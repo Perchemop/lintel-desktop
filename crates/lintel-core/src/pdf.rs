@@ -162,7 +162,6 @@ pub fn render_plan(
         project,
         spec,
         sheet_width,
-        sheet_height,
         produced_epoch_s,
     );
     draw_plan(
@@ -201,7 +200,6 @@ fn draw_title_block(
     project: &Project,
     spec: &SheetSpec,
     sheet_width: f64,
-    sheet_height: f64,
     produced_epoch_s: i64,
 ) {
     let x = sheet_width - MARGIN - TITLE_BLOCK_WIDTH;
@@ -743,7 +741,6 @@ mod tests {
         let text = String::from_utf8_lossy(bytes).to_string();
         let start = text.rfind("startxref").expect("startxref");
         let offset: usize = text[start + "startxref".len()..]
-            .trim()
             .split_whitespace()
             .next()
             .expect("offset")

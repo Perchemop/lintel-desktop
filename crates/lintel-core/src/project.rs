@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::CoreError;
 use crate::geom::Bounds;
-use crate::ids::{LevelId, OpeningId, WallId};
+use crate::ids::{LevelId, OpeningId};
 use crate::level::Level;
 use crate::units::UnitSystem;
 

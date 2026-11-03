@@ -627,8 +627,7 @@ mod tests {
             .active_level()
             .expect("level")
             .openings
-            .iter()
-            .next()
+            .first()
             .expect("door")
             .id;
         apply_command(
