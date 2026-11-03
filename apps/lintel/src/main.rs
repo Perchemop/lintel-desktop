@@ -4,6 +4,7 @@
 
 use crate::canvas::{Canvas, Draft, View};
 use crate::inspector::inspector;
+use crate::theme;
 use eframe::egui;
 use lintel_core::{
     command::Command,
@@ -35,6 +36,7 @@ impl Tool {
     }
 }
 
+/// Main eframe app state.
 struct LintelApp {
     doc: Document,
     view: View,
@@ -66,15 +68,15 @@ impl LintelApp {
 }
 
 impl eframe::App for LintelApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
-        self.menubar(ctx);
+        self.menubar(ui, frame, now);
 
         egui::SidePanel::left("inspector")
             .resizable(true)
             .default_width(260.0)
-            .show(ctx, |ui| {
+            .show(ui, |ui| {
                 ui.heading("Lintel");
                 ui.separator();
                 egui::ComboBox::from_label("Tool")
@@ -115,7 +117,8 @@ impl eframe::App for LintelApp {
                 }
             });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
+            let scroll = ui.input(|i| i.smooth_scroll_delta);
             let (response, rect) = Canvas::show(
                 ui,
                 &self.view,
@@ -123,17 +126,18 @@ impl eframe::App for LintelApp {
                 self.selection,
                 &self.snap,
                 &self.draft,
+                scroll,
             );
-            self.handle_canvas_input(ctx, response, rect, now);
+            self.handle_canvas_input(ui, response, rect, now);
         });
 
-        self.dialogs(ctx, now);
+        self.dialogs(ui, now);
     }
 }
 
 impl LintelApp {
-    fn menubar(&mut self, ctx: &egui::Context) {
-        egui::TopBottomPanel::top("menubar").show(ctx, |ui| {
+    fn menubar(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame, now: i64) {
+        egui::TopBottomPanel::top("menubar").show(ui, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("New plan").clicked {
@@ -174,7 +178,7 @@ impl LintelApp {
                     }
                     ui.separator();
                     if ui.button("Exit").clicked {
-                        ctx.send_viewport_cmd(eframe::ViewportCommand::Close);
+                        frame.send_viewport_cmd(eframe::ViewportCommand::Close);
                     }
                 });
                 ui.menu_button("Edit", |ui| {
@@ -209,7 +213,7 @@ impl LintelApp {
 
     fn handle_canvas_input(
         &mut self,
-        ctx: &egui::Context,
+        ui: &egui::Ui,
         response: crate::canvas::CanvasResponse,
         rect: egui::Rect,
         now: i64,
@@ -343,13 +347,13 @@ impl LintelApp {
             if let Some(world) = response.pointer_world {
                 self.draft.current = world;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                 self.draft = Draft::default();
             }
         }
 
-        if !ctx.wants_keyboard_input() {
-            if ctx
+        if !ui.ctx().wants_keyboard_input() {
+            if ui
                 .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
             {
                 if self.doc.can_undo() {
@@ -358,19 +362,18 @@ impl LintelApp {
                     self.draft = Draft::default();
                 }
             }
-            if ctx.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y)) {
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y)) {
                 if self.doc.can_redo() {
                     self.doc.redo(now);
                     self.selection = None;
                     self.draft = Draft::default();
                 }
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                 self.selection = None;
                 self.draft = Draft::default();
             }
-            if ctx
-                .input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
+            if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
             {
                 if let Some(Hit::Wall(id)) = self.selection {
                     let _ = self.doc.apply(Command::DeleteWall { id }, now);
@@ -381,36 +384,36 @@ impl LintelApp {
                     self.selection = None;
                 }
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::W)) {
+            if ui.input(|i| i.key_pressed(egui::Key::W)) {
                 self.tool = Tool::Wall;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::S)) {
+            if ui.input(|i| i.key_pressed(egui::Key::S)) {
                 self.tool = Tool::Select;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::D)) {
+            if ui.input(|i| i.key_pressed(egui::Key::D)) {
                 self.tool = Tool::Door;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::N)) {
+            if ui.input(|i| i.key_pressed(egui::Key::N)) {
                 self.tool = Tool::Window;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::G)) {
+            if ui.input(|i| i.key_pressed(egui::Key::G)) {
                 self.snap.grid_enabled = !self.snap.grid_enabled;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::O)) {
+            if ui.input(|i| i.key_pressed(egui::Key::O)) {
                 self.snap.ortho = !self.snap.ortho;
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::F)) {
+            if ui.input(|i| i.key_pressed(egui::Key::F)) {
                 self.zoom_to_fit();
             }
         }
     }
 
-    fn dialogs(&mut self, ctx: &egui::Context, now: i64) {
+    fn dialogs(&mut self, ui: &mut egui::Ui, now: i64) {
         if self.showing_about {
             egui::Window::new("About Lintel")
                 .open(&mut self.showing_about)
                 .collapsible(false)
-                .show(ctx, |ui| {
+                .show(ui, |ui| {
                     ui.label("Lintel — free, offline architectural drafting.");
                     ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                     ui.label("MIT OR Apache-2.0. Your plan stays on your disk.");
@@ -422,7 +425,7 @@ impl LintelApp {
             egui::Window::new("Export sheet")
                 .open(&mut self.export_open)
                 .collapsible(false)
-                .show(ctx, |ui| {
+                .show(ui, |ui| {
                     ui.label("Paper size:");
                     ui.radio_value(
                         &mut self.export_spec.paper,
