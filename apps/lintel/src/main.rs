@@ -119,11 +119,13 @@ impl eframe::App for LintelApp {
                 });
                 ui.menu_button("Edit", |ui| {
                     ui.add_enabled(self.doc.can_undo(), |ui: &mut egui::Ui| {
-                        if ui.button("Undo").clicked() {
+                        let response = ui.button("Undo");
+                        if response.clicked() {
                             self.doc.undo(now_epoch_s());
                             self.selection = None;
                             self.draft = Draft::default();
                         }
+                        response
                     });
                     ui.add_enabled(self.doc.can_redo(), |ui: &mut egui::Ui| {
                         if ui.button("Redo").clicked() {

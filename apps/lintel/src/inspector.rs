@@ -23,12 +23,10 @@ pub fn inspector(
         .default_open(true)
         .show(ui, |ui| match selection {
             Some(Hit::Wall(id)) => {
-                let wall = doc
-                    .project()
-                    .active_level()
-                    .expect("level")
-                    .wall(*id)
-                    .expect("wall");
+                let wall = {
+                    let level = doc.project().active_level().expect("level");
+                    level.wall(*id).expect("wall").clone()
+                };
                 ui.label(format!(
                     "Wall {} — {:.0} mm long",
                     id.value(),
@@ -38,12 +36,10 @@ pub fn inspector(
                 command = wall_fields(ui, doc, *id, wall);
             }
             Some(Hit::Opening(id)) => {
-                let opening = doc
-                    .project()
-                    .active_level()
-                    .expect("level")
-                    .opening(*id)
-                    .expect("opening");
+                let opening = {
+                    let level = doc.project().active_level().expect("level");
+                    level.opening(*id).expect("opening").clone()
+                };
                 ui.label(format!(
                     "{} {} — {:.0} × {:.0} mm",
                     opening.kind_label(),
