@@ -32,7 +32,7 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                wall_fields(ui, doc, *id, &wall)
+                wall_fields(ui, *id, &wall)
             }
             Some(Hit::Opening(id)) => {
                 let opening = {
@@ -106,7 +106,7 @@ pub fn inspector(
                     ui.label(format!("{} mm", level.elevation));
                 });
             }
-            changed.map(Command::SetActiveLevel)
+            changed.map(|id| Command::SetActiveLevel { id })
         })
         .body_returned
         .flatten();
@@ -114,12 +114,7 @@ pub fn inspector(
     element_cmd.or(storeys_cmd).or(view_cmd)
 }
 
-fn wall_fields(
-    ui: &mut egui::Ui,
-    doc: &Document,
-    id: WallId,
-    wall: &lintel_core::wall::Wall,
-) -> Option<Command> {
+fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
     let mut command: Option<Command> = None;
     let mut thickness = wall.thickness;
     let mut height = wall.height;
