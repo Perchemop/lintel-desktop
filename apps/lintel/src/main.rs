@@ -5,15 +5,18 @@
 use crate::canvas::{Canvas, Draft, View};
 use crate::inspector::inspector;
 use crate::theme;
-use eframe::egui;
+use eframe::{App, Frame};
 use lintel_core::{
     command::Command,
     document::Document,
     geom::{Point2, Vec2},
-    ids::Hit,
-    join::PlanGeometry,
+    join::{Hit, PlanGeometry},
     units::UnitSystem,
 };
+
+mod canvas;
+mod inspector;
+mod theme;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
 
