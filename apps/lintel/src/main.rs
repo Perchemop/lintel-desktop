@@ -104,10 +104,9 @@ impl eframe::App for LintelApp {
                         && let Some(path) = rfd::FileDialog::new()
                             .add_filter("Lintel plan", &["lintel.json"])
                             .save_file()
+                        && let Err(e) = self.doc.save_as(path)
                     {
-                        if let Err(e) = self.doc.save_as(path) {
-                            eprintln!("save as: {e}");
-                        }
+                        eprintln!("save as: {e}");
                     }
                     ui.separator();
                     if ui.button("Exit").clicked() {
@@ -223,10 +222,10 @@ impl LintelApp {
                                 )
                                 .map_err(|e| eprintln!("wall: {e}"))
                                 .ok();
-                            if let Some(applied) = applied {
-                                if let Some(wall_id) = applied.wall {
-                                    self.selection = Some(Hit::Wall(wall_id));
-                                }
+                            if let Some(applied) = applied
+                                && let Some(wall_id) = applied.wall
+                            {
+                                self.selection = Some(Hit::Wall(wall_id));
                             }
                         }
                         self.draft = Draft::default();
@@ -260,38 +259,38 @@ impl LintelApp {
             }
         }
 
-        if let Some(delta) = response.drag_delta {
-            if let Tool::Select = self.tool {
-                let mm = Vec2::new(
-                    delta.x as f64 / self.view.px_per_mm as f64,
-                    -delta.y as f64 / self.view.px_per_mm as f64,
-                );
-                match self.selection {
-                    Some(Hit::Wall(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let wall = level.wall(id).expect("wall");
-                        let start = wall.start + mm;
-                        let end = wall.end + mm;
-                        let _ = self.doc.apply(Command::MoveWall { id, start, end }, now);
-                    }
-                    Some(Hit::Opening(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let opening = level.opening(id).expect("opening");
-                        let host = level.wall(opening.host).expect("host wall");
-                        let dir = host.direction();
-                        let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
-                            / self.view.px_per_mm as f64;
-                        let new_offset = (opening.offset + progress).clamp(0.0, host.length());
-                        let _ = self.doc.apply(
-                            Command::MoveOpening {
-                                id,
-                                offset: new_offset,
-                            },
-                            now,
-                        );
-                    }
-                    _ => {}
+        if let Some(delta) = response.drag_delta
+            && let Tool::Select = self.tool
+        {
+            let mm = Vec2::new(
+                delta.x as f64 / self.view.px_per_mm as f64,
+                -delta.y as f64 / self.view.px_per_mm as f64,
+            );
+            match self.selection {
+                Some(Hit::Wall(id)) => {
+                    let level = self.doc.project().active_level().expect("level");
+                    let wall = level.wall(id).expect("wall");
+                    let start = wall.start + mm;
+                    let end = wall.end + mm;
+                    let _ = self.doc.apply(Command::MoveWall { id, start, end }, now);
                 }
+                Some(Hit::Opening(id)) => {
+                    let level = self.doc.project().active_level().expect("level");
+                    let opening = level.opening(id).expect("opening");
+                    let host = level.wall(opening.host).expect("host wall");
+                    let dir = host.direction();
+                    let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
+                        / self.view.px_per_mm as f64;
+                    let new_offset = (opening.offset + progress).clamp(0.0, host.length());
+                    let _ = self.doc.apply(
+                        Command::MoveOpening {
+                            id,
+                            offset: new_offset,
+                        },
+                        now,
+                    );
+                }
+                _ => {}
             }
         }
 
@@ -302,17 +301,16 @@ impl LintelApp {
             );
         }
 
-        if let Some((factor, anchor)) = response.zoom {
-            if let Some(hover) = response.pointer_world {
-                let before = hover;
-                self.view.px_per_mm =
-                    (self.view.px_per_mm as f64 * factor).clamp(0.02, 12.0) as f32;
-                let after = screen_to_world(&self.view, rect, anchor);
-                self.view.centre = Point2::new(
-                    self.view.centre.x + (before.x - after.x),
-                    self.view.centre.y + (before.y - after.y),
-                );
-            }
+        if let Some((factor, anchor)) = response.zoom
+            && let Some(hover) = response.pointer_world
+        {
+            let before = hover;
+            self.view.px_per_mm = (self.view.px_per_mm as f64 * factor).clamp(0.02, 12.0) as f32;
+            let after = screen_to_world(&self.view, rect, anchor);
+            self.view.centre = Point2::new(
+                self.view.centre.x + (before.x - after.x),
+                self.view.centre.y + (before.y - after.y),
+            );
         }
 
         if self.draft.active {

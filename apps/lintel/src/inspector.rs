@@ -154,7 +154,7 @@ fn opening_fields(
     id: OpeningId,
     opening: &lintel_core::opening::Opening,
 ) -> Option<Command> {
-    let mut command: Option<Command> = None;
+    let command: Option<Command> = None;
     let level = doc.project().active_level().expect("level");
     let wall = level.wall(opening.host).expect("host wall");
 
