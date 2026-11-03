@@ -4,6 +4,7 @@
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
+use crate::theme;
 use eframe::{App, Frame};
 use lintel_core::{
     command::Command,
@@ -12,10 +13,6 @@ use lintel_core::{
     join::{Hit, PlanGeometry},
     units::UnitSystem,
 };
-
-mod canvas;
-mod inspector;
-mod theme;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
 
@@ -73,73 +70,7 @@ impl eframe::App for LintelApp {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
-        self.menubar(ui, now);
-
-        egui::SidePanel::left("inspector")
-            .resizable(true)
-            .default_width(260.0)
-            .show(ui, |ui| {
-                ui.heading("Lintel");
-                ui.separator();
-                egui::ComboBox::from_label("Tool")
-                    .selected_text(self.tool.label())
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.tool, Tool::Select, Tool::Select.label());
-                        ui.selectable_value(&mut self.tool, Tool::Wall, Tool::Wall.label());
-                        ui.selectable_value(&mut self.tool, Tool::Door, Tool::Door.label());
-                        ui.selectable_value(&mut self.tool, Tool::Window, Tool::Window.label());
-                    });
-                ui.separator();
-                ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
-                let mut metric = self.doc.project().units == UnitSystem::Metric;
-                ui.radio_value(&mut metric, true, "Metric (mm)");
-                ui.radio_value(&mut metric, false, "Imperial (ft/in)");
-                if metric != (self.doc.project().units == UnitSystem::Metric) {
-                    let _ = self.doc.apply(
-                        Command::SetUnits {
-                            units: if metric {
-                                UnitSystem::Metric
-                            } else {
-                                UnitSystem::Imperial
-                            },
-                        },
-                        now,
-                    );
-                }
-                if ui.button("Export sheet…").clicked() {
-                    self.export_open = true;
-                }
-                if ui.button("About").clicked() {
-                    self.showing_about = true;
-                }
-                ui.separator();
-                if let Some(cmd) = inspector(ui, &mut self.doc, &mut self.selection, &mut self.snap)
-                {
-                    let _ = self.doc.apply(cmd, now);
-                }
-            });
-
         egui::CentralPanel::default().show(ui, |ui| {
-            let scroll = ui.input(|i| i.smooth_scroll_delta);
-            let (response, rect) = Canvas::show(
-                ui,
-                &self.view,
-                &PlanGeometry::of_level(self.doc.project().active_level().expect("level")),
-                self.selection,
-                &self.snap,
-                &self.draft,
-                scroll,
-            );
-            self.handle_canvas_input(ui, response, rect, now);
-        });
-
-        self.dialogs(ui, now);
-    }
-}
-
-impl LintelApp {
-    fn menubar(&mut self, ui: &mut egui::Ui, now: i64) {
-        egui::TopBottomPanel::top("menubar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("New plan").clicked() {
@@ -180,7 +111,7 @@ impl LintelApp {
                     }
                     ui.separator();
                     if ui.button("Exit").clicked() {
-                        ui.send_viewport_cmd(eframe::ViewportCommand::Close);
+                        ui.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
                 ui.menu_button("Edit", |ui| {
@@ -210,9 +141,43 @@ impl LintelApp {
                     }
                 });
             });
-        });
-    }
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("Tool:");
+                egui::ComboBox::from_label("Tool")
+                    .selected_text(self.tool.label())
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.tool, Tool::Select, Tool::Select.label());
+                        ui.selectable_value(&mut self.tool, Tool::Wall, Tool::Wall.label());
+                        ui.selectable_value(&mut self.tool, Tool::Door, Tool::Door.label());
+                        ui.selectable_value(&mut self.tool, Tool::Window, Tool::Window.label());
+                    });
+                ui.separator();
+                ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
+            });
 
+            let (response, rect) = Canvas::show(
+                ui,
+                &self.view,
+                &PlanGeometry::of_level(self.doc.project().active_level().expect("level")),
+                self.selection,
+                &self.snap,
+                &self.draft,
+            );
+            self.handle_canvas_input(ui, response, rect, now);
+
+            egui::Window::new("Inspector")
+                .default_pos(egui::Pos2::new(4.0, 40.0))
+                .show(ui, |ui| {
+                    inspector(ui, &mut self.doc, &mut self.selection, &mut self.snap);
+                });
+        });
+
+        self.dialogs(ui, now);
+    }
+}
+
+impl LintelApp {
     fn handle_canvas_input(
         &mut self,
         ui: &egui::Ui,
@@ -353,7 +318,7 @@ impl LintelApp {
             }
         }
 
-        if ui.memory(|m| !m.is_anything_being_edited()) {
+        if ui.memory(|m| m.focused().is_none()) {
             if ui
                 .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
             {
@@ -496,7 +461,7 @@ fn now_epoch_s() -> i64 {
 
 fn main() {
     let native_options = eframe::NativeOptions {
-        viewport: eframe::ViewportBuilder::default()
+        viewport: egui::ViewportBuilder::default()
             .with_title("Lintel — architectural drafting")
             .with_inner_size(egui::Vec2 {
                 x: 1300.0,

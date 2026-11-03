@@ -86,6 +86,7 @@ impl Canvas {
 
         let (egui_response, painter) =
             ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
+        let rect = egui_response.rect;
         painter.rect_filled(rect, 0.0, theme::PAPER);
 
         let hover = egui_response.hover_pos();
