@@ -157,13 +157,7 @@ pub fn render_plan(
 
     let mut content = Content::default();
     draw_frame(&mut content, sheet_width, sheet_height);
-    draw_title_block(
-        &mut content,
-        project,
-        spec,
-        sheet_width,
-        produced_epoch_s,
-    );
+    draw_title_block(&mut content, project, spec, sheet_width, produced_epoch_s);
     draw_plan(
         &mut content,
         &geometry,
