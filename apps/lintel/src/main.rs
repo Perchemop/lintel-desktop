@@ -174,7 +174,7 @@ impl eframe::App for LintelApp {
                 .default_pos(egui::Pos2::new(4.0, 40.0))
                 .show(ui, |ui| {
                     if let Some(cmd) = inspector(ui, &self.doc, &self.selection, &mut self.snap) {
-                        self.doc.apply(cmd, now);
+                        let _ = self.doc.apply(cmd, now);
                     }
                 });
         });
@@ -327,19 +327,18 @@ impl LintelApp {
         if ui.memory(|m| m.focused().is_none()) {
             if ui
                 .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
+                && self.doc.can_undo()
             {
-                if self.doc.can_undo() {
-                    self.doc.undo(now);
-                    self.selection = None;
-                    self.draft = Draft::default();
-                }
+                self.doc.undo(now);
+                self.selection = None;
+                self.draft = Draft::default();
             }
-            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y)) {
-                if self.doc.can_redo() {
-                    self.doc.redo(now);
-                    self.selection = None;
-                    self.draft = Draft::default();
-                }
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y))
+                && self.doc.can_redo()
+            {
+                self.doc.redo(now);
+                self.selection = None;
+                self.draft = Draft::default();
             }
             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                 self.selection = None;
@@ -419,24 +418,23 @@ impl LintelApp {
                     ui.text_edit_singleline(&mut self.export_spec.sheet_number);
                     ui.label("Title:");
                     ui.text_edit_singleline(&mut self.export_spec.sheet_title);
-                    if ui.button("Export PDF…").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
+                    if ui.button("Export PDF…").clicked()
+                        && let Some(path) = rfd::FileDialog::new()
                             .add_filter("PDF", &["pdf"])
                             .set_file_name(format!("{}.pdf", self.export_spec.sheet_number))
                             .save_file()
-                        {
-                            match lintel_core::pdf::render_plan(
-                                self.doc.project(),
-                                &self.export_spec,
-                                now,
-                            ) {
-                                Ok(bytes) => {
-                                    if std::fs::write(&path, &bytes).is_err() {
-                                        eprintln!("write pdf: {}", path.display());
-                                    }
+                    {
+                        match lintel_core::pdf::render_plan(
+                            self.doc.project(),
+                            &self.export_spec,
+                            now,
+                        ) {
+                            Ok(bytes) => {
+                                if std::fs::write(&path, &bytes).is_err() {
+                                    eprintln!("write pdf: {}", path.display());
                                 }
-                                Err(e) => eprintln!("export: {e}"),
                             }
+                            Err(e) => eprintln!("export: {e}"),
                         }
                     }
                 });
