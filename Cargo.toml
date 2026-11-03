@@ -1,0 +1,16 @@
+# Lintel workspace. The drafting domain lives in `crates/lintel-core` and is
+# fully headless: every workflow test runs without a window, a GPU or a
+# display. The desktop shell in `apps/lintel` only paints and collects input
+# (addendum K.3 / K.13).
+[workspace]
+resolver = "2"
+members = [
+    "apps/lintel",
+    "crates/lintel-core",
+]
+
+# One shared release profile keeps artefacts identical across the suite.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

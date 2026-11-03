@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: [v*.*.*]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      # Allow the job to publish releases and attach artefacts
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
+      - name: Cache Cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-
+          restore-keys: |
+            cargo-index-${{ runner.os }}-
+
+      - name: Build release artefacts
+        run: |
+          cargo build --release -p lintel-core -p lintel
+          # Create target directory structure for assets
+          mkdir -p release_artifacts
+
+      - name: Run cargo-deny licence check
+        run: cargo deny check 2>&1
+
+      - name: Run secret scan on artefacts
+        run: bash scripts/scan-secrets.sh
+
+      - name: Run personal data scan on artefacts
+        run: bash scripts/scan-personal-data.sh --path target/release
+
+      - name: Run release-asset personal-data scan
+        run: bash scripts/scan-release-assets.sh target/release
+
+      - name: Generate GitHub Release
+        uses: softprops/gh-release@v2
+        with:
+          name: "v${GITHUB_REF#refs/tags/v}"
+          body_from_file: CHANGELOG.md
+          files: release_artifacts/*
+          draft: false
+          prerelease: false
+
+      - name: Upload release artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lintel-v${GITHUB_REF#refs/tags-v}
+          path: release_artifacts/
+          retention-days: 30

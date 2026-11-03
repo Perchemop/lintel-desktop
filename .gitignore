@@ -1,0 +1,8 @@
+/target
+/dist
+/dist-static
+*.log
+.DS_Store
+.opencode/
+opencode.json
+opencode.jsonc

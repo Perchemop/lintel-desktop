@@ -1,0 +1,50 @@
+name: Accessibility Issue
+description: Report an accessibility issue in Lintel
+title: "[Accessibility] "
+labels: ["accessibility"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the accessibility issue.
+      placeholder: "When I try to..., here's what I see..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the issue.
+      placeholder: "1. Open the app...\n2. Press Tab...\n3. Focus is trapped..."
+    validations:
+      required: true
+  - type: select
+    id: wcag-criterion
+    attributes:
+      label: WCAG criterion
+      description: Which WCAG 2.2 Level AA criterion is affected?
+      choices:
+        - Keyboard navigation (every flow completable from keyboard)
+        - Screen reader semantics (interactive widgets have meaningful roles/names)
+        - Colour contrast (text and meaningful UI meet AA contrast)
+        - Reduced motion (platform preferences honoured)
+        - Other (please specify below)
+    validations:
+      required: true
+  - type: input
+    id: assistive-tech
+    attributes:
+      label: Assistive technology
+      description: Which assistive technology are you using?
+      placeholder: "e.g. NVDA, VoiceOver, TalkBack, Screen reader..."
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any additional context about the issue.
+      placeholder: "Add any other relevant information..."
+    validations:
+      required: false

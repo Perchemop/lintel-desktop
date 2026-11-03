@@ -1,0 +1,19 @@
+[package]
+name = "lintel"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Core domain - pure Rust, headless tested
+lintel-core = { path = "../../crates/lintel-core" }
+
+# GUI
+eframe = { version = "=0.36" }
+egui = { version = "=0.36" }
+
+# Temp dirs for file dialogs
+tempfile = "3"
+
+[dev-dependencies]
+# Unit test helpers if needed
+serde = { version = "1", features = ["derive"] }
