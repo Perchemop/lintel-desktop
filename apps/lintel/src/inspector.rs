@@ -5,7 +5,8 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{Hit, OpeningId, WallId},
+    ids::{OpeningId, WallId},
+    join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
 };

@@ -6,8 +6,7 @@
 
 use eframe::egui;
 use lintel_core::geom::{self, Point2};
-use lintel_core::ids::Hit;
-use lintel_core::join::PlanGeometry;
+use lintel_core::join::{Hit, PlanGeometry};
 use lintel_core::snap::{self, SnapSettings};
 
 use crate::theme;

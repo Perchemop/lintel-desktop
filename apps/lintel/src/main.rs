@@ -4,7 +4,6 @@
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
-use crate::theme;
 use eframe::{App, Frame};
 use lintel_core::{
     command::Command,
@@ -74,7 +73,7 @@ impl eframe::App for LintelApp {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
-        self.menubar(ui, frame, now);
+        self.menubar(ui, now);
 
         egui::SidePanel::left("inspector")
             .resizable(true)
@@ -139,9 +138,9 @@ impl eframe::App for LintelApp {
 }
 
 impl LintelApp {
-    fn menubar(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame, now: i64) {
+    fn menubar(&mut self, ui: &mut egui::Ui, now: i64) {
         egui::TopBottomPanel::top("menubar").show(ui, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("New plan").clicked {
                         self.doc = Document::new("Untitled plan", now_epoch_s());
@@ -181,7 +180,7 @@ impl LintelApp {
                     }
                     ui.separator();
                     if ui.button("Exit").clicked {
-                        frame.send_viewport_cmd(eframe::ViewportCommand::Close);
+                        ui.send_viewport_cmd(eframe::ViewportCommand::Close);
                     }
                 });
                 ui.menu_button("Edit", |ui| {
