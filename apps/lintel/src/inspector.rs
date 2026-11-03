@@ -33,7 +33,7 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                command = wall_fields(ui, doc, *id, wall);
+                command = wall_fields(ui, doc, *id, &wall);
             }
             Some(Hit::Opening(id)) => {
                 let opening = {
@@ -48,7 +48,7 @@ pub fn inspector(
                     opening.height
                 ));
                 ui.separator();
-                command = opening_fields(ui, doc, *id, opening);
+                command = opening_fields(ui, doc, *id, &opening);
             }
             None => {
                 ui.label("Select a wall or opening to edit it.");
