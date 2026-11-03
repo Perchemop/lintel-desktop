@@ -1,2 +1,5 @@
 [toolchain]
-rust-version = "1.85"
+name = 'stable'
+release = { channel = 'stable', version = '1.85' }
+components = ['clippy', 'rustfmt']
+
