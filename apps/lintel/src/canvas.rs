@@ -51,10 +51,6 @@ impl View {
     pub fn zoom_percent(&self) -> i32 {
         (self.px_per_mm as f64 / 0.4 * 100.0).round() as i32
     }
-
-    pub fn clamp_zoom(&mut self) {
-        self.px_per_mm = self.px_per_mm.clamp(0.02, 12.0);
-    }
 }
 
 pub fn screen_to_world(view: &View, rect: egui::Rect, pos: egui::Pos2) -> Point2 {
@@ -165,22 +161,23 @@ impl Canvas {
             }
         }
         let scroll = ui.input(|i| i.smooth_scroll_delta);
-        if scroll.y.abs() > 1e-6 {
-            if let Some(anchor) = hover {
-                response.zoom = Some(((-scroll.y as f64 * 0.001).exp(), anchor));
-            }
+        if scroll.y.abs() > 1e-6
+            && let Some(anchor) = hover
+        {
+            response.zoom = Some(((-scroll.y as f64 * 0.001).exp(), anchor));
         }
 
         (response, rect)
     }
 }
 
-fn nearest_anchor<'a>(
+#[allow(clippy::question_mark)]
+pub fn nearest_anchor(
     world: Option<Point2>,
-    anchors: &'a [Point2],
+    anchors: &[Point2],
     tolerance_mm: f64,
 ) -> Option<Point2> {
-    let Some(w) = world else { return None };
+    let w = world?;
     let mut best: Option<(f64, Point2)> = None;
     for &a in anchors {
         let d = w.distance(a);

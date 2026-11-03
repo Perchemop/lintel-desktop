@@ -10,7 +10,6 @@ use lintel_core::{
     document::Document,
     geom::{Point2, Vec2},
     join::{Hit, PlanGeometry},
-    units::UnitSystem,
 };
 
 mod canvas;
@@ -70,7 +69,7 @@ impl LintelApp {
 }
 
 impl eframe::App for LintelApp {
-    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
         egui::CentralPanel::default().show(ui, |ui| {
@@ -82,34 +81,32 @@ impl eframe::App for LintelApp {
                         self.draft = Draft::default();
                     }
                     ui.separator();
-                    if ui.button("Open…").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
+                    if ui.button("Open…").clicked()
+                        && let Some(path) = rfd::FileDialog::new()
                             .add_filter("Lintel plan", &["lintel.json"])
                             .pick_file()
-                        {
-                            match Document::open(&path) {
-                                Ok(loaded) => {
-                                    self.doc = loaded;
-                                    self.selection = None;
-                                    self.view = View::default();
-                                }
-                                Err(e) => eprintln!("open: {e}"),
+                    {
+                        match Document::open(&path) {
+                            Ok(loaded) => {
+                                self.doc = loaded;
+                                self.selection = None;
+                                self.view = View::default();
                             }
+                            Err(e) => eprintln!("open: {e}"),
                         }
                     }
-                    if ui.button("Save").clicked() {
-                        if let Err(e) = self.doc.save() {
-                            eprintln!("save: {e}");
-                        }
+                    if ui.button("Save").clicked()
+                        && let Err(e) = self.doc.save()
+                    {
+                        eprintln!("save: {e}");
                     }
-                    if ui.button("Save As…").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
+                    if ui.button("Save As…").clicked()
+                        && let Some(path) = rfd::FileDialog::new()
                             .add_filter("Lintel plan", &["lintel.json"])
                             .save_file()
-                        {
-                            if let Err(e) = self.doc.save_as(path) {
-                                eprintln!("save as: {e}");
-                            }
+                    {
+                        if let Err(e) = self.doc.save_as(path) {
+                            eprintln!("save as: {e}");
                         }
                     }
                     ui.separator();
@@ -176,7 +173,9 @@ impl eframe::App for LintelApp {
             egui::Window::new("Inspector")
                 .default_pos(egui::Pos2::new(4.0, 40.0))
                 .show(ui, |ui| {
-                    inspector(ui, &mut self.doc, &mut self.selection, &mut self.snap);
+                    if let Some(cmd) = inspector(ui, &self.doc, &self.selection, &self.snap) {
+                        self.doc.apply(cmd, now);
+                    }
                 });
         });
 
@@ -391,7 +390,7 @@ impl LintelApp {
                     ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                     ui.label("MIT OR Apache-2.0. Your plan stays on your disk.");
                     ui.separator();
-                    ui.link("github.com/Perchemop/lintel-desktop");
+                    let _ = ui.link("github.com/Perchemop/lintel-desktop");
                 });
         }
         if self.export_open {
@@ -452,7 +451,7 @@ impl LintelApp {
             let rect_h = 700.0;
             let sx = (rect_w - 2.0 * padding) / bounds.width().max(1.0);
             let sy = (rect_h - 2.0 * padding) / bounds.height().max(1.0);
-            let scale = sx.min(sy).max(0.02).min(12.0) as f32;
+            let scale = sx.min(sy).clamp(0.02, 12.0) as f32;
             self.view.px_per_mm = scale;
             self.view.centre = bounds.centre();
         }

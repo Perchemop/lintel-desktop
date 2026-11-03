@@ -1,19 +1,19 @@
 //! Right-hand inspector: properties of the selected element plus global
-//! view controls. All edits flow through `lintel_core::Command`.
+//! view controls. All edits flow through `lintel_core::Command` values
+//! returned here and applied by the shell.
 
 use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{OpeningId, WallId},
-    join::Hit,
+    ids::{Hit, OpeningId, WallId},
     opening::OpeningKind,
     snap::SnapSettings,
 };
 
 pub fn inspector(
     ui: &mut egui::Ui,
-    doc: &mut Document,
+    doc: &Document,
     selection: &Option<Hit>,
     snap: &mut SnapSettings,
 ) -> Option<Command> {
@@ -33,7 +33,7 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                command = wall_fields(ui, doc, *id, &wall);
+                command = command.or(wall_fields(ui, doc, *id, &wall));
             }
             Some(Hit::Opening(id)) => {
                 let opening = {
@@ -48,7 +48,7 @@ pub fn inspector(
                     opening.height
                 ));
                 ui.separator();
-                command = opening_fields(ui, doc, *id, &opening);
+                command = command.or(opening_fields(ui, doc, *id, &opening));
             }
             None => {
                 ui.label("Select a wall or opening to edit it.");
@@ -113,7 +113,7 @@ pub fn inspector(
 
 fn wall_fields(
     ui: &mut egui::Ui,
-    doc: &mut Document,
+    doc: &Document,
     id: WallId,
     wall: &lintel_core::wall::Wall,
 ) -> Option<Command> {
@@ -132,7 +132,7 @@ fn wall_fields(
                 .suffix(" mm"),
         );
         if ui.button("Apply").clicked() && (thickness - wall.thickness).abs() > f64::EPSILON {
-            command = Some(Command::SetWallThickness { id, thickness });
+            return Some(Command::SetWallThickness { id, thickness });
         }
     });
     ui.horizontal(|ui| {
@@ -144,7 +144,7 @@ fn wall_fields(
                 .suffix(" mm"),
         );
         if ui.button("Apply").clicked() && (height - wall.height).abs() > f64::EPSILON {
-            command = Some(Command::SetWallHeight { id, height });
+            return Some(Command::SetWallHeight { id, height });
         }
     });
     command
@@ -152,7 +152,7 @@ fn wall_fields(
 
 fn opening_fields(
     ui: &mut egui::Ui,
-    doc: &mut Document,
+    doc: &Document,
     id: OpeningId,
     opening: &lintel_core::opening::Opening,
 ) -> Option<Command> {
@@ -173,7 +173,7 @@ fn opening_fields(
         ui.radio_value(&mut kind, OpeningKind::Window, "Window");
     });
     if kind != opening.kind {
-        command = Some(Command::SetOpeningKind { id, kind });
+        return Some(Command::SetOpeningKind { id, kind });
     }
 
     ui.horizontal(|ui| {
@@ -224,7 +224,7 @@ fn opening_fields(
         || (height - opening.height).abs() > f64::EPSILON
         || (sill - opening.sill).abs() > f64::EPSILON;
     if size_changed {
-        command = Some(Command::SetOpeningSize {
+        return Some(Command::SetOpeningSize {
             id,
             width,
             height,
@@ -232,10 +232,10 @@ fn opening_fields(
         });
     }
     if (offset - opening.offset).abs() > f64::EPSILON {
-        command = Some(Command::MoveOpening { id, offset });
+        return Some(Command::MoveOpening { id, offset });
     }
     if flipped != opening.flipped {
-        command = Some(Command::FlipOpening { id });
+        return Some(Command::FlipOpening { id });
     }
 
     command
