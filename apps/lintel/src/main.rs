@@ -106,10 +106,10 @@ impl eframe::App for LintelApp {
                         now,
                     );
                 }
-                if ui.button("Export sheet…").clicked {
+                if ui.button("Export sheet…").clicked() {
                     self.export_open = true;
                 }
-                if ui.button("About").clicked {
+                if ui.button("About").clicked() {
                     self.showing_about = true;
                 }
                 ui.separator();
@@ -142,13 +142,13 @@ impl LintelApp {
         egui::TopBottomPanel::top("menubar").show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("New plan").clicked {
+                    if ui.button("New plan").clicked() {
                         self.doc = Document::new("Untitled plan", now_epoch_s());
                         self.selection = None;
                         self.draft = Draft::default();
                     }
                     ui.separator();
-                    if ui.button("Open…").clicked {
+                    if ui.button("Open…").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("Lintel plan", &["lintel.json"])
                             .pick_file()
@@ -163,12 +163,12 @@ impl LintelApp {
                             }
                         }
                     }
-                    if ui.button("Save").clicked {
+                    if ui.button("Save").clicked() {
                         if let Err(e) = self.doc.save() {
                             eprintln!("save: {e}");
                         }
                     }
-                    if ui.button("Save As…").clicked {
+                    if ui.button("Save As…").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("Lintel plan", &["lintel.json"])
                             .save_file()
@@ -179,20 +179,20 @@ impl LintelApp {
                         }
                     }
                     ui.separator();
-                    if ui.button("Exit").clicked {
+                    if ui.button("Exit").clicked() {
                         ui.send_viewport_cmd(eframe::ViewportCommand::Close);
                     }
                 });
                 ui.menu_button("Edit", |ui| {
                     ui.add_enabled(self.doc.can_undo(), |ui| {
-                        if ui.button("Undo").clicked {
+                        if ui.button("Undo").clicked() {
                             self.doc.undo(now_epoch_s());
                             self.selection = None;
                             self.draft = Draft::default();
                         }
                     });
                     ui.add_enabled(self.doc.can_redo(), |ui| {
-                        if ui.button("Redo").clicked {
+                        if ui.button("Redo").clicked() {
                             self.doc.redo(now_epoch_s());
                             self.selection = None;
                             self.draft = Draft::default();
@@ -200,12 +200,12 @@ impl LintelApp {
                     });
                 });
                 ui.menu_button("View", |ui| {
-                    if ui.button("Zoom to fit").clicked {
+                    if ui.button("Zoom to fit").clicked() {
                         self.zoom_to_fit();
                     }
                 });
                 ui.menu_button("Help", |ui| {
-                    if ui.button("About Lintel…").clicked {
+                    if ui.button("About Lintel…").clicked() {
                         self.showing_about = true;
                     }
                 });
@@ -353,7 +353,7 @@ impl LintelApp {
             }
         }
 
-        if !ui.ctx().wants_keyboard_input() {
+        if ui.memory(|m| !m.is_anything_being_edited()) {
             if ui
                 .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
             {
@@ -448,7 +448,7 @@ impl LintelApp {
                     ui.text_edit_singleline(&mut self.export_spec.sheet_number);
                     ui.label("Title:");
                     ui.text_edit_singleline(&mut self.export_spec.sheet_title);
-                    if ui.button("Export PDF…").clicked {
+                    if ui.button("Export PDF…").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
                             .add_filter("PDF", &["pdf"])
                             .set_file_name(format!("{}.pdf", self.export_spec.sheet_number))

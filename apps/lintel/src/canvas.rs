@@ -155,19 +155,18 @@ impl Canvas {
         if egui_response.clicked_by(egui::PointerButton::Primary) {
             response.click = hover;
         }
-        if let Some(delta) = egui_response.drag_delta() {
-            if delta.length_sq() > 0.0 {
-                if egui_response.dragged_by(egui::PointerButton::Primary) {
-                    response.drag_delta = Some(delta);
-                } else if egui_response.dragged_by(egui::PointerButton::Middle) {
-                    response.pan_delta = Some(delta);
-                }
+        let delta = egui_response.drag_delta();
+        if delta.length_sq() > 0.0 {
+            if egui_response.dragged_by(egui::PointerButton::Primary) {
+                response.drag_delta = Some(delta);
+            } else if egui_response.dragged_by(egui::PointerButton::Middle) {
+                response.pan_delta = Some(delta);
             }
         }
         let scroll = ui.input(|i| i.smooth_scroll_delta);
         if scroll.y.abs() > 1e-6 {
             if let Some(anchor) = hover {
-                response.zoom = Some(((-scroll.y * 0.001).exp(), anchor));
+                response.zoom = Some(((-scroll.y as f64 * 0.001).exp(), anchor));
             }
         }
 
@@ -255,7 +254,11 @@ fn paint_wall(
     } else {
         theme::WALL_FILL
     };
-    painter.add(egui::Shape::convex_polygon(pts.clone(), fill));
+    painter.add(egui::Shape::convex_polygon(
+        pts.clone(),
+        fill,
+        egui::Stroke::none(),
+    ));
     let stroke = if selected {
         theme::selection_stroke()
     } else {
@@ -293,6 +296,7 @@ fn paint_opening(
     painter.add(egui::Shape::convex_polygon(
         quad.to_vec(),
         theme::OPENING_GAP,
+        egui::Stroke::none(),
     ));
 
     for jamb in [start, end] {
