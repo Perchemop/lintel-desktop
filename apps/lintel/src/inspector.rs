@@ -103,7 +103,7 @@ pub fn inspector(
                 });
             }
             ui.horizontal(|ui| {
-                if ui.button("Add storey…").clicked {
+                if ui.button("Add storey…").clicked() {
                     command = Some(Command::AddLevel {
                         name: format!("Level {}", doc.project().levels.len() + 1),
                         elevation: doc.project().levels.len() as f64 * 3000.0,
@@ -135,7 +135,7 @@ fn wall_fields(
                 )
                 .suffix(" mm"),
         );
-        if ui.button("Apply").clicked && (thickness - wall.thickness).abs() > f64::EPSILON {
+        if ui.button("Apply").clicked() && (thickness - wall.thickness).abs() > f64::EPSILON {
             command = Some(Command::SetWallThickness { id, thickness });
         }
     });
@@ -147,7 +147,7 @@ fn wall_fields(
                 .range(lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT)
                 .suffix(" mm"),
         );
-        if ui.button("Apply").clicked && (height - wall.height).abs() > f64::EPSILON {
+        if ui.button("Apply").clicked() && (height - wall.height).abs() > f64::EPSILON {
             command = Some(Command::SetWallHeight { id, height });
         }
     });

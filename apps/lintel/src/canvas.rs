@@ -258,7 +258,10 @@ fn paint_wall(
     painter.add(egui::Shape::convex_polygon(
         pts.clone(),
         fill,
-        egui::Stroke::none(),
+        egui::Stroke {
+            width: 0.0,
+            color: egui::Color32::TRANSPARENT,
+        },
     ));
     let stroke = if selected {
         theme::selection_stroke()
@@ -297,7 +300,10 @@ fn paint_opening(
     painter.add(egui::Shape::convex_polygon(
         quad.to_vec(),
         theme::OPENING_GAP,
-        egui::Stroke::none(),
+        egui::Stroke {
+            width: 0.0,
+            color: egui::Color32::TRANSPARENT,
+        },
     ));
 
     for jamb in [start, end] {

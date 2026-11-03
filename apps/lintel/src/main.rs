@@ -4,7 +4,7 @@
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
-use eframe::{App, Frame};
+use eframe::Frame;
 use lintel_core::{
     command::Command,
     document::Document,
@@ -118,14 +118,14 @@ impl eframe::App for LintelApp {
                     }
                 });
                 ui.menu_button("Edit", |ui| {
-                    ui.add_enabled(self.doc.can_undo(), |ui| {
+                    ui.add_enabled(self.doc.can_undo(), |ui: &mut egui::Ui| {
                         if ui.button("Undo").clicked() {
                             self.doc.undo(now_epoch_s());
                             self.selection = None;
                             self.draft = Draft::default();
                         }
                     });
-                    ui.add_enabled(self.doc.can_redo(), |ui| {
+                    ui.add_enabled(self.doc.can_redo(), |ui: &mut egui::Ui| {
                         if ui.button("Redo").clicked() {
                             self.doc.redo(now_epoch_s());
                             self.selection = None;
@@ -473,6 +473,6 @@ fn main() {
         ..Default::default()
     };
     let app = LintelApp::new();
-    eframe::run_native("Lintel", native_options, Box::new(|_cc| Box::new(app)))
+    eframe::run_native("Lintel", native_options, Box::new(|_cc| Ok(Box::new(app))))
         .expect("eframe run failed");
 }
