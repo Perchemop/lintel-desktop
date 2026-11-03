@@ -17,9 +17,8 @@ use crate::theme;
 pub struct CanvasResponse {
     pub pointer_world: Option<Point2>,
     pub click: Option<egui::Pos2>, // primary-button click, in screen space
-    pub middle_click: Option<egui::Pos2>,
     pub drag_delta: Option<egui::Vec2>, // primary-button drag, screen delta
-    pub pan_delta: Option<egui::Vec2>,  // middle-button drag, screen delta
+    pub pan_delta: Option<egui::Vec2>, // middle-button drag, screen delta
     pub zoom: Option<(f64, egui::Pos2)>, // factor, anchor in screen space
 }
 
@@ -86,11 +85,11 @@ impl Canvas {
     ) -> (CanvasResponse, egui::Rect) {
         let mut response = CanvasResponse::default();
 
-        let (rect, painter) =
+        let (egui_response, painter) =
             ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
         painter.rect_filled(rect, 0.0, theme::PAPER);
 
-        let hover = response.hover_pos();
+        let hover = egui_response.hover_pos();
         response.pointer_world = hover.map(|p| screen_to_world(view, rect, p));
 
         // Grid.
@@ -154,17 +153,14 @@ impl Canvas {
         }
 
         // Input intents.
-        if response.clicked_by(egui::PointerButton::Primary) {
+        if egui_response.clicked_by(egui::PointerButton::Primary) {
             response.click = hover;
         }
-        if response.clicked_by(egui::PointerButton::Middle) {
-            response.middle_click = hover;
-        }
-        if let Some(delta) = response.drag_delta() {
+        if let Some(delta) = egui_response.drag_delta() {
             if delta.length_sq() > 0.0 {
-                if response.dragged_by(egui::PointerButton::Primary) {
+                if egui_response.dragged_by(egui::PointerButton::Primary) {
                     response.drag_delta = Some(delta);
-                } else if response.dragged_by(egui::PointerButton::Middle) {
+                } else if egui_response.dragged_by(egui::PointerButton::Middle) {
                     response.pan_delta = Some(delta);
                 }
             }
@@ -282,7 +278,10 @@ fn paint_opening(
     let half = opening.host_thickness * 0.5;
     let normal = opening.host_direction.perpendicular();
     let scale = view.px_per_mm as f64;
-    let n_screen = normal.scaled(half * scale);
+    let n_screen = egui::Vec2::new(
+        (normal.x * half * scale) as f32,
+        (normal.y * half * scale) as f32,
+    );
     let start = world_to_screen(view, rect, opening.start);
     let end = world_to_screen(view, rect, opening.end);
 
@@ -325,7 +324,10 @@ fn paint_opening(
             ));
         }
         None => {
-            let inset = normal.scaled(half * scale * 0.5);
+            let inset = egui::Vec2::new(
+                (normal.x * half * scale * 0.5) as f32,
+                (normal.y * half * scale * 0.5) as f32,
+            );
             painter.line_segment(
                 [start + inset, end + inset],
                 egui::Stroke::new(0.7, theme::WINDOW_LINE),
