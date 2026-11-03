@@ -2,7 +2,7 @@
 //! Every user interaction goes through a `Command`; the core model updates
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
-use crate::canvas::{Canvas, Draft, View};
+use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
 use crate::theme;
 use eframe::{App, Frame};
@@ -223,13 +223,14 @@ impl LintelApp {
     ) {
         let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
 
-        if let Some(click) = response.click {
-            match (click.1, self.tool, response.pointer_world) {
-                (egui::PointerButton::Primary, Tool::Select, Some(world)) => {
+        if let Some(click_screen) = response.click {
+            let world = screen_to_world(&self.view, rect, click_screen);
+            match (self.tool, Some(world)) {
+                (Tool::Select, Some(world)) => {
                     self.selection = geometry.hit_test(world, self.snap.anchor_tolerance);
                     self.draft = Draft::default();
                 }
-                (egui::PointerButton::Primary, Tool::Wall, Some(world)) => {
+                (Tool::Wall, Some(world)) => {
                     if !self.draft.active {
                         self.draft = Draft {
                             active: true,
@@ -261,32 +262,30 @@ impl LintelApp {
                         self.draft = Draft::default();
                     }
                 }
-                (egui::PointerButton::Primary, Tool::Door | Tool::Window, Some(world)) => {
-                    match self.selection {
-                        Some(Hit::Wall(id)) => {
-                            let level = self.doc.project().active_level().expect("level");
-                            let wall = level.wall(id).expect("wall");
-                            let offset = wall.start.distance(world).clamp(0.0, wall.length());
-                            let kind = match self.tool {
-                                Tool::Door => lintel_core::opening::OpeningKind::Door,
-                                Tool::Window => lintel_core::opening::OpeningKind::Window,
-                                _ => unreachable!(),
-                            };
-                            let _ = self.doc.apply(
-                                Command::PlaceOpening {
-                                    kind,
-                                    host: id,
-                                    offset,
-                                },
-                                now,
-                            );
-                            self.draft = Draft::default();
-                        }
-                        _ => {
-                            self.selection = geometry.hit_test(world, self.snap.anchor_tolerance);
-                        }
+                (Tool::Door | Tool::Window, Some(world)) => match self.selection {
+                    Some(Hit::Wall(id)) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        let wall = level.wall(id).expect("wall");
+                        let offset = wall.start.distance(world).clamp(0.0, wall.length());
+                        let kind = match self.tool {
+                            Tool::Door => lintel_core::opening::OpeningKind::Door,
+                            Tool::Window => lintel_core::opening::OpeningKind::Window,
+                            _ => unreachable!(),
+                        };
+                        let _ = self.doc.apply(
+                            Command::PlaceOpening {
+                                kind,
+                                host: id,
+                                offset,
+                            },
+                            now,
+                        );
+                        self.draft = Draft::default();
                     }
-                }
+                    _ => {
+                        self.selection = geometry.hit_test(world, self.snap.anchor_tolerance);
+                    }
+                },
                 _ => {}
             }
         }
@@ -494,13 +493,6 @@ fn now_epoch_s() -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .expect("clock")
         .as_secs() as i64
-}
-
-fn screen_to_world(view: &View, rect: egui::Rect, pos: egui::Pos2) -> Point2 {
-    Point2::new(
-        view.centre.x + (pos.x - rect.center().x) as f64 / view.px_per_mm as f64,
-        view.centre.y - (pos.y - rect.center().y) as f64 / view.px_per_mm as f64,
-    )
 }
 
 fn main() {

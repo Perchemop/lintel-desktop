@@ -16,10 +16,11 @@ use crate::theme;
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CanvasResponse {
     pub pointer_world: Option<Point2>,
-    pub click: Option<(egui::Pos2, egui::PointerButton)>,
-    pub drag_delta: Option<egui::Vec2>, // screen delta, primary button
-    pub pan_delta: Option<egui::Vec2>,  // screen delta, middle button
-    pub zoom: Option<(f64, egui::Pos2)>, // factor, anchor screen pos
+    pub click: Option<egui::Pos2>, // primary-button click, in screen space
+    pub middle_click: Option<egui::Pos2>,
+    pub drag_delta: Option<egui::Vec2>, // primary-button drag, screen delta
+    pub pan_delta: Option<egui::Vec2>,  // middle-button drag, screen delta
+    pub zoom: Option<(f64, egui::Pos2)>, // factor, anchor in screen space
 }
 
 /// Draft geometry for the wall tool.
@@ -28,134 +29,6 @@ pub struct Draft {
     pub active: bool,
     pub start: Point2,
     pub current: Point2,
-}
-
-pub struct Canvas {}
-
-impl Canvas {
-    pub fn show(
-        ui: &mut egui::Ui,
-        view: &super::View,
-        geometry: &PlanGeometry,
-        selection: Option<Hit>,
-        snap: &SnapSettings,
-        draft: &Draft,
-    ) -> (CanvasResponse, egui::Rect) {
-        let mut response = CanvasResponse::default();
-
-        let (rect, painter) =
-            ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
-        painter.rect_filled(rect, 0.0, theme::PAPER);
-
-        let hover = ui.ctx().input(|i| i.pointer_hover_pos());
-        response.pointer_world = hover.map(|p| screen_to_world(view, rect, p));
-        let scroll = ui.ctx().input(|i| i.smooth_scroll_delta);
-        if scroll.y.abs() > 1e-6 {
-            if let Some(anchor) = hover {
-                response.zoom = Some(((-scroll.y * 0.001).exp(), anchor));
-            }
-        }
-        // Grid.
-        if snap.grid_enabled && snap.grid.is_finite() && snap.grid > 0.0 {
-            paint_grid(&painter, rect, view, snap.grid);
-        }
-
-        for wall in &geometry.walls {
-            paint_wall(
-                &painter,
-                rect,
-                view,
-                wall,
-                selection == Some(Hit::Wall(wall.wall.id)),
-            );
-        }
-        for opening in &geometry.openings {
-            paint_opening(
-                &painter,
-                rect,
-                view,
-                opening,
-                selection == Some(Hit::Opening(opening.id)),
-            );
-        }
-
-        // Draft preview (wall tool).
-        if draft.active {
-            let anchors = wall_anchors_snap(geometry);
-            let snapped = snap::snap_point(
-                response.pointer_world.unwrap_or(draft.current),
-                &wall_anchors_snap(geometry),
-                Some(draft.start),
-                snap,
-            );
-            let start_screen = world_to_screen(view, rect, draft.start);
-            let end_screen = world_to_screen(view, rect, snapped.point);
-            painter.line_segment([start_screen, end_screen], theme::selection_stroke());
-            let length = draft.start.distance(snapped.point);
-            let angle = (snapped.point - draft.start).angle_degrees();
-            let pos = end_screen + egui::Vec2::new(8.0, -6.0);
-            painter.text(
-                pos,
-                egui::Align2::LEFT_TOP,
-                format!("{length:.0} mm  {angle:.0}°"),
-                egui::FontId::proportional(11.0),
-                theme::INK,
-            );
-            if let Some(anchor) =
-                nearest_anchor(response.pointer_world, &anchors, snap.anchor_tolerance)
-            {
-                let screen = world_to_screen(view, rect, anchor);
-                painter.circle_filled(screen, theme::snap_radius(), theme::GREEN);
-            }
-        } else if let Some(world) = response.pointer_world {
-            let anchors = wall_anchors_snap(geometry);
-            if let Some(anchor) = nearest_anchor(Some(world), &anchors, snap.anchor_tolerance) {
-                let screen = world_to_screen(view, rect, anchor);
-                painter.circle_filled(screen, 3.0, theme::GREEN);
-            }
-        }
-
-        // Input intents.
-        if response.pointer_world.is_some() {
-            if ui
-                .ctx()
-                .input(|i| i.button_pressed(egui::PointerButton::Primary))
-            {
-                response.click =
-                    Some((hover.unwrap_or(rect.center()), egui::PointerButton::Primary));
-            }
-            if ui
-                .ctx()
-                .input(|i| i.button_pressed(egui::PointerButton::Middle))
-            {
-                response.click =
-                    Some((hover.unwrap_or(rect.center()), egui::PointerButton::Middle));
-            }
-        }
-        if let Some(delta) = ui.ctx().input(|i| i.pointer_delta()) {
-            if delta.length_sq() > 0.0 {
-                if ui
-                    .ctx()
-                    .input(|i| i.button_down(egui::PointerButton::Primary))
-                {
-                    response.drag_delta = Some(delta);
-                } else if ui
-                    .ctx()
-                    .input(|i| i.button_down(egui::PointerButton::Middle))
-                {
-                    response.pan_delta = Some(delta);
-                }
-            }
-        }
-        if scroll_delta.y.abs() > 1e-6 && response.hovered {
-            response.zoom = Some((
-                (-scroll_delta.y * 0.001).exp(),
-                hover.unwrap_or(rect.center()),
-            ));
-        }
-
-        (response, rect)
-    }
 }
 
 /// Viewport transform: world millimetres ↔ screen pixels.
@@ -200,6 +73,139 @@ pub fn world_to_screen(view: &View, rect: egui::Rect, p: Point2) -> egui::Pos2 {
     )
 }
 
+pub struct Canvas {}
+
+impl Canvas {
+    pub fn show(
+        ui: &mut egui::Ui,
+        view: &View,
+        geometry: &PlanGeometry,
+        selection: Option<Hit>,
+        snap: &SnapSettings,
+        draft: &Draft,
+    ) -> (CanvasResponse, egui::Rect) {
+        let mut response = CanvasResponse::default();
+
+        let (rect, painter) =
+            ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
+        painter.rect_filled(rect, 0.0, theme::PAPER);
+
+        let hover = response.hover_pos();
+        response.pointer_world = hover.map(|p| screen_to_world(view, rect, p));
+
+        // Grid.
+        if snap.grid_enabled && snap.grid.is_finite() && snap.grid > 0.0 {
+            paint_grid(&painter, rect, view, snap.grid);
+        }
+
+        for wall in &geometry.walls {
+            paint_wall(
+                &painter,
+                rect,
+                view,
+                wall,
+                selection == Some(Hit::Wall(wall.wall.id)),
+            );
+        }
+        for opening in &geometry.openings {
+            paint_opening(
+                &painter,
+                rect,
+                view,
+                opening,
+                selection == Some(Hit::Opening(opening.id)),
+            );
+        }
+
+        // Draft preview (wall tool).
+        if draft.active {
+            let anchors = wall_anchors_snap(geometry);
+            let snapped = snap::snap_point(
+                response.pointer_world.unwrap_or(draft.current),
+                &anchors,
+                Some(draft.start),
+                snap,
+            );
+            let start_screen = world_to_screen(view, rect, draft.start);
+            let end_screen = world_to_screen(view, rect, snapped.point);
+            painter.line_segment([start_screen, end_screen], theme::selection_stroke());
+            let length = draft.start.distance(snapped.point);
+            let angle = (snapped.point - draft.start).angle_degrees();
+            let pos = end_screen + egui::Vec2::new(8.0, -6.0);
+            painter.text(
+                pos,
+                egui::Align2::LEFT_TOP,
+                format!("{length:.0} mm  {angle:.0}°"),
+                egui::FontId::proportional(11.0),
+                theme::INK,
+            );
+            if let Some(anchor) =
+                nearest_anchor(response.pointer_world, &anchors, snap.anchor_tolerance)
+            {
+                let screen = world_to_screen(view, rect, anchor);
+                painter.circle_filled(screen, theme::snap_radius(), theme::GREEN);
+            }
+        } else if let Some(world) = response.pointer_world {
+            let anchors = wall_anchors_snap(geometry);
+            if let Some(anchor) = nearest_anchor(Some(world), &anchors, snap.anchor_tolerance) {
+                let screen = world_to_screen(view, rect, anchor);
+                painter.circle_filled(screen, 3.0, theme::GREEN);
+            }
+        }
+
+        // Input intents.
+        if response.clicked_by(egui::PointerButton::Primary) {
+            response.click = hover;
+        }
+        if response.clicked_by(egui::PointerButton::Middle) {
+            response.middle_click = hover;
+        }
+        if let Some(delta) = response.drag_delta() {
+            if delta.length_sq() > 0.0 {
+                if response.dragged_by(egui::PointerButton::Primary) {
+                    response.drag_delta = Some(delta);
+                } else if response.dragged_by(egui::PointerButton::Middle) {
+                    response.pan_delta = Some(delta);
+                }
+            }
+        }
+        let scroll = ui.input(|i| i.smooth_scroll_delta);
+        if scroll.y.abs() > 1e-6 {
+            if let Some(anchor) = hover {
+                response.zoom = Some(((-scroll.y * 0.001).exp(), anchor));
+            }
+        }
+
+        (response, rect)
+    }
+}
+
+fn nearest_anchor<'a>(
+    world: Option<Point2>,
+    anchors: &'a [Point2],
+    tolerance_mm: f64,
+) -> Option<Point2> {
+    let Some(w) = world else { return None };
+    let mut best: Option<(f64, Point2)> = None;
+    for &a in anchors {
+        let d = w.distance(a);
+        if d <= tolerance_mm && best.is_none_or(|(bd, _)| d < bd) {
+            best = Some((d, a));
+        }
+    }
+    best.map(|(_, a)| a)
+}
+
+/// Snap anchors for all walls in a level (both ends of each).
+pub fn wall_anchors_snap(geometry: &PlanGeometry) -> Vec<Point2> {
+    let mut anchors = Vec::with_capacity(geometry.walls.len() * 2);
+    for wall in &geometry.walls {
+        anchors.push(wall.wall.start);
+        anchors.push(wall.wall.end);
+    }
+    anchors
+}
+
 fn paint_grid(painter: &egui::Painter, rect: egui::Rect, view: &View, spacing_mm: f64) {
     let px_per = view.px_per_mm as f64;
     if spacing_mm * px_per < 6.0 {
@@ -222,7 +228,6 @@ fn paint_grid(painter: &egui::Painter, rect: egui::Rect, view: &View, spacing_mm
         };
         painter.line_segment([p0, p1], stroke);
     }
-    // horizontal grid lines
     let g0 = (wb / spacing_mm).floor() as i64;
     let g1 = (wt / spacing_mm).ceil() as i64;
     for g in g0..=g1 {
@@ -281,7 +286,6 @@ fn paint_opening(
     let start = world_to_screen(view, rect, opening.start);
     let end = world_to_screen(view, rect, opening.end);
 
-    // Paper gap over the wall band.
     let quad = [
         start + n_screen,
         end + n_screen,
@@ -293,7 +297,6 @@ fn paint_opening(
         theme::OPENING_GAP,
     ));
 
-    // Jambs.
     for jamb in [start, end] {
         painter.line_segment(
             [jamb + n_screen, jamb - n_screen],
@@ -338,30 +341,4 @@ fn paint_opening(
         let c = world_to_screen(view, rect, opening.centre);
         painter.circle_filled(c, 3.0, theme::selection_stroke().color);
     }
-}
-
-fn nearest_anchor<'a>(
-    world: Option<Point2>,
-    anchors: &'a [Point2],
-    tolerance_mm: f64,
-) -> Option<Point2> {
-    let Some(w) = world else { return None };
-    let mut best: Option<(f64, Point2)> = None;
-    for &a in anchors {
-        let d = w.distance(a);
-        if d <= tolerance_mm && best.is_none_or(|(bd, _)| d < bd) {
-            best = Some((d, a));
-        }
-    }
-    best.map(|(_, a)| a)
-}
-
-/// Snap anchors for all walls in a level (both ends of each).
-pub fn wall_anchors_snap(geometry: &PlanGeometry) -> Vec<Point2> {
-    let mut anchors = Vec::with_capacity(geometry.walls.len() * 2);
-    for wall in &geometry.walls {
-        anchors.push(wall.wall.start);
-        anchors.push(wall.wall.end);
-    }
-    anchors
 }
