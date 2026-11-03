@@ -4,7 +4,6 @@
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
-use crate::theme;
 use eframe::{App, Frame};
 use lintel_core::{
     command::Command,
@@ -13,6 +12,10 @@ use lintel_core::{
     join::{Hit, PlanGeometry},
     units::UnitSystem,
 };
+
+mod canvas;
+mod inspector;
+mod theme;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
 
