@@ -2,6 +2,8 @@
 //! Every user interaction goes through a `Command`; the core model updates
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
+use crate::canvas::{Canvas, Draft, View};
+use crate::inspector::inspector;
 use eframe::egui;
 use lintel_core::{
     command::Command,
@@ -11,8 +13,6 @@ use lintel_core::{
     join::PlanGeometry,
     units::UnitSystem,
 };
-use crate::canvas::{Canvas, Draft, View};
-use crate::inspector::inspector;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
 
@@ -109,7 +109,8 @@ impl eframe::App for LintelApp {
                     self.showing_about = true;
                 }
                 ui.separator();
-                if let Some(cmd) = inspector(ui, &mut self.doc, &mut self.selection, &mut self.snap) {
+                if let Some(cmd) = inspector(ui, &mut self.doc, &mut self.selection, &mut self.snap)
+                {
                     let _ = self.doc.apply(cmd, now);
                 }
             });
@@ -134,7 +135,7 @@ impl LintelApp {
     fn menubar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("menubar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                if ui.menu_button("File", |ui| {
+                ui.menu_button("File", |ui| {
                     if ui.button("New plan").clicked {
                         self.doc = Document::new("Untitled plan", now_epoch_s());
                         self.selection = None;
@@ -176,7 +177,7 @@ impl LintelApp {
                         ctx.send_viewport_cmd(eframe::ViewportCommand::Close);
                     }
                 });
-                if ui.menu_button("Edit", |ui| {
+                ui.menu_button("Edit", |ui| {
                     ui.add_enabled(self.doc.can_undo(), |ui| {
                         if ui.button("Undo").clicked {
                             self.doc.undo(now_epoch_s());
@@ -191,17 +192,17 @@ impl LintelApp {
                             self.draft = Draft::default();
                         }
                     });
-                }) {}
-                if ui.menu_button("View", |ui| {
+                });
+                ui.menu_button("View", |ui| {
                     if ui.button("Zoom to fit").clicked {
                         self.zoom_to_fit();
                     }
-                }) {}
-                if ui.menu_button("Help", |ui| {
+                });
+                ui.menu_button("Help", |ui| {
                     if ui.button("About Lintel…").clicked {
                         self.showing_about = true;
                     }
-                }) {}
+                });
             });
         });
     }
@@ -223,7 +224,11 @@ impl LintelApp {
                 }
                 (egui::PointerButton::Primary, Tool::Wall, Some(world)) => {
                     if !self.draft.active {
-                        self.draft = Draft { active: true, start: world, current: world };
+                        self.draft = Draft {
+                            active: true,
+                            start: world,
+                            current: world,
+                        };
                     } else {
                         let end = world;
                         if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
@@ -261,7 +266,11 @@ impl LintelApp {
                                 _ => unreachable!(),
                             };
                             let _ = self.doc.apply(
-                                Command::PlaceOpening { kind, host: id, offset },
+                                Command::PlaceOpening {
+                                    kind,
+                                    host: id,
+                                    offset,
+                                },
                                 now,
                             );
                             self.draft = Draft::default();
@@ -297,7 +306,13 @@ impl LintelApp {
                         let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
                             / self.view.px_per_mm as f64;
                         let new_offset = (opening.offset + progress).clamp(0.0, host.length());
-                        let _ = self.doc.apply(Command::MoveOpening { id, offset: new_offset }, now);
+                        let _ = self.doc.apply(
+                            Command::MoveOpening {
+                                id,
+                                offset: new_offset,
+                            },
+                            now,
+                        );
                     }
                     _ => {}
                 }
@@ -334,7 +349,9 @@ impl LintelApp {
         }
 
         if !ctx.wants_keyboard_input() {
-            if ctx.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift) {
+            if ctx
+                .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
+            {
                 if self.doc.can_undo() {
                     self.doc.undo(now);
                     self.selection = None;
@@ -352,7 +369,9 @@ impl LintelApp {
                 self.selection = None;
                 self.draft = Draft::default();
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace)) {
+            if ctx
+                .input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
+            {
                 if let Some(Hit::Wall(id)) = self.selection {
                     let _ = self.doc.apply(Command::DeleteWall { id }, now);
                     self.selection = None;
@@ -405,8 +424,16 @@ impl LintelApp {
                 .collapsible(false)
                 .show(ctx, |ui| {
                     ui.label("Paper size:");
-                    ui.radio_value(&mut self.export_spec.paper, lintel_core::pdf::PaperSize::A3, "A3");
-                    ui.radio_value(&mut self.export_spec.paper, lintel_core::pdf::PaperSize::A4, "A4");
+                    ui.radio_value(
+                        &mut self.export_spec.paper,
+                        lintel_core::pdf::PaperSize::A3,
+                        "A3",
+                    );
+                    ui.radio_value(
+                        &mut self.export_spec.paper,
+                        lintel_core::pdf::PaperSize::A4,
+                        "A4",
+                    );
                     ui.label("Scale 1:N:");
                     ui.add(
                         egui::DragValue::new(&mut self.export_spec.scale_denominator)
@@ -442,8 +469,7 @@ impl LintelApp {
     }
 
     fn zoom_to_fit(&mut self) {
-        let geometry =
-            PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+        let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
         if let Some(bounds) = geometry.bounds() {
             let padding = 40.0;
             let rect_w = 1100.0;
@@ -475,7 +501,10 @@ fn main() {
     let native_options = eframe::NativeOptions {
         viewport: eframe::ViewportBuilder::default()
             .with_title("Lintel — architectural drafting")
-            .with_inner_size(egui::Vec2 { x: 1300.0, y: 850.0 }),
+            .with_inner_size(egui::Vec2 {
+                x: 1300.0,
+                y: 850.0,
+            }),
         ..Default::default()
     };
     let app = LintelApp::new();

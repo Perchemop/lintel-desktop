@@ -17,9 +17,9 @@ use crate::theme;
 pub struct CanvasResponse {
     pub pointer_world: Option<Point2>,
     pub click: Option<(egui::Pos2, egui::PointerButton)>,
-    pub drag_delta: Option<egui::Vec2>,   // screen delta, primary button
-    pub pan_delta: Option<egui::Vec2>,    // screen delta, middle button
-    pub zoom: Option<(f64, egui::Pos2)>,  // factor, anchor screen pos
+    pub drag_delta: Option<egui::Vec2>, // screen delta, primary button
+    pub pan_delta: Option<egui::Vec2>,  // screen delta, middle button
+    pub zoom: Option<(f64, egui::Pos2)>, // factor, anchor screen pos
 }
 
 /// Draft geometry for the wall tool.
@@ -43,7 +43,8 @@ impl Canvas {
     ) -> (CanvasResponse, egui::Rect) {
         let mut response = CanvasResponse::default();
 
-        let (rect, painter) = ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
+        let (rect, painter) =
+            ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
         painter.rect_filled(rect, 0.0, theme::PAPER);
 
         let hover = ui.ctx().input(|i| i.pointer_hover_pos());
@@ -60,10 +61,22 @@ impl Canvas {
         }
 
         for wall in &geometry.walls {
-            paint_wall(&painter, rect, view, wall, selection == Some(Hit::Wall(wall.wall.id)));
+            paint_wall(
+                &painter,
+                rect,
+                view,
+                wall,
+                selection == Some(Hit::Wall(wall.wall.id)),
+            );
         }
         for opening in &geometry.openings {
-            paint_opening(&painter, rect, view, opening, selection == Some(Hit::Opening(opening.id)));
+            paint_opening(
+                &painter,
+                rect,
+                view,
+                opening,
+                selection == Some(Hit::Opening(opening.id)),
+            );
         }
 
         // Draft preview (wall tool).
@@ -88,7 +101,9 @@ impl Canvas {
                 egui::FontId::proportional(11.0),
                 theme::INK,
             );
-            if let Some(anchor) = nearest_anchor(response.pointer_world, &anchors, snap.anchor_tolerance) {
+            if let Some(anchor) =
+                nearest_anchor(response.pointer_world, &anchors, snap.anchor_tolerance)
+            {
                 let screen = world_to_screen(view, rect, anchor);
                 painter.circle_filled(screen, theme::snap_radius(), theme::GREEN);
             }
@@ -102,24 +117,41 @@ impl Canvas {
 
         // Input intents.
         if response.pointer_world.is_some() {
-            if ui.ctx().input(|i| i.button_pressed(egui::PointerButton::Primary)) {
-                response.click = Some((hover.unwrap_or(rect.center()), egui::PointerButton::Primary));
+            if ui
+                .ctx()
+                .input(|i| i.button_pressed(egui::PointerButton::Primary))
+            {
+                response.click =
+                    Some((hover.unwrap_or(rect.center()), egui::PointerButton::Primary));
             }
-            if ui.ctx().input(|i| i.button_pressed(egui::PointerButton::Middle)) {
-                response.click = Some((hover.unwrap_or(rect.center()), egui::PointerButton::Middle));
+            if ui
+                .ctx()
+                .input(|i| i.button_pressed(egui::PointerButton::Middle))
+            {
+                response.click =
+                    Some((hover.unwrap_or(rect.center()), egui::PointerButton::Middle));
             }
         }
         if let Some(delta) = ui.ctx().input(|i| i.pointer_delta()) {
             if delta.length_sq() > 0.0 {
-                if ui.ctx().input(|i| i.button_down(egui::PointerButton::Primary)) {
+                if ui
+                    .ctx()
+                    .input(|i| i.button_down(egui::PointerButton::Primary))
+                {
                     response.drag_delta = Some(delta);
-                } else if ui.ctx().input(|i| i.button_down(egui::PointerButton::Middle)) {
+                } else if ui
+                    .ctx()
+                    .input(|i| i.button_down(egui::PointerButton::Middle))
+                {
                     response.pan_delta = Some(delta);
                 }
             }
         }
         if scroll_delta.y.abs() > 1e-6 && response.hovered {
-            response.zoom = Some(((-scroll_delta.y * 0.001).exp(), hover.unwrap_or(rect.center())));
+            response.zoom = Some((
+                (-scroll_delta.y * 0.001).exp(),
+                hover.unwrap_or(rect.center()),
+            ));
         }
 
         (response, rect)
@@ -137,7 +169,10 @@ pub struct View {
 
 impl Default for View {
     fn default() -> Self {
-        Self { centre: Point2::ORIGIN, px_per_mm: 0.4 }
+        Self {
+            centre: Point2::ORIGIN,
+            px_per_mm: 0.4,
+        }
     }
 }
 
@@ -210,7 +245,11 @@ fn paint_wall(
     wall: &lintel_core::join::ResolvedWall,
     selected: bool,
 ) {
-    let pts: Vec<egui::Pos2> = wall.corners.iter().map(|p| world_to_screen(view, rect, *p)).collect();
+    let pts: Vec<egui::Pos2> = wall
+        .corners
+        .iter()
+        .map(|p| world_to_screen(view, rect, *p))
+        .collect();
     let fill = if selected {
         theme::COBALT.linear_multiply(0.12)
     } else {
@@ -243,12 +282,23 @@ fn paint_opening(
     let end = world_to_screen(view, rect, opening.end);
 
     // Paper gap over the wall band.
-    let quad = [start + n_screen, end + n_screen, end - n_screen, start - n_screen];
-    painter.add(egui::Shape::convex_polygon(quad.to_vec(), theme::OPENING_GAP));
+    let quad = [
+        start + n_screen,
+        end + n_screen,
+        end - n_screen,
+        start - n_screen,
+    ];
+    painter.add(egui::Shape::convex_polygon(
+        quad.to_vec(),
+        theme::OPENING_GAP,
+    ));
 
     // Jambs.
     for jamb in [start, end] {
-        painter.line_segment([jamb + n_screen, jamb - n_screen], egui::Stroke::new(0.9, theme::WALL_STROKE));
+        painter.line_segment(
+            [jamb + n_screen, jamb - n_screen],
+            egui::Stroke::new(0.9, theme::WALL_STROKE),
+        );
     }
 
     match opening.swing {

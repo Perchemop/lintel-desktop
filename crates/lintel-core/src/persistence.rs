@@ -141,7 +141,10 @@ mod tests {
             .map(|entry| entry.file_name().to_string_lossy().to_string())
             .filter(|name| name.ends_with(".tmp"))
             .collect();
-        assert!(leftovers.is_empty(), "temporary files left behind: {leftovers:?}");
+        assert!(
+            leftovers.is_empty(),
+            "temporary files left behind: {leftovers:?}"
+        );
     }
 
     #[test]

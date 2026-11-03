@@ -10,7 +10,7 @@
 //! limitation is documented in `docs/architecture.md` and scheduled for the
 //! joint-resolution milestone.
 
-use crate::geom::{point_segment_distance, Bounds, Point2, Vec2};
+use crate::geom::{Bounds, Point2, Vec2, point_segment_distance};
 use crate::ids::{OpeningId, WallId};
 use crate::level::Level;
 use crate::opening::{Opening, OpeningKind};
@@ -95,7 +95,11 @@ pub struct PlanGeometry {
 
 impl PlanGeometry {
     pub fn of_level(level: &Level) -> Self {
-        let walls: Vec<ResolvedWall> = level.walls.iter().map(|w| resolve_wall(w, &level.walls)).collect();
+        let walls: Vec<ResolvedWall> = level
+            .walls
+            .iter()
+            .map(|w| resolve_wall(w, &level.walls))
+            .collect();
         let openings: Vec<ResolvedOpening> = level
             .openings
             .iter()
@@ -329,7 +333,9 @@ mod tests {
         let door = &geometry.openings[0];
         let swing = door.swing.expect("door swing");
         assert_eq!(swing.radius, 900.0);
-        assert!((swing.from_degrees - 0.0).abs() < 1e-9 || (swing.from_degrees - 360.0).abs() < 1e-9);
+        assert!(
+            (swing.from_degrees - 0.0).abs() < 1e-9 || (swing.from_degrees - 360.0).abs() < 1e-9
+        );
         assert!((swing.to_degrees - 90.0).abs() < 1e-9);
         assert_eq!(swing.leaf_end, Point2::new(1550.0, 900.0));
     }

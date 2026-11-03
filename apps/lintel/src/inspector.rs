@@ -20,39 +20,41 @@ pub fn inspector(
 
     egui::CollapsingHeader::new("Element")
         .default_open(true)
-        .show(ui, |ui| {
-            match selection {
-                Some(Hit::Wall(id)) => {
-                    let wall = doc
-                        .project()
-                        .active_level()
-                        .expect("level")
-                        .wall(*id)
-                        .expect("wall");
-                    ui.label(format!("Wall {} — {:.0} mm long", id.value(), wall.length()));
-                    ui.separator();
-                    command = wall_fields(ui, doc, *id, wall);
-                }
-                Some(Hit::Opening(id)) => {
-                    let opening = doc
-                        .project()
-                        .active_level()
-                        .expect("level")
-                        .opening(*id)
-                        .expect("opening");
-                    ui.label(format!(
-                        "{} {} — {:.0} × {:.0} mm",
-                        opening.kind_label(),
-                        id.value(),
-                        opening.width,
-                        opening.height
-                    ));
-                    ui.separator();
-                    command = opening_fields(ui, doc, *id, opening);
-                }
-                None => {
-                    ui.label("Select a wall or opening to edit it.");
-                }
+        .show(ui, |ui| match selection {
+            Some(Hit::Wall(id)) => {
+                let wall = doc
+                    .project()
+                    .active_level()
+                    .expect("level")
+                    .wall(*id)
+                    .expect("wall");
+                ui.label(format!(
+                    "Wall {} — {:.0} mm long",
+                    id.value(),
+                    wall.length()
+                ));
+                ui.separator();
+                command = wall_fields(ui, doc, *id, wall);
+            }
+            Some(Hit::Opening(id)) => {
+                let opening = doc
+                    .project()
+                    .active_level()
+                    .expect("level")
+                    .opening(*id)
+                    .expect("opening");
+                ui.label(format!(
+                    "{} {} — {:.0} × {:.0} mm",
+                    opening.kind_label(),
+                    id.value(),
+                    opening.width,
+                    opening.height
+                ));
+                ui.separator();
+                command = opening_fields(ui, doc, *id, opening);
+            }
+            None => {
+                ui.label("Select a wall or opening to edit it.");
             }
         });
 
@@ -128,8 +130,7 @@ fn wall_fields(
             egui::DragValue::new(&mut thickness)
                 .speed(5.0)
                 .range(
-                    lintel_core::wall::MIN_WALL_THICKNESS
-                        ..=lintel_core::wall::MAX_WALL_THICKNESS,
+                    lintel_core::wall::MIN_WALL_THICKNESS..=lintel_core::wall::MAX_WALL_THICKNESS,
                 )
                 .suffix(" mm"),
         );
@@ -142,9 +143,7 @@ fn wall_fields(
         ui.add(
             egui::DragValue::new(&mut height)
                 .speed(50.0)
-                .range(
-                    lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT,
-                )
+                .range(lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT)
                 .suffix(" mm"),
         );
         if ui.button("Apply").clicked && (height - wall.height).abs() > f64::EPSILON {

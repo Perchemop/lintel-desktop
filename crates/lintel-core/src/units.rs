@@ -39,12 +39,11 @@ impl UnitSystem {
 
 /// Metric display: metres above a metre, whole millimetres below it.
 pub fn format_metric(millimetres: f64) -> String {
-    let value =
-        if millimetres.is_finite() {
-            millimetres
-        } else {
-            0.0
-        };
+    let value = if millimetres.is_finite() {
+        millimetres
+    } else {
+        0.0
+    };
     if value.abs() >= MM_PER_METRE {
         let metres = value / MM_PER_METRE;
         let text = format!("{metres:.2}");
@@ -56,12 +55,11 @@ pub fn format_metric(millimetres: f64) -> String {
 
 /// Imperial display: feet-and-inches to the nearest sixteenth of an inch.
 pub fn format_imperial(millimetres: f64) -> String {
-    let value =
-        if millimetres.is_finite() {
-            millimetres
-        } else {
-            0.0
-        };
+    let value = if millimetres.is_finite() {
+        millimetres
+    } else {
+        0.0
+    };
     let sixteenths = (value / MM_PER_INCH * 16.0).round() as i64;
     let sign = if sixteenths < 0 { "-" } else { "" };
     let sixteenths = sixteenths.abs();

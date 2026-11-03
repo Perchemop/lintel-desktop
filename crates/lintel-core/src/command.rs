@@ -300,8 +300,13 @@ fn place_opening(
             host
         )));
     }
-    if let Some(clash) = overlap_on(level, host, None, candidate.start_offset(), candidate.end_offset())
-    {
+    if let Some(clash) = overlap_on(
+        level,
+        host,
+        None,
+        candidate.start_offset(),
+        candidate.end_offset(),
+    ) {
         return Err(CoreError::invalid(format!(
             "the new {} would overlap {}",
             kind.label().to_ascii_lowercase(),
@@ -338,9 +343,7 @@ fn move_opening(project: &mut Project, id: OpeningId, offset: f64) -> Result<App
         candidate.start_offset(),
         candidate.end_offset(),
     ) {
-        return Err(CoreError::invalid(format!(
-            "{id} would overlap {clash}"
-        )));
+        return Err(CoreError::invalid(format!("{id} would overlap {clash}")));
     }
     let level = active_level_mut(project)?;
     level
@@ -393,12 +396,12 @@ fn set_opening_size(
         candidate.start_offset(),
         candidate.end_offset(),
     ) {
-        return Err(CoreError::invalid(format!(
-            "{id} would overlap {clash}"
-        )));
+        return Err(CoreError::invalid(format!("{id} would overlap {clash}")));
     }
     let level = active_level_mut(project)?;
-    let opening = level.opening_mut(id).ok_or(CoreError::OpeningNotFound(id))?;
+    let opening = level
+        .opening_mut(id)
+        .ok_or(CoreError::OpeningNotFound(id))?;
     opening.width = width;
     opening.height = height;
     opening.sill = sill;
@@ -428,9 +431,7 @@ fn add_level(project: &mut Project, name: String, elevation: f64) -> Result<Appl
         return Err(CoreError::invalid("a level needs a finite elevation"));
     }
     let id = LevelId(project.allocate_id());
-    project
-        .levels
-        .push(Level::new(id, trimmed, elevation));
+    project.levels.push(Level::new(id, trimmed, elevation));
     project.active_level = id;
     Ok(Applied {
         level: Some(id),
@@ -519,7 +520,11 @@ mod tests {
         assert_eq!(project.opening_count(), 1);
         apply_command(&mut project, Command::DeleteWall { id: wall }).expect("delete wall");
         assert_eq!(project.wall_count(), 0);
-        assert_eq!(project.opening_count(), 0, "hosted openings go with the wall");
+        assert_eq!(
+            project.opening_count(),
+            0,
+            "hosted openings go with the wall"
+        );
     }
 
     #[test]

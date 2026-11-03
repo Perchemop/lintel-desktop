@@ -90,8 +90,7 @@ pub fn snap_point(
     let mut nearest: Option<(f64, Point2)> = None;
     for anchor in anchors {
         let distance = raw.distance(*anchor);
-        if distance <= settings.anchor_tolerance
-            && nearest.is_none_or(|(best, _)| distance < best)
+        if distance <= settings.anchor_tolerance && nearest.is_none_or(|(best, _)| distance < best)
         {
             nearest = Some((distance, *anchor));
         }

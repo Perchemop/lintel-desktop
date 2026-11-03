@@ -15,7 +15,7 @@
 use std::fmt::Write as _;
 
 use crate::error::CoreError;
-use crate::geom::{arc_points, Bounds, Point2, Vec2};
+use crate::geom::{Bounds, Point2, Vec2, arc_points};
 use crate::join::PlanGeometry;
 use crate::project::Project;
 use crate::units::UnitSystem;
@@ -165,7 +165,14 @@ pub fn render_plan(
         sheet_height,
         produced_epoch_s,
     );
-    draw_plan(&mut content, &geometry, spec, sheet_width, sheet_height, project.units);
+    draw_plan(
+        &mut content,
+        &geometry,
+        spec,
+        sheet_width,
+        sheet_height,
+        project.units,
+    );
 
     Ok(build_pdf(
         &content.ops,
@@ -180,7 +187,12 @@ pub fn render_plan(
 fn draw_frame(content: &mut Content, sheet_width: f64, sheet_height: f64) {
     content.set_line_width(0.35);
     content.set_stroke_gray(0.0);
-    content.rectangle(MARGIN, MARGIN, sheet_width - 2.0 * MARGIN, sheet_height - 2.0 * MARGIN);
+    content.rectangle(
+        MARGIN,
+        MARGIN,
+        sheet_width - 2.0 * MARGIN,
+        sheet_height - 2.0 * MARGIN,
+    );
     content.stroke();
 }
 
@@ -784,7 +796,10 @@ mod tests {
         let bytes = render(&plan());
         let text = String::from_utf8_lossy(&bytes).to_string();
         // A3 landscape is 420 x 297 mm = 1190.551 x 841.890 pt.
-        assert!(text.contains("/MediaBox [0 0 1190.551 841.890]"), "{text:.300}");
+        assert!(
+            text.contains("/MediaBox [0 0 1190.551 841.890]"),
+            "{text:.300}"
+        );
     }
 
     #[test]
