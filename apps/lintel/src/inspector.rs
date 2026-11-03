@@ -6,7 +6,8 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{Hit, OpeningId, WallId},
+    ids::{LevelId, OpeningId, WallId},
+    join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
 };
@@ -53,7 +54,8 @@ pub fn inspector(
                 None
             }
         })
-        .inner;
+        .body_returned
+        .flatten();
 
     ui.separator();
 
@@ -82,7 +84,8 @@ pub fn inspector(
             ui.checkbox(&mut snap.ortho, "Orthogonal drawing");
             None::<Command>
         })
-        .inner;
+        .body_returned
+        .flatten();
 
     ui.separator();
 
@@ -105,7 +108,8 @@ pub fn inspector(
             }
             changed.map(Command::SetActiveLevel)
         })
-        .inner;
+        .body_returned
+        .flatten();
 
     element_cmd.or(storeys_cmd).or(view_cmd)
 }
