@@ -11,12 +11,10 @@
    - macOS: `./lintel` (or `open lintel.app`)
    - Windows: `lintel.exe`
 4. **Try the workflow**:
-   - Click "New Project" to start a fresh plan
-   - Click "Add Wall" to draw a wall
-   - Click "Place Door" or "Place Window" to add an opening
-   - Use "Save" to save the project as JSON
-   - Use "Reopen" to load a saved plan
-   - Render a PDF plan export
+   - In the sidebar, pick the **Wall** tool; click twice on the canvas to draw a wall.
+   - Pick the **Door** (or **Window**) tool; click on a wall to place an opening.
+   - Use **File → Save** to save the project as JSON; **File → Open…** to load it again.
+   - Click **Export sheet…** in the sidebar and render a PDF plan.
 
 ## Build from source (requires Rust)
 
@@ -38,7 +36,7 @@ cargo build --release -p lintel
 ## Try headless tests
 
 ```bash
-cargo test --workspace --lib -p lintel-core
+cargo test --workspace
 ```
 
 All workflow tests run without a display, GPU, or window server.
@@ -50,6 +48,13 @@ All workflow tests run without a display, GPU, or window server.
 - `docs/inspiration.md` — behavioural summaries and public sources
 - `docs/product-name.md` — product name origin and handling
 - `docs/assumptions-and-questions.md` — open decisions
+- `docs/architecture.md` — core/UI layering and module map
+- `docs/capability-inventory.md` — every capability, ID, source, and status
+- `docs/inspiration.md` — behavioural summaries and public sources
+- `docs/parity.md` — capability → test / CI-run evidence
+- `docs/product-name.md` — product name origin and handling
+- `docs/current-model-map.md` — model assignment per role
+- `docs/design/brand.md` — brand meaning, tokens, colours
 - `ROADMAP.md` — staged milestones and future capabilities
 - `CHANGELOG.md` — release history
 - `ATTRIBUTION.md` — third-party licences
@@ -69,8 +74,10 @@ See `LICENSE-MIT` and `LICENSE-APACHE` for details.
 | `eframe` | MIT OR Apache-2.0 WITH LLVM-exception |
 | `egui` | MIT OR Apache-2.0 WITH LLVM-exception |
 | `serde` | MIT OR Apache-2.0 |
+| `serde_json` | MIT OR Apache-2.0 |
 | `thiserror` | MIT |
 | `tempfile` | MIT OR Apache-2.0 |
+| `rfd` | MIT OR Apache-2.0 |
 
 Font licences: OFL-1.1, Ubuntu Font License 1.0
 

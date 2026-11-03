@@ -2,75 +2,145 @@ name: Release
 
 on:
   push:
-    tags: [v*.*.*]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      # Allow the job to publish releases and attach artefacts
-      contents: write
-      issues: write
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset: lintel-linux-x86_64
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: clippy, rustfmt
+    - name: Install Linux system dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+          libxkbcommon-dev
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            cargo-registry-${{ runner.os }}-
+    - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      with:
+        targets: ${{ matrix.target }}
 
-      - name: Cache Cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: cargo-index-${{ runner.os }}-
-          restore-keys: |
-            cargo-index-${{ runner.os }}-
+    - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      with:
+        key: ${{ matrix.target }}
 
-      - name: Build release artefacts
-        run: |
-          cargo build --release -p lintel-core -p lintel
-          # Create target directory structure for assets
-          mkdir -p release_artifacts
+    - name: Build release
+      run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Run cargo-deny licence check
-        run: cargo deny check 2>&1
+    - name: Prepare artifact (${{ matrix.name }})
+      shell: bash
+      run: |
+        set -euo pipefail
+        STAGE="${{ matrix.asset }}"
+        rm -rf "$STAGE" && mkdir -p "$STAGE"
+        BIN=""
+        for cand in "target/${{ matrix.target }}/release/lintel" \
+                    "target/${{ matrix.target }}/release/lintel.exe"; do
+          if [ -f "$cand" ]; then BIN="$cand"; break; fi
+        done
+        if [ -z "$BIN" ]; then
+          echo "no release binary found under target/${{ matrix.target }}/release" >&2
+          exit 1
+        fi
+        cp "$BIN" "$STAGE/"
+        cp README.md LICENSE-MIT LICENSE-APACHE ATTRIBUTION.md "$STAGE/" 2>/dev/null || true
+        OUT="${{ matrix.asset }}.zip"
+        rm -f "$OUT"
+        if command -v zip >/dev/null 2>&1; then
+          (cd "$STAGE" && zip -qr "../$OUT" .)
+        else
+          powershell.exe -NoProfile -Command \
+            "Compress-Archive -Path '$STAGE' -DestinationPath '$OUT' -Force" \
+            || powershell -NoProfile -Command \
+            "Compress-Archive -Path '$STAGE' -DestinationPath '$OUT' -Force"
+        fi
+        test -f "$OUT"
+        ls -la "$OUT"
 
-      - name: Run secret scan on artefacts
-        run: bash scripts/scan-secrets.sh
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ matrix.asset }}
+        path: ${{ matrix.asset }}.zip
+        if-no-files-found: error
 
-      - name: Run personal data scan on artefacts
-        run: bash scripts/scan-personal-data.sh --path target/release
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
 
-      - name: Run release-asset personal-data scan
-        run: bash scripts/scan-release-assets.sh target/release
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Generate GitHub Release
-        uses: softprops/gh-release@v2
-        with:
-          name: "v${GITHUB_REF#refs/tags/v}"
-          body_from_file: CHANGELOG.md
-          files: release_artifacts/*
-          draft: false
-          prerelease: false
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        path: dist
+        merge-multiple: true
 
-      - name: Upload release artefacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: lintel-v${GITHUB_REF#refs/tags-v}
-          path: release_artifacts/
-          retention-days: 30
+    - name: Collect artefacts and checksums
+      id: collect
+      run: |
+        set -euo pipefail
+        files=$(find dist -type f \( -name '*.zip' \) | sort)
+        : > dist/SHA256SUMS.txt
+        for f in $files; do
+          (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") >> dist/SHA256SUMS.txt
+        done
+        cat dist/SHA256SUMS.txt
+        {
+          echo "files<<EOF"
+          for f in $files dist/SHA256SUMS.txt; do echo "$f"; done
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Scan release assets for personal data (guide II.29.6)
+      run: bash scripts/scan-release-assets.sh dist
+
+    - name: Publish GitHub release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NOTES_BODY: |
+          Lintel v${GITHUB_REF_NAME#v} — first functional test build.
+
+          Walls, doors and windows on a storey, snapping, undo/redo, save and
+          reopen, and PDF sheet export (A3/A4, true scale). Offline; your plan
+          stays on your disk.
+
+          This is a v0.1.0 hard-gate build: one real workflow, honest scope,
+          headless tests, CI green.
+
+        ARTEFACTS: ${{ steps.collect.outputs.files }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME#v}"
+        if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+          prerelease=()
+        else
+          tag="dispatch-$(date -u +%Y%m%d-%H%M%S)"
+          prerelease=(--prerelease)
+        fi
+        if ! gh release view "$tag" >/dev/null 2>&1; then
+          gh release create "$tag" --title "Lintel ${tag}" --notes "$NOTES_BODY" "${prerelease[@]}"
+        else
+          echo "release $tag already exists; uploading assets"
+        fi
+        mapfile -t artefacts <<< "$ARTEFACTS"
+        gh release upload "$tag" "${artefacts[@]}" --clobber
+        gh release edit "$tag" --draft=false

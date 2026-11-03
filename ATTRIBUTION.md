@@ -9,8 +9,10 @@ Third-party licences used in this project:
 | `eframe` | 0.36.2 | MIT OR Apache-2.0 WITH LLVM-exception |
 | `egui` | 0.36.2 | MIT OR Apache-2.0 WITH LLVM-exception |
 | `serde` | 1.0 | MIT OR Apache-2.0 |
+| `serde_json` | 1.0 | MIT OR Apache-2.0 |
 | `thiserror` | 2.0 | MIT |
 | `tempfile` | 3.9 | MIT OR Apache-2.0 |
+| `rfd` | 0.14 | MIT OR Apache-2.0 |
 
 Font licences bundled inside egui/epaint_default_fonts:
 - OFL-1.1 (Ubuntu Font License)

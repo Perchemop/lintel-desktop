@@ -53,6 +53,10 @@ pub enum Command {
         id: OpeningId,
         offset: f64,
     },
+    SetOpeningKind {
+        id: OpeningId,
+        kind: OpeningKind,
+    },
     SetOpeningSize {
         id: OpeningId,
         width: f64,
@@ -119,6 +123,14 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             height,
             sill,
         } => set_opening_size(project, id, width, height, sill),
+        Command::SetOpeningKind { id, kind } => {
+            let level = active_level_mut(project)?;
+            let opening = level
+                .opening_mut(id)
+                .ok_or(CoreError::OpeningNotFound(id))?;
+            opening.kind = kind;
+            Ok(Applied::default())
+        }
         Command::FlipOpening { id } => {
             let level = active_level_mut(project)?;
             let opening = level
@@ -591,5 +603,42 @@ mod tests {
         .expect("add level");
         assert_eq!(project.levels.len(), 2);
         assert_eq!(project.active_level, applied.level.expect("level id"));
+    }
+
+    #[test]
+    fn opening_kind_can_be_switched() {
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        apply_command(
+            &mut project,
+            Command::PlaceOpening {
+                kind: OpeningKind::Door,
+                host: wall,
+                offset: 2000.0,
+            },
+        )
+        .expect("place door");
+        let id = project
+            .active_level()
+            .expect("level")
+            .openings
+            .iter()
+            .next()
+            .expect("door")
+            .id;
+            &mut project,
+            Command::SetOpeningKind {
+                id,
+                kind: OpeningKind::Window,
+            },
+        )
+        .expect("switch kind");
+        let opening = project
+            .active_level()
+            .expect("level")
+            .opening(id)
+            .expect("opening");
+        assert_eq!(opening.kind, OpeningKind::Window);
+        assert!(project.validate().is_ok());
     }
 }
