@@ -173,7 +173,7 @@ impl eframe::App for LintelApp {
             egui::Window::new("Inspector")
                 .default_pos(egui::Pos2::new(4.0, 40.0))
                 .show(ui, |ui| {
-                    if let Some(cmd) = inspector(ui, &self.doc, &self.selection, &self.snap) {
+                    if let Some(cmd) = inspector(ui, &self.doc, &self.selection, &mut self.snap) {
                         self.doc.apply(cmd, now);
                     }
                 });

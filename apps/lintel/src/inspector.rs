@@ -6,8 +6,7 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{OpeningId, WallId},
-    join::{Hit, PlanGeometry},
+    ids::{Hit, OpeningId, WallId},
     opening::OpeningKind,
     snap::SnapSettings,
 };
@@ -18,9 +17,7 @@ pub fn inspector(
     selection: &Option<Hit>,
     snap: &mut SnapSettings,
 ) -> Option<Command> {
-    let mut command: Option<Command> = None;
-
-    egui::CollapsingHeader::new("Element")
+    let element_cmd = egui::CollapsingHeader::new("Element")
         .default_open(true)
         .show(ui, |ui| match selection {
             Some(Hit::Wall(id)) => {
@@ -34,7 +31,7 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                command = command.or(wall_fields(ui, doc, *id, &wall));
+                wall_fields(ui, doc, *id, &wall)
             }
             Some(Hit::Opening(id)) => {
                 let opening = {
@@ -49,15 +46,18 @@ pub fn inspector(
                     opening.height
                 ));
                 ui.separator();
-                command = command.or(opening_fields(ui, doc, *id, &opening));
+                opening_fields(ui, doc, *id, &opening)
             }
             None => {
                 ui.label("Select a wall or opening to edit it.");
+                None
             }
-        });
+        })
+        .inner;
 
     ui.separator();
-    egui::CollapsingHeader::new("View")
+
+    let view_cmd = egui::CollapsingHeader::new("View")
         .default_open(false)
         .show(ui, |ui| {
             ui.checkbox(&mut snap.grid_enabled, "Show grid");
@@ -80,13 +80,17 @@ pub fn inspector(
                 );
             });
             ui.checkbox(&mut snap.ortho, "Orthogonal drawing");
-        });
+            None::<Command>
+        })
+        .inner;
 
     ui.separator();
-    egui::CollapsingHeader::new("Storeys")
+
+    let storeys_cmd = egui::CollapsingHeader::new("Storeys")
         .default_open(false)
         .show(ui, |ui| {
             let active = doc.project().active_level;
+            let mut changed: Option<LevelId> = None;
             for level in &doc.project().levels {
                 ui.horizontal(|ui| {
                     if ui
@@ -94,22 +98,16 @@ pub fn inspector(
                         .clicked()
                         && level.id != active
                     {
-                        command = Some(Command::SetActiveLevel { id: level.id });
+                        changed = Some(level.id);
                     }
                     ui.label(format!("{} mm", level.elevation));
                 });
             }
-            ui.horizontal(|ui| {
-                if ui.button("Add storey…").clicked() {
-                    command = Some(Command::AddLevel {
-                        name: format!("Level {}", doc.project().levels.len() + 1),
-                        elevation: doc.project().levels.len() as f64 * 3000.0,
-                    });
-                }
-            });
-        });
+            changed.map(Command::SetActiveLevel)
+        })
+        .inner;
 
-    command
+    element_cmd.or(storeys_cmd).or(view_cmd)
 }
 
 fn wall_fields(
@@ -174,7 +172,7 @@ fn opening_fields(
         ui.radio_value(&mut kind, OpeningKind::Window, "Window");
     });
     if kind != opening.kind {
-        command = Some(Command::SetOpeningKind { id, kind });
+        return Some(Command::SetOpeningKind { id, kind });
     }
 
     ui.horizontal(|ui| {
