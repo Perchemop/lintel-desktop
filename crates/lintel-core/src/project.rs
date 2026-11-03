@@ -200,6 +200,7 @@ impl Project {
 mod tests {
     use super::*;
     use crate::geom::Point2;
+    use crate::ids::WallId;
     use crate::opening::{Opening, OpeningKind};
     use crate::wall::Wall;
 
