@@ -6,7 +6,8 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{Hit, OpeningId, WallId},
+    ids::{OpeningId, WallId},
+    join::{Hit, PlanGeometry},
     opening::OpeningKind,
     snap::SnapSettings,
 };
@@ -132,7 +133,7 @@ fn wall_fields(
                 .suffix(" mm"),
         );
         if ui.button("Apply").clicked() && (thickness - wall.thickness).abs() > f64::EPSILON {
-            return Some(Command::SetWallThickness { id, thickness });
+            command = Some(Command::SetWallThickness { id, thickness });
         }
     });
     ui.horizontal(|ui| {
@@ -144,7 +145,7 @@ fn wall_fields(
                 .suffix(" mm"),
         );
         if ui.button("Apply").clicked() && (height - wall.height).abs() > f64::EPSILON {
-            return Some(Command::SetWallHeight { id, height });
+            command = Some(Command::SetWallHeight { id, height });
         }
     });
     command
@@ -173,7 +174,7 @@ fn opening_fields(
         ui.radio_value(&mut kind, OpeningKind::Window, "Window");
     });
     if kind != opening.kind {
-        return Some(Command::SetOpeningKind { id, kind });
+        command = Some(Command::SetOpeningKind { id, kind });
     }
 
     ui.horizontal(|ui| {

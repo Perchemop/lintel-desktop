@@ -4,7 +4,7 @@
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
 use crate::inspector::inspector;
-use eframe::Frame;
+use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
