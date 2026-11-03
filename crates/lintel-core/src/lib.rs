@@ -27,7 +27,7 @@ pub use command::{Applied, Command};
 pub use document::Document;
 pub use error::CoreError;
 pub use geom::{Bounds, Point2};
-pub use ids::{Hit, LevelId, OpeningId, WallId};
+pub use ids::{LevelId, OpeningId, WallId};
 pub use join::{Hit, PlanGeometry};
 pub use project::Project;
 pub use units::UnitSystem;
