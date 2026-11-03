@@ -626,6 +626,7 @@ mod tests {
             .next()
             .expect("door")
             .id;
+        apply_command(
             &mut project,
             Command::SetOpeningKind {
                 id,
