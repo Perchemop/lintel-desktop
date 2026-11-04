@@ -536,7 +536,7 @@ mod tests {
             Command::PlaceOpening {
                 kind: OpeningKind::Door,
                 host: wall,
-                offset: 3800.0,
+                offset: 3550.0,
             },
         )
         .expect("door near the end");

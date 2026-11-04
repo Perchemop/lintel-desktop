@@ -283,7 +283,7 @@ mod tests {
     #[test]
     fn validation_rejects_a_stale_identity_counter() {
         let (mut project, _) = project_with_wall();
-        project.next_id = 3;
+        project.next_id = 2;
         assert!(project.validate().is_err());
     }
 
