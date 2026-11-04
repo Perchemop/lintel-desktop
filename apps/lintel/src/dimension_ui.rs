@@ -18,7 +18,7 @@ pub struct DimensionCanvas;
 
 /// Draw every dimension in `geometry` onto `painter`.
 pub fn render_dimensions(
-    painter: &mut egui::Painter,
+    painter: &egui::Painter,
     rect: egui::Rect,
     view: &View,
     geometry: &PlanGeometry,
