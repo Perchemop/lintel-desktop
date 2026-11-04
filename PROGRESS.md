@@ -13,10 +13,17 @@
 - [x] Cross-platform CI build matrix (Linux, macOS, Windows)
 - [x] Multi-platform release matrix (Linux x86_64/aarch64, macOS aarch64, Windows x86_64)
 - [x] README rewritten for non-technical users
-- [ ] CI green on `main` for the v0.2.0 slice
-- [ ] v0.2.0 tag and GitHub Release published
+- [x] CI green (PR #4 run `41907396871`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.2.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.2.0
 
-Readiness % (v0.2.0): **~90% — features complete; verification and release pending.**
+Readiness % (v0.2.0): **100% — shipped.**
+
+### Still planned (v0.2.x / v0.3.0)
+
+- [ ] Dimension kind selector + extension-line toggle + label precision
+- [ ] Rotated dimensions labels for vertical/aligned dimensions
+- [ ] Installers (AppImage, MSI, macOS .app)
+- [ ] Accessibility, empty states and keyboard-focus management
 
 ## v0.1.0 Status — RELEASED
 

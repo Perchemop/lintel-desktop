@@ -35,7 +35,9 @@
 
 ## v0.2.0 — Joint Resolution & Dimensions
 
-**Status:** In progress — features implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.2.0
+
+CI evidence: PR #4 run `41907396871` (`check` + `build-matrix` on Linux/macOS/Windows).
 
 | ID | Capability | Done |
 |---|-----------|------|

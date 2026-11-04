@@ -69,4 +69,7 @@ run, recorded in `docs/parity.md`).
 | CAP-900 | GUI polish (empty/error states, keyboard shortcuts, accessibility) | Phase 7 polish; keyboard shortcuts exist minimally |
 
 Readiness % (v0.1.0): **100% — shipped** (CI `41793150063`).
-Readiness % (v0.2.0): **~90% — features implemented; CI verification and tag pending.**
+Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
+
+Still planned for v0.2.x / v0.3.0: dimension kind selector and rotated labels,
+installers (AppImage, MSI, macOS .app), and accessibility / empty-state work.
