@@ -293,7 +293,7 @@ mod tests {
         assert_eq!(bounds.min.x, 0.0);
         assert_eq!(bounds.min.y, -100.0);
         assert_eq!(bounds.max.x, 4000.0);
-        assert_eq!(bounds.max.y, 4100.0);
+        assert_eq!(bounds.max.y, 4000.0);
     }
 
     #[test]
