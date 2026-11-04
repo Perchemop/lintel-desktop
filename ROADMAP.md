@@ -2,7 +2,7 @@
 
 ## v0.1.0 — First Functional Test Build (Hard Gate)
 
-**Status:** Target milestone
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.1.0
 
 | ID | Capability | Done |
 |---|-----------|------|
@@ -28,7 +28,6 @@
 | CAP-020 | PDF plan rendering | ✓ |
 | CAP-021 | Wall geometry with joint extensions | ✓ |
 | CAP-022 | Door/window hit testing | ✓ |
-| CAP-023 | Unit system (Metric/Imperial) | ✓ |
 | CAP-024 | Project validation | ✓ |
 | CAP-025 | Command apply returns `Applied` | ✓ |
 
@@ -36,10 +35,28 @@
 
 ## v0.2.0 — Joint Resolution & Dimensions
 
-**Planned capabilities:**
-- Joint resolution for unequal wall thicknesses
-- Dimension lines with numeric labels
-- Full undo/redo persistence across saves
+**Status:** In progress (joint resolution done, dimension lines implemented)
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-021 | Wall geometry with joint extensions (unequal thickness) | ✓ |
+| CAP-022 | Door/window hit testing | ✓ |
+| CAP-026 | Dimension lines (LinearHorizontal, LinearVertical, Aligned) | ✓ |
+| CAP-027 | Dimension placement, move, delete | ✓ |
+| CAP-028 | Dimension offset editing | ✓ |
+| CAP-029 | Dimension hit testing (priority over walls) | ✓ |
+| CAP-030 | Dimension validation (zero-length, negative offset) | ✓ |
+| CAP-031 | Dimension undo/redo | ✓ |
+| CAP-032 | Dimension persistence (save/load) | ✓ |
+| CAP-033 | Dimension hit testing priority (over walls) | ✓ |
+| CAP-023 | Unit system (Metric/Imperial) for dimensions | ✓ |
+
+**Planned for v0.2.x:**
+- Dimension kind selection (LinearHorizontal/LinearVertical/Aligned)
+- Dimension extension lines toggle
+- Dimension text formatting (precision, units)
+- Dimension snap to wall endpoints/openings
+- Dimension text rotation for vertical/aligned
 
 ## v0.3.0 — Multi-Platform & Polish
 
