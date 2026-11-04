@@ -12,6 +12,8 @@ use lintel_core::{
     join::{Hit, PlanGeometry},
 };
 
+use std::path::PathBuf;
+
 mod canvas;
 mod inspector;
 mod theme;
@@ -82,9 +84,7 @@ impl eframe::App for LintelApp {
                     }
                     ui.separator();
                     if ui.button("Open…").clicked()
-                        && let Some(path) = rfd::FileDialog::new()
-                            .add_filter("Lintel plan", &["lintel.json"])
-                            .pick_file()
+                        && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                     {
                         match Document::open(&path) {
                             Ok(loaded) => {
@@ -101,9 +101,7 @@ impl eframe::App for LintelApp {
                         eprintln!("save: {e}");
                     }
                     if ui.button("Save As…").clicked()
-                        && let Some(path) = rfd::FileDialog::new()
-                            .add_filter("Lintel plan", &["lintel.json"])
-                            .save_file()
+                        && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                         && let Err(e) = self.doc.save_as(path)
                     {
                         eprintln!("save as: {e}");
@@ -417,10 +415,10 @@ impl LintelApp {
                     ui.label("Title:");
                     ui.text_edit_singleline(&mut self.export_spec.sheet_title);
                     if ui.button("Export PDF…").clicked()
-                        && let Some(path) = rfd::FileDialog::new()
-                            .add_filter("PDF", &["pdf"])
-                            .set_file_name(format!("{}.pdf", self.export_spec.sheet_number))
-                            .save_file()
+                        && let Some(path) = Some(PathBuf::from(format!(
+                            "{}.pdf",
+                            self.export_spec.sheet_number
+                        )))
                     {
                         match lintel_core::pdf::render_plan(
                             self.doc.project(),

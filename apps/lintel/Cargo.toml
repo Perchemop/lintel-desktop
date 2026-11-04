@@ -11,11 +11,6 @@ lintel-core = { path = "../../crates/lintel-core" }
 eframe = { version = "=0.36" }
 egui = { version = "=0.36" }
 
-# Native file dialogs (blocking, fine for v0.1.0 open/save/export; falls back
-# to zenity/kdialog/osascript when no native toolkit feature is enabled)
-rfd = "0.14"
-tempfile = "3"
-
 [dev-dependencies]
 # Unit test helpers if needed
 serde = { version = "1", features = ["derive"] }
