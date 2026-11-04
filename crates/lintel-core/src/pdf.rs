@@ -891,16 +891,6 @@ mod tests {
         assert_ne!(coarse, fine, "1:50 and 1:200 should produce different PDFs");
     }
 
-    /// Largest x coordinate in the content stream, as a rough size probe.
-    fn drawing_span(bytes: &[u8]) -> f64 {
-        let text = String::from_utf8_lossy(bytes).to_string();
-        text.lines()
-            .filter(|line| line.ends_with(" m") || line.ends_with(" l"))
-            .filter_map(|line| line.split_whitespace().next())
-            .filter_map(|value| value.parse::<f64>().ok())
-            .fold(0.0_f64, f64::max)
-    }
-
     #[test]
     fn the_scale_that_fits_never_overflows_the_sheet() {
         let small = Bounds {
