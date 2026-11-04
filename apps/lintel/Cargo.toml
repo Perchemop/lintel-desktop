@@ -1,11 +1,15 @@
 [package]
 name = "lintel"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
 # Core domain - pure Rust, headless tested
 lintel-core = { path = "../../crates/lintel-core" }
+
+# Shared suite infrastructure (guide section 7): crash capture + update check.
+crash-report = { path = "../../crates/crash-report" }
+update-check = { path = "../../crates/update-check" }
 
 # GUI
 eframe = { version = "=0.36" }

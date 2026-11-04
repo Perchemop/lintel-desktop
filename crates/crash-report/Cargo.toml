@@ -1,0 +1,18 @@
+[package]
+name = "crash-report"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+description = "Shared crash/bug reporting for the Lintel suite: panic hook, scrubbed diagnostics capture, optional user-confirmed GitHub issue reporting."
+repository = "https://github.com/Perchemop/lintel-desktop"
+readme = "../../README.md"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+# MIT OR Apache-2.0. Small synchronous HTTP client: the app owns its event loop,
+# so no async runtime is needed for a one-shot, user-confirmed issue submission.
+# ureq 3's default rustls provider is ring (no CMake/NASM, no system OpenSSL).
+ureq = { version = "3", features = ["json"] }

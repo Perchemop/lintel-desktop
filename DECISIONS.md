@@ -17,3 +17,8 @@
 | D-011 | GUI toolkit | eframe/egui 0.36.2 | Suite-consistent version; native desktop | 2026-11-04 |
 | D-012 | Shared suite crates | Deferred until after v0.1.0 | addendum Phase 5: crash-report/update-check optional before the hard gate | 2026-11-04 |
 | D-013 | Release matrix | v0.1.0 builds Linux x86_64 only | macOS/Windows runners lack linkers without cross tooling; expand after v0.1.0 | 2026-11-04 |
+| D-014 | Dimensions | Command-driven dimension lines stored on the `Level`, hit-tested ahead of walls | Keeps geometry in the core, every edit undoable and persisted like walls | 2026-11-04 |
+| D-015 | Shared suite crates | Adopt `update-check` + `crash-report` as workspace crates (supersedes D-012's deferral) | guide section 7 / Phase 4; the app now ships update checks and crash capture | 2026-11-05 |
+| D-016 | HTTP client | `ureq` 3 with its default `rustls` (ring) provider | Ring builds without CMake/NASM or system OpenSSL, so all three CI platforms compile cleanly | 2026-11-05 |
+| D-017 | Update delivery | The in-app check opens the GitHub Releases download page rather than replacing the running binary | Self-replacement needs signing and platform-specific installers; a one-click link is honest and safe | 2026-11-05 |
+| D-018 | Multi-platform | CI builds a Linux/macOS/Windows matrix; Releases publish Linux x86_64 + aarch64, macOS aarch64, Windows x86_64 | guide section 6.2 / section 8 step 7 | 2026-11-05 |

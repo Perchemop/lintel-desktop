@@ -1,65 +1,62 @@
-# Lintel — Desktop Drafting Application
+# Lintel
 
-**Lintel** is a desktop application for creating, editing, and exporting architectural floor plans. Build walls, place doors and windows, add multiple levels, and render PDF plans — all from a native Rust GUI.
+**Lintel** is a free desktop app for drawing simple 2D architectural floor plans — walls, doors, windows, and levels — made for anyone who wants to sketch out a space without learning professional CAD software.
 
-## Try it (without installing Rust)
+## Why Lintel?
 
-1. **Download the CI artefact** from the GitHub Actions page (releases tab).
-2. **Extract the archive** for your platform.
-3. **Run the binary**:
-   - Linux: `./lintel`
-   - macOS: `./lintel` (or `open lintel.app`)
-   - Windows: `lintel.exe`
-4. **Try the workflow**:
-   - In the sidebar, pick the **Wall** tool; click twice on the canvas to draw a wall.
-   - Pick the **Door** (or **Window**) tool; click on a wall to place an opening.
-   - Use **File → Save** to save the project as JSON; **File → Open…** to load it again.
-   - Click **Export sheet…** in the sidebar and render a PDF plan.
+- **Free and open source.** Lintel costs nothing, and its source code is openly available under the MIT OR Apache-2.0 licence. No trial limits, no locked features.
+- **Completely offline.** Lintel never needs an internet connection. Your plans stay on your own computer.
+- **Fast and native.** A small native application that starts quickly and responds instantly — no browser, no web app.
+- **No account, no subscription.** Download it, open it, and start drawing.
 
-## Build from source (requires Rust)
+## Get started
 
-```bash
-# Clone the repository
-git clone https://github.com/perchemop/lintel-desktop.git
-cd lintel-desktop
+1. **Download.** Visit the [Releases](https://github.com/Perchemop/lintel-desktop/releases) page of the Lintel repository and download the file for your computer (Linux, macOS, or Windows). The files are built automatically by GitHub Actions, so every release matches the published source code.
+2. **Unzip.** Extract the downloaded archive to any folder.
+3. **Run.** Double-click the Lintel icon:
+   - **Linux:** open the `lintel` file (or run `./lintel` in a terminal).
+   - **macOS:** open the Lintel app (or run `lintel` in a terminal).
+   - **Windows:** double-click `lintel.exe`.
 
-# Install dependencies
-rustup default stable
+That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
-# Build
-cargo build --release -p lintel
+## What you can do today
 
-# Run
-./target/release/lintel
-```
+- **Draw walls.** Pick the Wall tool and click twice on the sheet to draw a wall, then move it where you like. Wall thickness and height are adjustable.
+- **Place doors and windows.** Pick the Door or Window tool and click on a wall. Openings sit inside the wall and can be moved, resized, or flipped.
+- **Add levels.** Organise your building floor by floor and switch between them.
+- **Add dimension lines.** Annotate the plan with measurements, in metric (mm) or imperial (feet/inches).
+- **Undo and redo.** Every change can be stepped back.
+- **Save and reopen plans.** Plans are saved as plain JSON files — a simple, readable format you can back up or copy anywhere.
+- **Export a PDF sheet.** Turn the current level into a PDF plan sheet with a border, title block, scale label, and sheet number.
 
-## Try headless tests
+*Screenshots are coming.*
 
-```bash
-cargo test --workspace
-```
+## Your data and privacy
 
-All workflow tests run without a display, GPU, or window server.
+- Everything happens on your computer. Lintel works fully offline and nothing you draw is ever uploaded anywhere.
+- Plan files are saved wherever you choose, in a plain JSON format you can open with any text editor.
+- There is no account, no sign-in, and no telemetry.
+- Lintel checks GitHub for a newer release when it starts, and only reads public release information — never your plans or any personal data. If you are offline, the check simply says so and everything keeps working. You can also check on demand from the **Help** menu.
+- If something ever goes wrong, a crash log is written locally on your computer. Nothing is sent anywhere unless you choose to open a pre-filled bug report yourself.
+
+## Project status and roadmap
+
+Lintel is young and actively developed. Version 0.2.0 adds joint resolution for unequal wall thicknesses and dimension lines. Installers, accessibility work, and more are on the way. See:
+
+- [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
+- [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history
+
+Found a bug or have an idea? Please open an issue on the [project's GitHub page](https://github.com/Perchemop/lintel-desktop).
 
 ## Documentation
 
-- `docs/project-brief.md` — product overview and capabilities
-- `docs/scope.md` — in-scope and out-of-scope capabilities for v0.1.0
-- `docs/inspiration.md` — behavioural summaries and public sources
-- `docs/product-name.md` — product name origin and handling
-- `docs/assumptions-and-questions.md` — open decisions
-- `docs/architecture.md` — core/UI layering and module map
-- `docs/capability-inventory.md` — every capability, ID, source, and status
-- `docs/inspiration.md` — behavioural summaries and public sources
-- `docs/parity.md` — capability → test / CI-run evidence
-- `docs/product-name.md` — product name origin and handling
-- `docs/current-model-map.md` — model assignment per role
-- `docs/design/brand.md` — brand meaning, tokens, colours
-- `ROADMAP.md` — staged milestones and future capabilities
-- `CHANGELOG.md` — release history
-- `ATTRIBUTION.md` — third-party licences
-- `DECISIONS.md` — recorded project decisions
-- `PROGRESS.md` — current progress tracking
+- [`docs/capability-inventory.md`](docs/capability-inventory.md) — every capability and its status
+- [`docs/architecture.md`](docs/architecture.md) — how the app is structured
+- [`ROADMAP.md`](ROADMAP.md) — milestones and future capabilities
+- [`CHANGELOG.md`](CHANGELOG.md) — release history
+- [`ATTRIBUTION.md`](ATTRIBUTION.md) — third-party licences
+- [`DECISIONS.md`](DECISIONS.md) — recorded project decisions
 
 ## Licence
 
@@ -75,12 +72,20 @@ See `LICENSE-MIT` and `LICENSE-APACHE` for details.
 | `egui` | MIT OR Apache-2.0 WITH LLVM-exception |
 | `serde` | MIT OR Apache-2.0 |
 | `serde_json` | MIT OR Apache-2.0 |
-| `thiserror` | MIT |
+| `thiserror` | MIT OR Apache-2.0 |
 | `tempfile` | MIT OR Apache-2.0 |
-| `rfd` | MIT OR Apache-2.0 |
+| `ureq` | MIT OR Apache-2.0 |
+| `uuid` | Apache-2.0 OR MIT |
 
-Font licences: OFL-1.1, Ubuntu Font License 1.0
+Font licences: OFL-1.1, Ubuntu Font License 1.0.
 
-## Contact
+## For developers
 
-For questions, issues, or contribution inquiries, please use the GitHub repository.
+Want to build Lintel from source or contribute? See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide. In short:
+
+```bash
+git clone https://github.com/Perchemop/lintel-desktop.git
+cd lintel-desktop
+cargo build --release -p lintel
+cargo test --workspace
+```

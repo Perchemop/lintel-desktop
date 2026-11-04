@@ -1,18 +1,30 @@
 # Progress
 
+## v0.2.0 Status — IN PROGRESS (features implemented; CI/tag pending)
+
+- [x] Dimension lines (aligned/horizontal/vertical) with numeric labels
+- [x] Dimension place / move / offset / delete commands and Inspector panel
+- [x] Dimension hit testing ahead of walls; save/load and undo/redo
+- [x] Joint resolution for unequal wall thicknesses
+- [x] Shared `update-check` crate (GitHub Releases API, fail-soft offline)
+- [x] Shared `crash-report` crate (panic hook, scrubbed diagnostics, issue URL)
+- [x] In-app release-notes window with per-release and cumulative token metrics
+- [x] In-app update check with a non-intrusive "update available" prompt
+- [x] Cross-platform CI build matrix (Linux, macOS, Windows)
+- [x] Multi-platform release matrix (Linux x86_64/aarch64, macOS aarch64, Windows x86_64)
+- [x] README rewritten for non-technical users
+- [ ] CI green on `main` for the v0.2.0 slice
+- [ ] v0.2.0 tag and GitHub Release published
+
+Readiness % (v0.2.0): **~90% — features complete; verification and release pending.**
+
 ## v0.1.0 Status — RELEASED
 
 - [x] Core domain implemented (`crates/lintel-core`) with headless workflow tests
 - [x] GUI shell (`apps/lintel`) with eframe/egui UI wired to core commands
-- [x] Documentation: project-brief, scope, inspiration, product-name, assumptions-and-questions, architecture, capability-inventory, parity, current-model-map, design/brand
-- [x] ROADMAP.md with v0.1.0 milestone and beyond
-- [x] CHANGELOG.md with Keep a Changelog format
-- [x] ATTRIBUTION.md with third-party licences
-- [x] DECISIONS.md with recorded project decisions
-- [x] `.github/PULL_REQUEST_TEMPLATE.md` present
-- [x] `.github/workflows/ci.yml` and `.github/workflows/release.yml` present
-- [x] `rust-toolchain.toml` (stable, clippy + rustfmt)
-- [x] README.md with "try without Rust" section
+- [x] Documentation set (project-brief, scope, inspiration, architecture, capability-inventory, parity, …)
+- [x] ROADMAP / CHANGELOG / DECISIONS / ATTRIBUTION maintained
+- [x] `.github/workflows/ci.yml` and `.github/workflows/release.yml`
 - [x] CI green on push (`check` job)
 - [x] v0.1.0 tag and release — https://github.com/Perchemop/lintel-desktop/releases/tag/0.1.0
 
@@ -20,8 +32,8 @@ Readiness % (v0.1.0): **100% — shipped.**
 
 ## Research
 
-- [x] No large-scale research notes needed for v0.1.0 (public egui/eframe/PDF sources only)
-- [ ] Context7 lookups for egui/eframe API — not required; suite pattern is known-good
+- [x] No large-scale research notes needed; public egui/eframe/PDF/ureq sources only
+- [x] `docs/research/` reserved for gated research before larger Tasks
 
 ## Process feedback
 
