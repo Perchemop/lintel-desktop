@@ -157,8 +157,10 @@ fn parse_feet_inches(text: &str) -> Option<f64> {
 
     remainder = remainder
         .trim_end_matches('"')
+        .trim_end_matches('\'')
         .trim_end_matches("in")
-        .trim();
+        .trim()
+        .trim_start_matches('-');
     if !remainder.is_empty() {
         let inches: f64 = remainder.parse().ok()?;
         total_inches += inches;

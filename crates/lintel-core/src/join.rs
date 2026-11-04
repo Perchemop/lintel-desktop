@@ -191,7 +191,10 @@ fn resolve_opening(level: &Level, opening: &Opening) -> Option<ResolvedOpening> 
             (start, end)
         };
         let leaf = (closed_jamb - hinge).normalized();
-        let open = leaf.perpendicular();
+        let mut open = leaf.perpendicular();
+        if opening.flipped {
+            open = open.scaled(-1.0);
+        }
         let radius = opening.width;
         Some(Swing {
             hinge,

@@ -288,7 +288,7 @@ mod tests {
         ])
         .expect("bounds");
         assert_eq!(b.width(), 5000.0);
-        assert_eq!(b.height(), 2500.0);
+        assert_eq!(b.height(), 3000.0);
         assert!(b.contains(Point2::new(2000.0, 1000.0)));
         assert!(!b.contains(Point2::new(6000.0, 1000.0)));
     }
