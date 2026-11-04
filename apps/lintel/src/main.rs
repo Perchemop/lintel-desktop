@@ -175,8 +175,9 @@ impl eframe::App for LintelApp {
                 &self.snap,
                 &self.draft,
             );
+            let dimension_painter = ui.painter_at(rect);
             crate::dimension_ui::render_dimensions(
-                ui.painter_at(rect),
+                &dimension_painter,
                 rect,
                 &self.view,
                 &geometry,

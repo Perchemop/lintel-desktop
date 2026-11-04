@@ -3,10 +3,9 @@
 //! Pure presentation: world millimetres → screen pixels. The dimension UI
 //! never mutates the model itself.
 
-use crate::canvas::{View, screen_to_world, world_to_screen};
+use crate::canvas::{View, world_to_screen};
 use crate::theme;
 use eframe::egui;
-use lintel_core::geom::Point2;
 use lintel_core::join::{Hit, PlanGeometry};
 
 /// Alias kept for callers that want a dedicated viewport type; reuses the
