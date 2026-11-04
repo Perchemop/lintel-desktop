@@ -1,6 +1,6 @@
 # Progress
 
-## v0.1.0 Status — awaiting CI evidence
+## v0.1.0 Status — RELEASED
 
 - [x] Core domain implemented (`crates/lintel-core`) with headless workflow tests
 - [x] GUI shell (`apps/lintel`) with eframe/egui UI wired to core commands
@@ -13,10 +13,10 @@
 - [x] `.github/workflows/ci.yml` and `.github/workflows/release.yml` present
 - [x] `rust-toolchain.toml` (stable, clippy + rustfmt)
 - [x] README.md with "try without Rust" section
-- [ ] CI green on push (`check` job) — next step: `ci.sh run`
-- [ ] v0.1.0 tag and release (pending — hard gate, all Section 6.1 criteria)
+- [x] CI green on push (`check` job)
+- [x] v0.1.0 tag and release — https://github.com/Perchemop/lintel-desktop/releases/tag/0.1.0
 
-Readiness % (v0.1.0): implementation complete; **verified % moves only after CI is green**.
+Readiness % (v0.1.0): **100% — shipped.**
 
 ## Research
 

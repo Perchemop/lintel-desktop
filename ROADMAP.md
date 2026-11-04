@@ -2,7 +2,7 @@
 
 ## v0.1.0 — First Functional Test Build (Hard Gate)
 
-**Status:** Target milestone
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.1.0
 
 | ID | Capability | Done |
 |---|-----------|------|
@@ -32,7 +32,7 @@
 | CAP-024 | Project validation | ✓ |
 | CAP-025 | Command apply returns `Applied` | ✓ |
 
-**Release notes (first functional test build):** "First functional test build (v0.1.0); limited scope: walls, doors, windows, levels, save/load, PDF export. Joint resolution for unequal thicknesses is a known limitation scheduled for 0.2.x."
+**Release notes:** First functional test build (v0.1.0); limited scope: walls, doors, windows, levels, save/load, PDF export. Joint resolution for unequal thicknesses is a known limitation scheduled for 0.2.x.
 
 ## v0.2.0 — Joint Resolution & Dimensions
 
