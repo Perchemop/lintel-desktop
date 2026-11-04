@@ -6,7 +6,7 @@
 use crate::canvas::{View, screen_to_world, world_to_screen};
 use crate::theme;
 use eframe::egui;
-use lintel_core::dimension::Dimension;
+use lintel_core::geom::Point2;
 use lintel_core::join::{Hit, PlanGeometry};
 
 /// Alias kept for callers that want a dedicated viewport type; reuses the
@@ -16,26 +16,16 @@ pub type DimensionView = View;
 /// Marker struct for the dimension canvas renderer.
 pub struct DimensionCanvas;
 
-/// Mirror of `canvas::screen_to_world`.
-pub fn screen_to_world(view: &View, rect: egui::Rect, pos: egui::Pos2) -> Point2 {
-    crate::canvas::screen_to_world(view, rect, pos)
-}
-
-/// Mirror of `canvas::world_to_screen`.
-pub fn world_to_screen(view: &View, rect: egui::Rect, p: Point2) -> egui::Pos2 {
-    crate::canvas::world_to_screen(view, rect, p)
-}
-
 /// Draw every dimension in `geometry` onto `painter`.
 pub fn render_dimensions(
-    painter: &egui::Painter,
+    painter: &mut egui::Painter,
     rect: egui::Rect,
     view: &View,
     geometry: &PlanGeometry,
     selection: Option<Hit>,
 ) {
     for dim in geometry.dimensions() {
-        let selected = matches!(selection, Some(Hit::Dimension(id)) if *id == dim.id);
+        let selected = matches!(selection, Some(Hit::Dimension(id)) if id == dim.id);
         let Some((a, b)) = dim.dimension_line() else {
             continue;
         };
@@ -65,7 +55,7 @@ pub fn render_dimensions(
         painter.line_segment([sb - perp, sb + perp], line_stroke);
 
         // Text label centred above/below the line.
-        let mid = (sa + sb) * 0.5;
+        let mid = (sa.to_vec2() + sb.to_vec2()) * 0.5;
         let label_offset = if perp.y <= 0.0 {
             egui::Vec2::new(0.0, -12.0)
         } else {
@@ -73,7 +63,7 @@ pub fn render_dimensions(
         };
         let label = format!("{:.0} mm", dim.length());
         painter.text(
-            mid + label_offset,
+            egui::Pos2::new(mid.x, mid.y) + label_offset,
             egui::Align2::CENTER_CENTER,
             label,
             egui::FontId::proportional(11.0),
