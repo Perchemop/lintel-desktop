@@ -305,6 +305,7 @@ mod tests {
         let geometry = PlanGeometry {
             walls: resolved,
             openings: Vec::new(),
+            dimensions: Vec::new(),
         };
         let bounds = geometry.bounds().expect("bounds");
         // The corner is filled: the horizontal wall reaches x = 4100 and the
