@@ -760,7 +760,7 @@ mod tests {
         );
 
         let mut lines = bytes[offset..].split(|b| *b == b'\n');
-        assert_eq!(lines.next(), Some(b"xref"));
+        assert_eq!(lines.next(), Some(b"xref".as_slice()));
         let header = lines.next().expect("header");
         let header_str = std::str::from_utf8(header).expect("header is ASCII");
         let count: usize = header_str
