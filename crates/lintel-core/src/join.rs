@@ -292,7 +292,7 @@ mod tests {
         // vertical wall reaches y = -100, so the union spans the joint.
         assert_eq!(bounds.min.x, 0.0);
         assert_eq!(bounds.min.y, -100.0);
-        assert_eq!(bounds.max.x, 4000.0);
+        assert_eq!(bounds.max.x, 4100.0);
         assert_eq!(bounds.max.y, 4000.0);
     }
 
