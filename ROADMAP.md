@@ -35,13 +35,13 @@
 
 ## v0.2.0 — Joint Resolution & Dimensions
 
-**Status:** In progress (joint resolution done, dimension lines implemented)
+**Status:** In progress — features implemented; CI verification and tag pending.
 
 | ID | Capability | Done |
 |---|-----------|------|
 | CAP-021 | Wall geometry with joint extensions (unequal thickness) | ✓ |
 | CAP-022 | Door/window hit testing | ✓ |
-| CAP-026 | Dimension lines (LinearHorizontal, LinearVertical, Aligned) | ✓ |
+| CAP-026 | Dimension lines (aligned, horizontal, vertical) | ✓ |
 | CAP-027 | Dimension placement, move, delete | ✓ |
 | CAP-028 | Dimension offset editing | ✓ |
 | CAP-029 | Dimension hit testing (priority over walls) | ✓ |
@@ -50,23 +50,29 @@
 | CAP-032 | Dimension persistence (save/load) | ✓ |
 | CAP-033 | Dimension hit testing priority (over walls) | ✓ |
 | CAP-023 | Unit system (Metric/Imperial) for dimensions | ✓ |
+| CAP-040 | Crash reporting (panic hook, scrubbed diagnostics) | ✓ |
+| CAP-041 | Update check (GitHub Releases, fail-soft offline) | ✓ |
+| CAP-042 | In-app release notes with token metrics | ✓ |
+| CAP-043 | Cross-platform CI build matrix | ✓ |
+| CAP-044 | Multi-platform release artefacts | ✓ |
+| CAP-045 | User-facing README for non-technical users | ✓ |
 
 **Planned for v0.2.x:**
-- Dimension kind selection (LinearHorizontal/LinearVertical/Aligned)
-- Dimension extension lines toggle
-- Dimension text formatting (precision, units)
-- Dimension snap to wall endpoints/openings
-- Dimension text rotation for vertical/aligned
+- Dimension kind selection (aligned / horizontal / vertical) in the UI
+- Dimension extension-line toggle
+- Dimension label precision and unit formatting
+- Dimension snap to wall endpoints and openings
+- Rotated labels for vertical/aligned dimensions
 
-## v0.3.0 — Multi-Platform & Polish
+## v0.3.0 — Installers & Accessibility
 
 **Planned capabilities:**
-- Windows installer
-- macOS .app bundle
-- Linux AppImage
-- Full accessibility (keyboard navigation, screen reader support)
+- Windows installer (MSI or setup .exe)
+- macOS .app bundle (and notarisation notes)
+- Linux AppImage / Flatpak
+- Full accessibility (keyboard navigation, screen-reader labels)
 - Empty states, error handling, keyboard focus management
 
 ---
 
-**Unscheduled / future:** Web/WASM port, plugin architecture, collaborative editing, custom paper sizes, advanced rendering (dimensions, hatching).
+**Unscheduled / future:** Web/WASM port, plugin architecture, collaborative editing, custom paper sizes, better on-canvas hints.

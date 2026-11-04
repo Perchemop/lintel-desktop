@@ -6,7 +6,9 @@
 resolver = "2"
 members = [
     "apps/lintel",
+    "crates/crash-report",
     "crates/lintel-core",
+    "crates/update-check",
 ]
 
 # One shared release profile keeps artefacts identical across the suite.

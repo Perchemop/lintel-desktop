@@ -5,6 +5,8 @@ Lintel is split into a **thick, headless core** and a **thin UI shell** (addendu
 ```
 apps/lintel/          UI shell (egui/eframe) — paint + input only
 crates/lintel-core/   domain, commands, persistence, PDF export — fully tested
+crates/update-check/  shared: GitHub Releases check, fail-soft offline   (guide §7)
+crates/crash-report/  shared: panic hook, scrubbed diagnostics           (guide §7)
 ```
 
 ## Layering rule
@@ -27,7 +29,8 @@ crates/lintel-core/   domain, commands, persistence, PDF export — fully tested
 | `geom` | `Point2`, `Vec2`, `Bounds`, segment projections, arc polylines |
 | `wall` | Wall centreline + thickness + height; band footprint; validity bounds |
 | `opening` | Door/window hosted on a wall: offset, size, sill, flip; fit-on checks |
-| `level` | One storey: walls, openings, extent |
+| `dimension` | Linear dimension line between two points: kind, offset, label length |
+| `level` | One storey: walls, openings, dimensions, extent |
 | `project` | Versioned project metadata + levels; structural validation on load/save |
 | `command` | All edits (`AddWall`, `PlaceOpening`, …); returns `Applied` |
 | `document` | Project + undo/redo + dirty tracking + atomic save/load |
@@ -36,8 +39,17 @@ crates/lintel-core/   domain, commands, persistence, PDF export — fully tested
 | `persistence` | Pretty JSON (`<name>.lintel.json`), atomic write via temp + rename |
 | `pdf` | Hand-written PDF 1.7 sheet: border, title block, walls, openings, dimensions |
 
-## Known v0.1.0 limitation (documented in `join.rs`)
+## Suite infrastructure (guide §7)
 
-Joints fill by extending each wall end by half the **joining** wall's thickness.
-Exact for equal thicknesses; unequal walls can show a small step at the corner.
-Scheduled for 0.2.0 (CAP-100 in `docs/scope.md`).
+- `update-check` is UI-free and blocking; the shell runs a check on a worker
+  thread and picks the result up through a channel, so the UI never stalls. Any
+  network, HTTP or parse failure becomes a quiet "could not check" state.
+- `crash-report` installs a panic hook that writes a scrubbed JSON log and
+  restores the previous hook. Nothing is ever sent automatically; the only
+  submission path is a pre-filled GitHub "New Issue" URL the user opens.
+
+## Joint resolution (v0.2.0)
+
+Joints fill by extending each wall end by half the **joining** wall's thickness,
+so outside corners close cleanly even when the two walls differ in thickness.
+Covered by the unequal-thickness tests in `join.rs`.

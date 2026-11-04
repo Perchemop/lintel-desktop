@@ -13,10 +13,13 @@ use lintel_core::{
 };
 
 use std::path::PathBuf;
+use std::sync::mpsc::{self, Receiver};
 
+mod about;
 mod canvas;
 mod dimension_ui;
 mod inspector;
+mod release_notes;
 mod theme;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
@@ -51,15 +54,22 @@ struct LintelApp {
     snap: lintel_core::snap::SnapSettings,
     draft: Draft,
     showing_about: bool,
+    showing_notes: bool,
     export_open: bool,
     export_spec: lintel_core::pdf::SheetSpec,
+    /// Receives the result of an in-flight update check, if any.
+    update_rx: Option<Receiver<update_check::UpdateStatus>>,
+    /// The last completed update check, if any.
+    update_status: Option<update_check::UpdateStatus>,
+    /// Whether the "update available" prompt is showing.
+    update_open: bool,
 }
 
 impl LintelApp {
     fn new() -> Self {
         let now = now_epoch_s();
         let doc = Document::new("Untitled plan", now);
-        Self {
+        let mut app = Self {
             doc,
             view: View::default(),
             tool: Tool::Wall,
@@ -67,8 +77,46 @@ impl LintelApp {
             snap: lintel_core::snap::SnapSettings::default(),
             draft: Draft::default(),
             showing_about: false,
+            showing_notes: false,
             export_open: false,
             export_spec: lintel_core::pdf::SheetSpec::default(),
+            update_rx: None,
+            update_status: None,
+            update_open: false,
+        };
+        // One quiet check at startup; it fails soft when offline and never
+        // blocks the UI thread.
+        app.start_update_check();
+        app
+    }
+
+    /// Kick off an update check on a worker thread. A no-op while one is
+    /// already in flight.
+    fn start_update_check(&mut self) {
+        if self.update_rx.is_some() {
+            return;
+        }
+        let (tx, rx) = mpsc::channel();
+        self.update_rx = Some(rx);
+        std::thread::spawn(move || {
+            let checker = update_check::UpdateChecker::new();
+            let status = checker.check_uncached(about::REPO, env!("CARGO_PKG_VERSION"));
+            let _ = tx.send(status);
+        });
+    }
+
+    /// Collect a finished update check without blocking the UI thread.
+    fn poll_update(&mut self) {
+        let result = self.update_rx.as_ref().map(|rx| rx.try_recv());
+        match result {
+            None => {}
+            Some(Ok(status)) => {
+                self.update_open = matches!(status, update_check::UpdateStatus::UpdateAvailable(_));
+                self.update_status = Some(status);
+                self.update_rx = None;
+            }
+            Some(Err(mpsc::TryRecvError::Empty)) => {}
+            Some(Err(mpsc::TryRecvError::Disconnected)) => self.update_rx = None,
         }
     }
 }
@@ -76,6 +124,12 @@ impl LintelApp {
 impl eframe::App for LintelApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let now = now_epoch_s();
+        self.poll_update();
+        if self.update_rx.is_some() {
+            // Poll for the worker's result without spinning the CPU.
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_millis(500));
+        }
 
         egui::CentralPanel::default().show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
@@ -143,6 +197,14 @@ impl eframe::App for LintelApp {
                     if ui.button("About Lintel…").clicked() {
                         self.showing_about = true;
                     }
+                    if ui.button("Release notes…").clicked() {
+                        self.showing_notes = true;
+                    }
+                    ui.separator();
+                    if ui.button("Check for updates…").clicked() {
+                        self.start_update_check();
+                        self.showing_about = true;
+                    }
                 });
             });
             ui.separator();
@@ -163,6 +225,18 @@ impl eframe::App for LintelApp {
                     });
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let version = ui.link(
+                        egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
+                            .small(),
+                    );
+                    if version
+                        .on_hover_text("Release notes and update status")
+                        .clicked()
+                    {
+                        self.showing_notes = true;
+                    }
+                });
             });
 
             let geometry =
@@ -434,6 +508,8 @@ impl LintelApp {
 
     fn dialogs(&mut self, ui: &mut egui::Ui, now: i64) {
         if self.showing_about {
+            let status = about::status_line(self.update_status.as_ref());
+            let mut do_check = false;
             egui::Window::new("About Lintel")
                 .open(&mut self.showing_about)
                 .collapsible(false)
@@ -442,9 +518,26 @@ impl LintelApp {
                     ui.label(format!("v{}", env!("CARGO_PKG_VERSION")));
                     ui.label("MIT OR Apache-2.0. Your plan stays on your disk.");
                     ui.separator();
-                    let _ = ui.link("github.com/Perchemop/lintel-desktop");
+                    ui.label(status);
+                    ui.hyperlink_to(
+                        "github.com/Perchemop/lintel-desktop",
+                        format!("https://github.com/{}", about::REPO),
+                    );
+                    ui.horizontal(|ui| {
+                        if ui.button("Release notes…").clicked() {
+                            self.showing_notes = true;
+                        }
+                        if ui.button("Check for updates").clicked() {
+                            do_check = true;
+                        }
+                    });
                 });
+            if do_check {
+                self.start_update_check();
+            }
         }
+        about::release_notes_window(ui, &mut self.showing_notes);
+        about::update_window(ui, &mut self.update_open, self.update_status.as_ref());
         if self.export_open {
             egui::Window::new("Export sheet")
                 .open(&mut self.export_open)
@@ -517,6 +610,8 @@ fn now_epoch_s() -> i64 {
 }
 
 fn main() {
+    // Capture a crash report before anything else can panic (guide section 7).
+    crash_report::install_panic_hook("lintel", env!("CARGO_PKG_VERSION"), &about::crash_log_dir());
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Lintel — architectural drafting")

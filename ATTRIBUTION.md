@@ -10,9 +10,13 @@ Third-party licences used in this project:
 | `egui` | 0.36.2 | MIT OR Apache-2.0 WITH LLVM-exception |
 | `serde` | 1.0 | MIT OR Apache-2.0 |
 | `serde_json` | 1.0 | MIT OR Apache-2.0 |
-| `thiserror` | 2.0 | MIT |
-| `tempfile` | 3.9 | MIT OR Apache-2.0 |
-| `rfd` | 0.14 | MIT OR Apache-2.0 |
+| `thiserror` | 2.0 | MIT OR Apache-2.0 |
+| `tempfile` | 3.x | MIT OR Apache-2.0 |
+| `ureq` | 3.x | MIT OR Apache-2.0 |
+| `uuid` | 1.x | Apache-2.0 OR MIT |
+
+The first-party shared crates `update-check` and `crash-report` are part of this
+repository and carry the same dual licence as the rest of Lintel.
 
 Font licences bundled inside egui/epaint_default_fonts:
 - OFL-1.1 (Ubuntu Font License)
