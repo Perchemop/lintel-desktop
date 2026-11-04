@@ -1,12 +1,13 @@
-//! A storey: a named elevation holding its own walls and openings.
+//! A storey: a named elevation holding its own walls, openings and dimensions.
 //!
 //! v0.1.0 edits one storey at a time, but the file format already holds a
 //! list, so multi-storey work is a UI milestone rather than a format change.
 
 use serde::{Deserialize, Serialize};
 
+use crate::dimension::Dimension;
 use crate::geom::Bounds;
-use crate::ids::{LevelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LevelId, OpeningId, WallId};
 use crate::opening::Opening;
 use crate::wall::Wall;
 
@@ -18,6 +19,10 @@ pub struct Level {
     pub elevation: f64,
     pub walls: Vec<Wall>,
     pub openings: Vec<Opening>,
+    /// Annotation drawn over the plan. `serde(default)` keeps files written
+    /// before dimensions existed readable.
+    #[serde(default)]
+    pub dimensions: Vec<Dimension>,
 }
 
 impl Level {
@@ -28,6 +33,7 @@ impl Level {
             elevation,
             walls: Vec::new(),
             openings: Vec::new(),
+            dimensions: Vec::new(),
         }
     }
 
@@ -47,6 +53,14 @@ impl Level {
         self.openings.iter_mut().find(|o| o.id == id)
     }
 
+    pub fn dimension(&self, id: DimensionId) -> Option<&Dimension> {
+        self.dimensions.iter().find(|d| d.id == id)
+    }
+
+    pub fn dimension_mut(&mut self, id: DimensionId) -> Option<&mut Dimension> {
+        self.dimensions.iter_mut().find(|d| d.id == id)
+    }
+
     pub fn openings_on(&self, wall: WallId) -> impl Iterator<Item = &Opening> {
         self.openings.iter().filter(move |o| o.host == wall)
     }
@@ -57,6 +71,10 @@ impl Level {
 
     pub fn opening_count(&self) -> usize {
         self.openings.len()
+    }
+
+    pub fn dimension_count(&self) -> usize {
+        self.dimensions.len()
     }
 
     /// Bounds of every wall band on this level, for zoom-to-fit and the sheet
@@ -80,6 +98,7 @@ impl Level {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dimension::{Dimension, DimensionKind};
     use crate::geom::Point2;
 
     #[test]
@@ -87,6 +106,7 @@ mod tests {
         let level = Level::new(LevelId(1), "Level 0", 0.0);
         assert!(level.extent().is_none());
         assert_eq!(level.wall_count(), 0);
+        assert_eq!(level.dimension_count(), 0);
     }
 
     #[test]
@@ -124,5 +144,42 @@ mod tests {
         let on_first: Vec<_> = level.openings_on(WallId(1)).collect();
         assert_eq!(on_first.len(), 1);
         assert_eq!(on_first[0].id, OpeningId(1));
+    }
+
+    #[test]
+    fn dimensions_are_found_by_id() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.dimensions.push(Dimension::new(
+            DimensionId(7),
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        ));
+        assert_eq!(level.dimension_count(), 1);
+        let dimension = level.dimension(DimensionId(7)).expect("dimension");
+        assert_eq!(dimension.kind, DimensionKind::LinearHorizontal);
+        level
+            .dimension_mut(DimensionId(7))
+            .expect("dimension")
+            .offset = 700.0;
+        assert_eq!(
+            level.dimension(DimensionId(7)).expect("dimension").offset,
+            700.0
+        );
+        assert!(level.dimension(DimensionId(8)).is_none());
+    }
+
+    #[test]
+    fn levels_saved_before_dimensions_still_load() {
+        let json = r#"{
+            "id": 1,
+            "name": "Level 0",
+            "elevation": 0.0,
+            "walls": [],
+            "openings": []
+        }"#;
+        let level: Level = serde_json::from_str(json).expect("old level");
+        assert!(level.dimensions.is_empty());
     }
 }

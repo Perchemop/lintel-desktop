@@ -6,9 +6,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::dimension::{Dimension, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::Point2;
-use crate::ids::{LevelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LevelId, OpeningId, WallId};
 use crate::level::Level;
 use crate::opening::{
     MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT, MIN_OPENING_WIDTH, Opening,
@@ -69,6 +70,24 @@ pub enum Command {
     DeleteOpening {
         id: OpeningId,
     },
+    PlaceDimension {
+        kind: DimensionKind,
+        start: Point2,
+        end: Point2,
+        offset: f64,
+    },
+    MoveDimension {
+        id: DimensionId,
+        start: Point2,
+        end: Point2,
+    },
+    SetDimensionOffset {
+        id: DimensionId,
+        offset: f64,
+    },
+    DeleteDimension {
+        id: DimensionId,
+    },
     AddLevel {
         name: String,
         elevation: f64,
@@ -92,6 +111,7 @@ pub enum Command {
 pub struct Applied {
     pub wall: Option<WallId>,
     pub opening: Option<OpeningId>,
+    pub dimension: Option<DimensionId>,
     pub level: Option<LevelId>,
 }
 
@@ -145,6 +165,31 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             level.openings.retain(|o| o.id != id);
             if level.openings.len() == before {
                 return Err(CoreError::OpeningNotFound(id));
+            }
+            Ok(Applied::default())
+        }
+        Command::PlaceDimension {
+            kind,
+            start,
+            end,
+            offset,
+        } => place_dimension(project, kind, start, end, offset),
+        Command::MoveDimension { id, start, end } => move_dimension(project, id, start, end),
+        Command::SetDimensionOffset { id, offset } => {
+            validate_dimension_offset(offset)?;
+            let level = active_level_mut(project)?;
+            let dimension = level
+                .dimension_mut(id)
+                .ok_or(CoreError::DimensionNotFound(id))?;
+            dimension.offset = offset;
+            Ok(Applied::default())
+        }
+        Command::DeleteDimension { id } => {
+            let level = active_level_mut(project)?;
+            let before = level.dimensions.len();
+            level.dimensions.retain(|d| d.id != id);
+            if level.dimensions.len() == before {
+                return Err(CoreError::DimensionNotFound(id));
             }
             Ok(Applied::default())
         }
@@ -279,6 +324,71 @@ fn delete_wall(project: &mut Project, id: WallId) -> Result<Applied, CoreError> 
     }
     // A hosted opening cannot outlive its wall.
     level.openings.retain(|o| o.host != id);
+    Ok(Applied::default())
+}
+
+fn validate_dimension_offset(offset: f64) -> Result<(), CoreError> {
+    if offset.is_finite() && offset > 0.0 {
+        Ok(())
+    } else {
+        Err(CoreError::invalid(
+            "a dimension offset must be a distance greater than zero",
+        ))
+    }
+}
+
+fn validate_dimension(dimension: &Dimension) -> Result<(), CoreError> {
+    if !dimension.start.is_finite() || !dimension.end.is_finite() {
+        return Err(CoreError::invalid("a dimension needs two finite points"));
+    }
+    let length = dimension.length();
+    if !length.is_finite() || length <= 0.0 {
+        return Err(CoreError::invalid(
+            "a dimension needs two different measured points",
+        ));
+    }
+    validate_dimension_offset(dimension.offset)
+}
+
+fn place_dimension(
+    project: &mut Project,
+    kind: DimensionKind,
+    start: Point2,
+    end: Point2,
+    offset: f64,
+) -> Result<Applied, CoreError> {
+    // Validate before allocating so a rejected command does not burn an id.
+    let candidate = Dimension::new(DimensionId(0), kind, start, end, offset);
+    validate_dimension(&candidate)?;
+    let id = DimensionId(project.allocate_id());
+    let dimension = Dimension::new(id, kind, start, end, offset);
+    active_level_mut(project)?.dimensions.push(dimension);
+    Ok(Applied {
+        dimension: Some(id),
+        ..Applied::default()
+    })
+}
+
+fn move_dimension(
+    project: &mut Project,
+    id: DimensionId,
+    start: Point2,
+    end: Point2,
+) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    let existing = level
+        .dimension(id)
+        .ok_or(CoreError::DimensionNotFound(id))?;
+    let mut candidate = existing.clone();
+    candidate.start = start;
+    candidate.end = end;
+    validate_dimension(&candidate)?;
+    let level = active_level_mut(project)?;
+    let dimension = level
+        .dimension_mut(id)
+        .ok_or(CoreError::DimensionNotFound(id))?;
+    dimension.start = start;
+    dimension.end = end;
     Ok(Applied::default())
 }
 
@@ -645,5 +755,161 @@ mod tests {
             .expect("opening");
         assert_eq!(opening.kind, OpeningKind::Window);
         assert!(project.validate().is_ok());
+    }
+
+    fn place_horizontal(project: &mut Project) -> DimensionId {
+        apply_command(
+            project,
+            Command::PlaceDimension {
+                kind: DimensionKind::LinearHorizontal,
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(3000.0, 0.0),
+                offset: 500.0,
+            },
+        )
+        .expect("place dimension")
+        .dimension
+        .expect("dimension id")
+    }
+
+    #[test]
+    fn placing_a_dimension_returns_its_id() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        assert_eq!(project.dimension_count(), 1);
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .dimension(id)
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn zero_length_dimensions_are_rejected() {
+        let mut project = empty_project();
+        let before = project.next_id;
+        let error = apply_command(
+            &mut project,
+            Command::PlaceDimension {
+                kind: DimensionKind::Aligned,
+                start: Point2::new(500.0, 500.0),
+                end: Point2::new(500.0, 500.0),
+                offset: 500.0,
+            },
+        )
+        .expect_err("zero length");
+        assert!(error.to_string().contains("different measured points"));
+        assert_eq!(project.dimension_count(), 0);
+        assert_eq!(project.next_id, before, "a rejected command burns no id");
+    }
+
+    #[test]
+    fn dimension_offsets_must_be_positive() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::PlaceDimension {
+                kind: DimensionKind::LinearHorizontal,
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(3000.0, 0.0),
+                offset: 0.0,
+            },
+        )
+        .expect_err("zero offset");
+        assert!(error.to_string().contains("greater than zero"));
+        assert_eq!(project.dimension_count(), 0);
+    }
+
+    #[test]
+    fn a_dimension_can_be_moved_and_deleted() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::MoveDimension {
+                id,
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+            },
+        )
+        .expect("move dimension");
+        let dimension = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!((dimension.length() - 4000.0).abs() < 1e-9);
+
+        apply_command(&mut project, Command::DeleteDimension { id }).expect("delete dimension");
+        assert_eq!(project.dimension_count(), 0);
+        let error =
+            apply_command(&mut project, Command::DeleteDimension { id }).expect_err("already gone");
+        assert!(matches!(error, CoreError::DimensionNotFound(_)));
+    }
+
+    #[test]
+    fn a_dimension_offset_can_be_changed() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::SetDimensionOffset { id, offset: 800.0 },
+        )
+        .expect("set offset");
+        let offset = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .offset;
+        assert_eq!(offset, 800.0);
+
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionOffset { id, offset: 0.0 },
+        )
+        .expect_err("zero offset");
+        assert!(error.to_string().contains("greater than zero"));
+        let offset = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .offset;
+        assert_eq!(offset, 800.0, "a rejected change leaves the offset alone");
+    }
+
+    #[test]
+    fn a_placed_dimension_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let id = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearVertical,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(0.0, 2000.0),
+                    offset: 500.0,
+                },
+                1_760_000_100,
+            )
+            .expect("place dimension")
+            .dimension
+            .expect("dimension id");
+        assert!(document.undo(1_760_000_200));
+        assert_eq!(document.project().dimension_count(), 0);
+        assert!(document.redo(1_760_000_300));
+        assert_eq!(document.project().dimension_count(), 1);
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .dimension(id)
+                .is_some()
+        );
     }
 }

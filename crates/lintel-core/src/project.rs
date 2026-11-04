@@ -93,6 +93,10 @@ impl Project {
         self.levels.iter().map(Level::opening_count).sum()
     }
 
+    pub fn dimension_count(&self) -> usize {
+        self.levels.iter().map(Level::dimension_count).sum()
+    }
+
     /// Structural integrity check, used on load and before a save.
     pub fn validate(&self) -> Result<(), CoreError> {
         if self.format_version == 0 || self.format_version > FORMAT_VERSION {
@@ -118,6 +122,7 @@ impl Project {
         let mut seen_levels = std::collections::HashSet::new();
         let mut seen_walls = std::collections::HashSet::new();
         let mut seen_openings = std::collections::HashSet::new();
+        let mut seen_dimensions = std::collections::HashSet::new();
         let mut highest_id = 0_u64;
 
         for level in &self.levels {
@@ -167,6 +172,22 @@ impl Project {
                 }
             }
 
+            for dimension in &level.dimensions {
+                if !seen_dimensions.insert(dimension.id) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{} appears twice",
+                        dimension.id
+                    )));
+                }
+                highest_id = highest_id.max(dimension.id.value());
+                if !dimension.is_valid() {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{} has a zero length or a non-positive offset",
+                        dimension.id
+                    )));
+                }
+            }
+
             // Openings on one wall may sit side by side with zero gap, but may
             // never overlap each other.
             for wall in &level.walls {
@@ -199,8 +220,9 @@ impl Project {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dimension::{Dimension, DimensionKind};
     use crate::geom::Point2;
-    use crate::ids::WallId;
+    use crate::ids::{DimensionId, WallId};
     use crate::opening::{Opening, OpeningKind};
     use crate::wall::Wall;
 
@@ -295,5 +317,62 @@ mod tests {
             project.validate(),
             Err(CoreError::UnsupportedVersion { .. })
         ));
+    }
+
+    #[test]
+    fn a_valid_dimension_counts_and_passes_validation() {
+        let mut project = Project::new(UNTITLED, 1);
+        let id = DimensionId(project.allocate_id());
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            ));
+        assert_eq!(project.dimension_count(), 1);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn validation_catches_a_zero_length_dimension() {
+        let mut project = Project::new(UNTITLED, 1);
+        let id = DimensionId(project.allocate_id());
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(Dimension::new(
+                id,
+                DimensionKind::Aligned,
+                Point2::new(100.0, 100.0),
+                Point2::new(100.0, 100.0),
+                500.0,
+            ));
+        let error = project.validate().expect_err("zero length");
+        assert!(error.to_string().contains("zero length"));
+    }
+
+    #[test]
+    fn validation_catches_a_non_positive_dimension_offset() {
+        let mut project = Project::new(UNTITLED, 1);
+        let id = DimensionId(project.allocate_id());
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                0.0,
+            ));
+        let error = project.validate().expect_err("zero offset");
+        assert!(error.to_string().contains("non-positive offset"));
     }
 }

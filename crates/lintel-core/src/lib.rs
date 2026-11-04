@@ -9,6 +9,7 @@
 //! user gets is the behaviour CI proves.
 
 pub mod command;
+pub mod dimension;
 pub mod document;
 pub mod error;
 pub mod geom;
@@ -24,10 +25,11 @@ pub mod units;
 pub mod wall;
 
 pub use command::{Applied, Command};
+pub use dimension::{Dimension, DimensionKind};
 pub use document::Document;
 pub use error::CoreError;
 pub use geom::{Bounds, Point2};
-pub use ids::{LevelId, OpeningId, WallId};
+pub use ids::{DimensionId, LevelId, OpeningId, WallId};
 pub use join::{Hit, PlanGeometry};
 pub use project::Project;
 pub use units::UnitSystem;

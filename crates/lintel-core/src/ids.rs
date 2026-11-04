@@ -32,6 +32,7 @@ macro_rules! id_type {
 id_type!(WallId, "wall #{}");
 id_type!(OpeningId, "opening #{}");
 id_type!(LevelId, "level #{}");
+id_type!(DimensionId, "dimension #{}");
 
 #[cfg(test)]
 mod tests {
@@ -42,6 +43,7 @@ mod tests {
         assert_eq!(WallId(7).to_string(), "wall #7");
         assert_eq!(OpeningId(3).to_string(), "opening #3");
         assert_eq!(LevelId(1).to_string(), "level #1");
+        assert_eq!(DimensionId(5).to_string(), "dimension #5");
     }
 
     #[test]
@@ -50,5 +52,10 @@ mod tests {
         assert_eq!(json, "42");
         let back: WallId = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, WallId(42));
+
+        let json = serde_json::to_string(&DimensionId(42)).expect("serialize");
+        assert_eq!(json, "42");
+        let back: DimensionId = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, DimensionId(42));
     }
 }
