@@ -167,7 +167,10 @@ mod tests {
     #[test]
     fn opening_must_stay_inside_the_wall() {
         let mut door = Opening::new(OpeningId(1), OpeningKind::Door, WallId(1), 300.0);
-        assert!(!door.fits_on(&host()), "900 mm door centred at 300 mm overhangs the start");
+        assert!(
+            !door.fits_on(&host()),
+            "900 mm door centred at 300 mm overhangs the start"
+        );
         door.offset = 3600.0;
         assert!(!door.fits_on(&host()), "door overhangs the end");
         door.offset = 2000.0;

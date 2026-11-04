@@ -1,63 +1,65 @@
 //! Right-hand inspector: properties of the selected element plus global
-//! view controls. All edits flow through `lintel_core::Command`.
+//! view controls. All edits flow through `lintel_core::Command` values
+//! returned here and applied by the shell.
 
 use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{Hit, OpeningId, WallId},
+    ids::{LevelId, OpeningId, WallId},
+    join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
 };
 
 pub fn inspector(
     ui: &mut egui::Ui,
-    doc: &mut Document,
+    doc: &Document,
     selection: &Option<Hit>,
     snap: &mut SnapSettings,
 ) -> Option<Command> {
-    let mut command: Option<Command> = None;
-
-    egui::CollapsingHeader::new("Element")
+    let element_cmd = egui::CollapsingHeader::new("Element")
         .default_open(true)
-        .show(ui, |ui| {
-            match selection {
-                Some(Hit::Wall(id)) => {
-                    let wall = doc
-                        .project()
-                        .active_level()
-                        .expect("level")
-                        .wall(*id)
-                        .expect("wall");
-                    ui.label(format!("Wall {} — {:.0} mm long", id.value(), wall.length()));
-                    ui.separator();
-                    command = wall_fields(ui, doc, *id, wall);
-                }
-                Some(Hit::Opening(id)) => {
-                    let opening = doc
-                        .project()
-                        .active_level()
-                        .expect("level")
-                        .opening(*id)
-                        .expect("opening");
-                    ui.label(format!(
-                        "{} {} — {:.0} × {:.0} mm",
-                        opening.kind_label(),
-                        id.value(),
-                        opening.width,
-                        opening.height
-                    ));
-                    ui.separator();
-                    command = opening_fields(ui, doc, *id, opening);
-                }
-                None => {
-                    ui.label("Select a wall or opening to edit it.");
-                }
+        .show(ui, |ui| match selection {
+            Some(Hit::Wall(id)) => {
+                let wall = {
+                    let level = doc.project().active_level().expect("level");
+                    level.wall(*id).expect("wall").clone()
+                };
+                ui.label(format!(
+                    "Wall {} — {:.0} mm long",
+                    id.value(),
+                    wall.length()
+                ));
+                ui.separator();
+                wall_fields(ui, *id, &wall)
             }
-        });
+            Some(Hit::Opening(id)) => {
+                let opening = {
+                    let level = doc.project().active_level().expect("level");
+                    level.opening(*id).expect("opening").clone()
+                };
+                ui.label(format!(
+                    "{} {} — {:.0} × {:.0} mm",
+                    opening.kind_label(),
+                    id.value(),
+                    opening.width,
+                    opening.height
+                ));
+                ui.separator();
+                opening_fields(ui, doc, *id, &opening)
+            }
+            None => {
+                ui.label("Select a wall or opening to edit it.");
+                None
+            }
+        })
+        .body_returned
+        .flatten();
 
     ui.separator();
-    egui::CollapsingHeader::new("View")
+
+    let view_cmd = egui::CollapsingHeader::new("View")
         .default_open(false)
         .show(ui, |ui| {
             ui.checkbox(&mut snap.grid_enabled, "Show grid");
@@ -80,13 +82,18 @@ pub fn inspector(
                 );
             });
             ui.checkbox(&mut snap.ortho, "Orthogonal drawing");
-        });
+            None::<Command>
+        })
+        .body_returned
+        .flatten();
 
     ui.separator();
-    egui::CollapsingHeader::new("Storeys")
+
+    let storeys_cmd = egui::CollapsingHeader::new("Storeys")
         .default_open(false)
         .show(ui, |ui| {
             let active = doc.project().active_level;
+            let mut changed: Option<LevelId> = None;
             for level in &doc.project().levels {
                 ui.horizontal(|ui| {
                     if ui
@@ -94,30 +101,20 @@ pub fn inspector(
                         .clicked()
                         && level.id != active
                     {
-                        command = Some(Command::SetActiveLevel { id: level.id });
+                        changed = Some(level.id);
                     }
                     ui.label(format!("{} mm", level.elevation));
                 });
             }
-            ui.horizontal(|ui| {
-                if ui.button("Add storey…").clicked {
-                    command = Some(Command::AddLevel {
-                        name: format!("Level {}", doc.project().levels.len() + 1),
-                        elevation: doc.project().levels.len() as f64 * 3000.0,
-                    });
-                }
-            });
-        });
+            changed.map(|id| Command::SetActiveLevel { id })
+        })
+        .body_returned
+        .flatten();
 
-    command
+    element_cmd.or(storeys_cmd).or(view_cmd)
 }
 
-fn wall_fields(
-    ui: &mut egui::Ui,
-    doc: &mut Document,
-    id: WallId,
-    wall: &lintel_core::wall::Wall,
-) -> Option<Command> {
+fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
     let mut command: Option<Command> = None;
     let mut thickness = wall.thickness;
     let mut height = wall.height;
@@ -128,12 +125,11 @@ fn wall_fields(
             egui::DragValue::new(&mut thickness)
                 .speed(5.0)
                 .range(
-                    lintel_core::wall::MIN_WALL_THICKNESS
-                        ..=lintel_core::wall::MAX_WALL_THICKNESS,
+                    lintel_core::wall::MIN_WALL_THICKNESS..=lintel_core::wall::MAX_WALL_THICKNESS,
                 )
                 .suffix(" mm"),
         );
-        if ui.button("Apply").clicked && (thickness - wall.thickness).abs() > f64::EPSILON {
+        if ui.button("Apply").clicked() && (thickness - wall.thickness).abs() > f64::EPSILON {
             command = Some(Command::SetWallThickness { id, thickness });
         }
     });
@@ -142,12 +138,10 @@ fn wall_fields(
         ui.add(
             egui::DragValue::new(&mut height)
                 .speed(50.0)
-                .range(
-                    lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT,
-                )
+                .range(lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT)
                 .suffix(" mm"),
         );
-        if ui.button("Apply").clicked && (height - wall.height).abs() > f64::EPSILON {
+        if ui.button("Apply").clicked() && (height - wall.height).abs() > f64::EPSILON {
             command = Some(Command::SetWallHeight { id, height });
         }
     });
@@ -156,11 +150,11 @@ fn wall_fields(
 
 fn opening_fields(
     ui: &mut egui::Ui,
-    doc: &mut Document,
+    doc: &Document,
     id: OpeningId,
     opening: &lintel_core::opening::Opening,
 ) -> Option<Command> {
-    let mut command: Option<Command> = None;
+    let command: Option<Command> = None;
     let level = doc.project().active_level().expect("level");
     let wall = level.wall(opening.host).expect("host wall");
 
@@ -177,7 +171,7 @@ fn opening_fields(
         ui.radio_value(&mut kind, OpeningKind::Window, "Window");
     });
     if kind != opening.kind {
-        command = Some(Command::SetOpeningKind { id, kind });
+        return Some(Command::SetOpeningKind { id, kind });
     }
 
     ui.horizontal(|ui| {
@@ -228,7 +222,7 @@ fn opening_fields(
         || (height - opening.height).abs() > f64::EPSILON
         || (sill - opening.sill).abs() > f64::EPSILON;
     if size_changed {
-        command = Some(Command::SetOpeningSize {
+        return Some(Command::SetOpeningSize {
             id,
             width,
             height,
@@ -236,10 +230,10 @@ fn opening_fields(
         });
     }
     if (offset - opening.offset).abs() > f64::EPSILON {
-        command = Some(Command::MoveOpening { id, offset });
+        return Some(Command::MoveOpening { id, offset });
     }
     if flipped != opening.flipped {
-        command = Some(Command::FlipOpening { id });
+        return Some(Command::FlipOpening { id });
     }
 
     command

@@ -5,9 +5,9 @@
 //! decides whether v0.1.0 actually works.
 
 use lintel_core::geom::Point2;
-use lintel_core::join::{Hit, PlanGeometry, HIT_TOLERANCE};
+use lintel_core::join::{HIT_TOLERANCE, Hit, PlanGeometry};
 use lintel_core::opening::OpeningKind;
-use lintel_core::pdf::{render_plan, SheetSpec};
+use lintel_core::pdf::{SheetSpec, render_plan};
 use lintel_core::{Command, Document, WallId};
 
 const T0: i64 = 1_760_000_000;
@@ -224,10 +224,6 @@ fn a_second_level_keeps_its_own_walls() {
     document
         .apply(Command::SetActiveLevel { id: LevelId(1) }, T0 + 32)
         .expect("back to ground");
-    let level_zero = document
-        .project()
-        .active_level()
-        .expect("active level")
-        .id;
+    let level_zero = document.project().active_level().expect("active level").id;
     assert_eq!(level_zero, LevelId(1));
 }

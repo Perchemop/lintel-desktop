@@ -5,7 +5,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::command::{apply_command, Applied, Command};
+use crate::command::{Applied, Command, apply_command};
 use crate::error::CoreError;
 use crate::project::Project;
 
@@ -206,18 +206,12 @@ mod tests {
     fn a_new_edit_clears_the_redo_stack() {
         let mut document = Document::new("Plan", 1_760_000_000);
         document
-            .apply(
-                wall(Point2::new(0.0, 0.0), Point2::new(4000.0, 0.0)),
-                1,
-            )
+            .apply(wall(Point2::new(0.0, 0.0), Point2::new(4000.0, 0.0)), 1)
             .expect("add wall");
         document.undo(2);
         assert!(document.can_redo());
         document
-            .apply(
-                wall(Point2::new(0.0, 0.0), Point2::new(0.0, 4000.0)),
-                3,
-            )
+            .apply(wall(Point2::new(0.0, 0.0), Point2::new(0.0, 4000.0)), 3)
             .expect("add wall");
         assert!(!document.can_redo());
     }

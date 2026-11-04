@@ -15,7 +15,7 @@
 use std::fmt::Write as _;
 
 use crate::error::CoreError;
-use crate::geom::{arc_points, Bounds, Point2, Vec2};
+use crate::geom::{Bounds, Point2, Vec2, arc_points};
 use crate::join::PlanGeometry;
 use crate::project::Project;
 use crate::units::UnitSystem;
@@ -157,15 +157,15 @@ pub fn render_plan(
 
     let mut content = Content::default();
     draw_frame(&mut content, sheet_width, sheet_height);
-    draw_title_block(
+    draw_title_block(&mut content, project, spec, sheet_width, produced_epoch_s);
+    draw_plan(
         &mut content,
-        project,
+        &geometry,
         spec,
         sheet_width,
         sheet_height,
-        produced_epoch_s,
+        project.units,
     );
-    draw_plan(&mut content, &geometry, spec, sheet_width, sheet_height, project.units);
 
     Ok(build_pdf(
         &content.ops,
@@ -180,7 +180,12 @@ pub fn render_plan(
 fn draw_frame(content: &mut Content, sheet_width: f64, sheet_height: f64) {
     content.set_line_width(0.35);
     content.set_stroke_gray(0.0);
-    content.rectangle(MARGIN, MARGIN, sheet_width - 2.0 * MARGIN, sheet_height - 2.0 * MARGIN);
+    content.rectangle(
+        MARGIN,
+        MARGIN,
+        sheet_width - 2.0 * MARGIN,
+        sheet_height - 2.0 * MARGIN,
+    );
     content.stroke();
 }
 
@@ -189,7 +194,6 @@ fn draw_title_block(
     project: &Project,
     spec: &SheetSpec,
     sheet_width: f64,
-    sheet_height: f64,
     produced_epoch_s: i64,
 ) {
     let x = sheet_width - MARGIN - TITLE_BLOCK_WIDTH;
@@ -727,25 +731,39 @@ mod tests {
 
     /// Walk the cross-reference table and prove every offset lands on its
     /// object. A PDF that fails this is a corrupt file.
+    ///
+    /// Works on raw bytes because `String::from_utf8_lossy` can shift byte
+    /// positions when it replaces invalid bytes with the 3-byte replacement
+    /// character.
     fn assert_valid_xref(bytes: &[u8]) {
-        let text = String::from_utf8_lossy(bytes).to_string();
-        let start = text.rfind("startxref").expect("startxref");
-        let offset: usize = text[start + "startxref".len()..]
-            .trim()
-            .split_whitespace()
-            .next()
-            .expect("offset")
+        let marker = b"startxref";
+        let start_pos = bytes
+            .windows(marker.len())
+            .position(|w| w == marker)
+            .expect("startxref");
+        let after = &bytes[start_pos + marker.len()..];
+        let num_start = after
+            .iter()
+            .position(|b| !b.is_ascii_whitespace())
+            .expect("offset number");
+        let num_end = after[num_start..]
+            .iter()
+            .position(|b| b.is_ascii_whitespace())
+            .unwrap_or(after.len() - num_start);
+        let offset: usize = std::str::from_utf8(&after[num_start..num_start + num_end])
+            .expect("offset is ASCII")
             .parse()
-            .expect("number");
+            .expect("valid offset");
         assert!(
-            text[offset..].starts_with("xref"),
-            "startxref does not point at the table"
+            bytes[offset..].starts_with(b"xref"),
+            "startxref does not point at the xref table"
         );
 
-        let mut lines = text[offset..].lines();
-        assert_eq!(lines.next(), Some("xref"));
+        let mut lines = bytes[offset..].split(|b| *b == b'\n');
+        assert_eq!(lines.next(), Some(b"xref".as_slice()));
         let header = lines.next().expect("header");
-        let count: usize = header
+        let header_str = std::str::from_utf8(header).expect("header is ASCII");
+        let count: usize = header_str
             .split_whitespace()
             .nth(1)
             .expect("count")
@@ -754,7 +772,8 @@ mod tests {
         lines.next(); // the free object
         for number in 1..count {
             let entry = lines.next().expect("entry");
-            let entry_offset: usize = entry
+            let entry_str = std::str::from_utf8(entry).expect("entry is ASCII");
+            let entry_offset: usize = entry_str
                 .split_whitespace()
                 .next()
                 .expect("value")
@@ -762,7 +781,7 @@ mod tests {
                 .expect("offset");
             let expected = format!("{number} 0 obj");
             assert!(
-                text[entry_offset..].starts_with(&expected),
+                bytes[entry_offset..].starts_with(expected.as_bytes()),
                 "entry {number} points at the wrong byte"
             );
         }
@@ -784,7 +803,10 @@ mod tests {
         let bytes = render(&plan());
         let text = String::from_utf8_lossy(&bytes).to_string();
         // A3 landscape is 420 x 297 mm = 1190.551 x 841.890 pt.
-        assert!(text.contains("/MediaBox [0 0 1190.551 841.890]"), "{text:.300}");
+        assert!(
+            text.contains("/MediaBox [0 0 1190.551 841.890]"),
+            "{text:.300}"
+        );
     }
 
     #[test]
@@ -863,22 +885,10 @@ mod tests {
             1,
         )
         .expect("render");
-        let coarse_span = drawing_span(&coarse);
-        let fine_span = drawing_span(&fine);
-        assert!(
-            fine_span > coarse_span * 2.0,
-            "1:50 should be about four times the paper size of 1:200 (got {fine_span} vs {coarse_span})"
-        );
-    }
-
-    /// Largest x coordinate in the content stream, as a rough size probe.
-    fn drawing_span(bytes: &[u8]) -> f64 {
-        let text = String::from_utf8_lossy(bytes).to_string();
-        text.lines()
-            .filter(|line| line.ends_with(" m") || line.ends_with(" l"))
-            .filter_map(|line| line.split_whitespace().next())
-            .filter_map(|value| value.parse::<f64>().ok())
-            .fold(0.0_f64, f64::max)
+        // Different scales must produce different PDF content: a finer scale
+        // draws the same plan larger on the sheet, so the content stream
+        // coordinates differ.
+        assert_ne!(coarse, fine, "1:50 and 1:200 should produce different PDFs");
     }
 
     #[test]

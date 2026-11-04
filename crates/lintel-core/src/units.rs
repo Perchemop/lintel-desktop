@@ -39,7 +39,11 @@ impl UnitSystem {
 
 /// Metric display: metres above a metre, whole millimetres below it.
 pub fn format_metric(millimetres: f64) -> String {
-    let value = if millimetres.is_finite() { millimetres } else { 0.0 };
+    let value = if millimetres.is_finite() {
+        millimetres
+    } else {
+        0.0
+    };
     if value.abs() >= MM_PER_METRE {
         let metres = value / MM_PER_METRE;
         let text = format!("{metres:.2}");
@@ -151,7 +155,12 @@ fn parse_feet_inches(text: &str) -> Option<f64> {
         remainder = remainder[index + 1..].trim();
     }
 
-    remainder = remainder.trim_end_matches('"').trim_end_matches("in").trim();
+    remainder = remainder
+        .trim_end_matches('"')
+        .trim_end_matches('\'')
+        .trim_end_matches("in")
+        .trim()
+        .trim_start_matches('-');
     if !remainder.is_empty() {
         let inches: f64 = remainder.parse().ok()?;
         total_inches += inches;

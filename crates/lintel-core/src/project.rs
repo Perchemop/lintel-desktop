@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::CoreError;
 use crate::geom::Bounds;
-use crate::ids::{LevelId, OpeningId, WallId};
+use crate::ids::{LevelId, OpeningId};
 use crate::level::Level;
 use crate::units::UnitSystem;
 
@@ -105,7 +105,9 @@ impl Project {
             return Err(CoreError::InvalidProject("the project has no name".into()));
         }
         if self.levels.is_empty() {
-            return Err(CoreError::InvalidProject("the project has no levels".into()));
+            return Err(CoreError::InvalidProject(
+                "the project has no levels".into(),
+            ));
         }
         if !self.levels.iter().any(|l| l.id == self.active_level) {
             return Err(CoreError::InvalidProject(
@@ -198,6 +200,7 @@ impl Project {
 mod tests {
     use super::*;
     use crate::geom::Point2;
+    use crate::ids::WallId;
     use crate::opening::{Opening, OpeningKind};
     use crate::wall::Wall;
 
@@ -245,12 +248,16 @@ mod tests {
     fn validation_catches_a_dangling_opening_host() {
         let (mut project, wall_id) = project_with_wall();
         let opening_id = OpeningId(project.allocate_id());
-        project.active_level_mut().expect("level").openings.push(Opening::new(
-            opening_id,
-            OpeningKind::Door,
-            WallId(wall_id.value() + 100),
-            2000.0,
-        ));
+        project
+            .active_level_mut()
+            .expect("level")
+            .openings
+            .push(Opening::new(
+                opening_id,
+                OpeningKind::Door,
+                WallId(wall_id.value() + 100),
+                2000.0,
+            ));
         let error = project.validate().expect_err("dangling host");
         assert!(error.to_string().contains("which is missing"));
     }
@@ -276,7 +283,7 @@ mod tests {
     #[test]
     fn validation_rejects_a_stale_identity_counter() {
         let (mut project, _) = project_with_wall();
-        project.next_id = 3;
+        project.next_id = 2;
         assert!(project.validate().is_err());
     }
 

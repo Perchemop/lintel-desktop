@@ -7,12 +7,10 @@
 use eframe::egui::Color32;
 
 pub const PAPER: Color32 = Color32::from_rgb(252, 248, 242); // warm off-white sheet
-pub const INK: Color32 = Color32::from_rgb(26, 24, 22);      // near-black graphite
-pub const INK_DIM: Color32 = Color32::from_rgb(112, 106, 98);
+pub const INK: Color32 = Color32::from_rgb(26, 24, 22); // near-black graphite
 
-pub const COBALT: Color32 = Color32::from_rgb(18, 78, 120);   // selection / active tool
-pub const AMBER: Color32 = Color32::from_rgb(211, 134, 0);    // ortho / grid hints
-pub const GREEN: Color32 = Color32::from_rgb(34, 158, 96);    // endpoint snap
+pub const COBALT: Color32 = Color32::from_rgb(18, 78, 120); // selection / active tool
+pub const GREEN: Color32 = Color32::from_rgb(34, 158, 96); // endpoint snap
 
 pub const WALL_FILL: Color32 = Color32::from_rgb(226, 222, 214);
 pub const WALL_STROKE: Color32 = Color32::from_rgb(84, 78, 70);
