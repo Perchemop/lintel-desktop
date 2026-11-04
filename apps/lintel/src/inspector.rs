@@ -6,7 +6,7 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{LevelId, OpeningId, WallId},
+    ids::{DimensionId, LevelId, OpeningId, WallId},
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
@@ -48,6 +48,20 @@ pub fn inspector(
                 ));
                 ui.separator();
                 opening_fields(ui, doc, *id, &opening)
+            }
+            Some(Hit::Dimension(id)) => {
+                let dimension = {
+                    let level = doc.project().active_level().expect("level");
+                    level.dimension(*id).expect("dimension").clone()
+                };
+                ui.label(format!(
+                    "{} {} — {:.0} mm",
+                    dimension.kind.label(),
+                    id.value(),
+                    dimension.length()
+                ));
+                ui.separator();
+                dimension_fields(ui, *id, &dimension)
             }
             None => {
                 ui.label("Select a wall or opening to edit it.");
@@ -236,5 +250,28 @@ fn opening_fields(
         return Some(Command::FlipOpening { id });
     }
 
+    command
+}
+
+fn dimension_fields(
+    ui: &mut egui::Ui,
+    id: DimensionId,
+    dimension: &lintel_core::dimension::Dimension,
+) -> Option<Command> {
+    let mut command: Option<Command> = None;
+    let mut offset = dimension.offset;
+    ui.horizontal(|ui| {
+        ui.label("Offset:");
+        ui.add(
+            egui::DragValue::new(&mut offset)
+                .speed(10.0)
+                .range(1.0..=100000.0)
+                .suffix(" mm"),
+        );
+        if ui.button("Apply").clicked() && (offset - dimension.offset).abs() > f64::EPSILON {
+            command = Some(Command::SetDimensionOffset { id, offset });
+        }
+    });
+    ui.label(format!("Extension lines: {}", dimension.extension_lines));
     command
 }

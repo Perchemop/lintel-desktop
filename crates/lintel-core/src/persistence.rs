@@ -103,6 +103,17 @@ mod tests {
             )
             .expect("place door");
         document
+            .apply(
+                Command::PlaceDimension {
+                    kind: crate::dimension::DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    offset: 500.0,
+                },
+                1_760_000_250,
+            )
+            .expect("place dimension");
+        document
     }
 
     #[test]
@@ -115,6 +126,7 @@ mod tests {
         assert_eq!(&loaded, original.project());
         assert_eq!(loaded.wall_count(), 1);
         assert_eq!(loaded.opening_count(), 1);
+        assert_eq!(loaded.dimension_count(), 1);
     }
 
     #[test]

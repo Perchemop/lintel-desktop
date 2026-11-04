@@ -10,8 +10,9 @@
 //! limitation is documented in `docs/architecture.md` and scheduled for the
 //! joint-resolution milestone.
 
+use crate::dimension::Dimension;
 use crate::geom::{Bounds, Point2, Vec2, point_segment_distance};
-use crate::ids::{OpeningId, WallId};
+use crate::ids::{DimensionId, OpeningId, WallId};
 use crate::level::Level;
 use crate::opening::{Opening, OpeningKind};
 use crate::wall::Wall;
@@ -84,6 +85,7 @@ pub struct ResolvedOpening {
 pub enum Hit {
     Wall(WallId),
     Opening(OpeningId),
+    Dimension(DimensionId),
 }
 
 /// Everything needed to paint one level, in world millimetres.
@@ -91,6 +93,7 @@ pub enum Hit {
 pub struct PlanGeometry {
     pub walls: Vec<ResolvedWall>,
     pub openings: Vec<ResolvedOpening>,
+    pub dimensions: Vec<Dimension>,
 }
 
 impl PlanGeometry {
@@ -105,7 +108,11 @@ impl PlanGeometry {
             .iter()
             .filter_map(|o| resolve_opening(level, o))
             .collect();
-        Self { walls, openings }
+        Self {
+            walls,
+            openings,
+            dimensions: level.dimensions.clone(),
+        }
     }
 
     pub fn bounds(&self) -> Option<Bounds> {
@@ -119,6 +126,10 @@ impl PlanGeometry {
 
     pub fn thickness_of(&self, id: WallId) -> f64 {
         self.wall(id).map_or(200.0, |w| w.wall.thickness)
+    }
+
+    pub fn dimensions(&self) -> &[Dimension] {
+        &self.dimensions
     }
 
     /// What is under the pointer. Doors and windows win over their host wall,
@@ -136,6 +147,14 @@ impl PlanGeometry {
                 let better = best.is_none_or(|(best_distance, _)| distance < best_distance);
                 if better {
                     best = Some((distance, wall.wall.id));
+                }
+            }
+        }
+        // Dimensions: hit test against their dimension line.
+        for dim in &self.dimensions {
+            if let Some((a, b)) = dim.dimension_line() {
+                if point_segment_distance(point, a, b) <= tolerance {
+                    return Some(Hit::Dimension(dim.id));
                 }
             }
         }
@@ -286,6 +305,7 @@ mod tests {
         let geometry = PlanGeometry {
             walls: resolved,
             openings: Vec::new(),
+            dimensions: Vec::new(),
         };
         let bounds = geometry.bounds().expect("bounds");
         // The corner is filled: the horizontal wall reaches x = 4100 and the

@@ -15,6 +15,7 @@ use lintel_core::{
 use std::path::PathBuf;
 
 mod canvas;
+mod dimension_ui;
 mod inspector;
 mod theme;
 
@@ -26,6 +27,7 @@ enum Tool {
     Wall,
     Door,
     Window,
+    Dimension,
 }
 
 impl Tool {
@@ -35,6 +37,7 @@ impl Tool {
             Tool::Wall => "Wall",
             Tool::Door => "Door",
             Tool::Window => "Window",
+            Tool::Dimension => "Dimension",
         }
     }
 }
@@ -152,18 +155,33 @@ impl eframe::App for LintelApp {
                         ui.selectable_value(&mut self.tool, Tool::Wall, Tool::Wall.label());
                         ui.selectable_value(&mut self.tool, Tool::Door, Tool::Door.label());
                         ui.selectable_value(&mut self.tool, Tool::Window, Tool::Window.label());
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::Dimension,
+                            Tool::Dimension.label(),
+                        );
                     });
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
             });
 
+            let geometry =
+                PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
             let (response, rect) = Canvas::show(
                 ui,
                 &self.view,
-                &PlanGeometry::of_level(self.doc.project().active_level().expect("level")),
+                &geometry,
                 self.selection,
                 &self.snap,
                 &self.draft,
+            );
+            let dimension_painter = ui.painter_at(rect);
+            crate::dimension_ui::render_dimensions(
+                &dimension_painter,
+                rect,
+                &self.view,
+                &geometry,
+                self.selection,
             );
             self.handle_canvas_input(ui, response, rect, now);
 
@@ -224,6 +242,38 @@ impl LintelApp {
                                 && let Some(wall_id) = applied.wall
                             {
                                 self.selection = Some(Hit::Wall(wall_id));
+                            }
+                        }
+                        self.draft = Draft::default();
+                    }
+                }
+                (Tool::Dimension, Some(world)) => {
+                    if !self.draft.active {
+                        self.draft = Draft {
+                            active: true,
+                            start: world,
+                            current: world,
+                        };
+                    } else {
+                        let end = world;
+                        if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
+                            let applied = self
+                                .doc
+                                .apply(
+                                    Command::PlaceDimension {
+                                        kind: lintel_core::dimension::DimensionKind::Aligned,
+                                        start: self.draft.start,
+                                        end,
+                                        offset: lintel_core::dimension::DEFAULT_DIMENSION_OFFSET,
+                                    },
+                                    now,
+                                )
+                                .map_err(|e| eprintln!("dimension: {e}"))
+                                .ok();
+                            if let Some(applied) = applied
+                                && let Some(dim_id) = applied.dimension
+                            {
+                                self.selection = Some(Hit::Dimension(dim_id));
                             }
                         }
                         self.draft = Draft::default();
@@ -350,6 +400,10 @@ impl LintelApp {
                     let _ = self.doc.apply(Command::DeleteOpening { id }, now);
                     self.selection = None;
                 }
+                if let Some(Hit::Dimension(id)) = self.selection {
+                    let _ = self.doc.apply(Command::DeleteDimension { id }, now);
+                    self.selection = None;
+                }
             }
             if ui.input(|i| i.key_pressed(egui::Key::W)) {
                 self.tool = Tool::Wall;
@@ -362,6 +416,9 @@ impl LintelApp {
             }
             if ui.input(|i| i.key_pressed(egui::Key::N)) {
                 self.tool = Tool::Window;
+            }
+            if ui.input(|i| i.key_pressed(egui::Key::M)) {
+                self.tool = Tool::Dimension;
             }
             if ui.input(|i| i.key_pressed(egui::Key::G)) {
                 self.snap.grid_enabled = !self.snap.grid_enabled;

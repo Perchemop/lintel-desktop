@@ -1,7 +1,7 @@
 //! Typed failures. Nothing in the domain panics on bad user input: a command
 //! that cannot be honoured returns one of these instead.
 
-use crate::ids::{LevelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LevelId, OpeningId, WallId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {
@@ -9,6 +9,8 @@ pub enum CoreError {
     WallNotFound(WallId),
     #[error("{0} does not exist")]
     OpeningNotFound(OpeningId),
+    #[error("{0} does not exist")]
+    DimensionNotFound(DimensionId),
     #[error("{0} does not exist")]
     LevelNotFound(LevelId),
     #[error("the last level cannot be deleted; give the project another level first")]
@@ -44,5 +46,7 @@ mod tests {
         assert!(e.to_string().contains("last level"));
         let e = CoreError::WallNotFound(WallId(4));
         assert_eq!(e.to_string(), "wall #4 does not exist");
+        let e = CoreError::DimensionNotFound(DimensionId(9));
+        assert_eq!(e.to_string(), "dimension #9 does not exist");
     }
 }
