@@ -8,13 +8,6 @@ use crate::theme;
 use eframe::egui;
 use lintel_core::join::{Hit, PlanGeometry};
 
-/// Alias kept for callers that want a dedicated viewport type; reuses the
-/// canvas view so transforms stay consistent.
-pub type DimensionView = View;
-
-/// Marker struct for the dimension canvas renderer.
-pub struct DimensionCanvas;
-
 /// Draw every dimension in `geometry` onto `painter`.
 pub fn render_dimensions(
     painter: &egui::Painter,
