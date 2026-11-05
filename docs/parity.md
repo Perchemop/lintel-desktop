@@ -32,6 +32,14 @@ each green CI run; percentages move only from evidence.
 | CAP-049 | Keyboard shortcut hints + hover labels on all controls | `42013256872` (PR #7) | verified |
 | CAP-050 | Focus-ring contrast WCAG AA (COBALT) | `42013256872` (PR #7) | verified |
 | CAP-051 | Linux AppImage release artefact | `42024620827` (v0.4.0 release) | verified |
+| CAP-052 | Windows installer (Inno Setup via Chocolatey) | pending | awaiting run |
+| CAP-053 | `.iss` DefaultDirName typo fixed | pending | awaiting run |
+
+## v0.5.0 release
+
+Pending — will be published at
+https://github.com/Perchemop/lintel-desktop/releases/tag/0.5.0 once CI and the
+release workflow are green for the `opencode/v0.5.0-windows-installer` branch.
 
 ## v0.4.0 release
 

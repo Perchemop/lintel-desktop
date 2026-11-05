@@ -1,5 +1,22 @@
 # Progress
 
+## v0.5.0 Status — IN PROGRESS (implemented; CI/tag pending)
+
+- [x] Windows installer step restored using Chocolatey (`choco install innosetup`)
+- [x] `.iss` `DefaultDirName` typo fixed (`{autpf}` → `{autopf}`)
+- [x] `.iss` version bumped to 0.5.0; app + core bumped to 0.5.0
+- [x] `*.exe` re-added to the release collect pattern so the installer ships with checksums
+- [ ] CI green on `main` for the v0.5.0 slice
+- [ ] v0.5.0 tag and GitHub Release published
+
+Readiness % (v0.5.0): **~85% — implemented; verification and release pending.**
+
+### Still planned (v0.6.0)
+
+- [ ] Screen-reader labels beyond egui's built-in accessibility
+- [ ] Keyboard-focus management review
+- [ ] Linux AppImage verification on end-user systems
+
 ## v0.4.0 Status — RELEASED
 
 - [x] Keyboard shortcut hints + hover labels on all controls (W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete)
