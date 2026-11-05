@@ -138,17 +138,20 @@ jobs:
         set -euo pipefail
         curl -L -o appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
         chmod +x appimagetool
-        rm -rf AppDir && mkdir -p AppDir/usr/bin
+        # appimagetool is itself an AppImage and needs FUSE to run; extract it
+        # and invoke the embedded AppRun ELF binary directly instead.
+        ./appimagetool --appimage-extract
         BIN=""
         for cand in "target/${{ matrix.target }}/release/lintel"; do
-          [ -f "$cand" ] && BIN="$cand" && break
+          if [ -f "$cand" ]; then BIN="$cand"; break; fi
         done
-        test -n "$BIN"
+        test -f "$BIN"
+        rm -rf AppDir && mkdir -p AppDir/usr/bin
         cp "$BIN" AppDir/usr/bin/lintel
         chmod +x AppDir/usr/bin/lintel
         cp resources/linux/lintel.desktop AppDir/lintel.desktop
         cp resources/linux/lintel.png AppDir/lintel.png
-        ./appimagetool AppDir lintel-appimage-x86_64.AppImage
+        ./squashfs-root/AppRun AppDir lintel-appimage-x86_64.AppImage
         test -f lintel-appimage-x86_64.AppImage
         ls -la lintel-appimage-x86_64.AppImage
 
