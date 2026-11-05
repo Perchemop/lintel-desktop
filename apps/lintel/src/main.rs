@@ -260,7 +260,7 @@ impl eframe::App for LintelApp {
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Tool:");
-                egui::ComboBox::from_label("Tool")
+                let tool_response = egui::ComboBox::from_label("Tool")
                     .selected_text(self.tool.label())
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.tool, Tool::Select, Tool::Select.label());
@@ -272,10 +272,10 @@ impl eframe::App for LintelApp {
                             Tool::Dimension,
                             Tool::Dimension.label(),
                         );
-                    })
-                    .on_hover_text(
-                        "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
-                    );
+                    });
+                tool_response.response.on_hover_text(
+                    "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
+                );
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
                 ui.label(
