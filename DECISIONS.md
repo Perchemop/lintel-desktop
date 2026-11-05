@@ -22,3 +22,5 @@
 | D-016 | HTTP client | `ureq` 3 with its default `rustls` (ring) provider | Ring builds without CMake/NASM or system OpenSSL, so all three CI platforms compile cleanly | 2026-11-05 |
 | D-017 | Update delivery | The in-app check opens the GitHub Releases download page rather than replacing the running binary | Self-replacement needs signing and platform-specific installers; a one-click link is honest and safe | 2026-11-05 |
 | D-018 | Multi-platform | CI builds a Linux/macOS/Windows matrix; Releases publish Linux x86_64 + aarch64, macOS aarch64, Windows x86_64 | guide section 6.2 / section 8 step 7 | 2026-11-05 |
+| D-019 | Accessibility labels | Keyboard shortcut hints + hover labels on every control; COBALT focus rings meet WCAG AA | guide II.21; every interactive widget gets a name/label | 2026-11-05 |
+| D-020 | Linux AppImage | Release publishes `lintel-appimage-x86_64.AppImage`; Windows installer deferred (Inno Setup download hangs on CI) | AppImage built without FUSE by extracting `appimagetool` and running `AppRun` directly | 2026-11-05 |

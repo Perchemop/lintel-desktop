@@ -25,6 +25,21 @@ each green CI run; percentages move only from evidence.
 | CAP-047 | Rejected edits / file errors shown in the app | `41998649019` (PR #6) | verified |
 | CAP-048 | macOS release ships a `Lintel.app` bundle | `41999766800` (v0.3.0 release) | verified |
 
+## v0.4.0 — accessibility labels, shortcuts, AppImage
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-049 | Keyboard shortcut hints + hover labels on all controls | `42013256872` (PR #7) | verified |
+| CAP-050 | Focus-ring contrast WCAG AA (COBALT) | `42013256872` (PR #7) | verified |
+| CAP-051 | Linux AppImage release artefact | `42024620827` (v0.4.0 release) | verified |
+
+## v0.4.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.4.0 —
+release workflow run `42024620827`. The macOS archive contains `Lintel.app`,
+and the release includes `lintel-appimage-x86_64.AppImage` (valid ELF) plus
+`SHA256SUMS.txt` (recomputed hashes match). Notes came from `RELEASE_NOTES.md`.
+
 ## v0.3.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.3.0 —

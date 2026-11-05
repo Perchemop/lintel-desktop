@@ -42,7 +42,11 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.3.0 adds on-screen error messages and a proper macOS app bundle; dimension lines and joint resolution arrived in 0.2.0. A Linux AppImage, a Windows installer, and screen-reader work are on the way. See:
+Lintel is young and actively developed. Version 0.4.0 adds keyboard shortcut
+hints, hover labels on every control, WCAG AA focus-ring contrast, and a Linux
+AppImage release; dimension lines and joint resolution arrived in 0.2.0, and
+on-screen error messages plus a macOS app bundle in 0.3.0. A Windows installer
+and screen-reader work are on the way. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

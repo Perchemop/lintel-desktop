@@ -56,6 +56,9 @@ run, recorded in `docs/parity.md`).
 | CAP-046 | Empty-state hint | A level with no walls shows an on-canvas hint | `apps/lintel/src/main.rs` | guide §6.2 | implemented |
 | CAP-047 | Visible error feedback | Rejected edits and file failures show a toolbar status message | `LintelApp::note_status` | guide §9 | implemented |
 | CAP-048 | macOS app bundle | The macOS archive contains `Lintel.app` with `Info.plist` | `release.yml` bundle step | guide §6.2 | implemented |
+| CAP-049 | Keyboard shortcut hints | Toolbar line + hover tooltip on every control | `apps/lintel/src/main.rs`, `apps/lintel/src/inspector.rs` | guide §9 / II.21 | implemented |
+| CAP-050 | Focus-ring contrast WCAG AA | COBALT focus rings meet AA on panel + canvas backgrounds | `apps/lintel/src/theme.rs` (comment) | guide II.21 | implemented |
+| CAP-051 | Linux AppImage | Release publishes `lintel-appimage-x86_64.AppImage` (valid ELF) | `release.yml` AppImage step | guide §6.2 | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -74,6 +77,7 @@ run, recorded in `docs/parity.md`).
 Readiness % (v0.1.0): **100% — shipped** (CI `41793150063`).
 Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
 Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
+Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
 
-Still planned for v0.4.0: screen-reader labels beyond the toolkit's built-in
-accessibility, a Linux AppImage and a Windows installer.
+Still planned for v0.5.0: screen-reader labels beyond the toolkit's built-in
+accessibility, Windows installer, keyboard-focus management review.

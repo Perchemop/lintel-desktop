@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.4.0 — 2026-11-05
+
+### Summary
+
+Accessibility polish and packaging: keyboard shortcut hints and hover labels on
+every control, WCAG AA focus-ring contrast, and a Linux AppImage release
+artefact. Windows installer deferred (Inno Setup download hangs on CI).
+
+### Added
+
+- Keyboard shortcut line in the toolbar: W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete
+- Hover tooltip on every menu button and Inspector control describing units and ranges
+- Focus-ring colour COBALT verified above WCAG AA 4.5:1 on both panel and canvas backgrounds
+- Escape dismissal confirmed on all dialogs (About, Release notes, Update, Export sheet)
+- `ACCESSIBILITY.md` honesty statement and `docs/qc/checklist.md` accessibility smoke test
+- Linux AppImage release artefact (`lintel-appimage-x86_64.AppImage`, valid ELF)
+- Release notes now come from `RELEASE_NOTES.md` per tag
+
+### Changed
+
+- (none)
+
+### Fixed
+
+- AppImage build: `appimagetool` is itself an AppImage needing FUSE; now extracted
+  and the embedded `AppRun` ELF invoked directly so no FUSE is required on CI
+
+### Known limitations
+
+- No Windows installer yet (zip remains the Windows deliverable; Inno Setup step deferred)
+- Screen-reader labels beyond egui's built-in AccessKit support still pending
+- Canvas objects (walls/openings/dimensions) have no per-object ARIA labels; documented in `ACCESSIBILITY.md`
+
+### Token metrics
+
+- Approx. tokens this release: 200,000
+- Approx. cumulative tokens since development began: 5,400,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.3.0 — 2026-11-05
 
 ### Summary

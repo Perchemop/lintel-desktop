@@ -3,6 +3,55 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.4.0 — Accessibility labels, keyboard shortcuts, AppImage
+
+**Summary.** Keyboard shortcut hints and hover labels on every control,
+WCAG AA focus-ring contrast, and a Linux AppImage release artefact. The
+Windows installer is deferred (Inno Setup download hangs on CI).
+
+### Added
+
+- Keyboard shortcut line in the toolbar: W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete
+- Hover tooltip on every menu button and Inspector control describing units and ranges
+- Focus-ring colour COBALT verified above WCAG AA 4.5:1 on both panel and canvas backgrounds
+- Escape dismissal confirmed on all dialogs (About, Release notes, Update, Export sheet)
+- `ACCESSIBILITY.md` honesty statement and `docs/qc/checklist.md` accessibility smoke test
+- Linux AppImage release artefact (`lintel-appimage-x86_64.AppImage`, valid ELF)
+
+### Changed
+
+- (none)
+
+### Fixed
+
+- AppImage build: `appimagetool` is itself an AppImage needing FUSE; now extracted
+  and the embedded `AppRun` ELF invoked directly so no FUSE is required on CI
+
+### Known limitations
+
+- No Windows installer yet — the Windows zip remains the deliverable; the Inno
+  Setup installer step is deferred to a future release
+- Screen-reader labels beyond egui's built-in AccessKit support still pending
+- Canvas objects (walls/openings/dimensions) have no per-object ARIA labels;
+  documented in `ACCESSIBILITY.md`
+
+### Artefacts
+
+`lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`,
+`lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-appimage-x86_64.AppImage` (Linux AppImage),
+`lintel-windows-x86_64.zip`, and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~200,000 tokens
+- Cumulative since development began: ~5,400,000 tokens
+
+---
+
 ## Lintel 0.3.0 — Error feedback and macOS bundle
 
 **Summary.** When something cannot be done — a rejected edit, a file that will

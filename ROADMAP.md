@@ -78,10 +78,23 @@ CI evidence: PR #6 run `41998649019`; release workflow run `41999766800`.
 | CAP-047 | Rejected edits and file errors shown in the app | ✓ |
 | CAP-048 | macOS release ships a `Lintel.app` bundle | ✓ |
 
-**Planned for v0.4.0:**
+## v0.4.0 — Accessibility labels, keyboard shortcuts, AppImage
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.4.0
+
+CI evidence: PR #7 run `42013256872`; release workflow run `42024620827`.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-049 | Keyboard shortcut hints + hover labels on all controls | ✓ |
+| CAP-050 | Focus-ring contrast WCAG AA (COBALT) | ✓ |
+| CAP-051 | Linux AppImage release artefact | ✓ |
+
+**Planned for v0.5.0:**
+- Windows installer (MSI or setup .exe) — Inno Setup download hangs on CI; deferred
 - Screen-reader labels beyond egui's built-in accessibility
-- Linux AppImage and Windows installer
 - Keyboard-focus management review
+- Linux AppImage verification on end-user systems
 
 ---
 

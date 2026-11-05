@@ -1,5 +1,24 @@
 # Progress
 
+## v0.4.0 Status — RELEASED
+
+- [x] Keyboard shortcut hints + hover labels on all controls (W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete)
+- [x] Focus-ring contrast WCAG AA (COBALT verified ~8.3:1 on PAPER, ~7.8:1 on PANEL_BG)
+- [x] Escape dismissal on all dialogs (About, Release notes, Update, Export sheet)
+- [x] Linux AppImage release artefact (`lintel-appimage-x86_64.AppImage`, verified ELF)
+- [x] ACCESSIBILITY.md (honest statement incl. canvas limitation) and docs/qc/checklist.md
+- [x] CI green (PR #7 run `42013256872`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.4.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.4.0
+      (release run `42024620827`; AppImage + SHA256SUMS verified)
+
+Readiness % (v0.4.0): **100% — shipped.**
+
+### Still planned (v0.5.0)
+
+- [ ] Windows installer (MSI or setup .exe) — Inno Setup download hangs on CI; deferred
+- [ ] Screen-reader labels beyond egui's built-in accessibility
+- [ ] Keyboard-focus management review
+
 ## v0.3.0 Status — RELEASED
 
 - [x] Rejected edits and file errors surfaced in the toolbar (with a Clear message item)
@@ -10,12 +29,6 @@
       (release run `41999766800`; `Lintel.app` verified inside the published asset)
 
 Readiness % (v0.3.0): **100% — shipped.**
-
-### Still planned (v0.4.0)
-
-- [ ] Screen-reader labels beyond egui's built-in accessibility
-- [ ] Linux AppImage and Windows installer
-- [ ] Keyboard-focus management review
 
 ## v0.2.0 Status — RELEASED
 
