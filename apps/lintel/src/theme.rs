@@ -12,6 +12,15 @@ pub const INK: Color32 = Color32::from_rgb(26, 24, 22); // near-black graphite
 pub const COBALT: Color32 = Color32::from_rgb(18, 78, 120); // selection / active tool
 pub const GREEN: Color32 = Color32::from_rgb(34, 158, 96); // endpoint snap
 
+// Focus-ring colour decision (guide II.21.2 / II.21.4).
+// egui draws focus rings around keyboard-focused widgets automatically, derived
+// from the theme's selection/accent colour. COBALT (#124E78) has a relative
+// luminance of ~0.069. Against PAPER (#FCF8F2, ~0.942) the contrast ratio is
+// ~8.3:1 and against PANEL_BG (#F5F0E8, ~0.876) it is ~7.8:1 — both above the
+// WCAG AA 4.5:1 threshold for normal text and the 3:1 threshold for UI
+// graphics. So COBALT focus rings meet AA on both light panel and canvas
+// backgrounds; no focus-ring colour change or removal is needed.
+
 pub const WALL_FILL: Color32 = Color32::from_rgb(226, 222, 214);
 pub const WALL_STROKE: Color32 = Color32::from_rgb(84, 78, 70);
 #[allow(dead_code)]

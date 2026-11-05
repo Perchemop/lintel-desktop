@@ -147,13 +147,20 @@ impl eframe::App for LintelApp {
         egui::CentralPanel::default().show(ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("New plan").clicked() {
+                    if ui
+                        .button("New plan")
+                        .on_hover_text("Start a new empty plan")
+                        .clicked()
+                    {
                         self.doc = Document::new("Untitled plan", now_epoch_s());
                         self.selection = None;
                         self.draft = Draft::default();
                     }
                     ui.separator();
-                    if ui.button("Open…").clicked()
+                    if ui
+                        .button("Open…")
+                        .on_hover_text("Open a saved Lintel plan from disk")
+                        .clicked()
                         && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                     {
                         match Document::open(&path) {
@@ -167,25 +174,30 @@ impl eframe::App for LintelApp {
                             }
                         }
                     }
-                    if ui.button("Save").clicked()
+                    if ui.button("Save").on_hover_text("Save the current plan").clicked()
                         && let Err(e) = self.doc.save()
                     {
                         self.note_status(format!("Could not save: {e}"), now);
                     }
-                    if ui.button("Save As…").clicked()
+                    if ui
+                        .button("Save As…")
+                        .on_hover_text("Save the current plan under a new name")
+                        .clicked()
                         && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                         && let Err(e) = self.doc.save_as(path)
                     {
                         self.note_status(format!("Could not save: {e}"), now);
                     }
                     ui.separator();
-                    if ui.button("Exit").clicked() {
+                    if ui.button("Exit").on_hover_text("Close Lintel").clicked() {
                         ui.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
                 ui.menu_button("Edit", |ui| {
                     ui.add_enabled(self.doc.can_undo(), |ui: &mut egui::Ui| {
-                        let response = ui.button("Undo");
+                        let response = ui
+                            .button("Undo")
+                            .on_hover_text("Undo the last change (Ctrl+Z)");
                         if response.clicked() {
                             self.doc.undo(now_epoch_s());
                             self.selection = None;
@@ -194,7 +206,9 @@ impl eframe::App for LintelApp {
                         response
                     });
                     ui.add_enabled(self.doc.can_redo(), |ui: &mut egui::Ui| {
-                        let response = ui.button("Redo");
+                        let response = ui
+                            .button("Redo")
+                            .on_hover_text("Redo the last undone change (Ctrl+Y)");
                         if response.clicked() {
                             self.doc.redo(now_epoch_s());
                             self.selection = None;
@@ -204,23 +218,40 @@ impl eframe::App for LintelApp {
                     });
                 });
                 ui.menu_button("View", |ui| {
-                    if ui.button("Zoom to fit").clicked() {
+                    if ui
+                        .button("Zoom to fit")
+                        .on_hover_text("Zoom the canvas to fit the whole plan (F)")
+                        .clicked()
+                    {
                         self.zoom_to_fit();
                     }
                 });
                 ui.menu_button("Help", |ui| {
-                    if ui.button("About Lintel…").clicked() {
+                    if ui
+                        .button("About Lintel…")
+                        .on_hover_text("Show the About dialog with version and licence")
+                        .clicked()
+                    {
                         self.showing_about = true;
                     }
-                    if ui.button("Release notes…").clicked() {
+                    if ui
+                        .button("Release notes…")
+                        .on_hover_text("Show the full release history")
+                        .clicked()
+                    {
                         self.showing_notes = true;
                     }
                     ui.separator();
-                    if ui.button("Clear message").clicked() {
+                    if ui.button("Clear message").on_hover_text("Dismiss the current status message").clicked()
+                    {
                         self.status = None;
                     }
                     ui.separator();
-                    if ui.button("Check for updates…").clicked() {
+                    if ui
+                        .button("Check for updates…")
+                        .on_hover_text("Check GitHub Releases for a newer version")
+                        .clicked()
+                    {
                         self.start_update_check();
                         self.showing_about = true;
                     }
@@ -231,6 +262,9 @@ impl eframe::App for LintelApp {
                 ui.label("Tool:");
                 egui::ComboBox::from_label("Tool")
                     .selected_text(self.tool.label())
+                    .on_hover_text(
+                        "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
+                    )
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.tool, Tool::Select, Tool::Select.label());
                         ui.selectable_value(&mut self.tool, Tool::Wall, Tool::Wall.label());
@@ -244,6 +278,11 @@ impl eframe::App for LintelApp {
                     });
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
+                ui.label(
+                    egui::RichText::new("Shortcuts: W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete")
+                        .small()
+                        .color(egui::Color32::GRAY),
+                );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if let Some(status) = self.status.clone()
                         && now_epoch_s().saturating_sub(self.status_at) < 8
@@ -622,23 +661,32 @@ impl LintelApp {
                         &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A3,
                         "A3",
-                    );
+                    )
+                    .on_hover_text("Export on an A3 sheet");
                     ui.radio_value(
                         &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A4,
                         "A4",
-                    );
+                    )
+                    .on_hover_text("Export on an A4 sheet");
                     ui.label("Scale 1:N:");
                     ui.add(
                         egui::DragValue::new(&mut export_spec.scale_denominator)
                             .range(20..=2000)
-                            .speed(10),
+                            .speed(10)
+                            .on_hover_text("Scale denominator 1:N, from 1:20 to 1:2000"),
                     );
                     ui.label("Sheet:");
-                    ui.text_edit_singleline(&mut export_spec.sheet_number);
+                    ui.text_edit_singleline(&mut export_spec.sheet_number)
+                        .on_hover_text("Sheet number printed on the exported sheet");
                     ui.label("Title:");
-                    ui.text_edit_singleline(&mut export_spec.sheet_title);
-                    if ui.button("Export PDF…").clicked() {
+                    ui.text_edit_singleline(&mut export_spec.sheet_title)
+                        .on_hover_text("Sheet title printed on the exported sheet");
+                    if ui
+                        .button("Export PDF…")
+                        .on_hover_text("Export the plan as a scaled PDF sheet")
+                        .clicked()
+                    {
                         do_export = true;
                     }
                 });

@@ -131,6 +131,59 @@ jobs:
         path: ${{ matrix.asset }}.zip
         if-no-files-found: error
 
+    - name: Build Linux AppImage
+      if: matrix.name == 'linux-x86_64'
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -L -o appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+        chmod +x appimagetool
+        rm -rf AppDir && mkdir -p AppDir/usr/bin
+        BIN=""
+        for cand in "target/${{ matrix.target }}/release/lintel"; do
+          [ -f "$cand" ] && BIN="$cand" && break
+        done
+        test -n "$BIN"
+        cp "$BIN" AppDir/usr/bin/lintel
+        chmod +x AppDir/usr/bin/lintel
+        cp resources/linux/lintel.desktop AppDir/lintel.desktop
+        cp resources/linux/lintel.png AppDir/lintel.png
+        ./appimagetool AppDir lintel-appimage-x86_64.AppImage
+        test -f lintel-appimage-x86_64.AppImage
+        ls -la lintel-appimage-x86_64.AppImage
+
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: matrix.name == 'linux-x86_64'
+      with:
+        name: lintel-appimage-x86_64
+        path: lintel-appimage-x86_64.AppImage
+        if-no-files-found: error
+
+    - name: Build Windows installer
+      if: matrix.name == 'windows-x86_64'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        Invoke-WebRequest -Uri https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe -OutFile innosetup.exe
+        Start-Process -FilePath ./innosetup.exe -ArgumentList '/extract="C:\tools\iscc"' -Wait
+        Expand-Archive -Path lintel-windows-x86_64.zip -DestinationPath staging
+        Copy-Item resources\windows\lintel.png staging\lintel.png
+        Set-Location resources\windows
+        & "C:\tools\iscc\ISCC.exe" lintel.iss
+        Copy-Item output\lintel-windows-x86_64-setup.exe ..
+        Set-Location ..
+        if (!(Test-Path lintel-windows-x86_64-setup.exe)) {
+          throw "lintel-windows-x86_64-setup.exe was not produced"
+        }
+        ls -la lintel-windows-x86_64-setup.exe
+
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: matrix.name == 'windows-x86_64'
+      with:
+        name: lintel-windows-x86_64-setup
+        path: lintel-windows-x86_64-setup.exe
+        if-no-files-found: error
+
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -149,7 +202,7 @@ jobs:
       id: collect
       run: |
         set -euo pipefail
-        files=$(find dist -type f \( -name '*.zip' \) | sort)
+        files=$(find dist -type f \( -name '*.zip' -o -name '*.AppImage' -o -name '*.exe' \) | sort)
         : > dist/SHA256SUMS.txt
         for f in $files; do
           (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") >> dist/SHA256SUMS.txt
