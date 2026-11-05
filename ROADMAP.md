@@ -92,12 +92,15 @@ CI evidence: PR #7 run `42013256872`; release workflow run `42024620827`.
 
 ## v0.5.0 — Windows installer
 
-**Status:** In progress — implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.5.0
+
+CI evidence: PR #8 run `42099183213`; release workflow run `42103705669`.
 
 | ID | Capability | Done |
 |---|-----------|------|
 | CAP-052 | Windows installer (Inno Setup via Chocolatey on CI) | ✓ |
 | CAP-053 | `.iss` DefaultDirName typo fixed (`{autpf}` → `{autopf}`) | ✓ |
+| CAP-054 | `.iss` AppId brace escaped + Windows `.ico` icon | ✓ |
 
 **Planned for v0.6.0:**
 - Screen-reader labels beyond egui's built-in accessibility

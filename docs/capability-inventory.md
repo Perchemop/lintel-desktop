@@ -61,6 +61,7 @@ run, recorded in `docs/parity.md`).
 | CAP-051 | Linux AppImage | Release publishes `lintel-appimage-x86_64.AppImage` (valid ELF) | `release.yml` AppImage step | guide §6.2 | implemented |
 | CAP-052 | Windows installer | Release publishes `lintel-windows-x86_64-setup.exe` via Inno Setup | `release.yml` + `resources/windows/lintel.iss` | guide §6.2 | implemented |
 | CAP-053 | `.iss` DefaultDirName fix | Installer suggests the correct Program Files dir | `resources/windows/lintel.iss` | — | implemented |
+| CAP-054 | `.iss` AppId + Windows icon | AppId brace escaped; `SetupIconFile` uses a real `.ico` | `resources/windows/lintel.iss`, `resources/windows/lintel.ico` | — | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -80,7 +81,7 @@ Readiness % (v0.1.0): **100% — shipped** (CI `41793150063`).
 Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
 Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
 Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
-Readiness % (v0.5.0): **~85% — implemented; CI verification and tag pending.**
+Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
 
 Still planned for v0.6.0: screen-reader labels beyond the toolkit's built-in
 accessibility, keyboard-focus management review.

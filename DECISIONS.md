@@ -24,3 +24,5 @@
 | D-018 | Multi-platform | CI builds a Linux/macOS/Windows matrix; Releases publish Linux x86_64 + aarch64, macOS aarch64, Windows x86_64 | guide section 6.2 / section 8 step 7 | 2026-11-05 |
 | D-019 | Accessibility labels | Keyboard shortcut hints + hover labels on every control; COBALT focus rings meet WCAG AA | guide II.21; every interactive widget gets a name/label | 2026-11-05 |
 | D-020 | Linux AppImage | Release publishes `lintel-appimage-x86_64.AppImage`; Windows installer deferred (Inno Setup download hangs on CI) | AppImage built without FUSE by extracting `appimagetool` and running `AppRun` directly | 2026-11-05 |
+| D-021 | Windows installer | Built on CI with Inno Setup installed via Chocolatey, not a direct `.exe` download | The direct download hung on windows-latest; `choco install innosetup` is reliable and preinstalled | 2026-11-06 |
+| D-022 | Windows icon | `SetupIconFile` uses a real `.ico` (`resources/windows/lintel.ico`) wrapping the 256x256 PNG | Inno Setup rejects PNG for the setup icon; ICO supports a PNG-compressed 256x256 entry | 2026-11-06 |

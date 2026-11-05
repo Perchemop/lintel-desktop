@@ -33,13 +33,14 @@ each green CI run; percentages move only from evidence.
 | CAP-050 | Focus-ring contrast WCAG AA (COBALT) | `42013256872` (PR #7) | verified |
 | CAP-051 | Linux AppImage release artefact | `42024620827` (v0.4.0 release) | verified |
 | CAP-052 | Windows installer (Inno Setup via Chocolatey) | pending | awaiting run |
-| CAP-053 | `.iss` DefaultDirName typo fixed | pending | awaiting run |
+| CAP-053 | `.iss` DefaultDirName typo fixed | `42099183213` (PR #8) | verified |
+| CAP-054 | `.iss` AppId brace + Windows `.ico` icon | `42103705669` (v0.5.0 release) | verified |
 
 ## v0.5.0 release
 
-Pending — will be published at
-https://github.com/Perchemop/lintel-desktop/releases/tag/0.5.0 once CI and the
-release workflow are green for the `opencode/v0.5.0-windows-installer` branch.
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.5.0 —
+release workflow run `42103705669`. `lintel-windows-x86_64-setup.exe` verified
+as a valid PE binary; SHA256SUMS.txt recomputed and matching.
 
 ## v0.4.0 release
 
