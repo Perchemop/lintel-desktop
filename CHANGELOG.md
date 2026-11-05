@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.3.0 — 2026-11-05
+
+### Summary
+
+Packaging and feedback polish: rejected edits and file errors are now shown in
+the app instead of only on the console, and the macOS download ships as a real
+`Lintel.app` bundle.
+
+### Added
+
+- A status message in the toolbar whenever an edit is rejected or a file
+  operation fails (open, save, save as, PDF export), with a
+  "Help → Clear message" item
+- The macOS release archive now contains `Lintel.app` with a real
+  `Info.plist`, instead of a bare binary
+
+### Changed
+
+- (none)
+
+### Fixed
+
+- (none)
+
+### Known limitations
+
+- No Linux AppImage or Windows installer yet
+- Screen-reader labelling beyond egui's built-in accessibility is still pending
+
+### Token metrics
+
+- Approx. tokens this release: 300,000
+- Approx. cumulative tokens since development began: 5,200,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.2.0 — 2026-11-05
 
 ### Summary
@@ -20,6 +56,10 @@ user-facing README.
   editable offset; place, move and delete them from the canvas and the Inspector
 - Dimension hit testing that takes priority over the wall beneath it, plus
   dimension save/load and full undo/redo
+- Dimension kind selector and extension-line toggle in the Inspector, labels
+  that rotate to follow the line, and snapping applied when a wall or dimension
+  is committed (not just previewed)
+- An on-canvas hint when a level has no walls yet
 - Shared `update-check` crate (GitHub Releases API, semantic version comparison,
   fail-soft offline) and the in-app "check for updates" flow
 - Shared `crash-report` crate (panic hook, scrubbed diagnostics, optional

@@ -53,6 +53,9 @@ run, recorded in `docs/parity.md`).
 | CAP-043 | Cross-platform CI build matrix | Linux/macOS/Windows compile in CI | `build-matrix` job | guide §8 step 7 | implemented |
 | CAP-044 | Multi-platform release artefacts | Release publishes 4 target archives + checksums | `release.yml` matrix | guide §6.2 | implemented |
 | CAP-045 | User-facing README | Plain-language README for non-technical users | `README.md` | guide §9 | implemented |
+| CAP-046 | Empty-state hint | A level with no walls shows an on-canvas hint | `apps/lintel/src/main.rs` | guide §6.2 | implemented |
+| CAP-047 | Visible error feedback | Rejected edits and file failures show a toolbar status message | `LintelApp::note_status` | guide §9 | implemented |
+| CAP-048 | macOS app bundle | The macOS archive contains `Lintel.app` with `Info.plist` | `release.yml` bundle step | guide §6.2 | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -70,6 +73,7 @@ run, recorded in `docs/parity.md`).
 
 Readiness % (v0.1.0): **100% — shipped** (CI `41793150063`).
 Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
+Readiness % (v0.3.0): **~85% — features implemented; CI verification and tag pending.**
 
-Still planned for v0.2.x / v0.3.0: dimension kind selector and rotated labels,
-installers (AppImage, MSI, macOS .app), and accessibility / empty-state work.
+Still planned for v0.4.0: screen-reader labels beyond the toolkit's built-in
+accessibility, a Linux AppImage and a Windows installer.

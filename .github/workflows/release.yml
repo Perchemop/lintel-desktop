@@ -55,22 +55,62 @@ jobs:
     - name: Build release
       run: cargo build --release --target ${{ matrix.target }}
 
+    - name: Build macOS app bundle
+      id: bundle
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        set -euo pipefail
+        APP="Lintel.app"
+        rm -rf "$APP"
+        mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+        for cand in "target/${{ matrix.target }}/release/lintel"; do
+          [ -f "$cand" ] && cp "$cand" "$APP/Contents/MacOS/lintel" && break
+        done
+        test -f "$APP/Contents/MacOS/lintel"
+        chmod +x "$APP/Contents/MacOS/lintel"
+        cat > "$APP/Contents/Info.plist" <<PLIST
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>CFBundleName</key><string>Lintel</string>
+          <key>CFBundleDisplayName</key><string>Lintel</string>
+          <key>CFBundleExecutable</key><string>lintel</string>
+          <key>CFBundleIdentifier</key><string>io.github.perchemop.lintel</string>
+          <key>CFBundlePackageType</key><string>APPL</string>
+          <key>CFBundleShortVersionString</key><string>${GITHUB_REF_NAME#v}</string>
+          <key>CFBundleVersion</key><string>${GITHUB_REF_NAME#v}</string>
+          <key>LSMinimumSystemVersion</key><string>10.13</string>
+          <key>NSHighResolutionCapable</key><true/>
+          <key>NSPrincipalClass</key><string>NSApplication</string>
+        </dict>
+        </plist>
+        PLIST
+        echo "bundle=$APP" >> "$GITHUB_OUTPUT"
+
     - name: Prepare artifact (${{ matrix.name }})
       shell: bash
       run: |
         set -euo pipefail
         STAGE="${{ matrix.asset }}"
         rm -rf "$STAGE" && mkdir -p "$STAGE"
-        BIN=""
-        for cand in "target/${{ matrix.target }}/release/lintel" \
-                    "target/${{ matrix.target }}/release/lintel.exe"; do
-          if [ -f "$cand" ]; then BIN="$cand"; break; fi
-        done
-        if [ -z "$BIN" ]; then
-          echo "no release binary found under target/${{ matrix.target }}/release" >&2
-          exit 1
+        if [ "${{ runner.os }}" = "macOS" ]; then
+          APP="${{ steps.bundle.outputs.bundle }}"
+          test -d "$APP"
+          cp -R "$APP" "$STAGE/"
+        else
+          BIN=""
+          for cand in "target/${{ matrix.target }}/release/lintel" \
+                      "target/${{ matrix.target }}/release/lintel.exe"; do
+            if [ -f "$cand" ]; then BIN="$cand"; break; fi
+          done
+          if [ -z "$BIN" ]; then
+            echo "no release binary found under target/${{ matrix.target }}/release" >&2
+            exit 1
+          fi
+          cp "$BIN" "$STAGE/"
         fi
-        cp "$BIN" "$STAGE/"
         cp README.md LICENSE-MIT LICENSE-APACHE ATTRIBUTION.md "$STAGE/" 2>/dev/null || true
         OUT="${{ matrix.asset }}.zip"
         rm -f "$OUT"

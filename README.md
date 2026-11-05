@@ -42,7 +42,7 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.2.0 adds joint resolution for unequal wall thicknesses and dimension lines. Installers, accessibility work, and more are on the way. See:
+Lintel is young and actively developed. Version 0.3.0 adds on-screen error messages and a proper macOS app bundle; dimension lines and joint resolution arrived in 0.2.0. A Linux AppImage, a Windows installer, and screen-reader work are on the way. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

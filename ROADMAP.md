@@ -66,14 +66,20 @@ CI evidence: PR #4 run `41907396871` (`check` + `build-matrix` on Linux/macOS/Wi
 - Dimension snap to wall endpoints and openings
 - Rotated labels for vertical/aligned dimensions
 
-## v0.3.0 — Installers & Accessibility
+## v0.3.0 — Error Feedback & macOS Bundle
 
-**Planned capabilities:**
-- Windows installer (MSI or setup .exe)
-- macOS .app bundle (and notarisation notes)
-- Linux AppImage / Flatpak
-- Full accessibility (keyboard navigation, screen-reader labels)
-- Empty states, error handling, keyboard focus management
+**Status:** In progress — implemented; CI verification and tag pending.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-046 | Empty-state hint on a level with no walls | ✓ |
+| CAP-047 | Rejected edits and file errors shown in the app | ✓ |
+| CAP-048 | macOS release ships a `Lintel.app` bundle | ✓ |
+
+**Planned for v0.4.0:**
+- Screen-reader labels beyond egui's built-in accessibility
+- Linux AppImage and Windows installer
+- Keyboard-focus management review
 
 ---
 

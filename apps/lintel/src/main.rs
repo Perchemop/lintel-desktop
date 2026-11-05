@@ -63,6 +63,10 @@ struct LintelApp {
     update_status: Option<update_check::UpdateStatus>,
     /// Whether the "update available" prompt is showing.
     update_open: bool,
+    /// Last user-visible status message, cleared after a short while.
+    status: Option<String>,
+    /// Unix seconds when `status` was set, so it can expire.
+    status_at: i64,
 }
 
 impl LintelApp {
@@ -83,6 +87,8 @@ impl LintelApp {
             update_rx: None,
             update_status: None,
             update_open: false,
+            status: None,
+            status_at: 0,
         };
         // One quiet check at startup; it fails soft when offline and never
         // blocks the UI thread.
@@ -119,6 +125,13 @@ impl LintelApp {
             Some(Err(mpsc::TryRecvError::Disconnected)) => self.update_rx = None,
         }
     }
+
+    /// Show a short status/error message in the toolbar and log it.
+    fn note_status(&mut self, message: String, now: i64) {
+        eprintln!("lintel: {message}");
+        self.status = Some(message);
+        self.status_at = now;
+    }
 }
 
 impl eframe::App for LintelApp {
@@ -149,19 +162,21 @@ impl eframe::App for LintelApp {
                                 self.selection = None;
                                 self.view = View::default();
                             }
-                            Err(e) => eprintln!("open: {e}"),
+                            Err(e) => {
+                                self.note_status(format!("Could not open the plan: {e}"), now)
+                            }
                         }
                     }
                     if ui.button("Save").clicked()
                         && let Err(e) = self.doc.save()
                     {
-                        eprintln!("save: {e}");
+                        self.note_status(format!("Could not save: {e}"), now);
                     }
                     if ui.button("Save As…").clicked()
                         && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                         && let Err(e) = self.doc.save_as(path)
                     {
-                        eprintln!("save as: {e}");
+                        self.note_status(format!("Could not save: {e}"), now);
                     }
                     ui.separator();
                     if ui.button("Exit").clicked() {
@@ -201,6 +216,10 @@ impl eframe::App for LintelApp {
                         self.showing_notes = true;
                     }
                     ui.separator();
+                    if ui.button("Clear message").clicked() {
+                        self.status = None;
+                    }
+                    ui.separator();
                     if ui.button("Check for updates…").clicked() {
                         self.start_update_check();
                         self.showing_about = true;
@@ -226,6 +245,15 @@ impl eframe::App for LintelApp {
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if let Some(status) = self.status.clone()
+                        && now_epoch_s().saturating_sub(self.status_at) < 8
+                    {
+                        ui.label(
+                            egui::RichText::new(status)
+                                .small()
+                                .color(egui::Color32::DARK_RED),
+                        );
+                    }
                     let version = ui.link(
                         egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
                             .small(),
@@ -338,7 +366,9 @@ impl LintelApp {
                                     },
                                     now,
                                 )
-                                .map_err(|e| eprintln!("wall: {e}"))
+                                .map_err(|e| {
+                                    self.note_status(format!("Wall rejected: {e}"), now);
+                                })
                                 .ok();
                             if let Some(applied) = applied
                                 && let Some(wall_id) = applied.wall
@@ -379,7 +409,9 @@ impl LintelApp {
                                     },
                                     now,
                                 )
-                                .map_err(|e| eprintln!("dimension: {e}"))
+                                .map_err(|e| {
+                                    self.note_status(format!("Dimension rejected: {e}"), now);
+                                })
                                 .ok();
                             if let Some(applied) = applied
                                 && let Some(dim_id) = applied.dimension
@@ -576,51 +608,54 @@ impl LintelApp {
         about::release_notes_window(ui, &mut self.showing_notes);
         about::update_window(ui, &mut self.update_open, self.update_status.as_ref());
         if self.export_open {
+            // The window edits the spec in place and only reports that the
+            // user asked for an export, so the closure never needs `*self`
+            // (it is already borrowed by `.open`).
+            let export_spec = &mut self.export_spec;
+            let mut do_export = false;
             egui::Window::new("Export sheet")
                 .open(&mut self.export_open)
                 .collapsible(false)
                 .show(ui, |ui| {
                     ui.label("Paper size:");
                     ui.radio_value(
-                        &mut self.export_spec.paper,
+                        &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A3,
                         "A3",
                     );
                     ui.radio_value(
-                        &mut self.export_spec.paper,
+                        &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A4,
                         "A4",
                     );
                     ui.label("Scale 1:N:");
                     ui.add(
-                        egui::DragValue::new(&mut self.export_spec.scale_denominator)
+                        egui::DragValue::new(&mut export_spec.scale_denominator)
                             .range(20..=2000)
                             .speed(10),
                     );
                     ui.label("Sheet:");
-                    ui.text_edit_singleline(&mut self.export_spec.sheet_number);
+                    ui.text_edit_singleline(&mut export_spec.sheet_number);
                     ui.label("Title:");
-                    ui.text_edit_singleline(&mut self.export_spec.sheet_title);
-                    if ui.button("Export PDF…").clicked()
-                        && let Some(path) = Some(PathBuf::from(format!(
-                            "{}.pdf",
-                            self.export_spec.sheet_number
-                        )))
-                    {
-                        match lintel_core::pdf::render_plan(
-                            self.doc.project(),
-                            &self.export_spec,
-                            now,
-                        ) {
-                            Ok(bytes) => {
-                                if std::fs::write(&path, &bytes).is_err() {
-                                    eprintln!("write pdf: {}", path.display());
-                                }
-                            }
-                            Err(e) => eprintln!("export: {e}"),
-                        }
+                    ui.text_edit_singleline(&mut export_spec.sheet_title);
+                    if ui.button("Export PDF…").clicked() {
+                        do_export = true;
                     }
                 });
+            if do_export {
+                let path = PathBuf::from(format!("{}.pdf", self.export_spec.sheet_number));
+                match lintel_core::pdf::render_plan(self.doc.project(), &self.export_spec, now) {
+                    Ok(bytes) => {
+                        if let Err(e) = std::fs::write(&path, &bytes) {
+                            self.note_status(
+                                format!("Could not write {}: {e}", path.display()),
+                                now,
+                            );
+                        }
+                    }
+                    Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
+                }
+            }
         }
     }
 

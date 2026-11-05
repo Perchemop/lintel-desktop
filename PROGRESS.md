@@ -1,6 +1,16 @@
 # Progress
 
-## v0.2.0 Status — IN PROGRESS (features implemented; CI/tag pending)
+## v0.3.0 Status — IN PROGRESS (implemented; CI/tag pending)
+
+- [x] Rejected edits and file errors surfaced in the toolbar (with a Clear message item)
+- [x] macOS release archive packages `Lintel.app` with a real `Info.plist`
+- [x] Empty-state hint when a level has no walls (landed with the v0.2.0 polish)
+- [ ] CI green on `main` for the v0.3.0 slice
+- [ ] v0.3.0 tag and GitHub Release published
+
+Readiness % (v0.3.0): **~85% — features complete; verification and release pending.**
+
+## v0.2.0 Status — RELEASED
 
 - [x] Dimension lines (aligned/horizontal/vertical) with numeric labels
 - [x] Dimension place / move / offset / delete commands and Inspector panel
