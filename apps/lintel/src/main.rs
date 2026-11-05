@@ -262,9 +262,6 @@ impl eframe::App for LintelApp {
                 ui.label("Tool:");
                 egui::ComboBox::from_label("Tool")
                     .selected_text(self.tool.label())
-                    .on_hover_text(
-                        "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
-                    )
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut self.tool, Tool::Select, Tool::Select.label());
                         ui.selectable_value(&mut self.tool, Tool::Wall, Tool::Wall.label());
@@ -275,7 +272,10 @@ impl eframe::App for LintelApp {
                             Tool::Dimension,
                             Tool::Dimension.label(),
                         );
-                    });
+                    })
+                    .on_hover_text(
+                        "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
+                    );
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
                 ui.label(
@@ -673,9 +673,9 @@ impl LintelApp {
                     ui.add(
                         egui::DragValue::new(&mut export_spec.scale_denominator)
                             .range(20..=2000)
-                            .speed(10)
-                            .on_hover_text("Scale denominator 1:N, from 1:20 to 1:2000"),
-                    );
+                            .speed(10),
+                    )
+                    .on_hover_text("Scale denominator 1:N, from 1:20 to 1:2000");
                     ui.label("Sheet:");
                     ui.text_edit_singleline(&mut export_spec.sheet_number)
                         .on_hover_text("Sheet number printed on the exported sheet");
