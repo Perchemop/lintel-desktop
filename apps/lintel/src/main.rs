@@ -608,59 +608,54 @@ impl LintelApp {
         about::release_notes_window(ui, &mut self.showing_notes);
         about::update_window(ui, &mut self.update_open, self.update_status.as_ref());
         if self.export_open {
+            // The window edits the spec in place and only reports that the
+            // user asked for an export, so the closure never needs `*self`
+            // (it is already borrowed by `.open`).
+            let export_spec = &mut self.export_spec;
+            let mut do_export = false;
             egui::Window::new("Export sheet")
                 .open(&mut self.export_open)
                 .collapsible(false)
                 .show(ui, |ui| {
                     ui.label("Paper size:");
                     ui.radio_value(
-                        &mut self.export_spec.paper,
+                        &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A3,
                         "A3",
                     );
                     ui.radio_value(
-                        &mut self.export_spec.paper,
+                        &mut export_spec.paper,
                         lintel_core::pdf::PaperSize::A4,
                         "A4",
                     );
                     ui.label("Scale 1:N:");
                     ui.add(
-                        egui::DragValue::new(&mut self.export_spec.scale_denominator)
+                        egui::DragValue::new(&mut export_spec.scale_denominator)
                             .range(20..=2000)
                             .speed(10),
                     );
                     ui.label("Sheet:");
-                    ui.text_edit_singleline(&mut self.export_spec.sheet_number);
+                    ui.text_edit_singleline(&mut export_spec.sheet_number);
                     ui.label("Title:");
-                    ui.text_edit_singleline(&mut self.export_spec.sheet_title);
-                    if ui.button("Export PDF…").clicked()
-                        && let Some(path) = Some(PathBuf::from(format!(
-                            "{}.pdf",
-                            self.export_spec.sheet_number
-                        )))
-                    {
-                        match lintel_core::pdf::render_plan(
-                            self.doc.project(),
-                            &self.export_spec,
-                            now,
-                        ) {
-                            Ok(bytes) => {
-                                if std::fs::write(&path, &bytes).is_err() {
-                                    self.note_status(
-                                        format!(
-                                            "Could not write {}.pdf",
-                                            self.export_spec.sheet_number
-                                        ),
-                                        now,
-                                    );
-                                }
-                            }
-                            Err(e) => {
-                                self.note_status(format!("Could not export the PDF: {e}"), now)
-                            }
-                        }
+                    ui.text_edit_singleline(&mut export_spec.sheet_title);
+                    if ui.button("Export PDF…").clicked() {
+                        do_export = true;
                     }
                 });
+            if do_export {
+                let path = PathBuf::from(format!("{}.pdf", self.export_spec.sheet_number));
+                match lintel_core::pdf::render_plan(self.doc.project(), &self.export_spec, now) {
+                    Ok(bytes) => {
+                        if let Err(e) = std::fs::write(&path, &bytes) {
+                            self.note_status(
+                                format!("Could not write {}: {e}", path.display()),
+                                now,
+                            );
+                        }
+                    }
+                    Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
+                }
+            }
         }
     }
 
