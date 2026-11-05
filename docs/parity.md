@@ -22,8 +22,16 @@ each green CI run; percentages move only from evidence.
 | CAP-044 | `release.yml` multi-target matrix | v0.2.0 release run | published |
 | CAP-045 | README rewrite (guide §9) | `41907396871` (PR #4) | verified |
 | CAP-046 | Empty-state hint on an empty level | `41992132501` (PR #5) | verified |
-| CAP-047 | Rejected edits / file errors shown in the app | pending | awaiting run |
-| CAP-048 | macOS release ships a `Lintel.app` bundle | pending | awaiting run |
+| CAP-047 | Rejected edits / file errors shown in the app | `41998649019` (PR #6) | verified |
+| CAP-048 | macOS release ships a `Lintel.app` bundle | `41999766800` (v0.3.0 release) | verified |
+
+## v0.3.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.3.0 —
+release workflow run `41999766800`. The macOS archive contains
+`Lintel.app/Contents/MacOS/lintel` and an `Info.plist` whose
+`CFBundleShortVersionString` expands to the tag version (verified by
+downloading the published asset and inspecting the archive).
 
 ## v0.2.0 release
 

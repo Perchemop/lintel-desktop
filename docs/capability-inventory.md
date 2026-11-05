@@ -73,7 +73,7 @@ run, recorded in `docs/parity.md`).
 
 Readiness % (v0.1.0): **100% — shipped** (CI `41793150063`).
 Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
-Readiness % (v0.3.0): **~85% — features implemented; CI verification and tag pending.**
+Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
 
 Still planned for v0.4.0: screen-reader labels beyond the toolkit's built-in
 accessibility, a Linux AppImage and a Windows installer.

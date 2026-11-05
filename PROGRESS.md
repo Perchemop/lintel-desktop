@@ -1,14 +1,21 @@
 # Progress
 
-## v0.3.0 Status — IN PROGRESS (implemented; CI/tag pending)
+## v0.3.0 Status — RELEASED
 
 - [x] Rejected edits and file errors surfaced in the toolbar (with a Clear message item)
 - [x] macOS release archive packages `Lintel.app` with a real `Info.plist`
 - [x] Empty-state hint when a level has no walls (landed with the v0.2.0 polish)
-- [ ] CI green on `main` for the v0.3.0 slice
-- [ ] v0.3.0 tag and GitHub Release published
+- [x] CI green (PR #6 run `41998649019`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.3.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.3.0
+      (release run `41999766800`; `Lintel.app` verified inside the published asset)
 
-Readiness % (v0.3.0): **~85% — features complete; verification and release pending.**
+Readiness % (v0.3.0): **100% — shipped.**
+
+### Still planned (v0.4.0)
+
+- [ ] Screen-reader labels beyond egui's built-in accessibility
+- [ ] Linux AppImage and Windows installer
+- [ ] Keyboard-focus management review
 
 ## v0.2.0 Status — RELEASED
 

@@ -68,7 +68,9 @@ CI evidence: PR #4 run `41907396871` (`check` + `build-matrix` on Linux/macOS/Wi
 
 ## v0.3.0 — Error Feedback & macOS Bundle
 
-**Status:** In progress — implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.3.0
+
+CI evidence: PR #6 run `41998649019`; release workflow run `41999766800`.
 
 | ID | Capability | Done |
 |---|-----------|------|
