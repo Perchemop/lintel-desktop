@@ -85,6 +85,14 @@ pub enum Command {
         id: DimensionId,
         offset: f64,
     },
+    SetDimensionKind {
+        id: DimensionId,
+        kind: DimensionKind,
+    },
+    SetDimensionExtensionLines {
+        id: DimensionId,
+        extension_lines: bool,
+    },
     DeleteDimension {
         id: DimensionId,
     },
@@ -182,6 +190,28 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
                 .dimension_mut(id)
                 .ok_or(CoreError::DimensionNotFound(id))?;
             dimension.offset = offset;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionKind { id, kind } => {
+            let level = active_level_mut(project)?;
+            let dimension = level
+                .dimension_mut(id)
+                .ok_or(CoreError::DimensionNotFound(id))?;
+            let mut candidate = dimension.clone();
+            candidate.kind = kind;
+            validate_dimension(&candidate)?;
+            dimension.kind = kind;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionExtensionLines {
+            id,
+            extension_lines,
+        } => {
+            let level = active_level_mut(project)?;
+            let dimension = level
+                .dimension_mut(id)
+                .ok_or(CoreError::DimensionNotFound(id))?;
+            dimension.extension_lines = extension_lines;
             Ok(Applied::default())
         }
         Command::DeleteDimension { id } => {
@@ -911,5 +941,86 @@ mod tests {
                 .dimension(id)
                 .is_some()
         );
+    }
+
+    #[test]
+    fn switching_a_dimension_kind_revalidates() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        // The two points share a y, so a vertical measure of them is zero and
+        // the switch must be refused.
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionKind {
+                id,
+                kind: DimensionKind::LinearVertical,
+            },
+        )
+        .expect_err("a vertical measure of a horizontal pair is zero");
+        assert!(error.to_string().contains("different measured points"));
+        let kind = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .kind;
+        assert_eq!(
+            kind,
+            DimensionKind::LinearHorizontal,
+            "a rejected change leaves the kind alone"
+        );
+
+        apply_command(
+            &mut project,
+            Command::SetDimensionKind {
+                id,
+                kind: DimensionKind::Aligned,
+            },
+        )
+        .expect("aligned always measures something");
+        let kind = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .kind;
+        assert_eq!(kind, DimensionKind::Aligned);
+    }
+
+    #[test]
+    fn dimension_extension_lines_can_be_toggled() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::SetDimensionExtensionLines {
+                id,
+                extension_lines: false,
+            },
+        )
+        .expect("hide extension lines");
+        let extension_lines = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .extension_lines;
+        assert!(!extension_lines);
+
+        apply_command(
+            &mut project,
+            Command::SetDimensionExtensionLines {
+                id,
+                extension_lines: true,
+            },
+        )
+        .expect("show extension lines");
+        let extension_lines = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .extension_lines;
+        assert!(extension_lines);
     }
 }

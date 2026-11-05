@@ -257,6 +257,25 @@ impl eframe::App for LintelApp {
                 &geometry,
                 self.selection,
             );
+            if geometry.walls.is_empty() && !self.draft.active {
+                let msg1 = "Pick the Wall tool (W) and click twice to draw a wall";
+                let msg2 = "Then place doors and windows from the toolbar";
+                let center = rect.center();
+                dimension_painter.text(
+                    center,
+                    egui::Align2::CENTER_CENTER,
+                    msg1,
+                    egui::FontId::proportional(16.0),
+                    crate::theme::INK,
+                );
+                dimension_painter.text(
+                    center + egui::Vec2::new(0.0, 22.0),
+                    egui::Align2::CENTER_CENTER,
+                    msg2,
+                    egui::FontId::proportional(16.0),
+                    crate::theme::INK,
+                );
+            }
             self.handle_canvas_input(ui, response, rect, now);
 
             egui::Window::new("Inspector")
@@ -290,14 +309,23 @@ impl LintelApp {
                     self.draft = Draft::default();
                 }
                 (Tool::Wall, Some(world)) => {
+                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
                     if !self.draft.active {
+                        let start =
+                            lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
                         self.draft = Draft {
                             active: true,
-                            start: world,
+                            start,
                             current: world,
                         };
                     } else {
-                        let end = world;
+                        let end = lintel_core::snap::snap_point(
+                            world,
+                            &anchors,
+                            Some(self.draft.start),
+                            &self.snap,
+                        )
+                        .point;
                         if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
                             let applied = self
                                 .doc
@@ -322,14 +350,23 @@ impl LintelApp {
                     }
                 }
                 (Tool::Dimension, Some(world)) => {
+                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
                     if !self.draft.active {
+                        let start =
+                            lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
                         self.draft = Draft {
                             active: true,
-                            start: world,
+                            start,
                             current: world,
                         };
                     } else {
-                        let end = world;
+                        let end = lintel_core::snap::snap_point(
+                            world,
+                            &anchors,
+                            Some(self.draft.start),
+                            &self.snap,
+                        )
+                        .point;
                         if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
                             let applied = self
                                 .doc

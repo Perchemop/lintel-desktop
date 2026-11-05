@@ -46,20 +46,21 @@ pub fn render_dimensions(
         painter.line_segment([sa - perp, sa + perp], line_stroke);
         painter.line_segment([sb - perp, sb + perp], line_stroke);
 
-        // Text label centred above/below the line.
+        // Text label rotated to follow the dimension line.
         let mid = (sa.to_vec2() + sb.to_vec2()) * 0.5;
-        let label_offset = if perp.y <= 0.0 {
-            egui::Vec2::new(0.0, -12.0)
-        } else {
-            egui::Vec2::new(0.0, 12.0)
-        };
+        let normal = egui::Vec2::new(-dir.y, dir.x) / len;
+        let mut angle = dir.angle();
+        if angle > std::f32::consts::FRAC_PI_2 {
+            angle -= std::f32::consts::PI;
+        } else if angle <= -std::f32::consts::FRAC_PI_2 {
+            angle += std::f32::consts::PI;
+        }
         let label = format!("{:.0} mm", dim.length());
-        painter.text(
-            egui::Pos2::new(mid.x, mid.y) + label_offset,
-            egui::Align2::CENTER_CENTER,
-            label,
-            egui::FontId::proportional(11.0),
-            stroke_color,
-        );
+        let font = egui::FontId::proportional(11.0);
+        let galley = painter.layout_no_wrap(label, font, stroke_color);
+        let pos = egui::Pos2::new(mid.x, mid.y) + normal * 8.0;
+        let shape = egui::epaint::TextShape::new(pos, galley, stroke_color)
+            .with_angle_and_anchor(angle, egui::Align2::CENTER_CENTER);
+        painter.add(shape);
     }
 }
