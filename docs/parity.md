@@ -21,3 +21,13 @@ each green CI run; percentages move only from evidence.
 | CAP-043 | `build-matrix` job in `.github/workflows/ci.yml` (Linux/macOS/Windows) | `41907396871` (PR #4) | verified |
 | CAP-044 | `release.yml` multi-target matrix | v0.2.0 release run | published |
 | CAP-045 | README rewrite (guide §9) | `41907396871` (PR #4) | verified |
+| CAP-046 | Empty-state hint on an empty level | `41992132501` (PR #5) | verified |
+| CAP-047 | Rejected edits / file errors shown in the app | pending | awaiting run |
+| CAP-048 | macOS release ships a `Lintel.app` bundle | pending | awaiting run |
+
+## v0.2.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.2.0 —
+release workflow run `41993262778` built all four targets (Linux x86_64,
+Linux aarch64, macOS aarch64, Windows x86_64) and attached
+`SHA256SUMS.txt`. Notes came from `RELEASE_NOTES.md`.

@@ -1,8 +1,41 @@
-# Release notes
+<!-- This file is attached verbatim to every GitHub Release by
+     .github/workflows/release.yml (--notes-file). The newest release belongs at
+     the top. Everything above the first release heading stays invisible on
+     GitHub because it is an HTML comment. -->
 
-This file is attached verbatim to every GitHub Release by
-`.github/workflows/release.yml` (`--notes-file`). The newest release belongs at
-the top.
+## Lintel 0.3.0 — Error feedback and macOS bundle
+
+**Summary.** When something cannot be done — a rejected edit, a file that will
+not open or save, a PDF that cannot be written — Lintel now says so in the
+toolbar instead of staying silent. The macOS download is packaged as a real
+`Lintel.app` application.
+
+### Added
+
+- A status message in the toolbar whenever an edit is rejected or a file
+  operation fails (open, save, save as, PDF export). It clears itself after a
+  few seconds, and **Help → Clear message** hides it immediately.
+- The macOS release archive now contains `Lintel.app` with a real
+  `Info.plist`, so it launches like a normal Mac application.
+
+### Known limitations
+
+- No Linux AppImage or Windows installer yet — unzip and run the binary.
+- Screen-reader labelling beyond the toolkit's built-in support is pending.
+
+### Artefacts
+
+`lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`,
+`lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-windows-x86_64.zip`, and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~300,000 tokens
+- Cumulative since development began: ~5,200,000 tokens
 
 ---
 
