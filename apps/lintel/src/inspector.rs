@@ -76,7 +76,8 @@ pub fn inspector(
     let view_cmd = egui::CollapsingHeader::new("View")
         .default_open(false)
         .show(ui, |ui| {
-            ui.checkbox(&mut snap.grid_enabled, "Show grid");
+            ui.checkbox(&mut snap.grid_enabled, "Show grid")
+                .on_hover_text("Show a background grid on the canvas.");
             ui.horizontal(|ui| {
                 ui.label("Snap tolerance:");
                 ui.add(
@@ -84,7 +85,8 @@ pub fn inspector(
                         .speed(1.0)
                         .range(10.0..=1000.0)
                         .suffix(" mm"),
-                );
+                )
+                .on_hover_text("Maximum distance in mm to snap to wall anchors.");
             });
             ui.horizontal(|ui| {
                 ui.label("Grid pitch:");
@@ -93,9 +95,11 @@ pub fn inspector(
                         .speed(10.0)
                         .range(50.0..=5000.0)
                         .suffix(" mm"),
-                );
+                )
+                .on_hover_text("Grid spacing in mm.");
             });
-            ui.checkbox(&mut snap.ortho, "Orthogonal drawing");
+            ui.checkbox(&mut snap.ortho, "Orthogonal drawing")
+                .on_hover_text("Constrain new walls to horizontal or vertical.");
             None::<Command>
         })
         .body_returned
@@ -142,8 +146,14 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
                     lintel_core::wall::MIN_WALL_THICKNESS..=lintel_core::wall::MAX_WALL_THICKNESS,
                 )
                 .suffix(" mm"),
-        );
-        if ui.button("Apply").clicked() && (thickness - wall.thickness).abs() > f64::EPSILON {
+        )
+        .on_hover_text("Wall thickness in mm (20–2000). Press Apply to commit.");
+        if ui
+            .button("Apply")
+            .on_hover_text("Apply the new wall thickness.")
+            .clicked()
+            && (thickness - wall.thickness).abs() > f64::EPSILON
+        {
             command = Some(Command::SetWallThickness { id, thickness });
         }
     });
@@ -154,8 +164,14 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
                 .speed(50.0)
                 .range(lintel_core::wall::MIN_WALL_HEIGHT..=lintel_core::wall::MAX_WALL_HEIGHT)
                 .suffix(" mm"),
-        );
-        if ui.button("Apply").clicked() && (height - wall.height).abs() > f64::EPSILON {
+        )
+        .on_hover_text("Wall height in mm (300–20000). Press Apply to commit.");
+        if ui
+            .button("Apply")
+            .on_hover_text("Apply the new wall height.")
+            .clicked()
+            && (height - wall.height).abs() > f64::EPSILON
+        {
             command = Some(Command::SetWallHeight { id, height });
         }
     });
@@ -181,8 +197,10 @@ fn opening_fields(
 
     ui.horizontal(|ui| {
         ui.label("Kind:");
-        ui.radio_value(&mut kind, OpeningKind::Door, "Door");
-        ui.radio_value(&mut kind, OpeningKind::Window, "Window");
+        ui.radio_value(&mut kind, OpeningKind::Door, "Door")
+            .on_hover_text("A hinged door opening in the wall.");
+        ui.radio_value(&mut kind, OpeningKind::Window, "Window")
+            .on_hover_text("A fixed window opening in the wall.");
     });
     if kind != opening.kind {
         return Some(Command::SetOpeningKind { id, kind });
@@ -198,7 +216,8 @@ fn opening_fields(
                         ..=lintel_core::opening::MAX_OPENING_WIDTH,
                 )
                 .suffix(" mm"),
-        );
+        )
+        .on_hover_text("Opening width in mm (200–6000).");
     });
     ui.horizontal(|ui| {
         ui.label("Height:");
@@ -210,7 +229,8 @@ fn opening_fields(
                         ..=lintel_core::opening::MAX_OPENING_HEIGHT,
                 )
                 .suffix(" mm"),
-        );
+        )
+        .on_hover_text("Opening height in mm (200–6000).");
     });
     ui.horizontal(|ui| {
         ui.label("Sill:");
@@ -219,7 +239,8 @@ fn opening_fields(
                 .speed(50.0)
                 .range(0.0..=20000.0)
                 .suffix(" mm"),
-        );
+        )
+        .on_hover_text("Sill height above floor level in mm (0–20000).");
     });
     ui.horizontal(|ui| {
         ui.label("Position along wall:");
@@ -228,9 +249,11 @@ fn opening_fields(
                 .speed(10.0)
                 .range(0.0..=wall.length())
                 .suffix(" mm"),
-        );
+        )
+        .on_hover_text("Distance from the wall start to the opening centre in mm (0–wall length).");
     });
-    ui.checkbox(&mut flipped, "Flip door hinge");
+    ui.checkbox(&mut flipped, "Flip door hinge")
+        .on_hover_text("Mirror the door swing to the other side of the wall.");
 
     let size_changed = (width - opening.width).abs() > f64::EPSILON
         || (height - opening.height).abs() > f64::EPSILON
@@ -268,17 +291,20 @@ fn dimension_fields(
             &mut kind,
             lintel_core::dimension::DimensionKind::LinearHorizontal,
             lintel_core::dimension::DimensionKind::LinearHorizontal.label(),
-        );
+        )
+        .on_hover_text("A horizontal dimension line.");
         ui.radio_value(
             &mut kind,
             lintel_core::dimension::DimensionKind::LinearVertical,
             lintel_core::dimension::DimensionKind::LinearVertical.label(),
-        );
+        )
+        .on_hover_text("A vertical dimension line.");
         ui.radio_value(
             &mut kind,
             lintel_core::dimension::DimensionKind::Aligned,
             lintel_core::dimension::DimensionKind::Aligned.label(),
-        );
+        )
+        .on_hover_text("A dimension line aligned with the measured segment.");
     });
     if kind != dimension.kind {
         return Some(Command::SetDimensionKind { id, kind });
@@ -292,8 +318,14 @@ fn dimension_fields(
                 .speed(10.0)
                 .range(1.0..=100000.0)
                 .suffix(" mm"),
-        );
-        if ui.button("Apply").clicked() && (offset - dimension.offset).abs() > f64::EPSILON {
+        )
+        .on_hover_text("Extension distance from the measured points to the dimension line in mm (1–100000). Press Apply to commit.");
+        if ui
+            .button("Apply")
+            .on_hover_text("Apply the new dimension offset.")
+            .clicked()
+            && (offset - dimension.offset).abs() > f64::EPSILON
+        {
             command = Some(Command::SetDimensionOffset { id, offset });
         }
     });
@@ -301,6 +333,7 @@ fn dimension_fields(
     let mut extension_lines = dimension.extension_lines;
     if ui
         .checkbox(&mut extension_lines, "Extension lines")
+        .on_hover_text("Draw witness lines from the measured points to the dimension line.")
         .changed()
         && extension_lines != dimension.extension_lines
     {
