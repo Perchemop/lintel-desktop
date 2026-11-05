@@ -11,7 +11,7 @@
 #define MyAppURL "https://github.com/Perchemop/lintel-desktop"
 
 [Setup]
-AppId={0F9A1E2C-4D5B-4C6A-8E9F-1D2A3B4C5D6E}
+AppId={{0F9A1E2C-4D5B-4C6A-8E9F-1D2A3B4C5D6E}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
