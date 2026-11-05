@@ -90,8 +90,16 @@ CI evidence: PR #7 run `42013256872`; release workflow run `42024620827`.
 | CAP-050 | Focus-ring contrast WCAG AA (COBALT) | ✓ |
 | CAP-051 | Linux AppImage release artefact | ✓ |
 
-**Planned for v0.5.0:**
-- Windows installer (MSI or setup .exe) — Inno Setup download hangs on CI; deferred
+## v0.5.0 — Windows installer
+
+**Status:** In progress — implemented; CI verification and tag pending.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-052 | Windows installer (Inno Setup via Chocolatey on CI) | ✓ |
+| CAP-053 | `.iss` DefaultDirName typo fixed (`{autpf}` → `{autopf}`) | ✓ |
+
+**Planned for v0.6.0:**
 - Screen-reader labels beyond egui's built-in accessibility
 - Keyboard-focus management review
 - Linux AppImage verification on end-user systems

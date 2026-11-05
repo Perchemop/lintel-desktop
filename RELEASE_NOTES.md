@@ -3,6 +3,53 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.5.0 — Windows installer
+
+**Summary.** Windows users get a real installer: the release now publishes
+`lintel-windows-x86_64-setup.exe`, built on CI with Inno Setup, alongside the
+Windows zip. Install to Program Files with Start-menu and optional desktop
+shortcuts.
+
+### Added
+
+- Windows installer (`lintel-windows-x86_64-setup.exe`) published with the
+  release, in addition to `lintel-windows-x86_64.zip`
+- Inno Setup script checked into the repo (`resources/windows/lintel.iss`) so a
+  human can rebuild the installer offline
+
+### Changed
+
+- App and core version bumped to 0.5.0
+
+### Fixed
+
+- `.iss` `DefaultDirName` typo (`{autpf}` → `{autopf}`), so the installer
+  suggests the correct Program Files directory
+
+### Known limitations
+
+- Screen-reader labels beyond egui's built-in AccessKit support still pending
+- Linux AppImage not yet verified on end-user systems
+- Canvas objects (walls/openings/dimensions) have no per-object ARIA labels;
+  documented in `ACCESSIBILITY.md`
+
+### Artefacts
+
+`lintel-windows-x86_64-setup.exe` (Windows installer),
+`lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`,
+`lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-appimage-x86_64.AppImage` (Linux AppImage), and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~120,000 tokens
+- Cumulative since development began: ~5,520,000 tokens
+
+---
+
 ## Lintel 0.4.0 — Accessibility labels, keyboard shortcuts, AppImage
 
 **Summary.** Keyboard shortcut hints and hover labels on every control,

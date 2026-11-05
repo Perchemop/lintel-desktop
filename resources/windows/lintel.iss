@@ -5,7 +5,7 @@
 ; Windows installer from the release zip contents.
 
 #define MyAppName "Lintel"
-#define MyAppVersion "0.4.0"
+#define MyAppVersion "0.5.0"
 #define MyAppPublisher "Perchemop"
 #define MyAppExeName "lintel.exe"
 #define MyAppURL "https://github.com/Perchemop/lintel-desktop"
@@ -18,7 +18,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autpf}\{#MyAppName}
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=LICENSE-MIT

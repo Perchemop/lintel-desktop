@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.5.0 — 2026-11-06
+
+### Summary
+
+Windows users finally get a real installer: the release now publishes
+`lintel-windows-x86_64-setup.exe`, built on CI with Inno Setup via Chocolatey.
+
+### Added
+
+- Windows installer (`lintel-windows-x86_64-setup.exe`) published alongside the
+  Windows zip; installs to Program Files with Start-menu and optional desktop
+  shortcuts
+- Inno Setup script checked into the repo (`resources/windows/lintel.iss`) so a
+  human can rebuild the installer offline
+
+### Changed
+
+- App and core version bumped to 0.5.0
+
+### Fixed
+
+- `.iss` `DefaultDirName` typo (`{autpf}` → `{autopf}`), so the installer
+  suggests the correct Program Files directory
+
+### Known limitations
+
+- Screen-reader labels beyond egui's built-in AccessKit support still pending
+- Linux AppImage not yet verified on end-user systems
+- Canvas objects (walls/openings/dimensions) have no per-object ARIA labels
+
+### Token metrics
+
+- Approx. tokens this release: 120,000
+- Approx. cumulative tokens since development began: 5,520,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.4.0 — 2026-11-05
 
 ### Summary
