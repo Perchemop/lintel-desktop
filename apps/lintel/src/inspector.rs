@@ -259,6 +259,31 @@ fn dimension_fields(
     dimension: &lintel_core::dimension::Dimension,
 ) -> Option<Command> {
     let mut command: Option<Command> = None;
+
+    // Kind selector.
+    let mut kind = dimension.kind;
+    ui.horizontal(|ui| {
+        ui.label("Kind:");
+        ui.radio_value(
+            &mut kind,
+            lintel_core::dimension::DimensionKind::LinearHorizontal,
+            lintel_core::dimension::DimensionKind::LinearHorizontal.label(),
+        );
+        ui.radio_value(
+            &mut kind,
+            lintel_core::dimension::DimensionKind::LinearVertical,
+            lintel_core::dimension::DimensionKind::LinearVertical.label(),
+        );
+        ui.radio_value(
+            &mut kind,
+            lintel_core::dimension::DimensionKind::Aligned,
+            lintel_core::dimension::DimensionKind::Aligned.label(),
+        );
+    });
+    if kind != dimension.kind {
+        return Some(Command::SetDimensionKind { id, kind });
+    }
+
     let mut offset = dimension.offset;
     ui.horizontal(|ui| {
         ui.label("Offset:");
@@ -272,6 +297,18 @@ fn dimension_fields(
             command = Some(Command::SetDimensionOffset { id, offset });
         }
     });
-    ui.label(format!("Extension lines: {}", dimension.extension_lines));
+
+    let mut extension_lines = dimension.extension_lines;
+    if ui
+        .checkbox(&mut extension_lines, "Extension lines")
+        .changed()
+        && extension_lines != dimension.extension_lines
+    {
+        return Some(Command::SetDimensionExtensionLines {
+            id,
+            extension_lines,
+        });
+    }
+
     command
 }

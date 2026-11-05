@@ -127,16 +127,6 @@ jobs:
     - name: Publish GitHub release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NOTES_BODY: |
-          Lintel v${GITHUB_REF_NAME#v} — first functional test build.
-
-          Walls, doors and windows on a storey, snapping, undo/redo, save and
-          reopen, and PDF sheet export (A3/A4, true scale). Offline; your plan
-          stays on your disk.
-
-          This is a v0.1.0 hard-gate build: one real workflow, honest scope,
-          headless tests, CI green.
-
         ARTEFACTS: ${{ steps.collect.outputs.files }}
       shell: bash
       run: |
@@ -149,7 +139,7 @@ jobs:
           prerelease=(--prerelease)
         fi
         if ! gh release view "$tag" >/dev/null 2>&1; then
-          gh release create "$tag" --title "Lintel ${tag}" --notes "$NOTES_BODY" "${prerelease[@]}"
+          gh release create "$tag" --title "Lintel ${tag}" --notes-file RELEASE_NOTES.md "${prerelease[@]}"
         else
           echo "release $tag already exists; uploading assets"
         fi
