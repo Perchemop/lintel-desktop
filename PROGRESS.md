@@ -1,5 +1,29 @@
 # Progress
 
+## v0.7.0 Status — IN PROGRESS (implemented; CI/tag pending)
+
+- [x] Audit: grepped the UI for every `Command` variant; found 4 unreachable capabilities
+- [x] Inspector → Project: rename the project (`RenameProject`) and switch Metric/Imperial (`SetUnits`)
+- [x] Inspector → Storeys: delete a storey (`DeleteLevel`, disabled for the last) and add one (`AddLevel`)
+- [x] Dragging a selected dimension changes its offset (`SetDimensionOffset`)
+- [x] Fmt/clippy-safe: removed the now-unused `LevelId` import; rustfmt clean
+- [ ] CI green on `main` for the v0.7.0 slice
+- [ ] v0.7.0 tag and GitHub Release published
+
+Readiness % (v0.7.0): **~85% — implemented; verification and release pending.**
+
+### Known, deliberate exception
+
+`MoveDimension` (move a dimension's measured points) stays core-only: dragging
+binds to the offset instead, so a dimension never detaches from what it
+measures. Recorded in DECISIONS.md D-026.
+
+### Still planned (v0.8.0)
+
+- [ ] Screen-reader output spot-check on Windows/macOS (manual)
+- [ ] Linux AppImage execution check on an x86_64 host
+- [ ] Keyboard-focus management review
+
 ## v0.6.0 Status — RELEASED
 
 - [x] File keyboard shortcuts: Ctrl+N/O/S/Shift+S/E

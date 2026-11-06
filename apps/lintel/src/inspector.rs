@@ -6,17 +6,29 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{DimensionId, LevelId, OpeningId, WallId},
+    ids::{DimensionId, OpeningId, WallId},
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
+    units::UnitSystem,
 };
+
+/// Transient drafts the Inspector keeps between frames (edits that are only
+/// committed when the user presses Apply / Add).
+#[derive(Debug, Default)]
+pub struct InspectorDraft {
+    /// Name being typed for a new storey.
+    pub new_level_name: String,
+    /// Elevation being typed for a new storey, in millimetres.
+    pub new_level_elevation: f64,
+}
 
 pub fn inspector(
     ui: &mut egui::Ui,
     doc: &Document,
     selection: &Option<Hit>,
     snap: &mut SnapSettings,
+    draft: &mut InspectorDraft,
 ) -> Option<Command> {
     let element_cmd = egui::CollapsingHeader::new("Element")
         .default_open(true)
@@ -73,6 +85,49 @@ pub fn inspector(
 
     ui.separator();
 
+    let project_cmd = egui::CollapsingHeader::new("Project")
+        .default_open(false)
+        .show(ui, |ui| {
+            let mut command: Option<Command> = None;
+            let project = doc.project();
+
+            let mut name = project.name.clone();
+            ui.horizontal(|ui| {
+                ui.label("Name:");
+                ui.text_edit_singleline(&mut name)
+                    .on_hover_text("The project name stored in the saved file.");
+                if ui
+                    .button("Apply")
+                    .on_hover_text("Apply the new project name.")
+                    .clicked()
+                    && !name.trim().is_empty()
+                    && name.trim() != project.name.as_str()
+                {
+                    command = Some(Command::RenameProject {
+                        name: name.trim().to_string(),
+                    });
+                }
+            });
+
+            let mut units = project.units;
+            ui.horizontal(|ui| {
+                ui.label("Units:");
+                ui.radio_value(&mut units, UnitSystem::Metric, "Metric (mm)")
+                    .on_hover_text("Show lengths in millimetres and metres.");
+                ui.radio_value(&mut units, UnitSystem::Imperial, "Imperial (ft-in)")
+                    .on_hover_text("Show lengths in feet and inches.");
+            });
+            if units != project.units {
+                command = Some(Command::SetUnits { units });
+            }
+
+            command
+        })
+        .body_returned
+        .flatten();
+
+    ui.separator();
+
     let view_cmd = egui::CollapsingHeader::new("View")
         .default_open(false)
         .show(ui, |ui| {
@@ -110,26 +165,68 @@ pub fn inspector(
     let storeys_cmd = egui::CollapsingHeader::new("Storeys")
         .default_open(false)
         .show(ui, |ui| {
-            let active = doc.project().active_level;
-            let mut changed: Option<LevelId> = None;
-            for level in &doc.project().levels {
+            let project = doc.project();
+            let active = project.active_level;
+            // The core refuses to delete the last storey, so the button is
+            // disabled rather than failing with a status message.
+            let only_one = project.levels.len() <= 1;
+            let mut command: Option<Command> = None;
+
+            for level in &project.levels {
                 ui.horizontal(|ui| {
                     if ui
                         .selectable_label(level.id == active, &level.name)
+                        .on_hover_text("Make this storey active.")
                         .clicked()
                         && level.id != active
                     {
-                        changed = Some(level.id);
+                        command = Some(Command::SetActiveLevel { id: level.id });
                     }
                     ui.label(format!("{} mm", level.elevation));
+                    if ui
+                        .add_enabled(!only_one, egui::Button::new("Delete"))
+                        .on_hover_text("Delete this storey (the last storey cannot be deleted).")
+                        .clicked()
+                    {
+                        command = Some(Command::DeleteLevel { id: level.id });
+                    }
                 });
             }
-            changed.map(|id| Command::SetActiveLevel { id })
+
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.add(
+                    egui::TextEdit::singleline(&mut draft.new_level_name)
+                        .desired_width(90.0)
+                        .hint_text("New storey"),
+                )
+                .on_hover_text("Name for the new storey.");
+                ui.add(
+                    egui::DragValue::new(&mut draft.new_level_elevation)
+                        .speed(100.0)
+                        .range(-100_000.0..=100_000.0)
+                        .suffix(" mm"),
+                )
+                .on_hover_text("Elevation of the new storey above the project datum.");
+                if ui
+                    .button("Add")
+                    .on_hover_text("Add the new storey and make it active.")
+                    .clicked()
+                    && !draft.new_level_name.trim().is_empty()
+                {
+                    command = Some(Command::AddLevel {
+                        name: draft.new_level_name.trim().to_string(),
+                        elevation: draft.new_level_elevation,
+                    });
+                }
+            });
+
+            command
         })
         .body_returned
         .flatten();
 
-    element_cmd.or(storeys_cmd).or(view_cmd)
+    element_cmd.or(project_cmd).or(storeys_cmd).or(view_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {

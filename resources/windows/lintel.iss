@@ -5,7 +5,7 @@
 ; Windows installer from the release zip contents.
 
 #define MyAppName "Lintel"
-#define MyAppVersion "0.6.0"
+#define MyAppVersion "0.7.0"
 #define MyAppPublisher "Perchemop"
 #define MyAppExeName "lintel.exe"
 #define MyAppURL "https://github.com/Perchemop/lintel-desktop"

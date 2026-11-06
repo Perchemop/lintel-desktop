@@ -3,7 +3,7 @@
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
 use crate::canvas::{Canvas, Draft, View, screen_to_world};
-use crate::inspector::inspector;
+use crate::inspector::{InspectorDraft, inspector};
 use eframe::egui;
 use lintel_core::{
     command::Command,
@@ -67,6 +67,8 @@ struct LintelApp {
     status: Option<String>,
     /// Unix seconds when `status` was set, so it can expire.
     status_at: i64,
+    /// Draft state for the Inspector's new-storey fields.
+    inspector_draft: InspectorDraft,
 }
 
 impl LintelApp {
@@ -89,6 +91,11 @@ impl LintelApp {
             update_open: false,
             status: None,
             status_at: 0,
+            inspector_draft: InspectorDraft {
+                // A sensible default floor-to-floor height for a new storey.
+                new_level_elevation: 3000.0,
+                ..InspectorDraft::default()
+            },
         };
         // One quiet check at startup; it fails soft when offline and never
         // blocks the UI thread.
@@ -387,7 +394,13 @@ impl eframe::App for LintelApp {
             egui::Window::new("Inspector")
                 .default_pos(egui::Pos2::new(4.0, 40.0))
                 .show(ui, |ui| {
-                    if let Some(cmd) = inspector(ui, &self.doc, &self.selection, &mut self.snap) {
+                    if let Some(cmd) = inspector(
+                        ui,
+                        &self.doc,
+                        &self.selection,
+                        &mut self.snap,
+                        &mut self.inspector_draft,
+                    ) {
                         let _ = self.doc.apply(cmd, now);
                     }
                 });
@@ -553,6 +566,34 @@ impl LintelApp {
                     let new_offset = (opening.offset + progress).clamp(0.0, host.length());
                     let _ = self.doc.apply(
                         Command::MoveOpening {
+                            id,
+                            offset: new_offset,
+                        },
+                        now,
+                    );
+                }
+                Some(Hit::Dimension(id)) => {
+                    // Dragging a dimension line moves it away from what it
+                    // measures by changing the offset. The component of the
+                    // drag perpendicular to the dimension line is used, so the
+                    // line follows the pointer without sliding lengthways.
+                    let level = self.doc.project().active_level().expect("level");
+                    let dimension = level.dimension(id).expect("dimension").clone();
+                    let shift = match dimension.kind {
+                        lintel_core::dimension::DimensionKind::LinearHorizontal => mm.y,
+                        lintel_core::dimension::DimensionKind::LinearVertical => mm.x,
+                        lintel_core::dimension::DimensionKind::Aligned => {
+                            let normal = (dimension.end - dimension.start)
+                                .normalized()
+                                .perpendicular();
+                            mm.dot(normal)
+                        }
+                    };
+                    // An offset must stay positive; clamping keeps the line on
+                    // the far side of the measurement instead of erroring.
+                    let new_offset = (dimension.offset + shift).max(1.0);
+                    let _ = self.doc.apply(
+                        Command::SetDimensionOffset {
                             id,
                             offset: new_offset,
                         },
