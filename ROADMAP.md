@@ -133,7 +133,9 @@ CI evidence: PR #10 run `42211261713`; release workflow run `42212698044`.
 
 ## v0.8.0 — Keyboard-focus review
 
-**Status:** In progress — implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0
+
+CI evidence: PR #11 run `42294376007`; release workflow run `42295310359`.
 
 | ID | Capability | Done |
 |---|-----------|------|

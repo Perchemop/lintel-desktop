@@ -1,15 +1,16 @@
 # Progress
 
-## v0.8.0 Status — IN PROGRESS (implemented; CI/tag pending)
+## v0.8.0 Status — RELEASED
 
 - [x] Focus review found a regression: tabbing to the canvas disabled every shortcut
 - [x] Shortcuts now apply when nothing is focused **or** the canvas is focused; still suppressed in text fields
 - [x] Unit tests for `plan_summary` (empty, singular, multi-storey) — verified in CI
 - [x] `ACCESSIBILITY.md` records the focus-review outcome
-- [ ] CI green on `main` for the v0.8.0 slice
-- [ ] v0.8.0 tag and GitHub Release published
+- [x] CI green (PR #11 run `42294376007`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.8.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0
+      (release run `42295310359`; all six assets present)
 
-Readiness % (v0.8.0): **~85% — implemented; verification and release pending.**
+Readiness % (v0.8.0): **100% — shipped.**
 
 ### Still planned (v0.9.0)
 

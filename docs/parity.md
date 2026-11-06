@@ -61,9 +61,14 @@ each green CI run; percentages move only from evidence.
 
 | ID | Evidence | CI run | Status |
 |---|---|---|---|
-| CAP-066 | Shortcuts work while the canvas has focus | pending | awaiting run |
-| CAP-067 | Level summary unit-tested (3 cases) | pending | awaiting run |
-| CAP-068 | Focus-review outcome recorded | pending | awaiting run |
+| CAP-066 | Shortcuts work while the canvas has focus | `42294376007` (PR #11) | verified |
+| CAP-067 | Level summary unit-tested (3 cases) | `42294376007` (PR #11) | verified |
+| CAP-068 | Focus-review outcome recorded | `42294376007` (PR #11) | verified |
+
+## v0.8.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0 —
+release workflow run `42295310359`, all six assets present.
 
 ## v0.7.0 release
 
