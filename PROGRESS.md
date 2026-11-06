@@ -1,6 +1,6 @@
 # Progress
 
-## v0.6.0 Status — IN PROGRESS (implemented; CI/tag pending)
+## v0.6.0 Status — RELEASED
 
 - [x] File keyboard shortcuts: Ctrl+N/O/S/Shift+S/E
 - [x] Focusable canvas with a screen-reader label naming the active level and its contents
@@ -9,10 +9,11 @@
 - [x] **Fixed:** PDF export dialog was unreachable (nothing set `export_open`); now File → Export sheet… and Ctrl+E
 - [x] Linux AppImage statically verified (ELF + SquashFS magic + SHA-256); execution needs an x86_64 host
 - [x] `ACCESSIBILITY.md` and `docs/qc/checklist.md` updated
-- [ ] CI green on `main` for the v0.6.0 slice
-- [ ] v0.6.0 tag and GitHub Release published
+- [x] CI green (PR #9 run `42192427679`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.6.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.6.0
+      (release run `42193835276`; all six assets present)
 
-Readiness % (v0.6.0): **~85% — implemented; verification and release pending.**
+Readiness % (v0.6.0): **100% — shipped.**
 
 ### Still planned (v0.7.0)
 

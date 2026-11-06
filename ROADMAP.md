@@ -104,7 +104,9 @@ CI evidence: PR #8 run `42099183213`; release workflow run `42103705669`.
 
 ## v0.6.0 — Keyboard-complete flows, accessible canvas
 
-**Status:** In progress — implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.6.0
+
+CI evidence: PR #9 run `42192427679`; release workflow run `42193835276`.
 
 | ID | Capability | Done |
 |---|-----------|------|

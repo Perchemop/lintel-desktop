@@ -40,12 +40,19 @@ each green CI run; percentages move only from evidence.
 
 | ID | Evidence | CI run | Status |
 |---|---|---|---|
-| CAP-055 | File keyboard shortcuts (Ctrl+N/O/S/Shift+S/E) | pending | awaiting run |
-| CAP-056 | Focusable canvas + screen-reader level summary | pending | awaiting run |
-| CAP-057 | Toolbar level summary | pending | awaiting run |
-| CAP-058 | Tool shortcuts guarded against modifiers | pending | awaiting run |
-| CAP-059 | PDF export dialog reachable (bug fix) | pending | awaiting run |
-| CAP-060 | Linux AppImage static verification | `42103705669` (v0.5.0 release asset) | verified |
+| CAP-055 | File keyboard shortcuts (Ctrl+N/O/S/Shift+S/E) | `42192427679` (PR #9) | verified |
+| CAP-056 | Focusable canvas + screen-reader level summary | `42192427679` (PR #9) | verified |
+| CAP-057 | Toolbar level summary | `42192427679` (PR #9) | verified |
+| CAP-058 | Tool shortcuts guarded against modifiers | `42192427679` (PR #9) | verified |
+| CAP-059 | PDF export dialog reachable (bug fix) | `42192427679` (PR #9) | verified |
+| CAP-060 | Linux AppImage static verification | `42193835276` (v0.6.0 release) | verified |
+
+## v0.6.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.6.0 —
+release workflow run `42193835276`, all six assets present
+(`lintel-windows-x86_64-setup.exe`, the Windows/Linux/macOS zips, the AppImage
+and `SHA256SUMS.txt`).
 
 ## v0.5.0 release
 
