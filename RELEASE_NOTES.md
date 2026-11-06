@@ -3,6 +3,52 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.7.0 — Every documented capability is now reachable
+
+**Summary.** An audit found four things Lintel could do but that had no way to
+be triggered in the interface — add or delete a storey, rename the project, and
+switch between metric and imperial units. All four are now in the Inspector,
+and dragging a dimension moves its line.
+
+### Added
+
+- **Project panel:** rename the project, and switch between Metric (mm) and
+  Imperial (ft-in) units
+- **Storeys panel:** delete a storey, and add a new one with a name and
+  elevation
+- Dragging a selected dimension line moves it perpendicular to what it
+  measures (its offset)
+
+### Fixed
+
+- Add storey, delete storey, rename project and switch units were implemented in
+  the core but unreachable from the interface — the same class of defect as the
+  unreachable export dialog fixed in 0.6.0
+
+### Known limitations
+
+- Moving a dimension's measured points (`MoveDimension`) is a core-only command
+  covered by unit tests; dragging adjusts the offset instead, because moving the
+  measured span would detach a dimension from what it measures
+- Screen-reader output is verified manually, not in CI
+
+### Artefacts
+
+`lintel-windows-x86_64-setup.exe` (Windows installer),
+`lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`,
+`lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-appimage-x86_64.AppImage` (Linux AppImage), and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~160,000 tokens
+- Cumulative since development began: ~5,830,000 tokens
+
+---
+
 ## Lintel 0.6.0 — Keyboard-complete file flows and an accessible canvas
 
 **Summary.** Everything you do with files is now one keyboard shortcut away,

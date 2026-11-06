@@ -117,7 +117,19 @@ CI evidence: PR #9 run `42192427679`; release workflow run `42193835276`.
 | CAP-059 | PDF export dialog reachable from the UI (bug fix) | ✓ |
 | CAP-060 | Linux AppImage static verification recorded | ✓ |
 
-**Planned for v0.7.0:**
+## v0.7.0 — Reachable capabilities
+
+**Status:** In progress — implemented; CI verification and tag pending.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-061 | Add / delete a storey from the Inspector | ✓ |
+| CAP-062 | Rename the project from the Inspector | ✓ |
+| CAP-063 | Switch Metric / Imperial units from the Inspector | ✓ |
+| CAP-064 | Drag a dimension to change its offset | ✓ |
+| CAP-065 | Command-reachability audit documented and clean | ✓ |
+
+**Planned for v0.8.0:**
 - Screen-reader output spot-check on Windows/macOS (manual, needs a host)
 - Linux AppImage execution check on an x86_64 host
 - Keyboard-focus management review

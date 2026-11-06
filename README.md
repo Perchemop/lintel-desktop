@@ -24,8 +24,9 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 - **Draw walls.** Pick the Wall tool and click twice on the sheet to draw a wall, then move it where you like. Wall thickness and height are adjustable.
 - **Place doors and windows.** Pick the Door or Window tool and click on a wall. Openings sit inside the wall and can be moved, resized, or flipped.
-- **Add levels.** Organise your building floor by floor and switch between them.
-- **Add dimension lines.** Annotate the plan with measurements, in metric (mm) or imperial (feet/inches).
+- **Add and delete storeys.** Organise your building floor by floor, name each storey and set its elevation.
+- **Add dimension lines.** Annotate the plan with measurements; drag a dimension line to move it, or edit its offset precisely.
+- **Work in your units.** Switch the whole plan between metric (mm) and imperial (feet/inches), and rename the project, from the Inspector.
 - **Undo and redo.** Every change can be stepped back.
 - **Save and reopen plans.** Plans are saved as plain JSON files — a simple, readable format you can back up or copy anywhere.
 - **Export a PDF sheet.** Turn the current level into a PDF sheet with a border, title block, scale label, and sheet number — from **File → Export sheet…** or Ctrl+E.
@@ -43,11 +44,11 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.6.0 makes every file action a
-keyboard shortcut (Ctrl+N/O/S/E) and gives the canvas a screen-reader summary of
-the current level; a real Windows installer arrived in 0.5.0, dimension lines
-and joint resolution in 0.2.0, and keyboard/accessibility polish plus a Linux
-AppImage in 0.4.0. See:
+Lintel is young and actively developed. Version 0.7.0 makes every capability
+reachable from the interface — add and delete storeys, rename the plan and
+switch units are all in the Inspector; 0.6.0 added file keyboard shortcuts and a
+screen-reader summary of the current level; a real Windows installer arrived in
+0.5.0, and dimension lines and joint resolution in 0.2.0. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

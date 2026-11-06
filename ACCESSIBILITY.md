@@ -14,9 +14,10 @@ recorded here honestly rather than glossed over (guide II.21.1).
   dimension.
 - **Zoom:** F = zoom to fit; scroll-wheel zooms; middle-drag pans.
 - **Inspector via Tab:** the Inspector panel (wall thickness/height, opening
-  kind/width/height/sill/position, dimension kind/offset/extension lines) is
-  reachable with Tab and each field carries its name as a label plus a
-  hover text explaining units and ranges.
+  kind/width/height/sill/position, dimension kind/offset/extension lines,
+  project name and units, storey list with add and delete) is reachable with
+  Tab, and each field carries its name as a label plus a hover text explaining
+  units and ranges.
 - **Escape dismissal:** the About, Release notes, Export sheet and Update
   windows all close on Escape (egui `Window` with `.open()` handles Escape by
   default; none override it).

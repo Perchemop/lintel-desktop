@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.7.0 — 2026-11-06
+
+### Summary
+
+Closes the gap between what the core can do and what the interface exposes. An
+audit found four documented capabilities — add/delete a storey, rename the
+project and switch units — that existed in the core but had no way to be
+triggered, like the export dialog before them. All four are now reachable.
+
+### Added
+
+- **Inspector → Project:** an editable project name (with Apply) and a Metric /
+  Imperial unit selector
+- **Inspector → Storeys:** a Delete button per storey (disabled for the last
+  one) and a name-elevation-Add row to create a storey
+- Dragging a selected dimension line moves it perpendicular to the measurement,
+  changing its offset
+- A documented command-reachability audit in the QC checklist that greps the UI
+  for every `Command` variant
+
+### Changed
+
+- The Inspector takes a small `InspectorDraft` for the new-storey fields so the
+  text being typed survives between frames
+
+### Fixed
+
+- Four capabilities were unreachable from the UI despite being listed as
+  implemented: `AddLevel`, `DeleteLevel`, `SetUnits` and `RenameProject`
+
+### Known limitations
+
+- `MoveDimension` (moving a dimension's measured points) remains a core-only
+  command covered by unit tests; the canvas binds dragging to the offset
+  instead, because moving the measured span detaches a dimension from what it
+  measures (see DECISIONS.md D-026)
+- Screen-reader output is verified manually, not in CI
+
+### Token metrics
+
+- Approx. tokens this release: 160,000
+- Approx. cumulative tokens since development began: 5,830,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.6.0 — 2026-11-06
 
 ### Summary

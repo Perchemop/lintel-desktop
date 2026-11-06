@@ -47,6 +47,16 @@ each green CI run; percentages move only from evidence.
 | CAP-059 | PDF export dialog reachable (bug fix) | `42192427679` (PR #9) | verified |
 | CAP-060 | Linux AppImage static verification | `42193835276` (v0.6.0 release) | verified |
 
+## v0.7.0 — reachable capabilities
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-061 | Add / delete a storey from the Inspector | pending | awaiting run |
+| CAP-062 | Rename the project from the Inspector | pending | awaiting run |
+| CAP-063 | Switch Metric / Imperial from the Inspector | pending | awaiting run |
+| CAP-064 | Drag a dimension to change its offset | pending | awaiting run |
+| CAP-065 | Command-reachability audit clean (only `MoveDimension` core-only, documented) | pending | awaiting run |
+
 ## v0.6.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.6.0 —

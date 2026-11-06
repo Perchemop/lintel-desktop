@@ -41,7 +41,7 @@ run, recorded in `docs/parity.md`).
 |---|---|---|---|---|---|
 | CAP-021 | Joint resolution for unequal wall thicknesses | Walls of different thicknesses close cleanly at outside corners | `resolve_wall` extends each end by half the *other* wall's thickness; tests pass | — | implemented |
 | CAP-026 | Dimension lines | Aligned/horizontal/vertical dimension between two points with an offset | `Command::PlaceDimension`; `PlanGeometry` reports it | — | implemented |
-| CAP-027 | Dimension placement / move / delete | Two clicks place, drag moves, Delete removes | `PlaceDimension`, `MoveDimension`, `DeleteDimension` | — | implemented |
+| CAP-027 | Dimension placement / move / delete | Two clicks place, dragging moves the line, Delete removes | `PlaceDimension`, `SetDimensionOffset` (drag), `DeleteDimension` | — | implemented |
 | CAP-028 | Dimension offset editing | Inspector changes the offset; zero/negative rejected | `Command::SetDimensionOffset` validation | — | implemented |
 | CAP-029 | Dimension hit testing | Clicking a dimension selects it; priority over the wall band | `PlanGeometry::hit_test` checks dimensions first | — | implemented |
 | CAP-030 | Dimension validation | Zero-length and non-positive offset rejected with plain messages | Command validation strings | — | implemented |
@@ -68,6 +68,11 @@ run, recorded in `docs/parity.md`).
 | CAP-058 | Modifier-guarded tool keys | W/S/D/N/M/G/O/F do not fire with Ctrl/Cmd/Alt | input block `plain_keys` | guide II.21.2 | implemented |
 | CAP-059 | PDF export reachable | File → Export sheet… opens the dialog (was unreachable) | `main.rs` File menu | guide §9 (no fake functionality) | implemented |
 | CAP-060 | AppImage verification | Published AppImage checked (ELF + SquashFS + SHA-256) | `docs/qc/checklist.md` | guide §6.2 | implemented |
+| CAP-061 | Add / delete a storey | Inspector → Storeys: Delete per row, and a name-elevation-Add row | `inspector.rs` storeys section | guide §9 (no fake functionality) | implemented |
+| CAP-062 | Rename the project | Inspector → Project: name field + Apply | `inspector.rs` project section | guide §9 | implemented |
+| CAP-063 | Switch units | Inspector → Project: Metric / Imperial radio | `inspector.rs` project section | guide §9 | implemented |
+| CAP-064 | Drag a dimension | Dragging a selected dimension changes its offset | `main.rs` drag handler | guide §9 | implemented |
+| CAP-065 | Reachability audit | Every `Command` variant is bound in the UI except the documented `MoveDimension` | `docs/qc/checklist.md` §7 | guide §9 | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -89,6 +94,7 @@ Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
 Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
 Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
 Readiness % (v0.6.0): **100% — shipped** (CI `42192427679`; release `0.6.0`).
+Readiness % (v0.7.0): **~85% — implemented; CI verification and tag pending.**
 
 Still planned for v0.7.0: screen-reader output spot-checks on Windows/macOS,
 Linux AppImage execution on an x86_64 host, keyboard-focus management review.

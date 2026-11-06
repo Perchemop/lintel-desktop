@@ -26,6 +26,9 @@ mouse.
 | 12 | Press **F** to zoom to fit | | |
 | 13 | Press **Escape** to cancel any active draft / clear selection | | |
 | 14 | Tab to the canvas; confirm the level summary is announced | | |
+| 15 | Inspector → Storeys: add a storey, then delete it | | |
+| 16 | Inspector → Project: rename the plan, then switch Metric ↔ Imperial | | |
+| 17 | Select a dimension and drag it; confirm the dimension line moves | | |
 
 ## 2. Dialog Escape dismissal
 
@@ -79,6 +82,26 @@ Static verification (no x86_64 host required): the published AppImage is a
 valid ELF (`7f 45 4c 46`), contains a SquashFS payload (`hsqs` magic), and its
 SHA-256 matches `SHA256SUMS.txt`. Execution was verified on an x86_64 host only
 where available; the ARM development machine cannot execute the x86_64 binary.
+
+## 7. Command-reachability audit (no fake functionality)
+
+Every `lintel_core::Command` variant must be bound somewhere in `apps/lintel`,
+or be explicitly documented as core-only. Run this from the repository root:
+
+```bash
+for v in AddWall MoveWall SetWallThickness SetWallHeight DeleteWall \
+         PlaceOpening MoveOpening SetOpeningKind SetOpeningSize FlipOpening \
+         DeleteOpening PlaceDimension MoveDimension SetDimensionOffset \
+         SetDimensionKind SetDimensionExtensionLines DeleteDimension \
+         AddLevel DeleteLevel SetActiveLevel SetUnits RenameProject; do
+  n=$(grep -rn "Command::$v" apps/lintel/src/ | wc -l)
+  [ "$n" -eq 0 ] && echo "UNREACHABLE: $v"
+done
+```
+
+| Check | Pass? | Notes |
+|-------|-------|-------|
+| No variant reports `UNREACHABLE` except `MoveDimension` | | `MoveDimension` is deliberately core-only (DECISIONS.md D-026) |
 
 ## Run log
 
