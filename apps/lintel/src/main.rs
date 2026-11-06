@@ -132,6 +132,45 @@ impl LintelApp {
         self.status = Some(message);
         self.status_at = now;
     }
+
+    /// The fixed path used by Open / Save / Save As. Native file dialogs are
+    /// out of scope for this build (see DECISIONS.md D-025).
+    const WORKFLOW_PATH: &str = "workflow.lintel.json";
+
+    /// Start a brand-new empty plan, clearing selection, draft and message.
+    fn new_plan(&mut self) {
+        self.doc = Document::new("Untitled plan", now_epoch_s());
+        self.selection = None;
+        self.draft = Draft::default();
+        self.status = None;
+    }
+
+    /// Open the plan at the fixed workflow path.
+    fn open_plan(&mut self, now: i64) {
+        match Document::open(PathBuf::from(Self::WORKFLOW_PATH)) {
+            Ok(loaded) => {
+                self.doc = loaded;
+                self.selection = None;
+                self.draft = Draft::default();
+                self.view = View::default();
+            }
+            Err(e) => self.note_status(format!("Could not open the plan: {e}"), now),
+        }
+    }
+
+    /// Save the document to its current path.
+    fn save_plan(&mut self, now: i64) {
+        if let Err(e) = self.doc.save() {
+            self.note_status(format!("Could not save: {e}"), now);
+        }
+    }
+
+    /// Save the document under the fixed workflow path.
+    fn save_plan_as(&mut self, now: i64) {
+        if let Err(e) = self.doc.save_as(PathBuf::from(Self::WORKFLOW_PATH)) {
+            self.note_status(format!("Could not save: {e}"), now);
+        }
+    }
 }
 
 impl eframe::App for LintelApp {
@@ -149,44 +188,40 @@ impl eframe::App for LintelApp {
                 ui.menu_button("File", |ui| {
                     if ui
                         .button("New plan")
-                        .on_hover_text("Start a new empty plan")
+                        .on_hover_text("Start a new empty plan (Ctrl+N)")
                         .clicked()
                     {
-                        self.doc = Document::new("Untitled plan", now_epoch_s());
-                        self.selection = None;
-                        self.draft = Draft::default();
+                        self.new_plan();
                     }
                     ui.separator();
                     if ui
                         .button("Open…")
-                        .on_hover_text("Open a saved Lintel plan from disk")
+                        .on_hover_text("Open a saved Lintel plan from disk (Ctrl+O)")
                         .clicked()
-                        && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
                     {
-                        match Document::open(&path) {
-                            Ok(loaded) => {
-                                self.doc = loaded;
-                                self.selection = None;
-                                self.view = View::default();
-                            }
-                            Err(e) => {
-                                self.note_status(format!("Could not open the plan: {e}"), now)
-                            }
-                        }
+                        self.open_plan(now);
                     }
-                    if ui.button("Save").on_hover_text("Save the current plan").clicked()
-                        && let Err(e) = self.doc.save()
+                    if ui
+                        .button("Save")
+                        .on_hover_text("Save the current plan (Ctrl+S)")
+                        .clicked()
                     {
-                        self.note_status(format!("Could not save: {e}"), now);
+                        self.save_plan(now);
                     }
                     if ui
                         .button("Save As…")
-                        .on_hover_text("Save the current plan under a new name")
+                        .on_hover_text("Save the current plan under a new name (Ctrl+Shift+S)")
                         .clicked()
-                        && let Some(path) = Some(PathBuf::from("workflow.lintel.json"))
-                        && let Err(e) = self.doc.save_as(path)
                     {
-                        self.note_status(format!("Could not save: {e}"), now);
+                        self.save_plan_as(now);
+                    }
+                    ui.separator();
+                    if ui
+                        .button("Export sheet…")
+                        .on_hover_text("Render the active level as a PDF sheet (Ctrl+E)")
+                        .clicked()
+                    {
+                        self.export_open = true;
                     }
                     ui.separator();
                     if ui.button("Exit").on_hover_text("Close Lintel").clicked() {
@@ -257,6 +292,7 @@ impl eframe::App for LintelApp {
                     }
                 });
             });
+            let summary = plan_summary(self.doc.project());
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Tool:");
@@ -278,8 +314,10 @@ impl eframe::App for LintelApp {
                 );
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
+                ui.separator();
+                ui.label(egui::RichText::new(summary.clone()).small());
                 ui.label(
-                    egui::RichText::new("Shortcuts: W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete")
+                    egui::RichText::new("Shortcuts: W/S/D/N/M tools · Ctrl+N/O/S/Shift+S/E file · Z/Y undo-redo · F fit · Esc cancel · Del delete")
                         .small()
                         .color(egui::Color32::GRAY),
                 );
@@ -315,6 +353,7 @@ impl eframe::App for LintelApp {
                 self.selection,
                 &self.snap,
                 &self.draft,
+                &summary,
             );
             let dimension_painter = ui.painter_at(rect);
             crate::dimension_ui::render_dimensions(
@@ -552,7 +591,33 @@ impl LintelApp {
             }
         }
 
+        // Plain letter shortcuts must not fire while a modifier is held, or
+        // Ctrl+S would also switch to the Select tool.
+        let plain_keys =
+            ui.input(|i| !i.modifiers.command && !i.modifiers.ctrl && !i.modifiers.alt);
+
         if ui.memory(|m| m.focused().is_none()) {
+            // File shortcuts (Ctrl/Cmd + key).
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::N)) {
+                self.new_plan();
+            }
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::O)) {
+                self.open_plan(now);
+            }
+            if ui
+                .input(|i| i.modifiers.command && i.key_pressed(egui::Key::S) && !i.modifiers.shift)
+            {
+                self.save_plan(now);
+            }
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::S) && i.modifiers.shift)
+            {
+                self.save_plan_as(now);
+            }
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::E)) {
+                self.export_open = true;
+            }
+
+            // Undo / redo.
             if ui
                 .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
                 && self.doc.can_undo()
@@ -568,6 +633,8 @@ impl LintelApp {
                 self.selection = None;
                 self.draft = Draft::default();
             }
+
+            // Cancellation and deletion.
             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                 self.selection = None;
                 self.draft = Draft::default();
@@ -587,28 +654,30 @@ impl LintelApp {
                     self.selection = None;
                 }
             }
-            if ui.input(|i| i.key_pressed(egui::Key::W)) {
+
+            // Plain tool / view shortcuts.
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::W)) {
                 self.tool = Tool::Wall;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::S)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::S)) {
                 self.tool = Tool::Select;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::D)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::D)) {
                 self.tool = Tool::Door;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::N)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::N)) {
                 self.tool = Tool::Window;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::M)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::M)) {
                 self.tool = Tool::Dimension;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::G)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::G)) {
                 self.snap.grid_enabled = !self.snap.grid_enabled;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::O)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::O)) {
                 self.snap.ortho = !self.snap.ortho;
             }
-            if ui.input(|i| i.key_pressed(egui::Key::F)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::F)) {
                 self.zoom_to_fit();
             }
         }
@@ -720,6 +789,39 @@ impl LintelApp {
             self.view.centre = bounds.centre();
         }
     }
+}
+
+/// One-line description of the active level. Used both as the canvas's
+/// screen-reader label (guide II.21.2) and as a visible toolbar summary.
+fn plan_summary(project: &lintel_core::project::Project) -> String {
+    use lintel_core::opening::OpeningKind;
+
+    let Some(level) = project.active_level() else {
+        return "No active level".to_string();
+    };
+    let plural = |n: usize| if n == 1 { "" } else { "s" };
+    let doors = level
+        .openings
+        .iter()
+        .filter(|o| o.kind == OpeningKind::Door)
+        .count();
+    let windows = level
+        .openings
+        .iter()
+        .filter(|o| o.kind == OpeningKind::Window)
+        .count();
+    format!(
+        "{}: {} wall{}, {} door{}, {} window{}, {} dimension{}",
+        level.name,
+        level.walls.len(),
+        plural(level.walls.len()),
+        doors,
+        plural(doors),
+        windows,
+        plural(windows),
+        level.dimensions.len(),
+        plural(level.dimensions.len()),
+    )
 }
 
 fn now_epoch_s() -> i64 {

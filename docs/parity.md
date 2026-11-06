@@ -36,6 +36,17 @@ each green CI run; percentages move only from evidence.
 | CAP-053 | `.iss` DefaultDirName typo fixed | `42099183213` (PR #8) | verified |
 | CAP-054 | `.iss` AppId brace + Windows `.ico` icon | `42103705669` (v0.5.0 release) | verified |
 
+## v0.6.0 — keyboard-complete flows, accessible canvas
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-055 | File keyboard shortcuts (Ctrl+N/O/S/Shift+S/E) | pending | awaiting run |
+| CAP-056 | Focusable canvas + screen-reader level summary | pending | awaiting run |
+| CAP-057 | Toolbar level summary | pending | awaiting run |
+| CAP-058 | Tool shortcuts guarded against modifiers | pending | awaiting run |
+| CAP-059 | PDF export dialog reachable (bug fix) | pending | awaiting run |
+| CAP-060 | Linux AppImage static verification | `42103705669` (v0.5.0 release asset) | verified |
+
 ## v0.5.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.5.0 —

@@ -28,7 +28,8 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 - **Add dimension lines.** Annotate the plan with measurements, in metric (mm) or imperial (feet/inches).
 - **Undo and redo.** Every change can be stepped back.
 - **Save and reopen plans.** Plans are saved as plain JSON files — a simple, readable format you can back up or copy anywhere.
-- **Export a PDF sheet.** Turn the current level into a PDF plan sheet with a border, title block, scale label, and sheet number.
+- **Export a PDF sheet.** Turn the current level into a PDF sheet with a border, title block, scale label, and sheet number — from **File → Export sheet…** or Ctrl+E.
+- **Work from the keyboard.** Ctrl+N/O/S create, open and save; W, S, D, N and M pick the Wall, Select, Door, Window and Dimension tools.
 
 *Screenshots are coming.*
 
@@ -42,10 +43,11 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.5.0 adds a real Windows
-installer; dimension lines and joint resolution arrived in 0.2.0, on-screen
-error messages and a macOS app bundle in 0.3.0, and keyboard/accessibility
-polish plus a Linux AppImage in 0.4.0. Screen-reader work is on the way. See:
+Lintel is young and actively developed. Version 0.6.0 makes every file action a
+keyboard shortcut (Ctrl+N/O/S/E) and gives the canvas a screen-reader summary of
+the current level; a real Windows installer arrived in 0.5.0, dimension lines
+and joint resolution in 0.2.0, and keyboard/accessibility polish plus a Linux
+AppImage in 0.4.0. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

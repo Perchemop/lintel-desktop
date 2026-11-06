@@ -102,10 +102,23 @@ CI evidence: PR #8 run `42099183213`; release workflow run `42103705669`.
 | CAP-053 | `.iss` DefaultDirName typo fixed (`{autpf}` → `{autopf}`) | ✓ |
 | CAP-054 | `.iss` AppId brace escaped + Windows `.ico` icon | ✓ |
 
-**Planned for v0.6.0:**
-- Screen-reader labels beyond egui's built-in accessibility
+## v0.6.0 — Keyboard-complete flows, accessible canvas
+
+**Status:** In progress — implemented; CI verification and tag pending.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-055 | File keyboard shortcuts (Ctrl+N/O/S/Shift+S/E) | ✓ |
+| CAP-056 | Focusable canvas with a screen-reader level summary | ✓ |
+| CAP-057 | Level summary shown in the toolbar | ✓ |
+| CAP-058 | Tool shortcuts guarded against Ctrl/Cmd/Alt | ✓ |
+| CAP-059 | PDF export dialog reachable from the UI (bug fix) | ✓ |
+| CAP-060 | Linux AppImage static verification recorded | ✓ |
+
+**Planned for v0.7.0:**
+- Screen-reader output spot-check on Windows/macOS (manual, needs a host)
+- Linux AppImage execution check on an x86_64 host
 - Keyboard-focus management review
-- Linux AppImage verification on end-user systems
 
 ---
 
