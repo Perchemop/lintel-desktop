@@ -3,6 +3,51 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.8.0 — Keyboard-focus review
+
+**Summary.** A focus review found a regression: after tabbing to the drawing
+canvas, every keyboard shortcut went dead. Shortcuts now work with the canvas
+focused and are still suppressed while you type in a field.
+
+### Added
+
+- Unit tests for the level summary shown in the toolbar and announced to screen
+  readers
+- `ACCESSIBILITY.md` now records the focus-review outcome: tab order, visible
+  focus, Escape dismissal, and that focus is never trapped
+
+### Changed
+
+- Keyboard shortcuts apply when nothing has focus **or** when the canvas has
+  focus; they are still suppressed while typing in a text field
+
+### Fixed
+
+- **Shortcuts stopped working after tabbing to the canvas** (a regression from
+  0.6.0, when the canvas became focusable)
+
+### Known limitations
+
+- Screen-reader output is verified manually, not in CI
+- The Linux AppImage has not been executed on an x86_64 host
+
+### Artefacts
+
+`lintel-windows-x86_64-setup.exe` (Windows installer),
+`lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`,
+`lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-appimage-x86_64.AppImage` (Linux AppImage), and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~130,000 tokens
+- Cumulative since development began: ~5,960,000 tokens
+
+---
+
 ## Lintel 0.7.0 — Every documented capability is now reachable
 
 **Summary.** An audit found four things Lintel could do but that had no way to

@@ -31,3 +31,4 @@
 | D-025 | File dialogs | Open/Save/Save As use one fixed path (`workflow.lintel.json`); no native file picker | The `rfd` picker dragged GPL/LGPL dependencies; a fixed path keeps the build clean (recorded since v0.1.0) | 2026-11-06 |
 | D-026 | Dimension drag | Dragging a dimension changes its **offset**; `MoveDimension` stays core-only | Moving the measured span would detach a dimension from what it measures; offset is the professional gesture | 2026-11-06 |
 | D-027 | Reachability audit | Every `Command` variant must be bound in `apps/lintel` (or explicitly documented as core-only) | Two releases in a row shipped a documented-but-unreachable capability (export dialog in 0.6.0, storeys/units/rename in 0.7.0) | 2026-11-06 |
+| D-028 | Keyboard focus | Shortcuts apply when nothing is focused **or** the canvas is focused; suppressed in text fields | Making the canvas focusable had disabled every shortcut while it held focus | 2026-11-07 |

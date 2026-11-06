@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.8.0 — 2026-11-07
+
+### Summary
+
+A keyboard-focus review. It found a regression introduced when the canvas
+became focusable: tabbing to the canvas silently disabled every keyboard
+shortcut. Shortcuts now work with the canvas focused, and the level summary is
+unit-tested.
+
+### Added
+
+- Unit tests for the level summary shown in the toolbar and announced to screen
+  readers (empty, singular and multi-storey cases)
+- `ACCESSIBILITY.md` records the focus-review outcome: tab order, visible focus,
+  Escape dismissal and that focus is never trapped
+
+### Changed
+
+- Keyboard shortcuts now apply when nothing has focus **or** when the canvas has
+  focus; they are still suppressed while typing in a text field
+
+### Fixed
+
+- **Shortcuts stopped working after tabbing to the canvas.** Making the canvas
+  focusable (0.6.0) meant `focused().is_none()` became false, so W/S/D/N/M,
+  Ctrl+N/O/S/E and undo/redo all went dead until focus moved elsewhere
+
+### Known limitations
+
+- Screen-reader output is verified manually, not in CI
+- The Linux AppImage has not been executed on an x86_64 host
+
+### Token metrics
+
+- Approx. tokens this release: 130,000
+- Approx. cumulative tokens since development began: 5,960,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.7.0 — 2026-11-06
 
 ### Summary

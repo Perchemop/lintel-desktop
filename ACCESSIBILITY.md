@@ -39,6 +39,24 @@ recorded here honestly rather than glossed over (guide II.21.1).
 - **Shortcut hints:** a single grey "Shortcuts:" line under the tool selector
   lists the keyboard bindings.
 
+## Keyboard focus
+
+Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
+
+- **Tab order** follows widget creation order: the menu bar, then the toolbar
+  (tool selector, zoom, summary, shortcuts, version), then the drawing canvas,
+  then the Inspector window and any open dialog.
+- **The canvas is focusable** so keyboard and screen-reader users can reach it.
+  While the canvas holds focus, every keyboard shortcut still works; the
+  shortcuts are only suppressed while a text field (project name, sheet number,
+  sheet title, new-storey name) has focus, so typing cannot trigger a tool.
+- **Focus is visible.** egui draws a focus ring in the theme's COBALT accent,
+  which meets WCAG AA contrast on both the canvas and panel backgrounds.
+- **Focus is never trapped.** Tab moves out of dialogs and back into the main
+  window; Escape closes any open dialog.
+- **Nothing steals focus.** The app never moves focus on its own; the update
+  prompt appears as a window and can be dismissed with Escape or "Later".
+
 ## Limitations (WCAG 2.2 AA, "where feasible")
 
 - **Canvas objects have no per-object ARIA-equivalent labels.** The canvas

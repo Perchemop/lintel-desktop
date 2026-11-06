@@ -44,11 +44,11 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.7.0 makes every capability
-reachable from the interface — add and delete storeys, rename the plan and
-switch units are all in the Inspector; 0.6.0 added file keyboard shortcuts and a
-screen-reader summary of the current level; a real Windows installer arrived in
-0.5.0, and dimension lines and joint resolution in 0.2.0. See:
+Lintel is young and actively developed. Version 0.8.0 fixes keyboard focus so
+shortcuts keep working after you tab to the canvas; 0.7.0 made every capability
+reachable from the interface; a real Windows installer arrived in 0.5.0; and
+dimension lines and joint resolution in 0.2.0. Screen-reader spot-checks on
+Windows/macOS are next. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

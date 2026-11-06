@@ -57,6 +57,14 @@ each green CI run; percentages move only from evidence.
 | CAP-064 | Drag a dimension to change its offset | `42211261713` (PR #10) | verified |
 | CAP-065 | Command-reachability audit clean (only `MoveDimension` core-only, documented) | `42211261713` (PR #10) | verified |
 
+## v0.8.0 — keyboard-focus review
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-066 | Shortcuts work while the canvas has focus | pending | awaiting run |
+| CAP-067 | Level summary unit-tested (3 cases) | pending | awaiting run |
+| CAP-068 | Focus-review outcome recorded | pending | awaiting run |
+
 ## v0.7.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.7.0 —
