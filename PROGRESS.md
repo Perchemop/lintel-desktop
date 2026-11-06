@@ -1,5 +1,25 @@
 # Progress
 
+## v0.6.0 Status — IN PROGRESS (implemented; CI/tag pending)
+
+- [x] File keyboard shortcuts: Ctrl+N/O/S/Shift+S/E
+- [x] Focusable canvas with a screen-reader label naming the active level and its contents
+- [x] Level summary shown in the toolbar
+- [x] Plain tool shortcuts guarded so Ctrl+S cannot also switch tools
+- [x] **Fixed:** PDF export dialog was unreachable (nothing set `export_open`); now File → Export sheet… and Ctrl+E
+- [x] Linux AppImage statically verified (ELF + SquashFS magic + SHA-256); execution needs an x86_64 host
+- [x] `ACCESSIBILITY.md` and `docs/qc/checklist.md` updated
+- [ ] CI green on `main` for the v0.6.0 slice
+- [ ] v0.6.0 tag and GitHub Release published
+
+Readiness % (v0.6.0): **~85% — implemented; verification and release pending.**
+
+### Still planned (v0.7.0)
+
+- [ ] Screen-reader output spot-check on Windows/macOS (manual)
+- [ ] Linux AppImage execution check on an x86_64 host
+- [ ] Keyboard-focus management review
+
 ## v0.5.0 Status — RELEASED
 
 - [x] Windows installer step restored using Chocolatey (`choco install innosetup`)

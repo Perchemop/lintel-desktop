@@ -62,6 +62,12 @@ run, recorded in `docs/parity.md`).
 | CAP-052 | Windows installer | Release publishes `lintel-windows-x86_64-setup.exe` via Inno Setup | `release.yml` + `resources/windows/lintel.iss` | guide §6.2 | implemented |
 | CAP-053 | `.iss` DefaultDirName fix | Installer suggests the correct Program Files dir | `resources/windows/lintel.iss` | — | implemented |
 | CAP-054 | `.iss` AppId + Windows icon | AppId brace escaped; `SetupIconFile` uses a real `.ico` | `resources/windows/lintel.iss`, `resources/windows/lintel.ico` | — | implemented |
+| CAP-055 | File keyboard shortcuts | Ctrl+N/O/S/Shift+S/E drive New/Open/Save/Save As/Export | `LintelApp` helpers + input block | guide II.21.2 | implemented |
+| CAP-056 | Accessible canvas | Canvas is focusable and labelled with the level summary | `canvas.rs` `widget_info`, `plan_summary` | guide II.21.2 | implemented |
+| CAP-057 | Toolbar level summary | Toolbar shows the active level's contents | `plan_summary` | guide II.21.2 | implemented |
+| CAP-058 | Modifier-guarded tool keys | W/S/D/N/M/G/O/F do not fire with Ctrl/Cmd/Alt | input block `plain_keys` | guide II.21.2 | implemented |
+| CAP-059 | PDF export reachable | File → Export sheet… opens the dialog (was unreachable) | `main.rs` File menu | guide §9 (no fake functionality) | implemented |
+| CAP-060 | AppImage verification | Published AppImage checked (ELF + SquashFS + SHA-256) | `docs/qc/checklist.md` | guide §6.2 | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -82,6 +88,7 @@ Readiness % (v0.2.0): **100% — shipped** (CI `41907396871`; release `0.2.0`).
 Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
 Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
 Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
+Readiness % (v0.6.0): **~85% — implemented; CI verification and tag pending.**
 
-Still planned for v0.6.0: screen-reader labels beyond the toolkit's built-in
-accessibility, keyboard-focus management review.
+Still planned for v0.7.0: screen-reader output spot-checks on Windows/macOS,
+Linux AppImage execution on an x86_64 host, keyboard-focus management review.

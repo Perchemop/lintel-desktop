@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.6.0 — 2026-11-06
+
+### Summary
+
+Keyboard-complete file flows and an accessible canvas. A real bug is also
+fixed: the PDF export dialog existed but had no way to open it.
+
+### Added
+
+- File keyboard shortcuts: Ctrl+N (new), Ctrl+O (open), Ctrl+S (save),
+  Ctrl+Shift+S (save as), Ctrl+E (export sheet)
+- The plan canvas is keyboard-focusable and carries a screen-reader label
+  naming the active level and its contents, e.g.
+  `Ground: 3 walls, 2 doors, 1 window, 1 dimension`
+- The same level summary is shown in the toolbar
+- `ACCESSIBILITY.md` and the QC checklist document the new keyboard flows
+
+### Changed
+
+- Plain tool shortcuts (W/S/D/N/M/G/O/F) no longer fire while a Ctrl/Cmd or Alt
+  modifier is held, so Ctrl+S cannot also switch to the Select tool
+
+### Fixed
+
+- **The PDF export dialog was unreachable**: nothing set `export_open`, so the
+  documented "Export sheet…" flow did not exist. It is now on the File menu and
+  bound to Ctrl+E.
+
+### Known limitations
+
+- Screen-reader labels beyond egui's built-in AccessKit support (and the canvas
+  level summary) still pending
+- Canvas objects have no per-object labels — see `ACCESSIBILITY.md`
+- Linux AppImage verified statically only (execution needs an x86_64 host)
+
+### Token metrics
+
+- Approx. tokens this release: 150,000
+- Approx. cumulative tokens since development began: 5,670,000
+
+(Figures are approximate totals recorded at release time.)
+
 ## v0.5.0 — 2026-11-06
 
 ### Summary

@@ -20,10 +20,12 @@ mouse.
 | 6 | Press **Z** (Undo) to remove the dimension | | |
 | 7 | Press **Y** (Redo) to restore it | | |
 | 8 | Select an item and press **Delete** to remove it | | |
-| 9 | Open File → Save; confirm the plan saves | | |
-| 10 | Open File → Export PDF; set paper/scale/sheet/title; export | | |
-| 11 | Press **F** to zoom to fit | | |
-| 12 | Press **Escape** to cancel any active draft / clear selection | | |
+| 9 | Press **Ctrl+S**; confirm the plan saves | | |
+| 10 | Press **Ctrl+E**; set paper/scale/sheet/title; export | | |
+| 11 | Press **Ctrl+N** for a new plan, then **Ctrl+O** to reopen the saved one | | |
+| 12 | Press **F** to zoom to fit | | |
+| 13 | Press **Escape** to cancel any active draft / clear selection | | |
+| 14 | Tab to the canvas; confirm the level summary is announced | | |
 
 ## 2. Dialog Escape dismissal
 
@@ -62,8 +64,24 @@ canvas PAPER background.
 | Shortcuts hint legible (grey on background) | | |
 | All text meets at least WCAG AA contrast | | |
 
+## 6. Linux AppImage end-user check
+
+Download `lintel-appimage-x86_64.AppImage` from the latest release and, on an
+x86_64 Linux machine:
+
+| Check | Pass? | Notes |
+|-------|-------|-------|
+| `chmod +x lintel-appimage-x86_64.AppImage` then run it — window opens | | |
+| The embedded desktop entry and icon are present (`--appimage-extract`) | | |
+| `sha256sum` matches the release `SHA256SUMS.txt` | | |
+
+Static verification (no x86_64 host required): the published AppImage is a
+valid ELF (`7f 45 4c 46`), contains a SquashFS payload (`hsqs` magic), and its
+SHA-256 matches `SHA256SUMS.txt`. Execution was verified on an x86_64 host only
+where available; the ARM development machine cannot execute the x86_64 binary.
+
 ## Run log
 
 | Date | Tester | Result | Notes |
 |------|--------|--------|-------|
-| | | | |
+| 2026-11-06 | agent (static) | partial | AppImage ELF + SquashFS + SHA-256 verified; GUI execution needs an x86_64 host |

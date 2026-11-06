@@ -77,11 +77,18 @@ impl Canvas {
         selection: Option<Hit>,
         snap: &SnapSettings,
         draft: &Draft,
+        summary: &str,
     ) -> (CanvasResponse, egui::Rect) {
         let mut response = CanvasResponse::default();
 
-        let (egui_response, painter) =
-            ui.allocate_painter(ui.available_size(), egui::Sense::click_and_drag());
+        // The canvas is focusable so keyboard users can Tab to it, and it
+        // carries a screen-reader label describing the active level (guide
+        // II.21.2). Individual plan objects cannot be labelled: they are drawn
+        // by a custom painter, which is recorded in ACCESSIBILITY.md.
+        let (egui_response, painter) = ui.allocate_painter(
+            ui.available_size(),
+            egui::Sense::click_and_drag() | egui::Sense::focusable_noninteractive(),
+        );
         let rect = egui_response.rect;
         painter.rect_filled(rect, 0.0, theme::PAPER);
 
@@ -166,6 +173,10 @@ impl Canvas {
         {
             response.zoom = Some(((-scroll.y as f64 * 0.001).exp(), anchor));
         }
+
+        // Screen-reader label for the plan canvas (guide II.21.2).
+        egui_response
+            .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Other, true, summary));
 
         (response, rect)
     }

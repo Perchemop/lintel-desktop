@@ -3,6 +3,57 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.6.0 — Keyboard-complete file flows and an accessible canvas
+
+**Summary.** Everything you do with files is now one keyboard shortcut away,
+and the canvas announces what is on the plan to a screen reader. This release
+also fixes a real bug: the PDF export dialog existed but could not be opened.
+
+### Added
+
+- File keyboard shortcuts: **Ctrl+N** new, **Ctrl+O** open, **Ctrl+S** save,
+  **Ctrl+Shift+S** save as, **Ctrl+E** export sheet
+- The plan canvas is keyboard-focusable and carries a screen-reader label
+  describing the active level, e.g. `Ground: 3 walls, 2 doors, 1 window, 1 dimension`
+- The same level summary is shown in the toolbar, so you can see the model's
+  contents at a glance
+
+### Changed
+
+- Plain tool shortcuts (W/S/D/N/M/G/O/F) no longer fire while Ctrl/Cmd or Alt is
+  held — previously Ctrl+S would also switch to the Select tool
+
+### Fixed
+
+- **PDF export is reachable again.** The export dialog was wired up but nothing
+  opened it, so the documented "Export sheet…" flow did not exist. It is now on
+  the File menu and bound to Ctrl+E.
+
+### Known limitations
+
+- Canvas objects have no per-object labels (the canvas carries a level summary
+  instead); documented in `ACCESSIBILITY.md`
+- Screen-reader output is verified manually, not in CI
+- The Linux AppImage is verified statically (ELF + SquashFS + checksum);
+  running it requires an x86_64 Linux host
+
+### Artefacts
+
+`lintel-windows-x86_64-setup.exe` (Windows installer),
+`lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`,
+`lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip` (contains `Lintel.app`),
+`lintel-appimage-x86_64.AppImage` (Linux AppImage), and `SHA256SUMS.txt`.
+
+### Token metrics
+
+Approximate totals recorded at release time, for transparency rather than as an
+exact accounting.
+
+- This release: ~150,000 tokens
+- Cumulative since development began: ~5,670,000 tokens
+
+---
+
 ## Lintel 0.5.0 — Windows installer
 
 **Summary.** Windows users get a real installer: the release now publishes
