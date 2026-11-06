@@ -1,5 +1,21 @@
 # Progress
 
+## v0.8.0 Status — IN PROGRESS (implemented; CI/tag pending)
+
+- [x] Focus review found a regression: tabbing to the canvas disabled every shortcut
+- [x] Shortcuts now apply when nothing is focused **or** the canvas is focused; still suppressed in text fields
+- [x] Unit tests for `plan_summary` (empty, singular, multi-storey) — verified in CI
+- [x] `ACCESSIBILITY.md` records the focus-review outcome
+- [ ] CI green on `main` for the v0.8.0 slice
+- [ ] v0.8.0 tag and GitHub Release published
+
+Readiness % (v0.8.0): **~85% — implemented; verification and release pending.**
+
+### Still planned (v0.9.0)
+
+- [ ] Screen-reader output spot-check on Windows/macOS (manual)
+- [ ] Linux AppImage execution check on an x86_64 host
+
 ## v0.7.0 Status — RELEASED
 
 - [x] Audit: grepped the UI for every `Command` variant; found 4 unreachable capabilities

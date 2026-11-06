@@ -19,6 +19,9 @@ pub struct CanvasResponse {
     pub drag_delta: Option<egui::Vec2>, // primary-button drag, screen delta
     pub pan_delta: Option<egui::Vec2>, // middle-button drag, screen delta
     pub zoom: Option<(f64, egui::Pos2)>, // factor, anchor in screen space
+    /// The canvas widget's id, so the shell can tell keyboard focus on the
+    /// canvas apart from focus inside a text field.
+    pub widget_id: Option<egui::Id>,
 }
 
 /// Draft geometry for the wall tool.
@@ -90,6 +93,7 @@ impl Canvas {
             egui::Sense::click_and_drag() | egui::Sense::focusable_noninteractive(),
         );
         let rect = egui_response.rect;
+        response.widget_id = Some(egui_response.id);
         painter.rect_filled(rect, 0.0, theme::PAPER);
 
         let hover = egui_response.hover_pos();

@@ -67,6 +67,17 @@ canvas PAPER background.
 | Shortcuts hint legible (grey on background) | | |
 | All text meets at least WCAG AA contrast | | |
 
+## 5b. Keyboard focus
+
+| Check | Pass? | Notes |
+|-------|-------|-------|
+| Tab reaches the canvas, toolbar and Inspector in a sensible order | | |
+| With the canvas focused, W/S/D/N/M and Ctrl+S still work | | |
+| While typing in a text field, letter shortcuts do NOT fire | | |
+| Focus ring is visible on the focused widget | | |
+| Tab moves out of an open dialog (no focus trap) | | |
+| Escape closes the dialog and returns focus to the main window | | |
+
 ## 6. Linux AppImage end-user check
 
 Download `lintel-appimage-x86_64.AppImage` from the latest release and, on an

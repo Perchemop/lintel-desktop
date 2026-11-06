@@ -637,7 +637,12 @@ impl LintelApp {
         let plain_keys =
             ui.input(|i| !i.modifiers.command && !i.modifiers.ctrl && !i.modifiers.alt);
 
-        if ui.memory(|m| m.focused().is_none()) {
+        // Keyboard shortcuts apply when nothing has focus, or when the canvas
+        // itself has it — but not while the user is typing in a text field.
+        // (The canvas is focusable so screen readers and Tab can reach it.)
+        let keyboard_scope =
+            ui.memory(|m| m.focused().is_none_or(|id| Some(id) == response.widget_id));
+        if keyboard_scope {
             // File shortcuts (Ctrl/Cmd + key).
             if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::N)) {
                 self.new_plan();
@@ -887,4 +892,88 @@ fn main() {
     let app = LintelApp::new();
     eframe::run_native("Lintel", native_options, Box::new(|_cc| Ok(Box::new(app))))
         .expect("eframe run failed");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lintel_core::dimension::DimensionKind;
+    use lintel_core::opening::OpeningKind;
+
+    #[test]
+    fn an_empty_level_summarises_to_zeroes() {
+        let doc = Document::new("Plan", 1);
+        assert_eq!(
+            plan_summary(doc.project()),
+            "Level 0: 0 walls, 0 doors, 0 windows, 0 dimensions"
+        );
+    }
+
+    #[test]
+    fn the_summary_uses_singular_words_for_single_items() {
+        let mut doc = Document::new("Plan", 1);
+        let wall = doc
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                2,
+            )
+            .expect("add wall")
+            .wall
+            .expect("wall id");
+        doc.apply(
+            Command::PlaceOpening {
+                kind: OpeningKind::Door,
+                host: wall,
+                offset: 2000.0,
+            },
+            3,
+        )
+        .expect("place door");
+        doc.apply(
+            Command::PlaceDimension {
+                kind: DimensionKind::LinearHorizontal,
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+                offset: 500.0,
+            },
+            4,
+        )
+        .expect("place dimension");
+
+        assert_eq!(
+            plan_summary(doc.project()),
+            "Level 0: 1 wall, 1 door, 0 windows, 1 dimension"
+        );
+    }
+
+    #[test]
+    fn the_summary_follows_the_active_level() {
+        let mut doc = Document::new("Plan", 1);
+        let applied = doc
+            .apply(
+                Command::AddLevel {
+                    name: "First floor".to_string(),
+                    elevation: 3000.0,
+                },
+                2,
+            )
+            .expect("add level");
+        assert!(
+            plan_summary(doc.project()).starts_with("First floor:"),
+            "a new storey becomes active: {}",
+            plan_summary(doc.project())
+        );
+
+        // Switching back to the ground storey is reflected immediately.
+        let ground = lintel_core::ids::LevelId(1);
+        assert_ne!(ground, applied.level.expect("level id"));
+        doc.apply(Command::SetActiveLevel { id: ground }, 3)
+            .expect("set active level");
+        assert!(plan_summary(doc.project()).starts_with("Level 0:"));
+    }
 }

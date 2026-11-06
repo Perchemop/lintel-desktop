@@ -131,10 +131,19 @@ CI evidence: PR #10 run `42211261713`; release workflow run `42212698044`.
 | CAP-064 | Drag a dimension to change its offset | ✓ |
 | CAP-065 | Command-reachability audit documented and clean | ✓ |
 
-**Planned for v0.8.0:**
+## v0.8.0 — Keyboard-focus review
+
+**Status:** In progress — implemented; CI verification and tag pending.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-066 | Shortcuts work while the canvas has keyboard focus | ✓ |
+| CAP-067 | Level summary unit-tested (empty / singular / multi-storey) | ✓ |
+| CAP-068 | Focus-review outcome recorded (tab order, visible focus, no trapping) | ✓ |
+
+**Planned for v0.9.0:**
 - Screen-reader output spot-check on Windows/macOS (manual, needs a host)
 - Linux AppImage execution check on an x86_64 host
-- Keyboard-focus management review
 
 ---
 

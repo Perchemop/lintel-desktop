@@ -73,6 +73,9 @@ run, recorded in `docs/parity.md`).
 | CAP-063 | Switch units | Inspector → Project: Metric / Imperial radio | `inspector.rs` project section | guide §9 | implemented |
 | CAP-064 | Drag a dimension | Dragging a selected dimension changes its offset | `main.rs` drag handler | guide §9 | implemented |
 | CAP-065 | Reachability audit | Every `Command` variant is bound in the UI except the documented `MoveDimension` | `docs/qc/checklist.md` §7 | guide §9 | implemented |
+| CAP-066 | Shortcuts with canvas focus | Tool/file/undo keys work while the canvas has focus, not while typing | `main.rs` keyboard scope + `CanvasResponse::widget_id` | guide II.21.2 | implemented |
+| CAP-067 | Level summary unit-tested | Empty, singular and multi-storey summary cases covered | `main.rs` `#[cfg(test)]` | guide §9 | implemented |
+| CAP-068 | Focus review recorded | Tab order, visible focus, Escape dismissal, no trapping | `ACCESSIBILITY.md` | guide II.21.4 | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -95,6 +98,7 @@ Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
 Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
 Readiness % (v0.6.0): **100% — shipped** (CI `42192427679`; release `0.6.0`).
 Readiness % (v0.7.0): **100% — shipped** (CI `42211261713`; release `0.7.0`).
+Readiness % (v0.8.0): **~85% — implemented; CI verification and tag pending.**
 
 Still planned for v0.7.0: screen-reader output spot-checks on Windows/macOS,
 Linux AppImage execution on an x86_64 host, keyboard-focus management review.
