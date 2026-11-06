@@ -51,11 +51,16 @@ each green CI run; percentages move only from evidence.
 
 | ID | Evidence | CI run | Status |
 |---|---|---|---|
-| CAP-061 | Add / delete a storey from the Inspector | pending | awaiting run |
-| CAP-062 | Rename the project from the Inspector | pending | awaiting run |
-| CAP-063 | Switch Metric / Imperial from the Inspector | pending | awaiting run |
-| CAP-064 | Drag a dimension to change its offset | pending | awaiting run |
-| CAP-065 | Command-reachability audit clean (only `MoveDimension` core-only, documented) | pending | awaiting run |
+| CAP-061 | Add / delete a storey from the Inspector | `42211261713` (PR #10) | verified |
+| CAP-062 | Rename the project from the Inspector | `42211261713` (PR #10) | verified |
+| CAP-063 | Switch Metric / Imperial from the Inspector | `42211261713` (PR #10) | verified |
+| CAP-064 | Drag a dimension to change its offset | `42211261713` (PR #10) | verified |
+| CAP-065 | Command-reachability audit clean (only `MoveDimension` core-only, documented) | `42211261713` (PR #10) | verified |
+
+## v0.7.0 release
+
+Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.7.0 —
+release workflow run `42212698044`, all six assets present.
 
 ## v0.6.0 release
 

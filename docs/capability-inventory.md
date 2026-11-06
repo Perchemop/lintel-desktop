@@ -94,7 +94,7 @@ Readiness % (v0.3.0): **100% — shipped** (CI `41998649019`; release `0.3.0`).
 Readiness % (v0.4.0): **100% — shipped** (CI `42013256872`; release `0.4.0`).
 Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
 Readiness % (v0.6.0): **100% — shipped** (CI `42192427679`; release `0.6.0`).
-Readiness % (v0.7.0): **~85% — implemented; CI verification and tag pending.**
+Readiness % (v0.7.0): **100% — shipped** (CI `42211261713`; release `0.7.0`).
 
 Still planned for v0.7.0: screen-reader output spot-checks on Windows/macOS,
 Linux AppImage execution on an x86_64 host, keyboard-focus management review.

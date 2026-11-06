@@ -1,16 +1,17 @@
 # Progress
 
-## v0.7.0 Status — IN PROGRESS (implemented; CI/tag pending)
+## v0.7.0 Status — RELEASED
 
 - [x] Audit: grepped the UI for every `Command` variant; found 4 unreachable capabilities
 - [x] Inspector → Project: rename the project (`RenameProject`) and switch Metric/Imperial (`SetUnits`)
 - [x] Inspector → Storeys: delete a storey (`DeleteLevel`, disabled for the last) and add one (`AddLevel`)
 - [x] Dragging a selected dimension changes its offset (`SetDimensionOffset`)
 - [x] Fmt/clippy-safe: removed the now-unused `LevelId` import; rustfmt clean
-- [ ] CI green on `main` for the v0.7.0 slice
-- [ ] v0.7.0 tag and GitHub Release published
+- [x] CI green (PR #10 run `42211261713`: `check` + `build-matrix` Linux/macOS/Windows)
+- [x] v0.7.0 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.7.0
+      (release run `42212698044`; all six assets present)
 
-Readiness % (v0.7.0): **~85% — implemented; verification and release pending.**
+Readiness % (v0.7.0): **100% — shipped.**
 
 ### Known, deliberate exception
 

@@ -119,7 +119,9 @@ CI evidence: PR #9 run `42192427679`; release workflow run `42193835276`.
 
 ## v0.7.0 — Reachable capabilities
 
-**Status:** In progress — implemented; CI verification and tag pending.
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.7.0
+
+CI evidence: PR #10 run `42211261713`; release workflow run `42212698044`.
 
 | ID | Capability | Done |
 |---|-----------|------|
