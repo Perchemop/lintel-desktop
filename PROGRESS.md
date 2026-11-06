@@ -35,12 +35,6 @@ Readiness % (v0.6.0): **100% — shipped.**
 
 Readiness % (v0.5.0): **100% — shipped.**
 
-### Still planned (v0.6.0)
-
-- [ ] Screen-reader labels beyond egui's built-in accessibility
-- [ ] Keyboard-focus management review
-- [ ] Linux AppImage verification on end-user systems
-
 ## v0.4.0 Status — RELEASED
 
 - [x] Keyboard shortcut hints + hover labels on all controls (W=Wall S=Select D=Door N=Window M=Dimension · Z=Undo Y=Redo F=Zoom-to-fit Esc=Cancel Del=Delete)
