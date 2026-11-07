@@ -30,6 +30,7 @@ pub fn inspector(
     selection: &Option<Hit>,
     snap: &mut SnapSettings,
     draft: &mut InspectorDraft,
+    measurements_active: bool,
 ) -> Option<Command> {
     let element_cmd = egui::CollapsingHeader::new("Element")
         .default_open(true)
@@ -243,6 +244,107 @@ pub fn inspector(
 
     ui.separator();
 
+    let measurements_cmd = if measurements_active {
+        egui::CollapsingHeader::new("Measurements")
+            .default_open(true)
+            .show(ui, |ui| {
+                let project = doc.project();
+                let measurements = lintel_core::measurements::Measurements::new(project);
+
+                // Cache rooms for this frame to avoid repeated detection
+                let level_rooms = project.active_level().map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
+
+                // Selected room (if the current selection sits inside one).
+                if let Some(Hit::Wall(wall_id)) = selection {
+                    let level = project.active_level().expect("level");
+                    if let Some(wall) = level.wall(*wall_id) {
+                        let mid = lintel_core::geom::Point2::new(
+                            (wall.start.x + wall.end.x) * 0.5,
+                            (wall.start.y + wall.end.y) * 0.5,
+                        );
+                        // Midpoint lies on the wall centreline; nudge it inward a little so containment works.
+                        let probe = [mid, lintel_core::geom::Point2::new(mid.x + 10.0, mid.y), lintel_core::geom::Point2::new(mid.x - 10.0, mid.y), lintel_core::geom::Point2::new(mid.x, mid.y + 10.0), lintel_core::geom::Point2::new(mid.x, mid.y - 10.0)];
+                        if let Some(rooms) = &level_rooms {
+                            if let Some(room) = rooms.iter().find(|r| probe.iter().any(|p| r.contains(*p))) {
+                                ui.label(format!(
+                                    "Selected room — area {}  perimeter {}",
+                                    room.area_label(),
+                                    project.units.format(room.perimeter_mm)
+                                ));
+                                ui.separator();
+                            }
+                        }
+                    }
+                }
+
+                if let Some(level) = project.active_level() {
+                    let totals = measurements.level_totals(level.id);
+                    ui.label(format!("Level: {}", level.name));
+                    ui.label(format!(
+                        "Wall length total: {}",
+                        project.units.format(totals.wall_length_mm)
+                    ));
+                    ui.label(format!(
+                        "Opening length total: {}",
+                        project.units.format(totals.opening_length_mm)
+                    ));
+                    ui.label(format!("Rooms: {}", totals.room_count));
+                    ui.label(format!(
+                        "Room area total: {:.2} m²",
+                        totals.total_room_area_mm2 / 1_000_000.0
+                    ));
+                    ui.label(format!(
+                        "Room perimeter total: {}",
+                        project.units.format(totals.total_room_perimeter_mm)
+                    ));
+                    ui.separator();
+                    if let Some(rooms) = &level_rooms {
+                        if rooms.is_empty() {
+                            ui.label("No enclosed rooms.");
+                        } else {
+                            for (index, room) in rooms.iter().enumerate() {
+                                ui.label(format!(
+                                    "Room {} — area {}  perimeter {}",
+                                    index + 1,
+                                    room.area_label(),
+                                    project.units.format(room.perimeter_mm)
+                                ));
+                            }
+                        }
+                    }
+                }
+
+                ui.separator();
+                let project_totals = measurements.project_totals();
+                ui.label("Project totals:");
+                ui.label(format!(
+                    "Wall length: {}",
+                    project.units.format(project_totals.wall_length_mm)
+                ));
+                ui.label(format!(
+                    "Opening length: {}",
+                    project.units.format(project_totals.opening_length_mm)
+                ));
+                ui.label(format!("Rooms: {}", project_totals.room_count));
+                ui.label(format!(
+                    "Room area: {:.2} m²",
+                    project_totals.total_room_area_mm2 / 1_000_000.0
+                ));
+                ui.label(format!(
+                    "Room perimeter: {}",
+                    project.units.format(project_totals.total_room_perimeter_mm)
+                ));
+
+                None::<Command>
+            })
+            .body_returned
+            .flatten()
+    } else {
+        None
+    };
+
+    ui.separator();
+
     let rooms_cmd = egui::CollapsingHeader::new("Rooms")
         .default_open(false)
         .show(ui, |ui| {
@@ -290,6 +392,7 @@ pub fn inspector(
         .or(view_cmd)
         .or(rooms_cmd)
         .or(schedule_cmd)
+        .or(measurements_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
