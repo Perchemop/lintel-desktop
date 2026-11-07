@@ -226,13 +226,19 @@ jobs:
       run: bash scripts/scan-release-assets.sh dist
 
     - name: Sign SHA256SUMS.txt (guide §12.1 auto-update security)
-      if: ${{ github.ref_type == 'tag' && secrets.GPG_PRIVATE_KEY != '' }}
+      if: ${{ github.ref_type == 'tag' }}
       shell: bash
       run: |
         set -euo pipefail
-        echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+        if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
+          echo "GPG_PRIVATE_KEY not set; skipping release signing"
+          exit 0
+        fi
+        echo "${GPG_PRIVATE_KEY}" | gpg --import --batch --yes
         gpg --batch --yes --armor --detach-sign dist/SHA256SUMS.txt
         ls -la dist/SHA256SUMS.txt.asc
+      env:
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
     - name: Publish GitHub release
       env:
