@@ -31,6 +31,7 @@ enum Tool {
     Door,
     Window,
     Dimension,
+    Label,
 }
 
 impl Tool {
@@ -41,6 +42,7 @@ impl Tool {
             Tool::Door => "Door",
             Tool::Window => "Window",
             Tool::Dimension => "Dimension",
+            Tool::Label => "Label",
         }
     }
 }
@@ -230,6 +232,30 @@ impl eframe::App for LintelApp {
                     {
                         self.export_open = true;
                     }
+                    if ui
+                        .button("Export drawing set…")
+                        .on_hover_text("Write a multi-sheet PDF with a cover page (Ctrl+Shift+E)")
+                        .clicked()
+                    {
+                        let path = PathBuf::from(format!("{}-set.pdf", self.export_spec.sheet_number));
+                        match lintel_core::pdf::render_set(
+                            self.doc.project(),
+                            &self.export_spec,
+                            now,
+                        ) {
+                            Ok(bytes) => {
+                                if let Err(e) = std::fs::write(&path, &bytes) {
+                                    self.note_status(
+                                        format!("Could not write {}: {e}", path.display()),
+                                        now,
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                self.note_status(format!("Could not export the PDF: {e}"), now)
+                            }
+                        }
+                    }
                     ui.separator();
                     if ui.button("Exit").on_hover_text("Close Lintel").clicked() {
                         ui.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -315,6 +341,7 @@ impl eframe::App for LintelApp {
                             Tool::Dimension,
                             Tool::Dimension.label(),
                         );
+                        ui.selectable_value(&mut self.tool, Tool::Label, Tool::Label.label());
                     });
                 tool_response.response.on_hover_text(
                     "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
@@ -324,8 +351,7 @@ impl eframe::App for LintelApp {
                 ui.separator();
                 ui.label(egui::RichText::new(summary.clone()).small());
                 ui.label(
-                    egui::RichText::new("Shortcuts: W/S/D/N/M tools · Ctrl+N/O/S/Shift+S/E file · Z/Y undo-redo · F fit · Esc cancel · Del delete")
-                        .small()
+                    egui::RichText::new("Shortcuts: W/S/D/N/M/L tools · Ctrl+N/O/S/Shift+S/E file · Ctrl+D duplicate · Z/Y undo-redo · F fit · Esc cancel · Del delete")                        .small()
                         .color(egui::Color32::GRAY),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -513,6 +539,30 @@ impl LintelApp {
                         self.draft = Draft::default();
                     }
                 }
+                (Tool::Label, Some(world)) => {
+                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
+                    let snapped =
+                        lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
+                    let applied = self
+                        .doc
+                        .apply(
+                            Command::PlaceLabel {
+                                anchor: snapped,
+                                text: "Note".to_string(),
+                            },
+                            now,
+                        )
+                        .map_err(|e| {
+                            self.note_status(format!("Label rejected: {e}"), now);
+                        })
+                        .ok();
+                    if let Some(applied) = applied
+                        && let Some(label_id) = applied.label
+                    {
+                        self.selection = Some(Hit::Label(label_id));
+                    }
+                    self.draft = Draft::default();
+                }
                 (Tool::Door | Tool::Window, Some(world)) => match self.selection {
                     Some(Hit::Wall(id)) => {
                         let level = self.doc.project().active_level().expect("level");
@@ -600,6 +650,12 @@ impl LintelApp {
                         now,
                     );
                 }
+                Some(Hit::Label(id)) => {
+                    let level = self.doc.project().active_level().expect("level");
+                    let label = level.label(id).expect("label");
+                    let anchor = label.anchor + mm;
+                    let _ = self.doc.apply(Command::MoveLabel { id, anchor }, now);
+                }
                 _ => {}
             }
         }
@@ -662,6 +718,21 @@ impl LintelApp {
             if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::E)) {
                 self.export_open = true;
             }
+            if ui.input(|i| i.modifiers.command && i.modifiers.shift && i.key_pressed(egui::Key::E))
+            {
+                let path = PathBuf::from(format!("{}-set.pdf", self.export_spec.sheet_number));
+                match lintel_core::pdf::render_set(self.doc.project(), &self.export_spec, now) {
+                    Ok(bytes) => {
+                        if let Err(e) = std::fs::write(&path, &bytes) {
+                            self.note_status(
+                                format!("Could not write {}: {e}", path.display()),
+                                now,
+                            );
+                        }
+                    }
+                    Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
+                }
+            }
 
             // Undo / redo.
             if ui
@@ -699,9 +770,114 @@ impl LintelApp {
                     let _ = self.doc.apply(Command::DeleteDimension { id }, now);
                     self.selection = None;
                 }
+                if let Some(Hit::Label(id)) = self.selection {
+                    let _ = self.doc.apply(Command::DeleteLabel { id }, now);
+                    self.selection = None;
+                }
             }
 
             // Plain tool / view shortcuts.
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::D)) {
+                let off = Vec2::new(1000.0, 1000.0);
+                match self.selection {
+                    Some(Hit::Wall(id)) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        let w = level.wall(id).expect("wall").clone();
+                        let applied = self
+                            .doc
+                            .apply(
+                                Command::AddWall {
+                                    start: w.start + off,
+                                    end: w.end + off,
+                                    thickness: w.thickness,
+                                    height: w.height,
+                                },
+                                now,
+                            )
+                            .ok();
+                        if let Some(applied) = applied
+                            && let Some(new_id) = applied.wall
+                        {
+                            self.selection = Some(Hit::Wall(new_id));
+                        }
+                    }
+                    Some(Hit::Dimension(id)) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        let d = level.dimension(id).expect("dimension").clone();
+                        let applied = self
+                            .doc
+                            .apply(
+                                Command::PlaceDimension {
+                                    kind: d.kind,
+                                    start: d.start + off,
+                                    end: d.end + off,
+                                    offset: d.offset,
+                                },
+                                now,
+                            )
+                            .ok();
+                        if let Some(applied) = applied
+                            && let Some(new_id) = applied.dimension
+                        {
+                            self.selection = Some(Hit::Dimension(new_id));
+                        }
+                    }
+                    Some(Hit::Label(id)) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        let l = level.label(id).expect("label").clone();
+                        let applied = self
+                            .doc
+                            .apply(
+                                Command::PlaceLabel {
+                                    anchor: l.anchor + off,
+                                    text: l.text.clone(),
+                                },
+                                now,
+                            )
+                            .ok();
+                        if let Some(applied) = applied
+                            && let Some(new_id) = applied.label
+                        {
+                            self.selection = Some(Hit::Label(new_id));
+                        }
+                    }
+                    Some(Hit::Opening(id)) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        let o = level.opening(id).expect("opening").clone();
+                        let host = level.wall(o.host).expect("host wall");
+                        let host_len = host.length();
+                        let new_offset = (o.offset + 1000.0).min(host_len);
+                        if new_offset + o.width * 0.5 <= host_len {
+                            let applied = self
+                                .doc
+                                .apply(
+                                    Command::PlaceOpening {
+                                        kind: o.kind,
+                                        host: o.host,
+                                        offset: new_offset,
+                                    },
+                                    now,
+                                )
+                                .map_err(|e| {
+                                    self.note_status(format!("Duplicate rejected: {e}"), now);
+                                })
+                                .ok();
+                            if let Some(applied) = applied
+                                && let Some(new_id) = applied.opening
+                            {
+                                self.selection = Some(Hit::Opening(new_id));
+                            }
+                        } else {
+                            self.note_status(
+                                "Duplicate would not fit on the host wall".to_string(),
+                                now,
+                            );
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::W)) {
                 self.tool = Tool::Wall;
             }
@@ -716,6 +892,9 @@ impl LintelApp {
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::M)) {
                 self.tool = Tool::Dimension;
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::L)) {
+                self.tool = Tool::Label;
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::G)) {
                 self.snap.grid_enabled = !self.snap.grid_enabled;
@@ -856,7 +1035,8 @@ fn plan_summary(project: &lintel_core::project::Project) -> String {
         .iter()
         .filter(|o| o.kind == OpeningKind::Window)
         .count();
-    format!(
+    let rooms = lintel_core::room::detect_rooms(&level.walls).len();
+    let base = format!(
         "{}: {} wall{}, {} door{}, {} window{}, {} dimension{}",
         level.name,
         level.walls.len(),
@@ -867,7 +1047,12 @@ fn plan_summary(project: &lintel_core::project::Project) -> String {
         plural(windows),
         level.dimensions.len(),
         plural(level.dimensions.len()),
-    )
+    );
+    if rooms > 0 {
+        format!("{}, {} room{}", base, rooms, plural(rooms))
+    } else {
+        base
+    }
 }
 
 fn now_epoch_s() -> i64 {
@@ -975,5 +1160,33 @@ mod tests {
         doc.apply(Command::SetActiveLevel { id: ground }, 3)
             .expect("set active level");
         assert!(plan_summary(doc.project()).starts_with("Level 0:"));
+    }
+
+    #[test]
+    fn the_summary_appends_room_count_when_rooms_exist() {
+        let mut doc = Document::new("Plan", 1);
+        // Four walls enclosing a 4000 x 4000 square.
+        let ids = [
+            (Point2::new(0.0, 0.0), Point2::new(4000.0, 0.0)),
+            (Point2::new(4000.0, 0.0), Point2::new(4000.0, 4000.0)),
+            (Point2::new(4000.0, 4000.0), Point2::new(0.0, 4000.0)),
+            (Point2::new(0.0, 4000.0), Point2::new(0.0, 0.0)),
+        ];
+        for (s, e) in ids {
+            doc.apply(
+                Command::AddWall {
+                    start: s,
+                    end: e,
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                2,
+            )
+            .expect("add wall");
+        }
+        assert_eq!(
+            plan_summary(doc.project()),
+            "Level 0: 4 walls, 0 doors, 0 windows, 0 dimensions, 1 room"
+        );
     }
 }

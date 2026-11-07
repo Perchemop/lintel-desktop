@@ -17,7 +17,10 @@ use std::fmt::Write as _;
 use crate::error::CoreError;
 use crate::geom::{Bounds, Point2, Vec2, arc_points};
 use crate::join::PlanGeometry;
+use crate::level::Level;
+use crate::opening::OpeningKind;
 use crate::project::Project;
+use crate::schedule::opening_schedule;
 use crate::units::UnitSystem;
 
 /// PostScript points per millimetre.
@@ -29,6 +32,12 @@ const TITLE_BLOCK_WIDTH: f64 = 190.0;
 const TITLE_BLOCK_HEIGHT: f64 = 45.0;
 /// Room left around the drawing for dimensions and for the drawing to breathe.
 const DRAWING_PADDING: f64 = 18.0;
+/// Width of the opening-schedule table, in millimetres.
+const SCHEDULE_WIDTH: f64 = 110.0;
+/// Height of the schedule's bold title row, in millimetres.
+const SCHEDULE_TITLE_HEIGHT: f64 = 6.0;
+/// Height of every other schedule row (header and data), in millimetres.
+const SCHEDULE_ROW_HEIGHT: f64 = 5.0;
 
 /// Scales offered in the sheet dialog, smallest denominator first.
 pub const STANDARD_SCALES: [u32; 8] = [20, 50, 100, 200, 250, 500, 1000, 2000];
@@ -152,19 +161,16 @@ pub fn render_plan(
     let level = project
         .active_level()
         .ok_or(CoreError::LevelNotFound(project.active_level))?;
-    let geometry = PlanGeometry::of_level(level);
     let (sheet_width, sheet_height) = spec.size_mm();
 
     let mut content = Content::default();
-    draw_frame(&mut content, sheet_width, sheet_height);
-    draw_title_block(&mut content, project, spec, sheet_width, produced_epoch_s);
-    draw_plan(
+    draw_sheet(
         &mut content,
-        &geometry,
+        project,
+        level,
         spec,
-        sheet_width,
-        sheet_height,
-        project.units,
+        &spec.sheet_title,
+        produced_epoch_s,
     );
 
     Ok(build_pdf(
@@ -175,6 +181,178 @@ pub fn render_plan(
         spec,
         produced_epoch_s,
     ))
+}
+
+/// Render the whole drawing set: a cover sheet followed by one plan sheet per
+/// storey, as a single multi-page PDF.
+pub fn render_set(
+    project: &Project,
+    spec: &SheetSpec,
+    produced_epoch_s: i64,
+) -> Result<Vec<u8>, CoreError> {
+    let (sheet_width, sheet_height) = spec.size_mm();
+
+    let mut cover = Content::default();
+    draw_frame(&mut cover, sheet_width, sheet_height);
+    draw_title_block(
+        &mut cover,
+        project,
+        spec,
+        "Drawing set",
+        sheet_width,
+        produced_epoch_s,
+    );
+    draw_cover(&mut cover, project, spec, sheet_width, sheet_height);
+    let mut pages: Vec<(String, f64, f64)> = vec![(cover.ops, sheet_width, sheet_height)];
+
+    for (index, level) in project.levels.iter().enumerate() {
+        let mut page_spec = spec.clone();
+        page_spec.sheet_number = sheet_number_for(&spec.sheet_number, index);
+        let mut content = Content::default();
+        draw_sheet(
+            &mut content,
+            project,
+            level,
+            &page_spec,
+            &level.name,
+            produced_epoch_s,
+        );
+        pages.push((content.ops, sheet_width, sheet_height));
+    }
+
+    Ok(build_pdf_pages(&pages, project, spec, produced_epoch_s))
+}
+
+/// Draw one complete plan sheet: frame, title block, plan geometry, north
+/// arrow, scale bar and the level's opening schedule.
+fn draw_sheet(
+    content: &mut Content,
+    project: &Project,
+    level: &Level,
+    spec: &SheetSpec,
+    title: &str,
+    produced_epoch_s: i64,
+) {
+    let (sheet_width, sheet_height) = spec.size_mm();
+    let geometry = PlanGeometry::of_level(level);
+    draw_frame(content, sheet_width, sheet_height);
+    draw_title_block(content, project, spec, title, sheet_width, produced_epoch_s);
+    draw_plan(
+        content,
+        &geometry,
+        spec,
+        sheet_width,
+        sheet_height,
+        project.units,
+    );
+    draw_orientation(content, spec, sheet_width, sheet_height, project.units);
+    draw_schedule_placement(content, level, sheet_width, sheet_height);
+}
+
+/// North arrow and scale bar, tucked into the drawing area's corners.
+fn draw_orientation(
+    content: &mut Content,
+    spec: &SheetSpec,
+    sheet_width: f64,
+    sheet_height: f64,
+    units: UnitSystem,
+) {
+    let (area_x, area_y, area_width, area_height) = drawing_area(sheet_width, sheet_height);
+    draw_north_arrow(
+        content,
+        Point2::new(area_x + area_width - 15.0, area_y + area_height - 15.0),
+        10.0,
+    );
+    draw_scale_bar(
+        content,
+        Point2::new(area_x, area_y + 4.0),
+        spec.scale_denominator,
+        units,
+    );
+}
+
+/// The cover sheet: a sheet index, a project summary, a north arrow and a
+/// scale bar.
+fn draw_cover(
+    content: &mut Content,
+    project: &Project,
+    spec: &SheetSpec,
+    sheet_width: f64,
+    sheet_height: f64,
+) {
+    let (area_x, area_y, area_width, area_height) = drawing_area(sheet_width, sheet_height);
+
+    // Sheet index, one line per level.
+    let mut y = area_y + area_height - 12.0;
+    content.set_fill_gray(0.0);
+    content.text(Point2::new(area_x, y), 4.5, true, "SHEET INDEX");
+    y -= 2.5;
+    content.set_line_width(0.3);
+    content.move_to(Point2::new(area_x, y));
+    content.line_to(Point2::new(area_x + 90.0, y));
+    content.stroke();
+    y -= 6.0;
+    for (index, level) in project.levels.iter().enumerate() {
+        let line = format!(
+            "{}   {}",
+            sheet_number_for(&spec.sheet_number, index),
+            truncate(&level.name, 40)
+        );
+        content.text(Point2::new(area_x, y), 3.4, false, &line);
+        y -= 6.0;
+    }
+
+    // Project summary, summed across every level.
+    let mut y = area_y + area_height * 0.5 + 15.0;
+    content.set_fill_gray(0.0);
+    content.text(Point2::new(area_x, y), 4.5, true, "PROJECT SUMMARY");
+    y -= 2.5;
+    content.set_line_width(0.3);
+    content.move_to(Point2::new(area_x, y));
+    content.line_to(Point2::new(area_x + 90.0, y));
+    content.stroke();
+    y -= 7.0;
+
+    let mut doors = 0_usize;
+    let mut windows = 0_usize;
+    let mut rooms = 0_usize;
+    let mut room_area_m2 = 0.0_f64;
+    for level in &project.levels {
+        for opening in &level.openings {
+            match opening.kind {
+                OpeningKind::Door => doors += 1,
+                OpeningKind::Window => windows += 1,
+            }
+        }
+        for room in PlanGeometry::of_level(level).rooms() {
+            rooms += 1;
+            room_area_m2 += room.area_m2();
+        }
+    }
+    let summary = [
+        format!("Storeys: {}", project.levels.len()),
+        format!("Walls: {}", project.wall_count()),
+        format!("Doors: {doors}"),
+        format!("Windows: {windows}"),
+        format!("Rooms: {rooms}"),
+        format!("Room area: {room_area_m2:.2} m2"),
+    ];
+    for line in summary {
+        content.text(Point2::new(area_x, y), 3.2, false, &line);
+        y -= 5.0;
+    }
+
+    draw_north_arrow(
+        content,
+        Point2::new(area_x + area_width - 15.0, area_y + area_height - 15.0),
+        10.0,
+    );
+    draw_scale_bar(
+        content,
+        Point2::new(area_x, area_y + 4.0),
+        spec.scale_denominator,
+        project.units,
+    );
 }
 
 fn draw_frame(content: &mut Content, sheet_width: f64, sheet_height: f64) {
@@ -193,6 +371,7 @@ fn draw_title_block(
     content: &mut Content,
     project: &Project,
     spec: &SheetSpec,
+    title: &str,
     sheet_width: f64,
     produced_epoch_s: i64,
 ) {
@@ -227,7 +406,7 @@ fn draw_title_block(
         Point2::new(x + 4.0, y + 21.0),
         3.2,
         false,
-        &truncate(&spec.sheet_title, 52),
+        &truncate(title, 52),
     );
     content.text(
         Point2::new(x + 4.0, y + 9.0),
@@ -375,6 +554,46 @@ fn draw_plan(
         true,
         units.format(bounds.height()),
     );
+
+    // 4. Room areas, centred on each room, in light grey so walls stay dominant.
+    content.set_fill_gray(0.35);
+    for room in geometry.rooms() {
+        let paper = layout.to_paper(room.centroid);
+        if !inside_area(paper, area_x, area_y, area_width, area_height) {
+            continue;
+        }
+        let label = room.area_label();
+        let width = label.chars().count() as f64 * 2.5 * 0.6;
+        content.text(
+            Point2::new(paper.x - width * 0.5, paper.y - 1.25),
+            2.5,
+            false,
+            &label,
+        );
+    }
+
+    // 5. Free-text labels, in black over the plan.
+    content.set_fill_gray(0.0);
+    for label in geometry.labels() {
+        let paper = layout.to_paper(label.anchor);
+        if !inside_area(paper, area_x, area_y, area_width, area_height) {
+            continue;
+        }
+        let size = (label.height_mm * layout.scale).clamp(1.5, 12.0);
+        if !size.is_finite() {
+            continue;
+        }
+        content.text(paper, size, false, &label.text);
+    }
+}
+
+/// True when `point` lies inside the drawing rectangle.
+fn inside_area(point: Point2, x: f64, y: f64, width: f64, height: f64) -> bool {
+    point.is_finite()
+        && point.x >= x
+        && point.x <= x + width
+        && point.y >= y
+        && point.y <= y + height
 }
 
 /// One dimension line, offset from the measured edge. `vertical` controls
@@ -430,6 +649,177 @@ fn draw_dimension(
     };
     content.set_fill_gray(0.0);
     content.text(text_at, 2.6, false, &label);
+}
+
+/// North arrow: a filled, outlined triangle pointing up, with "N" above it.
+fn draw_north_arrow(content: &mut Content, at: Point2, size_mm: f64) {
+    let half = size_mm * 0.5;
+    let tip = Point2::new(at.x, at.y + half);
+    let left = Point2::new(at.x - half * 0.55, at.y - half * 0.6);
+    let right = Point2::new(at.x + half * 0.55, at.y - half * 0.6);
+
+    content.set_line_width(0.2);
+    content.set_stroke_gray(0.0);
+    content.set_fill_gray(0.0);
+    content.path(&[tip, left, right], true);
+    content.fill();
+    content.path(&[tip, left, right], true);
+    content.stroke();
+
+    content.set_fill_gray(0.0);
+    content.text(
+        Point2::new(at.x - size_mm * 0.18, at.y + half + 1.0),
+        (size_mm * 0.42).clamp(1.5, 8.0),
+        true,
+        "N",
+    );
+}
+
+/// Scale bar drawn from `at`, its left end, towards the right. A round model
+/// length is chosen so the bar is 20-60 mm long on paper; the bar is split into
+/// a black left half and a white right half so it reads on any paper.
+fn draw_scale_bar(content: &mut Content, at: Point2, scale_denominator: u32, units: UnitSystem) {
+    const CANDIDATES: [f64; 7] = [
+        1000.0, 2000.0, 5000.0, 10_000.0, 20_000.0, 50_000.0, 100_000.0,
+    ];
+    let denominator = f64::from(scale_denominator.max(1));
+    let mut length_mm = CANDIDATES[CANDIDATES.len() - 1];
+    for candidate in CANDIDATES {
+        if candidate / denominator >= 25.0 {
+            length_mm = candidate;
+            break;
+        }
+    }
+    let bar_mm = length_mm / denominator;
+    let half = bar_mm * 0.5;
+    let height = 2.5;
+
+    content.set_line_width(0.15);
+    content.set_stroke_gray(0.0);
+    // Left half, black.
+    content.set_fill_gray(0.0);
+    content.rectangle(at.x, at.y, half, height);
+    content.fill();
+    // Right half, white.
+    content.set_fill_gray(1.0);
+    content.rectangle(at.x + half, at.y, half, height);
+    content.fill();
+    // Outline the whole bar so the white half still reads on white paper.
+    content.set_stroke_gray(0.0);
+    content.rectangle(at.x, at.y, bar_mm, height);
+    content.stroke();
+
+    content.set_fill_gray(0.0);
+    content.text(
+        Point2::new(at.x, at.y + height + 1.0),
+        2.6,
+        false,
+        &format!("Scale 1:{scale_denominator}"),
+    );
+    content.text(Point2::new(at.x - 0.8, at.y - 3.5), 2.6, false, "0");
+    let length_text = match units {
+        UnitSystem::Metric => format!("{} m", length_mm / 1000.0),
+        UnitSystem::Imperial => format!("{:.0} ft", length_mm / 304.8),
+    };
+    content.text(
+        Point2::new(at.x + bar_mm + 1.0, at.y - 3.5),
+        2.6,
+        false,
+        &length_text,
+    );
+}
+
+/// Place the opening schedule in the drawing area's bottom-right corner.
+fn draw_schedule_placement(
+    content: &mut Content,
+    level: &Level,
+    sheet_width: f64,
+    sheet_height: f64,
+) {
+    let (area_x, area_y, area_width, area_height) = drawing_area(sheet_width, sheet_height);
+    let body_rows = opening_schedule(level).len().max(1);
+    let height = SCHEDULE_TITLE_HEIGHT + SCHEDULE_ROW_HEIGHT * (1.0 + body_rows as f64);
+    let top = (area_y + height).min(area_y + area_height);
+    let left = (area_x + area_width - SCHEDULE_WIDTH).max(area_x);
+    draw_schedule(content, Point2::new(left, top), level);
+}
+
+/// The opening schedule table, `at` being its top-left corner in millimetres.
+fn draw_schedule(content: &mut Content, at: Point2, level: &Level) {
+    let rows = opening_schedule(level);
+    let body_rows = rows.len().max(1);
+    let height = SCHEDULE_TITLE_HEIGHT + SCHEDULE_ROW_HEIGHT * (1.0 + body_rows as f64);
+    let left = at.x;
+    let top = at.y;
+    let bottom = top - height;
+    let mark_column = left + 25.0;
+    let size_column = mark_column + 55.0;
+
+    content.set_line_width(0.25);
+    content.set_stroke_gray(0.0);
+    content.rectangle(left, bottom, SCHEDULE_WIDTH, height);
+    content.stroke();
+
+    let header_top = top - SCHEDULE_TITLE_HEIGHT;
+    let data_top = header_top - SCHEDULE_ROW_HEIGHT;
+
+    content.set_line_width(0.18);
+    for y in [header_top, data_top] {
+        content.move_to(Point2::new(left, y));
+        content.line_to(Point2::new(left + SCHEDULE_WIDTH, y));
+    }
+    for index in 1..body_rows {
+        let y = data_top - SCHEDULE_ROW_HEIGHT * index as f64;
+        content.move_to(Point2::new(left, y));
+        content.line_to(Point2::new(left + SCHEDULE_WIDTH, y));
+    }
+    for x in [mark_column, size_column] {
+        content.move_to(Point2::new(x, bottom));
+        content.line_to(Point2::new(x, header_top));
+    }
+    content.stroke();
+
+    content.set_fill_gray(0.0);
+    content.text(
+        Point2::new(left + 2.0, top - SCHEDULE_TITLE_HEIGHT + 1.8),
+        3.0,
+        true,
+        "DOOR & WINDOW SCHEDULE",
+    );
+    let header_baseline = header_top - SCHEDULE_ROW_HEIGHT + 1.5;
+    for (column, heading) in [
+        (left + 2.0, "MARK"),
+        (mark_column + 2.0, "SIZE"),
+        (size_column + 2.0, "QTY"),
+    ] {
+        content.text(Point2::new(column, header_baseline), 2.6, true, heading);
+    }
+
+    if rows.is_empty() {
+        content.text(
+            Point2::new(left + 2.0, data_top - SCHEDULE_ROW_HEIGHT + 1.5),
+            2.6,
+            false,
+            "No doors or windows",
+        );
+        return;
+    }
+    for (index, row) in rows.iter().enumerate() {
+        let baseline = data_top - SCHEDULE_ROW_HEIGHT * (index as f64 + 1.0) + 1.5;
+        content.text(Point2::new(left + 2.0, baseline), 2.6, false, &row.mark);
+        content.text(
+            Point2::new(mark_column + 2.0, baseline),
+            2.6,
+            false,
+            &row.size_label(),
+        );
+        content.text(
+            Point2::new(size_column + 2.0, baseline),
+            2.6,
+            false,
+            &row.count.to_string(),
+        );
+    }
 }
 
 /// Paper-space placement: `paper = origin + model * scale`.
@@ -546,6 +936,13 @@ fn escape_text(text: &str) -> String {
             ')' => out.push_str("\\)"),
             '\\' => out.push_str("\\\\"),
             '\n' | '\r' | '\t' => out.push(' '),
+            '²' => out.push('2'),
+            '³' => out.push('3'),
+            '·' => out.push('.'),
+            '—' | '–' => out.push('-'),
+            '’' | '‘' => out.push('\''),
+            '“' | '”' => out.push('"'),
+            '…' => out.push_str("..."),
             other if other.is_ascii() => out.push(other),
             _ => out.push('?'),
         }
@@ -576,29 +973,82 @@ fn build_pdf(
     spec: &SheetSpec,
     produced_epoch_s: i64,
 ) -> Vec<u8> {
-    let width_pt = sheet_width * MM_TO_PT;
-    let height_pt = sheet_height * MM_TO_PT;
-    let objects = vec![
+    let pages = [(ops.to_string(), sheet_width, sheet_height)];
+    build_pdf_pages(&pages, project, spec, produced_epoch_s)
+}
+
+/// Emit a multi-page PDF from already-rendered page content: `(ops, width_mm,
+/// height_mm)` per page.
+///
+/// Object layout for `n` pages: 1 = catalog, 2 = page tree, page `i` (0-based)
+/// = object `3 + 2*i` and its content stream `4 + 2*i`; the two fonts are
+/// `3 + 2*n` and `4 + 2*n`; the document info is `5 + 2*n`.
+fn build_pdf_pages(
+    pages: &[(String, f64, f64)],
+    project: &Project,
+    spec: &SheetSpec,
+    produced_epoch_s: i64,
+) -> Vec<u8> {
+    let n = pages.len();
+    let font_regular = 3 + 2 * n;
+    let font_bold = 4 + 2 * n;
+
+    let kids: Vec<String> = (0..n).map(|i| format!("{} 0 R", 3 + 2 * i)).collect();
+    let mut objects = vec![
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
         format!(
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {} {}] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>",
-            format_number(width_pt),
-            format_number(height_pt)
-        ),
-        stream_object(ops),
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
-            .to_string(),
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
-            .to_string(),
-        format!(
-            "<< /Title ({}) /Creator (Lintel) /Producer (Lintel v{}) /CreationDate ({}) >>",
-            escape_text(&format!("{} - {}", project.name, spec.sheet_title)),
-            env!("CARGO_PKG_VERSION"),
-            pdf_datetime(produced_epoch_s)
+            "<< /Type /Pages /Kids [ {} ] /Count {} >>",
+            kids.join(" "),
+            n
         ),
     ];
-    assemble(&objects, 1, 7)
+
+    for (index, (ops, width_mm, height_mm)) in pages.iter().enumerate() {
+        let content_object = 4 + 2 * index;
+        objects.push(format!(
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {} {}] \
+             /Resources << /Font << /F1 {} 0 R /F2 {} 0 R >> >> /Contents {} 0 R >>",
+            format_number(*width_mm * MM_TO_PT),
+            format_number(*height_mm * MM_TO_PT),
+            font_regular,
+            font_bold,
+            content_object
+        ));
+        objects.push(stream_object(ops));
+    }
+
+    objects.push(
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
+            .to_string(),
+    );
+    objects.push(
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
+            .to_string(),
+    );
+    objects.push(format!(
+        "<< /Title ({}) /Creator (Lintel) /Producer (Lintel v{}) /CreationDate ({}) >>",
+        escape_text(&format!("{} - {}", project.name, spec.sheet_title)),
+        env!("CARGO_PKG_VERSION"),
+        pdf_datetime(produced_epoch_s)
+    ));
+
+    assemble(&objects, 1, 5 + 2 * n)
+}
+
+/// Build a level's sheet number from `base` by adding `offset` to its trailing
+/// digit run, preserving that run's width (`"A-101"` + 1 → `"A-102"`,
+/// `"A-099"` + 1 → `"A-100"`). With no trailing digits a `-{offset + 1}`
+/// suffix is appended instead.
+fn sheet_number_for(base: &str, offset: usize) -> String {
+    let digits_start = base.trim_end_matches(|c: char| c.is_ascii_digit()).len();
+    if digits_start == base.len() {
+        return format!("{base}-{}", offset + 1);
+    }
+    let prefix = &base[..digits_start];
+    let digits = &base[digits_start..];
+    let width = digits.len();
+    let value = digits.parse::<usize>().unwrap_or(0).saturating_add(offset);
+    format!("{prefix}{value:0width$}")
 }
 
 fn assemble(objects: &[String], root: usize, info: usize) -> Vec<u8> {
@@ -953,5 +1403,75 @@ mod tests {
         project.active_level = crate::ids::LevelId(999);
         let error = render_plan(&project, &SheetSpec::default(), 1).expect_err("no level");
         assert!(matches!(error, CoreError::LevelNotFound(_)));
+    }
+
+    /// A project with the `plan()` storey plus a second, empty storey.
+    fn two_level_plan() -> Document {
+        let mut document = plan();
+        document
+            .apply(
+                Command::AddLevel {
+                    name: "Level 1".into(),
+                    elevation: 3000.0,
+                },
+                1_760_000_140,
+            )
+            .expect("level");
+        document
+    }
+
+    #[test]
+    fn escape_text_maps_superscript_two() {
+        assert_eq!(escape_text("12.40 m²"), "12.40 m2");
+    }
+
+    #[test]
+    fn sheet_numbers_increment_the_trailing_digits() {
+        assert_eq!(sheet_number_for("A-101", 1), "A-102");
+        assert_eq!(sheet_number_for("A-099", 1), "A-100");
+        assert_eq!(sheet_number_for("A-101", 0), "A-101");
+    }
+
+    #[test]
+    fn sheet_numbers_without_digits_get_a_suffix() {
+        assert_eq!(sheet_number_for("COVER", 0), "COVER-1");
+        assert_eq!(sheet_number_for("COVER", 2), "COVER-3");
+    }
+
+    #[test]
+    fn a_drawing_set_has_a_cover_and_a_page_per_level() {
+        let document = two_level_plan();
+        let bytes =
+            render_set(document.project(), &SheetSpec::default(), 1_760_000_200).expect("render");
+        assert!(bytes.starts_with(b"%PDF-1.7"));
+        assert!(
+            String::from_utf8_lossy(&bytes).ends_with("%%EOF\n"),
+            "must end with the end-of-file marker"
+        );
+        assert_valid_xref(&bytes);
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        // The page tree reports every page: the cover plus one per level.
+        assert!(text.contains("/Type /Pages"), "{text:.400}");
+        assert!(text.contains("/Count 3"), "{text:.400}");
+        // Counting the trailing space skips "/Type /Pages" itself.
+        assert_eq!(text.matches("/Type /Page ").count(), 3);
+        assert_eq!(text.matches("/MediaBox").count(), 3);
+    }
+
+    #[test]
+    fn a_single_sheet_is_still_one_page() {
+        let bytes = render(&plan());
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("/Count 1"));
+        assert_eq!(text.matches("/Type /Page ").count(), 1);
+    }
+
+    #[test]
+    fn a_level_without_openings_prints_the_empty_schedule() {
+        let document = Document::new("Empty plan", 1_760_000_000);
+        let bytes =
+            render_plan(document.project(), &SheetSpec::default(), 1_760_000_200).expect("render");
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("No doors or windows"), "{text:.400}");
     }
 }
