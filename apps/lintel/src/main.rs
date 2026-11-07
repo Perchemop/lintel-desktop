@@ -32,6 +32,7 @@ enum Tool {
     Window,
     Dimension,
     Label,
+    Measurements,
 }
 
 impl Tool {
@@ -43,6 +44,7 @@ impl Tool {
             Tool::Window => "Window",
             Tool::Dimension => "Dimension",
             Tool::Label => "Label",
+            Tool::Measurements => "Measurements",
         }
     }
 }
@@ -342,9 +344,14 @@ impl eframe::App for LintelApp {
                             Tool::Dimension.label(),
                         );
                         ui.selectable_value(&mut self.tool, Tool::Label, Tool::Label.label());
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::Measurements,
+                            Tool::Measurements.label(),
+                        );
                     });
                 tool_response.response.on_hover_text(
-                    "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension)",
+                    "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension Shift+M=Measurements)",
                 );
                 ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
@@ -431,6 +438,7 @@ impl eframe::App for LintelApp {
                         &self.selection,
                         &mut self.snap,
                         &mut self.inspector_draft,
+                        self.tool == Tool::Measurements,
                     ) {
                         let _ = self.doc.apply(cmd, now);
                     }
@@ -895,8 +903,11 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::N)) {
                 self.tool = Tool::Window;
             }
-            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::M)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::M) && !i.modifiers.shift) {
                 self.tool = Tool::Dimension;
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::M) && i.modifiers.shift) {
+                self.tool = Tool::Measurements;
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::L)) {
                 self.tool = Tool::Label;
