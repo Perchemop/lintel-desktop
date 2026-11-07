@@ -277,9 +277,7 @@ jobs:
         total_before=$(echo "$current" | grep -o '"total_tokens_since_start":[0-9]*' | grep -o '[0-9]*')
         total_after=$((total_before + release_tokens))
         # Write updated ledger.
-        cat > docs/tokens.json <<JSON
-{"total_tokens_since_start": $total_after, "release_tokens": $release_tokens, "release_version": "$tag", "_notes": "CI-managed ledger. Updated on each semver tag by the release workflow. Release notes must reference the values for the released version. See guide §12.1."}
-JSON
+        printf '{"total_tokens_since_start": %d, "release_tokens": %d, "release_version": "%s", "_notes": "CI-managed ledger. Updated on each semver tag by the release workflow. Release notes must reference the values for the released version. See guide \\u00a712.1."}\n' "$total_after" "$release_tokens" "$tag" > docs/tokens.json
         git add docs/tokens.json
         git commit -m "ci: update tokens.json ledger for v$tag" || true
         git push origin main || true
