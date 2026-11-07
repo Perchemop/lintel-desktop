@@ -1072,7 +1072,7 @@ fn main() {
     crash_report::install_panic_hook("lintel", env!("CARGO_PKG_VERSION"), &about::crash_log_dir());
 
     // Embed the app icon and set it as the window icon (guide §10: original visual design).
-    const ICON_BYTES: &[u8] = include_bytes!("../../resources/linux/lintel.png");
+    const ICON_BYTES: &[u8] = include_bytes!("../../../resources/linux/lintel.png");
     let icon_img = image::load_from_memory(ICON_BYTES)
         .expect("load embedded icon")
         .into_rgba8();
