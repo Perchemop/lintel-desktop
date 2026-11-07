@@ -1,0 +1,3 @@
+[submodule "crates/update-check"]
+	path = crates/update-check
+	url = https://github.com/Perchemop/lintel-shared-crates.git
