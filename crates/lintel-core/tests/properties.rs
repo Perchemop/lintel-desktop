@@ -7,10 +7,10 @@
 //! rooms. Property-based testing complements the example-based unit tests in
 //! `src/room.rs` by exploring the input space exhaustively.
 
-use lintel_core::room::detect_rooms;
-use lintel_core::wall::{DEFAULT_WALL_HEIGHT, DEFAULT_WALL_THICKNESS, Wall};
 use lintel_core::geom::Point2;
 use lintel_core::ids::WallId;
+use lintel_core::room::detect_rooms;
+use lintel_core::wall::{DEFAULT_WALL_HEIGHT, DEFAULT_WALL_THICKNESS, Wall};
 use proptest::prelude::*;
 
 /// Replace non-finite coordinates with 0.0 so the fuzzer can explore the full
