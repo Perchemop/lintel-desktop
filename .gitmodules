@@ -1,3 +1,6 @@
 [submodule "crates/update-check"]
 	path = crates/update-check
 	url = https://github.com/Perchemop/lintel-shared-crates.git
+[submodule "crates/crash-report"]
+	path = crates/crash-report
+	url = https://github.com/Perchemop/lintel-crash-report.git
