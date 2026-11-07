@@ -109,7 +109,7 @@ proptest! {
         let second = detect_rooms(&walls);
         prop_assert_eq!(first.len(), second.len());
         for (a, b) in first.iter().zip(second.iter()) {
-            prop_assert_eq!(a.polygon, b.polygon);
+            prop_assert_eq!(&a.polygon, &b.polygon);
             prop_assert_eq!(a.area_mm2, b.area_mm2);
             prop_assert_eq!(a.centroid, b.centroid);
         }
