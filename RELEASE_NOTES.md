@@ -3,6 +3,23 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.9.1 — Version fix
+
+**Summary.** Corrects the shipped binary version to 0.9.1 (fixes update check reporting the wrong installed version).
+
+### Fixed
+- Bumped crate versions to 0.9.1 so release binaries report the correct version.
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, and `SHA256SUMS.txt`.
+
+### Token metrics
+Approximate totals recorded at release time.
+
+- This release: ~5,000 tokens
+- Cumulative since development began: ~6,085,000 tokens
+
+---
 ## Lintel 0.9.0 — Drawing Set
 
 **Summary.** Lintel now issues a real drawing set: auto-detected rooms with area captions, free text plan labels, an opening schedule, north arrow and graphic scale bar on every sheet, multi-sheet PDF export with a cover sheet, and duplicate (Ctrl+D).
