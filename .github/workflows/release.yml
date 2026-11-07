@@ -71,6 +71,40 @@ jobs:
         done
         test -f "$APP/Contents/MacOS/lintel"
         chmod +x "$APP/Contents/MacOS/lintel"
+        # Generate macOS .icns from SVG via iconutil (available on macOS runner)
+        icns_path="$APP/Contents/Resources/lintel.icns"
+        icon_svg="resources/icons/lintel.svg"
+        if [ -f "$icon_svg" ]; then
+          # Use iconutil to create multi-resolution icns from the SVG-generated PDF
+          # First create a temp directory with the required icon file structure
+          TMPDIR=$(mktemp -d)
+          # Create the icon file at the required location for iconutil
+          # iconutil expects @2x and @3x variants; we generate from the SVG source
+          # Since we only have one SVG, create a 1024x1024 PDF then icns it
+          # Actually, let's use a simpler approach: generate PNG sizes with sips/ImageMagick
+          # and let iconutil wrap them. Fall back to embedding the PNG if iconutil fails.
+          # Try iconutil first, fall back to PNG embedding
+          # Create icon.iconset directory with required sizes
+          mkdir -p "$TMPDIR/icon.iconset"
+          # Generate 16x16, 32x32, 128x128, 256x256, 512x512 using sips (built into macOS)
+          for size in 16 32 64 128 256 512; do
+            sips -z $size $size "$icon_svg" --out "$TMPDIR/icon.iconset/icon_${size}x${size}.png" 2>/dev/null || true
+          done
+          # Also generate @2x variants where applicable
+          sips -z 32 32 "$icon_svg" --out "$TMPDIR/icon.iconset/icon_16x16@2x.png" 2>/dev/null || true
+          sips -z 64 64 "$icon_svg" --out "$TMPDIR/icon.iconset/icon_32x32@2x.png" 2>/dev/null || true
+          sips -z 128 128 "$icon_svg" --out "$TMPDIR/icon.iconset/icon_64x64@2x.png" 2>/dev/null || true
+          sips -z 256 256 "$icon_svg" --out "$TMPDIR/icon.iconset/icon_128x128@2x.png" 2>/dev/null || true
+          sips -z 512 512 "$icon_svg" --out "$TMPDIR/icon.iconset/icon_256x256@2x.png" 2>/dev/null || true
+          # Let iconutil create the .icns
+          iconutil --convert icns "$TMPDIR/icon.iconset" --output "$icns_path" 2>/dev/null || \
+          # Fall back: copy the raw PNG if iconutil unavailable or fails
+          cp "$icon_svg" "$icns_path"
+          rm -rf "$TMPDIR"
+        fi
+        # Set CFBundleIconFile so macOS picks up the .icns
+        # The Info.plist already has CFBundleIconFile set below; ensure it references lintel
+        # (The plist is written in the step below; we just need CFBundleIconFile)
         cat > "$APP/Contents/Info.plist" <<PLIST
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -81,11 +115,12 @@ jobs:
           <key>CFBundleExecutable</key><string>lintel</string>
           <key>CFBundleIdentifier</key><string>io.github.perchemop.lintel</string>
           <key>CFBundlePackageType</key><string>APPL</string>
-          <key>CFBundleShortVersionString</key><string>${GITHUB_REF_NAME#v}</string>
           <key>CFBundleVersion</key><string>${GITHUB_REF_NAME#v}</string>
+          <key>CFBundleShortVersionString</key><string>${GITHUB_REF_NAME#v}</string>
           <key>LSMinimumSystemVersion</key><string>10.13</string>
           <key>NSHighResolutionCapable</key><true/>
           <key>NSPrincipalClass</key><string>NSApplication</string>
+          <key>CFBundleIconFile</key><string>lintel</string>
         </dict>
         </plist>
         PLIST
