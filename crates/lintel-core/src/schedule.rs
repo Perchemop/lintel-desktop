@@ -185,7 +185,7 @@ mod tests {
         };
         let label = row.size_label();
         assert_eq!(label, "900 x 2100");
-        assert!(label.chars().all(|character| character.is_ascii()));
+        assert!(label.is_ascii());
     }
 
     #[test]
