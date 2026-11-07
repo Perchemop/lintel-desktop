@@ -93,7 +93,39 @@ fn trim_trailing_zeros(text: &str) -> String {
     }
 }
 
-/// Parse a user-typed length into millimetres.
+/// Imperial display: square feet to the nearest square inch.
+pub fn format_area(millimetres_squared: f64, unit_system: UnitSystem) -> String {
+    let value = if millimetres_squared.is_finite() {
+        millimetres_squared
+    } else {
+        0.0
+    };
+    match unit_system {
+        UnitSystem::Metric => {
+            let m2 = value / (MM_PER_METRE * MM_PER_METRE);
+            if m2 >= 1.0 {
+                let text = format!("{m2:.2}");
+                format!("{} m²", trim_trailing_zeros(&text).trim_end_matches('.'))
+            } else {
+                format!("{} mm²", value.round() as i64)
+            }
+        }
+        UnitSystem::Imperial => {
+            let ft2 = value / 92903.0; // 1 ft² = 92903.04 mm² approximately
+            if ft2 >= 1.0 {
+                let text = format!("{ft2:.2}");
+                format!("{} ft²", trim_trailing_zeros(&text).trim_end_matches('.'))
+            } else {
+                let in2 = value / (MM_PER_INCH * MM_PER_INCH);
+                if in2 >= 1.0 {
+                    format!("{:.1} in²", in2)
+                } else {
+                    format!("{:.0} in²", in2)
+                }
+            }
+        }
+    }
+}
 ///
 /// Accepted: `3600`, `3600 mm`, `3.6 m`, `3,6 m`, `72"`, `6'`, `6'-3"`.
 /// Rejected: empty input, unknown units, negative or non-finite results.

@@ -290,8 +290,8 @@ pub fn inspector(
                     ));
                     ui.label(format!("Rooms: {}", totals.room_count));
                     ui.label(format!(
-                        "Room area total: {:.2} m²",
-                        totals.total_room_area_mm2 / 1_000_000.0
+                        "Room area total: {}",
+                        format_area(totals.total_room_area_mm2, project.units)
                     ));
                     ui.label(format!(
                         "Room perimeter total: {}",

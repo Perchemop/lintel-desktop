@@ -40,4 +40,4 @@ pub use measurements::{LevelTotals, Measurements, ProjectTotals};
 pub use project::Project;
 pub use room::Room;
 pub use schedule::ScheduleRow;
-pub use units::UnitSystem;
+pub use units::{format_area, UnitSystem};
