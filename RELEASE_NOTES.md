@@ -28,10 +28,10 @@
 `lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, `SHA256SUMS.txt.asc`.
 
 ### Token metrics
-Approximate totals recorded at release time.
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
 
-- This release: ~15,000 tokens
-- Cumulative since development began: ~6,100,000 tokens
+- This release: 5,000 tokens
+- Cumulative since development began: 5,000 tokens
 
 ---
 ## Lintel 0.9.1 — Version fix
