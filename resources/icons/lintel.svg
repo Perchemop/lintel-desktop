@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Lintel icon: original mark for Lintel architectural drafting app.
+       A simple floor-plan motif: an outer wall boundary with a door opening,
+       drawn in the Lintel palette (PAPER background, INK lines, COBALT accent).
+       Clean-room original design; no competitor marks copied. -->
+  <rect width="256" height="256" fill="#FCF8F2"/>
+  <!-- Outer wall boundary (rounded rectangle) -->
+  <rect x="24" y="24" width="208" height="208" rx="16" fill="none" stroke="#1A1816" stroke-width="10" stroke-linejoin="round"/>
+  <!-- Door opening: gap in the bottom wall -->
+  <path d="M 92 232 L 132 232" stroke="#1A1816" stroke-width="10" stroke-linecap="round"/>
+  <!-- Door leaf arc (open door) -->
+  <path d="M 132 232 A 40 40 0 0 1 92 192" fill="none" stroke="#124E78" stroke-width="6" stroke-linecap="round"/>
+  <!-- Wall thickness hint: inner line -->
+  <rect x="34" y="34" width="188" height="188" rx="10" fill="none" stroke="#847E70" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Lintel accent dot (top-right corner) -->
+  <circle cx="212" cy="44" r="10" fill="#124E78"/>
+</svg>

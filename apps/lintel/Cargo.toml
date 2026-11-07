@@ -15,6 +15,9 @@ update-check = { path = "../../crates/update-check" }
 eframe = { version = "=0.36" }
 egui = { version = "=0.36" }
 
+# Window icon: decode the embedded PNG for egui::IconData.
+image = "0.25"
+
 [dev-dependencies]
 # Unit test helpers if needed
 serde = { version = "1", features = ["derive"] }

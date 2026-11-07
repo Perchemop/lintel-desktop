@@ -128,3 +128,98 @@ proptest! {
         }
     }
 }
+
+// -------------------------------------------------------------------------
+// Command-layer properties (audit finding: fuzz the editing commands).
+// -------------------------------------------------------------------------
+
+use lintel_core::{Command, Document};
+
+const T0: i64 = 1_760_000_000;
+
+/// Arbitrary sequence of wall-add commands with arbitrary coordinates and
+/// dimensions. Sanitised the same way as the room fuzz so the command layer is
+/// exercised over the full f64 bit space; non-finite thickness degrades to the
+/// default so the command's own validation is what is under test, not the
+/// strategy.
+fn arbitrary_wall_commands() -> impl Strategy<Value = Vec<Command>> {
+    prop::collection::vec(
+        (
+            any::<f64>(),
+            any::<f64>(),
+            any::<f64>(),
+            any::<f64>(),
+            any::<f64>(),
+        ),
+        0..12,
+    )
+    .prop_map(|points| {
+        points
+            .into_iter()
+            .map(|(x1, y1, x2, y2, thickness)| Command::AddWall {
+                start: sane_point(x1, y1),
+                end: sane_point(x2, y2),
+                thickness: if thickness.is_finite() {
+                    thickness.abs()
+                } else {
+                    200.0
+                },
+                height: 2800.0,
+            })
+            .collect()
+    })
+}
+
+proptest! {
+    #![proptest_config(proptest::test_runner::Config {
+        failure_persistence: None,
+        ..proptest::test_runner::Config::default()
+    })]
+
+    /// Applying any sequence of wall commands must never panic, and the
+    /// document must stay structurally valid afterwards. Rejected commands
+    /// change nothing; accepted ones keep every invariant.
+    #[test]
+    fn wall_commands_never_panic_or_corrupt(commands in arbitrary_wall_commands()) {
+        let mut document = Document::new("Fuzz plan", T0);
+        for (index, command) in commands.into_iter().enumerate() {
+            let _ = document.apply(command, T0 + index as i64);
+        }
+        prop_assert!(
+            document.project().validate().is_ok(),
+            "project invalid after fuzz sequence"
+        );
+    }
+
+    /// After any fuzz sequence, every surviving wall must have finite
+    /// geometry and sane dimensions — the validation invariants hold.
+    #[test]
+    fn fuzz_walls_stay_valid(commands in arbitrary_wall_commands()) {
+        let mut document = Document::new("Fuzz plan", T0);
+        for (index, command) in commands.into_iter().enumerate() {
+            let _ = document.apply(command, T0 + index as i64);
+        }
+        let level = document.project().active_level().expect("level");
+        for wall in &level.walls {
+            prop_assert!(wall.is_valid(), "wall {} invalid: {:?}", wall.id, wall);
+        }
+    }
+
+    /// Undo after any fuzz sequence must restore a valid project, and the
+    /// wall count must reach zero when the history is fully unwound.
+    #[test]
+    fn fuzz_undo_keeps_project_valid(commands in arbitrary_wall_commands()) {
+        let mut document = Document::new("Fuzz plan", T0);
+        for (index, command) in commands.into_iter().enumerate() {
+            let _ = document.apply(command, T0 + index as i64);
+        }
+        while document.can_undo() {
+            prop_assert!(document.undo(T0 + 9_000));
+            prop_assert!(
+                document.project().validate().is_ok(),
+                "project invalid after undo"
+            );
+        }
+        prop_assert_eq!(document.project().wall_count(), 0);
+    }
+}
