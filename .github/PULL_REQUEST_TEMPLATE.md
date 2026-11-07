@@ -30,7 +30,7 @@ Reviewers reject PRs that fail the checklist.
 
 ---
 
-## Rust QA (appended per addendum M.3)
+## Rust QA (appended per guide Appendix M.3)
 
 - [ ] Logic lives in core (or justified exception)
 - [ ] Workflow/regression test added or updated (name: `...`)

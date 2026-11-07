@@ -8,14 +8,14 @@
 | D-002 | License | Dual licence MIT OR Apache-2.0 | Permissive; allows commercial and open-source use; no copyleft viral risk | 2026-11-03 |
 | D-003 | Persistence format | JSON over SQLite | Human-readable; no native dependency; round-trip editable; part of clean-room rules | 2026-11-03 |
 | D-004 | Unit system default | Metric (mm) | Developer's local platform; metric is universal for architectural drafting | 2026-11-03 |
-| D-005 | CLI/gate strategy | Headless `cargo test` as primary QA; client visual pass on green CI | Matches addendum K/M rules; no display required in CI | 2026-11-03 |
+| D-005 | CLI/gate strategy | Headless `cargo test` as primary QA; client visual pass on green CI | Matches guide Appendix K/M rules; no display required in CI | 2026-11-03 |
 | D-006 | v0.1.0 gate | All Section 6.1 criteria must be satisfied before tagging | Hard gate prevents feature creep; ensures shipable foundation | 2026-11-03 |
 | D-007 | Shared suite crates | `crash-report` + `update-check` from day one | Suite readiness; consistent crash/update behaviour across apps | 2026-11-03 |
 | D-008 | CI from day one | `.github/workflows/ci.yml` and `release.yml` from foundation stage | Learn release path early; avoid broken tags/artefacts at the worst time | 2026-11-03 |
-| D-009 | Core/UI split | `crates/lintel-core` (domain, commands, persistence, PDF) + `apps/lintel` (egui shell); core has zero GUI dependencies | addendum K.3: headless workflow tests without a display | 2026-11-04 |
+| D-009 | Core/UI split | `crates/lintel-core` (domain, commands, persistence, PDF) + `apps/lintel` (egui shell); core has zero GUI dependencies | guide Appendix K.3: headless workflow tests without a display | 2026-11-04 |
 | D-010 | PDF export | Hand-written PDF 1.7 writer in `lintel-core::pdf`; no PDF crate dependency | Zero-licence-question, fully byte-tested export | 2026-11-04 |
 | D-011 | GUI toolkit | eframe/egui 0.36.2 | Suite-consistent version; native desktop | 2026-11-04 |
-| D-012 | Shared suite crates | Deferred until after v0.1.0 | addendum Phase 5: crash-report/update-check optional before the hard gate | 2026-11-04 |
+| D-012 | Shared suite crates | Deferred until after v0.1.0 | guide Phase 5: crash-report/update-check optional before the hard gate | 2026-11-04 |
 | D-013 | Release matrix | v0.1.0 builds Linux x86_64 only | macOS/Windows runners lack linkers without cross tooling; expand after v0.1.0 | 2026-11-04 |
 | D-014 | Dimensions | Command-driven dimension lines stored on the `Level`, hit-tested ahead of walls | Keeps geometry in the core, every edit undoable and persisted like walls | 2026-11-04 |
 | D-015 | Shared suite crates | Adopt `update-check` + `crash-report` as workspace crates (supersedes D-012's deferral) | guide section 7 / Phase 4; the app now ships update checks and crash capture | 2026-11-05 |
