@@ -3,6 +3,35 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.10.1 — Window icon and installer version
+
+**Summary.** The application window and taskbar now show the Lintel icon instead of the default toolkit icon, and the Windows installer metadata reports the correct version.
+
+### Added
+- Window icon: the embedded Lintel PNG is set on the eframe viewport via `.with_icon()`, so the window title bar, taskbar and app switcher show the Lintel mark on every platform.
+- `resources/icons/lintel.svg` — original scalable icon source (clean-room floor-plan motif in the Lintel palette) for future platform icon generation.
+
+### Changed
+- Windows installer script (`resources/windows/lintel.iss`) now reports version 0.10.1 (was stale at 0.8.0).
+- `ATTRIBUTION.md` records the icon assets and their original licence.
+
+### Fixed
+- `include_bytes!` path for the embedded icon resolves from the source file's directory (three levels to the repository root).
+
+### Known limitations
+- macOS app bundle still ships without a `.icns` icon (planned next release).
+- Release signing still requires the `GPG_PRIVATE_KEY` repository secret to produce `SHA256SUMS.txt.asc`.
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, and `SHA256SUMS.txt`.
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 8,000 tokens
+- Cumulative since development began: 13,000 tokens
+
+---
 ## Lintel 0.10.0 — Suite-standard conformance
 
 **Summary.** Brings Lintel into conformance with guide §12.1 suite-wide standards: CI-managed token ledger, signed releases with SHA256SUMS verification, property-based geometry fuzz tests, and development documentation.
