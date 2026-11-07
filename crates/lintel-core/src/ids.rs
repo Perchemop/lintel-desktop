@@ -33,6 +33,7 @@ id_type!(WallId, "wall #{}");
 id_type!(OpeningId, "opening #{}");
 id_type!(LevelId, "level #{}");
 id_type!(DimensionId, "dimension #{}");
+id_type!(LabelId, "label #{}");
 
 #[cfg(test)]
 mod tests {
@@ -44,6 +45,7 @@ mod tests {
         assert_eq!(OpeningId(3).to_string(), "opening #3");
         assert_eq!(LevelId(1).to_string(), "level #1");
         assert_eq!(DimensionId(5).to_string(), "dimension #5");
+        assert_eq!(LabelId(9).to_string(), "label #9");
     }
 
     #[test]
@@ -57,5 +59,10 @@ mod tests {
         assert_eq!(json, "42");
         let back: DimensionId = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, DimensionId(42));
+
+        let json = serde_json::to_string(&LabelId(42)).expect("serialize");
+        assert_eq!(json, "42");
+        let back: LabelId = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, LabelId(42));
     }
 }

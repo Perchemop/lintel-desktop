@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use crate::dimension::{Dimension, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::Point2;
-use crate::ids::{DimensionId, LevelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+use crate::label::{MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM, PlanLabel};
 use crate::level::Level;
 use crate::opening::{
     MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT, MIN_OPENING_WIDTH, Opening,
@@ -96,6 +97,21 @@ pub enum Command {
     DeleteDimension {
         id: DimensionId,
     },
+    PlaceLabel {
+        anchor: Point2,
+        text: String,
+    },
+    SetLabelText {
+        id: LabelId,
+        text: String,
+    },
+    MoveLabel {
+        id: LabelId,
+        anchor: Point2,
+    },
+    DeleteLabel {
+        id: LabelId,
+    },
     AddLevel {
         name: String,
         elevation: f64,
@@ -120,6 +136,7 @@ pub struct Applied {
     pub wall: Option<WallId>,
     pub opening: Option<OpeningId>,
     pub dimension: Option<DimensionId>,
+    pub label: Option<LabelId>,
     pub level: Option<LevelId>,
 }
 
@@ -220,6 +237,38 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             level.dimensions.retain(|d| d.id != id);
             if level.dimensions.len() == before {
                 return Err(CoreError::DimensionNotFound(id));
+            }
+            Ok(Applied::default())
+        }
+        Command::PlaceLabel { anchor, text } => place_label(project, anchor, text),
+        Command::SetLabelText { id, text } => {
+            let level = active_level(project)?;
+            let existing = level.label(id).ok_or(CoreError::LabelNotFound(id))?;
+            let mut candidate = existing.clone();
+            candidate.text = text.trim().to_string();
+            validate_label(&candidate)?;
+            let level = active_level_mut(project)?;
+            let label = level.label_mut(id).ok_or(CoreError::LabelNotFound(id))?;
+            label.text = candidate.text;
+            Ok(Applied::default())
+        }
+        Command::MoveLabel { id, anchor } => {
+            let level = active_level(project)?;
+            let existing = level.label(id).ok_or(CoreError::LabelNotFound(id))?;
+            let mut candidate = existing.clone();
+            candidate.anchor = anchor;
+            validate_label(&candidate)?;
+            let level = active_level_mut(project)?;
+            let label = level.label_mut(id).ok_or(CoreError::LabelNotFound(id))?;
+            label.anchor = anchor;
+            Ok(Applied::default())
+        }
+        Command::DeleteLabel { id } => {
+            let level = active_level_mut(project)?;
+            let before = level.labels.len();
+            level.labels.retain(|l| l.id != id);
+            if level.labels.len() == before {
+                return Err(CoreError::LabelNotFound(id));
             }
             Ok(Applied::default())
         }
@@ -420,6 +469,37 @@ fn move_dimension(
     dimension.start = start;
     dimension.end = end;
     Ok(Applied::default())
+}
+
+fn validate_label(label: &PlanLabel) -> Result<(), CoreError> {
+    if !label.anchor.is_finite() {
+        return Err(CoreError::invalid("a label needs a finite position"));
+    }
+    if label.text.trim().is_empty() {
+        return Err(CoreError::invalid("a label needs some text"));
+    }
+    if !label.height_mm.is_finite()
+        || !(MIN_LABEL_HEIGHT_MM..=MAX_LABEL_HEIGHT_MM).contains(&label.height_mm)
+    {
+        return Err(CoreError::invalid(format!(
+            "a label height must be between {MIN_LABEL_HEIGHT_MM} mm and {MAX_LABEL_HEIGHT_MM} mm"
+        )));
+    }
+    Ok(())
+}
+
+fn place_label(project: &mut Project, anchor: Point2, text: String) -> Result<Applied, CoreError> {
+    // Validate before allocating so a rejected command does not burn an id.
+    let text = text.trim().to_string();
+    let candidate = PlanLabel::new(LabelId(0), anchor, text.clone());
+    validate_label(&candidate)?;
+    let id = LabelId(project.allocate_id());
+    let label = PlanLabel::new(id, anchor, text);
+    active_level_mut(project)?.labels.push(label);
+    Ok(Applied {
+        label: Some(id),
+        ..Applied::default()
+    })
 }
 
 fn place_opening(
@@ -1022,5 +1102,168 @@ mod tests {
             .expect("dimension")
             .extension_lines;
         assert!(extension_lines);
+    }
+
+    fn add_label(project: &mut Project, text: &str) -> LabelId {
+        apply_command(
+            project,
+            Command::PlaceLabel {
+                anchor: Point2::new(1000.0, 500.0),
+                text: text.into(),
+            },
+        )
+        .expect("place label")
+        .label
+        .expect("label id")
+    }
+
+    #[test]
+    fn placing_a_label_returns_its_id() {
+        use crate::label::DEFAULT_LABEL_HEIGHT_MM;
+
+        let mut project = empty_project();
+        let id = add_label(&mut project, "  Living room  ");
+        let level = project.active_level().expect("level");
+        assert_eq!(level.labels.len(), 1);
+        let label = level.label(id).expect("label");
+        assert_eq!(label.text, "Living room", "text is trimmed on placement");
+        assert_eq!(label.anchor, Point2::new(1000.0, 500.0));
+        assert_eq!(label.height_mm, DEFAULT_LABEL_HEIGHT_MM);
+    }
+
+    #[test]
+    fn a_rejected_label_burns_no_id() {
+        let mut project = empty_project();
+        let before = project.next_id;
+        let error = apply_command(
+            &mut project,
+            Command::PlaceLabel {
+                anchor: Point2::new(1000.0, 500.0),
+                text: "   ".into(),
+            },
+        )
+        .expect_err("blank text");
+        assert!(error.to_string().contains("some text"));
+        assert_eq!(project.active_level().expect("level").labels.len(), 0);
+        assert_eq!(project.next_id, before, "a rejected command burns no id");
+    }
+
+    #[test]
+    fn setting_label_text_rejects_blank() {
+        let mut project = empty_project();
+        let id = add_label(&mut project, "Hall");
+        let error = apply_command(
+            &mut project,
+            Command::SetLabelText {
+                id,
+                text: " ".into(),
+            },
+        )
+        .expect_err("blank text");
+        assert!(error.to_string().contains("some text"));
+        let text = project
+            .active_level()
+            .expect("level")
+            .label(id)
+            .expect("label")
+            .text
+            .clone();
+        assert_eq!(text, "Hall", "a rejected change leaves the text alone");
+
+        apply_command(
+            &mut project,
+            Command::SetLabelText {
+                id,
+                text: "Corridor".into(),
+            },
+        )
+        .expect("set text");
+        let text = project
+            .active_level()
+            .expect("level")
+            .label(id)
+            .expect("label")
+            .text
+            .clone();
+        assert_eq!(text, "Corridor");
+    }
+
+    #[test]
+    fn moving_a_label_moves_its_anchor() {
+        let mut project = empty_project();
+        let id = add_label(&mut project, "Hall");
+        apply_command(
+            &mut project,
+            Command::MoveLabel {
+                id,
+                anchor: Point2::new(2500.0, 1750.0),
+            },
+        )
+        .expect("move label");
+        let anchor = project
+            .active_level()
+            .expect("level")
+            .label(id)
+            .expect("label")
+            .anchor;
+        assert_eq!(anchor, Point2::new(2500.0, 1750.0));
+    }
+
+    #[test]
+    fn deleting_a_label_removes_it_once() {
+        let mut project = empty_project();
+        let id = add_label(&mut project, "Hall");
+        apply_command(&mut project, Command::DeleteLabel { id }).expect("delete label");
+        assert_eq!(project.active_level().expect("level").labels.len(), 0);
+        let error =
+            apply_command(&mut project, Command::DeleteLabel { id }).expect_err("already gone");
+        assert!(matches!(error, CoreError::LabelNotFound(_)));
+    }
+
+    #[test]
+    fn a_deleted_label_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let id = document
+            .apply(
+                Command::PlaceLabel {
+                    anchor: Point2::new(1000.0, 500.0),
+                    text: "Hall".into(),
+                },
+                1_760_000_100,
+            )
+            .expect("place label")
+            .label
+            .expect("label id");
+        document
+            .apply(Command::DeleteLabel { id }, 1_760_000_200)
+            .expect("delete label");
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .label(id)
+                .is_none()
+        );
+        assert!(document.undo(1_760_000_300));
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .label(id)
+                .is_some()
+        );
+        assert!(document.redo(1_760_000_400));
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .label(id)
+                .is_none()
+        );
     }
 }
