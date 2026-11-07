@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::dimension::Dimension;
 use crate::geom::Bounds;
-use crate::ids::{DimensionId, LevelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+use crate::label::PlanLabel;
 use crate::opening::Opening;
 use crate::wall::Wall;
 
@@ -23,6 +24,9 @@ pub struct Level {
     /// before dimensions existed readable.
     #[serde(default)]
     pub dimensions: Vec<Dimension>,
+    /// Free text annotations drawn over the plan.
+    #[serde(default)]
+    pub labels: Vec<PlanLabel>,
 }
 
 impl Level {
@@ -34,6 +38,7 @@ impl Level {
             walls: Vec::new(),
             openings: Vec::new(),
             dimensions: Vec::new(),
+            labels: Vec::new(),
         }
     }
 
@@ -59,6 +64,14 @@ impl Level {
 
     pub fn dimension_mut(&mut self, id: DimensionId) -> Option<&mut Dimension> {
         self.dimensions.iter_mut().find(|d| d.id == id)
+    }
+
+    pub fn label(&self, id: LabelId) -> Option<&PlanLabel> {
+        self.labels.iter().find(|l| l.id == id)
+    }
+
+    pub fn label_mut(&mut self, id: LabelId) -> Option<&mut PlanLabel> {
+        self.labels.iter_mut().find(|l| l.id == id)
     }
 
     pub fn openings_on(&self, wall: WallId) -> impl Iterator<Item = &Opening> {
@@ -181,5 +194,35 @@ mod tests {
         }"#;
         let level: Level = serde_json::from_str(json).expect("old level");
         assert!(level.dimensions.is_empty());
+        assert!(level.labels.is_empty());
+    }
+
+    #[test]
+    fn labels_are_found_by_id() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.labels.push(PlanLabel::new(
+            LabelId(7),
+            Point2::new(1000.0, 500.0),
+            "Living room",
+        ));
+        let label = level.label(LabelId(7)).expect("label");
+        assert_eq!(label.text, "Living room");
+        level.label_mut(LabelId(7)).expect("label").text = "Kitchen".into();
+        assert_eq!(level.label(LabelId(7)).expect("label").text, "Kitchen");
+        assert!(level.label(LabelId(8)).is_none());
+    }
+
+    #[test]
+    fn labels_survive_a_save_and_load() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.labels.push(PlanLabel::new(
+            LabelId(3),
+            Point2::new(1200.0, 800.0),
+            "Bedroom",
+        ));
+        let json = serde_json::to_string(&level).expect("serialize");
+        let back: Level = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.labels, level.labels);
+        assert_eq!(back, level);
     }
 }

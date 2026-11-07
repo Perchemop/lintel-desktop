@@ -1,6 +1,6 @@
 # Architecture
 
-Lintel is split into a **thick, headless core** and a **thin UI shell** (addendum K.3):
+Lintel is split into a **thick, headless core** and a **thin UI shell** (guide Appendix K.3):
 
 ```
 apps/lintel/          UI shell (egui/eframe) — paint + input only

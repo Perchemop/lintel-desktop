@@ -123,6 +123,36 @@ impl Canvas {
             );
         }
 
+        // Rooms: area label at each centroid.
+        for room in geometry.rooms() {
+            let pos = world_to_screen(view, rect, room.centroid);
+            painter.text(
+                pos,
+                egui::Align2::CENTER_CENTER,
+                room.area_label(),
+                egui::FontId::proportional(11.0),
+                theme::INK.linear_multiply(0.55),
+            );
+        }
+
+        // Labels.
+        for label in geometry.labels() {
+            let pos = world_to_screen(view, rect, label.anchor);
+            let colour = if selection == Some(Hit::Label(label.id)) {
+                theme::COBALT
+            } else {
+                theme::INK
+            };
+            painter.text(
+                pos,
+                egui::Align2::LEFT_BOTTOM,
+                &label.text,
+                egui::FontId::proportional(
+                    (label.height_mm as f32 * view.px_per_mm).clamp(9.0, 96.0),
+                ),
+                colour,
+            );
+        }
         // Draft preview (wall tool).
         if draft.active {
             let anchors = wall_anchors_snap(geometry);

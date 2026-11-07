@@ -12,9 +12,11 @@
 
 use crate::dimension::Dimension;
 use crate::geom::{Bounds, Point2, Vec2, point_segment_distance};
-use crate::ids::{DimensionId, OpeningId, WallId};
+use crate::ids::{DimensionId, LabelId, OpeningId, WallId};
+use crate::label::PlanLabel;
 use crate::level::Level;
 use crate::opening::{Opening, OpeningKind};
+use crate::room::{Room, detect_rooms};
 use crate::wall::Wall;
 
 /// Two wall ends closer than this are treated as joined, in millimetres.
@@ -86,6 +88,7 @@ pub enum Hit {
     Wall(WallId),
     Opening(OpeningId),
     Dimension(DimensionId),
+    Label(LabelId),
 }
 
 /// Everything needed to paint one level, in world millimetres.
@@ -94,6 +97,8 @@ pub struct PlanGeometry {
     pub walls: Vec<ResolvedWall>,
     pub openings: Vec<ResolvedOpening>,
     pub dimensions: Vec<Dimension>,
+    pub labels: Vec<PlanLabel>,
+    pub rooms: Vec<Room>,
 }
 
 impl PlanGeometry {
@@ -112,6 +117,8 @@ impl PlanGeometry {
             walls,
             openings,
             dimensions: level.dimensions.clone(),
+            labels: level.labels.clone(),
+            rooms: detect_rooms(&level.walls),
         }
     }
 
@@ -132,9 +139,33 @@ impl PlanGeometry {
         &self.dimensions
     }
 
-    /// What is under the pointer. Doors and windows win over their host wall,
-    /// because they are drawn on top of it and are harder to hit.
+    pub fn labels(&self) -> &[PlanLabel] {
+        &self.labels
+    }
+
+    pub fn rooms(&self) -> &[Room] {
+        &self.rooms
+    }
+
+    pub fn label(&self, id: LabelId) -> Option<&PlanLabel> {
+        self.labels.iter().find(|l| l.id == id)
+    }
+
+    /// What is under the pointer. Labels win over everything, because they are
+    /// drawn on top. Doors and windows win over their host wall, because they
+    /// are drawn on top of it and are harder to hit.
     pub fn hit_test(&self, point: Point2, tolerance: f64) -> Option<Hit> {
+        if let Some(label) = self.labels.iter().find(|label| {
+            let anchor = label.anchor;
+            let height = label.height_mm;
+            let inside_box = point.x >= anchor.x
+                && point.x <= anchor.x + label.width_mm()
+                && point.y >= anchor.y
+                && point.y <= anchor.y + height;
+            inside_box || point.distance(anchor) <= height + tolerance
+        }) {
+            return Some(Hit::Label(label.id));
+        }
         if let Some(opening) = self.openings.iter().find(|o| {
             point_segment_distance(point, o.start, o.end) <= o.host_thickness * 0.5 + tolerance
         }) {
@@ -306,6 +337,8 @@ mod tests {
             walls: resolved,
             openings: Vec::new(),
             dimensions: Vec::new(),
+            labels: Vec::new(),
+            rooms: Vec::new(),
         };
         let bounds = geometry.bounds().expect("bounds");
         // The corner is filled: the horizontal wall reaches x = 4100 and the
@@ -388,5 +421,43 @@ mod tests {
         ));
         let geometry = PlanGeometry::of_level(&level);
         assert!(geometry.openings[0].swing.is_none());
+    }
+
+    #[test]
+    fn a_closed_loop_yields_a_room() {
+        let mut level = Level::new(crate::ids::LevelId(1), "Level 0", 0.0);
+        level.walls.push(wall(1, (0.0, 0.0), (4000.0, 0.0)));
+        level.walls.push(wall(2, (4000.0, 0.0), (4000.0, 4000.0)));
+        let geometry = PlanGeometry::of_level(&level);
+        assert!(
+            geometry.rooms().is_empty(),
+            "two walls at a corner enclose nothing"
+        );
+
+        level.walls.push(wall(3, (4000.0, 4000.0), (0.0, 4000.0)));
+        level.walls.push(wall(4, (0.0, 4000.0), (0.0, 0.0)));
+        let geometry = PlanGeometry::of_level(&level);
+        let rooms = geometry.rooms();
+        assert_eq!(rooms.len(), 1);
+        assert!(rooms[0].area_mm2 > 0.0);
+        assert!(rooms[0].perimeter_mm > 0.0);
+    }
+
+    #[test]
+    fn hit_test_finds_a_label_on_top_of_its_anchor() {
+        let mut level = Level::new(crate::ids::LevelId(1), "Level 0", 0.0);
+        level.walls.push(wall(1, (0.0, 0.0), (4000.0, 0.0)));
+        let id = LabelId(5);
+        level
+            .labels
+            .push(PlanLabel::new(id, Point2::new(2000.0, 0.0), "Living room"));
+        let geometry = PlanGeometry::of_level(&level);
+        assert_eq!(geometry.labels().len(), 1);
+        assert_eq!(geometry.label(id).map(|label| label.id), Some(id));
+        // The anchor sits on the wall, and the label still wins.
+        assert_eq!(
+            geometry.hit_test(Point2::new(2000.0, 0.0), HIT_TOLERANCE),
+            Some(Hit::Label(id))
+        );
     }
 }

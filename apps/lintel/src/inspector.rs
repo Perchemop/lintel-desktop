@@ -6,7 +6,8 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{DimensionId, OpeningId, WallId},
+    geom::Point2,
+    ids::{DimensionId, LabelId, OpeningId, WallId},
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
@@ -74,6 +75,20 @@ pub fn inspector(
                 ));
                 ui.separator();
                 dimension_fields(ui, *id, &dimension)
+            }
+            Some(Hit::Label(id)) => {
+                let label = {
+                    let level = doc.project().active_level().expect("level");
+                    level.label(*id).expect("label").clone()
+                };
+                let truncated = if label.text.chars().count() > 20 {
+                    format!("{}…", label.text.chars().take(20).collect::<String>())
+                } else {
+                    label.text.clone()
+                };
+                ui.label(format!("Label {} — {}", id.value(), truncated));
+                ui.separator();
+                label_fields(ui, *id, &label)
             }
             None => {
                 ui.label("Select a wall or opening to edit it.");
@@ -226,7 +241,55 @@ pub fn inspector(
         .body_returned
         .flatten();
 
-    element_cmd.or(project_cmd).or(storeys_cmd).or(view_cmd)
+    ui.separator();
+
+    let rooms_cmd = egui::CollapsingHeader::new("Rooms")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            let rooms = lintel_core::room::detect_rooms(&level.walls);
+            if rooms.is_empty() {
+                ui.label("No enclosed areas yet.");
+            } else {
+                for (index, room) in rooms.iter().enumerate() {
+                    ui.label(format!("{} — {}", index + 1, room.area_label()));
+                }
+            }
+            None::<Command>
+        })
+        .body_returned
+        .flatten();
+
+    ui.separator();
+
+    let schedule_cmd = egui::CollapsingHeader::new("Schedule")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            let rows = lintel_core::schedule::opening_schedule(level);
+            if rows.is_empty() {
+                ui.label("No doors or windows.");
+            } else {
+                for row in &rows {
+                    ui.label(format!(
+                        "{}  {}  x{}",
+                        row.mark,
+                        row.size_label(),
+                        row.count
+                    ));
+                }
+            }
+            None::<Command>
+        })
+        .body_returned
+        .flatten();
+
+    element_cmd
+        .or(project_cmd)
+        .or(storeys_cmd)
+        .or(view_cmd)
+        .or(rooms_cmd)
+        .or(schedule_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
@@ -438,6 +501,50 @@ fn dimension_fields(
             id,
             extension_lines,
         });
+    }
+
+    command
+}
+
+fn label_fields(
+    ui: &mut egui::Ui,
+    id: LabelId,
+    label: &lintel_core::label::PlanLabel,
+) -> Option<Command> {
+    let mut command: Option<Command> = None;
+
+    let mut text = label.text.clone();
+    ui.horizontal(|ui| {
+        ui.label("Text:");
+        ui.text_edit_singleline(&mut text);
+        if ui.button("Apply").clicked() && !text.trim().is_empty() && text.trim() != label.text {
+            command = Some(Command::SetLabelText {
+                id,
+                text: text.trim().to_string(),
+            });
+        }
+    });
+
+    let mut x = label.anchor.x;
+    let mut y = label.anchor.y;
+    ui.horizontal(|ui| {
+        ui.label("X:");
+        ui.add(egui::DragValue::new(&mut x).speed(10.0).suffix(" mm"));
+        ui.label("Y:");
+        ui.add(egui::DragValue::new(&mut y).speed(10.0).suffix(" mm"));
+        if ui.button("Apply").clicked()
+            && ((x - label.anchor.x).abs() > f64::EPSILON
+                || (y - label.anchor.y).abs() > f64::EPSILON)
+        {
+            command = Some(Command::MoveLabel {
+                id,
+                anchor: Point2::new(x, y),
+            });
+        }
+    });
+
+    if ui.button("Delete").clicked() {
+        command = Some(Command::DeleteLabel { id });
     }
 
     command
