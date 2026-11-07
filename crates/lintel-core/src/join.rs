@@ -157,11 +157,12 @@ impl PlanGeometry {
     pub fn hit_test(&self, point: Point2, tolerance: f64) -> Option<Hit> {
         if let Some(label) = self.labels.iter().find(|label| {
             let anchor = label.anchor;
+            let height = label.height_mm;
             let inside_box = point.x >= anchor.x
                 && point.x <= anchor.x + label.width_mm()
                 && point.y >= anchor.y
-                && point.y <= anchor.y + label.height_mm();
-            inside_box || point.distance(anchor) <= label.height_mm() + tolerance
+                && point.y <= anchor.y + height;
+            inside_box || point.distance(anchor) <= height + tolerance
         }) {
             return Some(Hit::Label(label.id));
         }
