@@ -16,3 +16,5 @@ thiserror = "2"
 [dev-dependencies]
 # Workflow tests use an isolated temporary directory (addendum K.11.4).
 tempfile = "3"
+# Property-based fuzz tests for geometry edge cases (audit finding: Low/Core).
+proptest = "1"

@@ -3,6 +3,37 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.10.0 — Suite-standard conformance
+
+**Summary.** Brings Lintel into conformance with guide §12.1 suite-wide standards: CI-managed token ledger, signed releases with SHA256SUMS verification, property-based geometry fuzz tests, and development documentation.
+
+### Added
+- `docs/development.md` — build, test, and contribution guide for developers.
+- `crates/lintel-core/tests/properties.rs` — property-based fuzz tests for room detection edge cases (degenerate walls, NaN coordinates, collinear overlaps, extreme values).
+- Release signing: `SHA256SUMS.txt` is GPG-signed and the `.asc` artefact is attached to every release (guide §12.1 auto-update security).
+- CI updates `docs/tokens.json` on each semver tag (`release_version`, `release_tokens`, `total_tokens_since_start`).
+
+### Changed
+- `crates/lintel-core/Cargo.toml` adds `proptest = "1"` as a dev-dependency for fuzz tests.
+- `.github/workflows/release.yml` adds token-ledger update and release-signing steps to the publish job.
+
+### Fixed
+- Release notes now reference `docs/tokens.json` ledger values for every release.
+
+### Known limitations
+- `crates/update-check` is still in-repo; guide §12.1 requires a shared git submodule (deviation recorded in DECISIONS.md D-012).
+- In-app auto-update verifies SHA256SUMS but does not yet verify the GPG signature before download (verification wiring planned post-v0.10.0).
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, `SHA256SUMS.txt.asc`.
+
+### Token metrics
+Approximate totals recorded at release time.
+
+- This release: ~15,000 tokens
+- Cumulative since development began: ~6,100,000 tokens
+
+---
 ## Lintel 0.9.1 — Version fix
 
 **Summary.** Corrects the shipped binary version to 0.9.1 (fixes update check reporting the wrong installed version).
