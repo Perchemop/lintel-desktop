@@ -28,8 +28,8 @@
 ### Token metrics
 Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
 
-- This release: 8,000 tokens
-- Cumulative since development began: 13,000 tokens
+- This release: 5,000 tokens
+- Cumulative since development began: 10,000 tokens
 
 ---
 ## Lintel 0.10.0 — Suite-standard conformance
