@@ -24,4 +24,11 @@ Font licences bundled inside egui/epaint_default_fonts:
 
 All other dependencies are either MIT/Apache-2.0 or otherwise permissive licences allowed by the `deny.toml` licence policy.
 
-No GPL/AGPL/M PL-2.0 crates are used without explicit maintainer approval.
+No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
+
+## Icons
+
+| Asset | Path | Licence | Notes |
+|-------|------|---------|-------|
+| Lintel icon (PNG/ICO) | `resources/linux/lintel.png`, `resources/windows/lintel.png`, `resources/windows/lintel.ico` | Original (MIT OR Apache-2.0) | Designed for Lintel; 256×256 PNG source |
+| Lintel icon (SVG) | `resources/icons/lintel.svg` | Original (MIT OR Apache-2.0) | Scalable source for all platform icons |

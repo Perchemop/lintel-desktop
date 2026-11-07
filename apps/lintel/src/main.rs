@@ -1070,13 +1070,27 @@ fn now_epoch_s() -> i64 {
 fn main() {
     // Capture a crash report before anything else can panic (guide section 7).
     crash_report::install_panic_hook("lintel", env!("CARGO_PKG_VERSION"), &about::crash_log_dir());
+
+    // Embed the app icon and set it as the window icon (guide §10: original visual design).
+    const ICON_BYTES: &[u8] = include_bytes!("../../../resources/linux/lintel.png");
+    let icon_img = image::load_from_memory(ICON_BYTES)
+        .expect("load embedded icon")
+        .into_rgba8();
+    let (icon_width, icon_height) = icon_img.dimensions();
+    let icon_data = egui::IconData {
+        rgba: icon_img.into_raw(),
+        width: icon_width,
+        height: icon_height,
+    };
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("Lintel — architectural drafting")
             .with_inner_size(egui::Vec2 {
                 x: 1300.0,
                 y: 850.0,
-            }),
+            })
+            .with_icon(icon_data),
         ..Default::default()
     };
     let app = LintelApp::new();
