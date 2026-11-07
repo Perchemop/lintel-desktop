@@ -149,4 +149,48 @@ CI evidence: PR #11 run `42294376007`; release workflow run `42295310359`.
 
 ---
 
+## v0.9.0 — Drawing Set
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.9.0
+
+CI evidence: PR `opencode/v0.9.0-rooms` merged; release workflow run.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-069 | Auto-detected rooms via planar face traversal | ✓ |
+| CAP-070 | Free text plan labels with placement, move, delete | ✓ |
+| CAP-071 | Opening schedule generation | ✓ |
+| CAP-072 | Multi-sheet PDF drawing set with cover, north arrow, scale bar | ✓ |
+| CAP-073 | Room area captions in canvas | ✓ |
+| CAP-074 | Label tool (L key), Ctrl+D duplicate, Ctrl+Shift+E Export | ✓ |
+
+## v0.10.0 — Suite Standards Conformance
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.0
+
+CI evidence: release workflow run `42365552699`.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-075 | `docs/tokens.json` CI-managed ledger | ✓ |
+| CAP-076 | Release signing step in `release.yml` | ✓ |
+| CAP-077 | `docs/development.md` added | ✓ |
+| CAP-078 | Property-based geometry and command-layer fuzz tests | ✓ |
+| CAP-079 | Version UI bottom-right with Release Notes popup + Update button | ✓ |
+| CAP-080 | Window icon embedded | ✓ |
+
+## v0.10.1 — Window Icon & Installer Version Fix
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.1
+
+CI evidence: PR #16 audit fixes merged; PR #17 version bump.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-081 | Window icon via `with_icon()` + `image` crate | ✓ |
+| CAP-082 | `resources/icons/lintel.svg` SVG source | ✓ |
+| CAP-083 | Windows `.iss` version corrected 0.8.0 → 0.10.1 | ✓ |
+| CAP-084 | Icon attribution in `ATTRIBUTION.md` | ✓ |
+| CAP-085 | Command-layer fuzz tests (never panic/corrupt/undo) | ✓ |
+
 **Unscheduled / future:** Web/WASM port, plugin architecture, collaborative editing, custom paper sizes, better on-canvas hints.

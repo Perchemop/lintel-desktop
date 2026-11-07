@@ -13,9 +13,29 @@ Each release is a vertical slice:
 3. UI wiring: canvas, inspector, menus, keyboard shortcuts.
 4. CI green → PR → merge → release.
 
-## Active Slice — v0.9.0 “Drawing Set”
-**Status:** In progress → release pending CI green.
+## Active Slice — v0.10.1 “Window Icon & Audit Fixes”
 
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.1
+
+**Core**
+- Window icon embedded via `with_icon()` + `image` crate
+- `include_bytes!` path corrected to repo root
+- `resources/icons/lintel.svg` SVG source added
+- Windows `.iss` version corrected
+- Command-layer proptest fuzz tests added
+
+## Completed Slices
+
+### v0.10.0 Suite Standards Conformance
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.0
+- `docs/tokens.json` CI-managed ledger
+- Release signing step added to `release.yml`
+- `docs/development.md` added
+- Property-based geometry and command-layer fuzz tests
+- Version UI bottom-right, Release Notes popup with Update button
+
+### v0.9.0 “Drawing Set”
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.9.0
 **Core**
 - `crates/lintel-core/src/room.rs` — planar face traversal for auto-detected rooms.
 - `crates/lintel-core/src/schedule.rs` — door/window schedule rows.
@@ -29,13 +49,7 @@ Each release is a vertical slice:
 - `apps/lintel/src/main.rs` — `Tool::Label`, `L` shortcut, `Ctrl+D` duplicate, `Ctrl+Shift+E` Export drawing set, `plan_summary` room count.
 - `apps/lintel/src/inspector.rs` — label editor, read-only Rooms and Schedule collapsing headers.
 
-**Verification**
-- `cargo test -p lintel-core` headless.
-- CI `check` (fmt + clippy -D warnings) + `build-matrix` (Linux/macOS/Windows release).
-- Manual try-steps after CI green.
-
 ## Next Slices
-- v0.10.0 Suite Standards Conformance: `docs/tokens.json` ledger, bottom-right version UI, Release Notes popup with token metrics + Update button, README screenshots, guide Appendix references cleanup.
 - v0.11.0 Measurements: area/perimeter query tool, wall length totals.
 - v1.0.0 Pavement: polish, README screenshots, accessibility spot-checks, legal checklist.
 

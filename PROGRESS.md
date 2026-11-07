@@ -1,5 +1,40 @@
 # Progress
 
+## v0.10.1 Status — RELEASED
+
+- [x] Window icon embedded via `with_icon()` + `image` crate decode
+- [x] `include_bytes!` path fixed to three levels to repo root
+- [x] `resources/icons/lintel.svg` created as canonical source
+- [x] Windows `.iss` version bumped 0.8.0 → 0.10.1
+- [x] `ATTRIBUTION.md` icon attribution added
+- [x] Command-layer fuzz tests added (3 proptest cases in `crates/lintel-core/tests/properties.rs`)
+- [x] CI green (PR #16 audit fixes merged, PR #17 v0.10.1 bump)
+- [x] v0.10.1 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.1 (release run `42372245530`; all seven assets present, `SHA256SUMS.txt` verified)
+- [x] Token ledger `docs/tokens.json` updated by CI; cumulative 10,000 tokens (ledger accumulation bug fixed)
+
+Readiness % (v0.10.1): **100% — shipped.**
+
+## v0.10.0 Status — RELEASED
+
+- [x] Suite-standard conformance: `docs/tokens.json` CI-managed ledger, release signing step added to `release.yml`, `docs/development.md` added
+- [x] Property-based geometry and command-layer fuzz tests added (`crates/lintel-core/tests/properties.rs`)
+- [x] Version UI moved to bottom-right; Release Notes popup gains Update button
+- [x] Window icon embedded via `include_bytes!` + `image` crate
+- [x] CI green, PR merged, tag `v0.10.0` pushed, release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.0
+
+Readiness % (v0.10.0): **100% — shipped.**
+
+## v0.9.0 Status — RELEASED
+
+- [x] Drawing Set shipped: auto-detected rooms, free text plan labels, opening schedule, multi-sheet PDF with cover, north arrow + scale bar
+- [x] Room detection orientation bug fixed; non-positive walks dropped
+- [x] `LabelNotFound` error message normalized to `"{0} does not exist"`
+- [x] Room area captions, label rendering, `Tool::Label` L key, drag-move, Delete, Ctrl+D duplicate, Ctrl+Shift+E Export drawing set
+- [x] `PlanGeometry.labels/rooms` wired, IDs/error/command/join plumbing complete
+- [x] CI green, PR `opencode/v0.9.0-rooms` merged, tag `v0.9.0` pushed, release published
+
+Readiness % (v0.9.0): **100% — shipped.**
+
 ## v0.8.0 Status — RELEASED
 
 - [x] Focus review found a regression: tabbing to the canvas disabled every shortcut
