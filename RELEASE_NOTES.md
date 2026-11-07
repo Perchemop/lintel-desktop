@@ -3,6 +3,43 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.9.0 — Drawing Set
+
+**Summary.** Lintel now issues a real drawing set: auto-detected rooms with area captions, free text plan labels, an opening schedule, north arrow and graphic scale bar on every sheet, multi-sheet PDF export with a cover sheet, and duplicate (Ctrl+D).
+
+### Added
+- Auto-detected rooms via planar face traversal; area captions rendered on canvas and PDF.
+- Free text plan labels with CRUD, drag to move, Delete key.
+- Opening schedule grouped by kind/size with D1/W1 marks; shown in Inspector and PDF.
+- Multi-sheet drawing-set export: cover sheet + one sheet per storey via `render_set`.
+- Sheet furniture: north arrow and graphic scale bar on plan sheets.
+- Duplicate selection (Ctrl+D) for wall/dimension/label/opening.
+- Export drawing set menu (Ctrl+Shift+E) and Label tool (L).
+
+### Changed
+- `PlanGeometry` now exposes `labels` and `rooms`; hit testing prioritises labels.
+- PDF `escape_text` maps superscripts and dashes to ASCII for WinAnsi fidelity.
+
+### Fixed
+- Room detection orientation bug: disconnected wall groups previously produced duplicate rooms; now all non-positive walks are dropped.
+- `LabelNotFound` error message no longer duplicates “label”.
+- Room JSON round-trip uses approximate centroid comparison.
+
+### Known limitations
+- Rooms have no persistent identity; naming is done via plan labels anchored inside the room.
+- `crates/update-check` is still in-repo; guide §12.1 requires a shared git submodule (deviation recorded).
+- Version UI is still top-toolbar; guide §12.1 requires bottom-right version with Release Notes popup containing token metrics and Update button (planned for v0.10.0).
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, and `SHA256SUMS.txt`.
+
+### Token metrics
+Approximate totals recorded at release time.
+
+- This release: ~120,000 tokens
+- Cumulative since development began: ~6,080,000 tokens
+
+---
 ## Lintel 0.8.0 — Keyboard-focus review
 
 **Summary.** A focus review found a regression: after tabbing to the drawing
