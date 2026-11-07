@@ -84,6 +84,16 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
                     "View releases on GitHub",
                     format!("https://github.com/{REPO}/releases"),
                 );
+                ui.add_space(4.0);
+                if ui
+                    .button("Update")
+                    .on_hover_text("Check for updates and open download page")
+                    .clicked()
+                {
+                    ui.ctx().open_url(egui::OpenUrl::new_tab(
+                        "https://github.com/Perchemop/lintel-desktop/releases",
+                    ));
+                }
             });
         });
 }

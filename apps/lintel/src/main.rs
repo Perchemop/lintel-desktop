@@ -364,16 +364,6 @@ impl eframe::App for LintelApp {
                                 .color(egui::Color32::DARK_RED),
                         );
                     }
-                    let version = ui.link(
-                        egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
-                            .small(),
-                    );
-                    if version
-                        .on_hover_text("Release notes and update status")
-                        .clicked()
-                    {
-                        self.showing_notes = true;
-                    }
                 });
             });
 
@@ -416,6 +406,21 @@ impl eframe::App for LintelApp {
                 );
             }
             self.handle_canvas_input(ui, response, rect, now);
+
+            // Bottom-right version bar per guide §12.1 suite standard
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
+                let version = ui.link(
+                    egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
+                        .small()
+                        .color(egui::Color32::GRAY),
+                );
+                if version
+                    .on_hover_text("Release notes and update status")
+                    .clicked()
+                {
+                    self.showing_notes = true;
+                }
+            });
 
             egui::Window::new("Inspector")
                 .default_pos(egui::Pos2::new(4.0, 40.0))
