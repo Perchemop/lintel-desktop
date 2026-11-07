@@ -3,7 +3,7 @@
 ## Development process
 
 1. **Fork the repository** and create a branch from `main` for your change.
-2. **Write or update tests** — headless `cargo test` is the primary QA engine (addendum K/M).
+2. **Write or update tests** — headless `cargo test` is the primary QA engine (guide Appendix K/M).
 3. **Run the full local check**:
    - `cargo fmt --check --all`
    - `cargo clippy --all-targets -D warnings`
