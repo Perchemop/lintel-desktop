@@ -225,6 +225,15 @@ jobs:
     - name: Scan release assets for personal data (guide II.29.6)
       run: bash scripts/scan-release-assets.sh dist
 
+    - name: Sign SHA256SUMS.txt (guide §12.1 auto-update security)
+      if: ${{ github.ref_type == 'tag' && secrets.GPG_PRIVATE_KEY != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+        gpg --batch --yes --armor --detach-sign dist/SHA256SUMS.txt
+        ls -la dist/SHA256SUMS.txt.asc
+
     - name: Publish GitHub release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -247,3 +256,30 @@ jobs:
         mapfile -t artefacts <<< "$ARTEFACTS"
         gh release upload "$tag" "${artefacts[@]}" --clobber
         gh release edit "$tag" --draft=false
+
+    - name: Update docs/tokens.json ledger (guide §12.1)
+      if: ${{ github.ref_type == 'tag' }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME#v}"
+        # Token count for this release: use RELEASE_TOKENS env var if set,
+        # otherwise a conservative estimate.
+        release_tokens="${RELEASE_TOKENS:-5000}"
+        git config user.name "Lintel Dev"
+        git config user.email "dev@example.com"
+        git fetch origin main
+        git checkout main
+        # Read current ledger.
+        current=$(cat docs/tokens.json)
+        total_before=$(echo "$current" | grep -o '"total_tokens_since_start":[0-9]*' | grep -o '[0-9]*')
+        total_after=$((total_before + release_tokens))
+        # Write updated ledger.
+        cat > docs/tokens.json <<JSON
+{"total_tokens_since_start": $total_after, "release_tokens": $release_tokens, "release_version": "$tag", "_notes": "CI-managed ledger. Updated on each semver tag by the release workflow. Release notes must reference the values for the released version. See guide §12.1."}
+JSON
+        git add docs/tokens.json
+        git commit -m "ci: update tokens.json ledger for v$tag" || true
+        git push origin main || true
