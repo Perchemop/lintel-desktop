@@ -11,7 +11,7 @@ pub enum CoreError {
     OpeningNotFound(OpeningId),
     #[error("{0} does not exist")]
     DimensionNotFound(DimensionId),
-    #[error("label {0} does not exist")]
+    #[error("{0} does not exist")]
     LabelNotFound(LabelId),
     #[error("{0} does not exist")]
     LevelNotFound(LevelId),

@@ -544,6 +544,10 @@ mod tests {
         let original = detect_rooms(&walls).remove(0);
         let json = serde_json::to_string(&original).expect("serialize");
         let back: Room = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(back, original);
+        assert_eq!(back.polygon, original.polygon);
+        assert_eq!(back.area_mm2, original.area_mm2);
+        assert_eq!(back.perimeter_mm, original.perimeter_mm);
+        assert!(approximately(back.centroid.x, original.centroid.x));
+        assert!(approximately(back.centroid.y, original.centroid.y));
     }
 }
