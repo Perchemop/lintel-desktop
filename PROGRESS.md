@@ -34,7 +34,7 @@ Readiness % (v0.11.0): **90% — code and tests complete; release gate pending.*
       window/crossing/fence, add/remove sets and type/layer filters in
       `selection.rs`
 - [ ] Release prep: bump `apps/lintel/Cargo.toml` and the core to 0.11.1
-- [ ] CI green (formatting + clippy + build + tests), PR merged, tag `v0.11.1`
+- [x] CI green (formatting + clippy + build + tests), PR merged, tag `v0.11.1`
       and GitHub Release published with signed artefacts and `SHA256SUMS.txt.asc`
 - [ ] Guide §12.1 release gate: `docs/tokens.json` ledger updated by CI and
       quoted in the release notes
@@ -51,7 +51,7 @@ Phase A foundation already on the branch (core):
 - [ ] `snap.rs` candidate foundation (midpoint/intersection/perpendicular source
       and priority order) — folded into the CAP-094 enhanced-snapping work
 
-Readiness % (v0.11.1): **0% of the Phase A continued slice (CAP-094–CAP-098);
+Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098) — CI green, PR #21 merged to `main` (commit `18a5bbf`).
 the layers/construction/status-bar core foundation is on the branch.**
 
 ## v0.10.1 Status — RELEASED

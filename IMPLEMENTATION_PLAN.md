@@ -15,7 +15,7 @@ Each release is a vertical slice:
 
 ## Active Slice — v0.11.1 “Phase A continued: Snapping + Selection + Command Palette”
 
-**Status:** In Progress — starting (0%).
+**Status:** **Complete** (PR #21 merged to `main`, CI green).
 
 **Core**
 - `crates/lintel-core/src/snap.rs` — extend snapping from endpoints to midpoint,
@@ -43,11 +43,35 @@ Each release is a vertical slice:
   add/remove sets, and entity-type/layer filters.
 
 **Release gate**
-- [ ] Bump `apps/lintel/Cargo.toml` (and the core) to 0.11.1
-- [ ] CI green: formatting, clippy, build and tests
-- [ ] PR merged to `main`
+- [x] Bump `apps/lintel/Cargo.toml` (and the core) to 0.11.1
+- [x] CI green: formatting, clippy, build and tests
+- [x] PR merged to `main`
 - [ ] Tag `v0.11.1` and publish the GitHub Release with signed artefacts and
       `SHA256SUMS.txt.asc`
+
+---
+
+## Next Slice — v0.12.0 “Phase B: Constraint-Driven Dimensions”
+
+**Status:** Planned
+
+**Core**
+- `crates/lintel-core/src/dimension.rs` — add `DimensionAnchor` (point on wall +
+  offset or perpendicular distance), witness-line gap/overrun, and serialization
+  backward-compatibility.
+- `crates/lintel-core/src/command.rs` — `SetDimensionAnchor`, `SetWitnessGap`,
+  `SetWitnessOverrun` commands.
+- `crates/lintel-core/src/constraint.rs` (new) — constraint solver for
+  dimension-driven geometry (perpendicular distance, fixed angle, equal length).
+
+**UI**
+- `apps/lintel/src/dimension_ui.rs` — anchor placement UX, grip editing for
+  witness lines, constraint badges on canvas.
+- `apps/lintel/src/inspector.rs` — anchor property fields, constraint toggle.
+
+**Tests**
+- Dimension anchor round-trip serialization.
+- Constraint solver: perpendicular distance holds under wall moves.
 - [ ] `docs/tokens.json` updated by CI and quoted in the release notes
 
 ## Awaiting Release — v0.11.0 “Measurements”

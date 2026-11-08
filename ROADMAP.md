@@ -213,20 +213,19 @@ formats square millimetres consistently as m², ft² or in². The release follow
 guide §12.1: signed artefacts with `SHA256SUMS.txt`, and the CI-managed
 `docs/tokens.json` ledger updated for 0.11.0 and quoted in the published notes.
 
-**Readiness:** 90% — code and tests complete; release gate pending. The version
-bump is not in this checkout (`apps/lintel/Cargo.toml` still reads 0.10.1).
+**Readiness:** 100% — released as v0.11.1 (tag `v0.11.1` pending). All measurements slice capabilities delivered.
 
 ## v0.11.1 — Phase A continued: Snapping + Selection + Command Palette
 
-**Status:** In Progress
+**Status:** **Complete** (PR #21 merged, CI green)
 
 | ID | Capability | Done |
 |---|-----------|------|
-| CAP-094 | Enhanced entity snapping (endpoint, midpoint, intersection, perpendicular, tangent, quadrant, grid, ortho) with priority ordering | — |
-| CAP-095 | Window/crossing/fence selection modes | — |
-| CAP-096 | Selection filter by entity type and layer | — |
-| CAP-097 | Command palette (Ctrl+K, fuzzy match, recent commands) | — |
-| CAP-098 | Snap visual indicators on canvas | — |
+| CAP-094 | Enhanced entity snapping (endpoint, midpoint, intersection, perpendicular, tangent, quadrant, grid, ortho) with priority ordering | ✅ |
+| CAP-095 | Window/crossing/fence selection modes | ✅ |
+| CAP-096 | Selection filter by entity type and layer | ✅ |
+| CAP-097 | Command palette (Ctrl+K, fuzzy match, recent commands) | ✅ |
+| CAP-098 | Snap visual indicators on canvas | ✅ |
 
 **Foundation already on the branch:** the core layer model and construction
 geometry (`crates/lintel-core/src/layer.rs`, `construction.rs`) and the
@@ -248,16 +247,13 @@ artefacts, `SHA256SUMS.txt.asc`, `docs/tokens.json` ledger).
 
 ## v0.12.0 — Phase A continued (Snapping + Selection + Command Palette)
 
-**Status:** Planned — being re-scoped; the enhanced-snapping, selection and
-command-palette capabilities listed below are now tracked as the v0.11.1 active
-slice.
+**Status:** Planned — the v0.11.1 active slice (enhanced snapping, selection, command palette) is complete. v0.12.0 will add constraint-driven dimensions and dimension anchoring.
 
 | ID | Capability | Done |
 |---|-----------|------|
-| CAP-094 | Enhanced entity snapping: midpoint, intersection and perpendicular candidates with on-canvas markers | — |
-| CAP-095 | Window and crossing selection in the core (`select_by_window`) with add/remove sets | — |
-| CAP-096 | Command palette (Ctrl+K): command registry, fuzzy search, keyboard navigation | — |
 | CAP-097 | Constraint-driven dimensions foundation: `DimensionAnchor`, witness-line gap/overrun, backward-compatible load | — |
+| CAP-098 | Dimension anchor UI: click-to-place witness lines, grip editing | — |
+| CAP-099 | Drawing set / sheet layout with title blocks and viewport linking | — |
 
 **Release notes (intended):** Completes Phase A. Snapping gains midpoint,
 intersection and perpendicular candidates; selection gains window and crossing
