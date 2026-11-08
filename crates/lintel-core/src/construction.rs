@@ -48,11 +48,20 @@ fn angle_in_sweep(angle: f64, start_degrees: f64, sweep: f64) -> bool {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ConstructionKind {
     /// A finite segment between two points.
-    Line { start: Point2, end: Point2 },
+    Line {
+        start: Point2,
+        end: Point2,
+    },
     /// A line through `point` extending forever in both directions.
-    InfiniteLine { point: Point2, direction: Vec2 },
+    InfiniteLine {
+        point: Point2,
+        direction: Vec2,
+    },
     /// A line starting at `origin` and extending forever forwards.
-    Ray { origin: Point2, direction: Vec2 },
+    Ray {
+        origin: Point2,
+        direction: Vec2,
+    },
     Circle {
         center: Point2,
         radius: f64,
