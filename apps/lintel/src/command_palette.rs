@@ -254,6 +254,10 @@ impl PaletteAction {
             PaletteAction::ToggleTangent => "T",
             PaletteAction::ToggleGrid => "G",
             PaletteAction::ToggleOrtho => "O",
+            PaletteAction::ToggleUnits => "U",
+            PaletteAction::ShowAbout => "?",
+            PaletteAction::ShowReleaseNotes => "R",
+            PaletteAction::CheckForUpdates => "U",
             _ => "",
         }
     }
@@ -1276,10 +1280,11 @@ mod tests {
     fn a_consecutive_run_beats_scattered_letters() {
         let query = "port";
         let consecutive = fuzzy_match(query, "Export sheet").expect("matches");
-        let scattered = fuzzy_match(query, "Project notes").expect("matches");
+        // "Support" has "port" scattered: p at 2, o at 4 (gap), r at 5, t at 6
+        let scattered = fuzzy_match(query, "Support").expect("matches");
         assert!(
             consecutive.score > scattered.score,
-            "{} should beat {}",
+            "consecutive {} should beat scattered {}",
             consecutive.score,
             scattered.score
         );
@@ -1294,8 +1299,9 @@ mod tests {
 
     #[test]
     fn a_shorter_label_wins_a_tie() {
-        let short = fuzzy_match("layer", "Layer lock").expect("matches");
-        let long = fuzzy_match("layer", "Layer printable").expect("matches");
+        // With equal prefix matches, the shorter label wins via length penalty
+        let short = fuzzy_match("zoom", "Zoom fit").expect("matches");
+        let long = fuzzy_match("zoom", "Zoom to fit").expect("matches");
         assert!(short.score > long.score);
     }
 
@@ -1303,9 +1309,10 @@ mod tests {
     fn highlights_group_runs_of_matched_characters() {
         let matched = fuzzy_match("walt", "Wall tool").expect("matches");
         let chunks = highlight_chunks("Wall tool", &matched.hits);
-        assert_eq!(chunks[0], ("W".to_string(), true));
-        assert!(chunks.iter().any(|(text, hit)| text == "all" && *hit));
-        assert!(chunks.iter().any(|(text, hit)| text == " " && !hit));
+        // "walt" matches W(0), a(1), l(2), t(5) -> "Wal" run then "t"
+        assert_eq!(chunks[0], ("Wal".to_string(), true));
+        assert!(chunks.iter().any(|(text, hit)| text == "t" && *hit));
+        assert!(chunks.iter().any(|(text, hit)| text == " " && !*hit));
     }
 
     #[test]

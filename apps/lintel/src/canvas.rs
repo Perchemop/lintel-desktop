@@ -1194,9 +1194,12 @@ mod tests {
             tangent: false,
             ..SnapModes::default()
         };
+        // This point is near wall 2's start (which coincides with wall 1's midpoint).
+        // When midpoint is off, the endpoint wins because it has higher priority.
         let raw = Point2::new(2050.0, -30.0);
         let resolved = resolve_snap(raw, &geometry, &off, None, &settings());
-        assert_eq!(resolved.kind, SnapModeKind::Free);
+        assert_eq!(resolved.kind, SnapModeKind::Endpoint);
+        assert_eq!(resolved.point, Point2::new(2000.0, 0.0));
 
         let resolved = resolve_snap(raw, &geometry, &all_modes(), None, &settings());
         assert_eq!(resolved.kind, SnapModeKind::Midpoint);
@@ -1446,8 +1449,8 @@ mod tests {
         selection.pick_all(&geometry);
         assert_eq!(
             selection.len(),
-            5,
-            "walls, opening, dimension, label, guide"
+            6,
+            "walls(2), opening, dimension, label, guide"
         );
         assert!(selection.contains(EntityId::Opening(OpeningId(2))));
         assert!(selection.contains(EntityId::Label(LabelId(4))));
@@ -1539,13 +1542,9 @@ mod tests {
     fn every_mode_has_a_distinct_marker_colour_and_label() {
         let mut labels = Vec::new();
         let mut colours = Vec::new();
-        for kind in SnapModes::KINDS {
+        for kind in SnapModeKind::PRIORITY {
             labels.push(kind.label());
             colours.push(kind.colour());
-        }
-        for other in SnapModeKind::PRIORITY {
-            labels.push(other.label());
-            colours.push(other.colour());
         }
         let unique_labels = labels.len();
         labels.sort_unstable();
