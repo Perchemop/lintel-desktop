@@ -164,7 +164,11 @@ impl Level {
                 .iter()
                 .filter(|d| d.layer_id == layer_id)
                 .count()
-            + self.labels.iter().filter(|l| l.layer_id == layer_id).count()
+            + self
+                .labels
+                .iter()
+                .filter(|l| l.layer_id == layer_id)
+                .count()
     }
 
     pub fn construction_entity(&self, id: ConstructionId) -> Option<&ConstructionEntity> {
