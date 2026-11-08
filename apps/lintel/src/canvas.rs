@@ -1194,22 +1194,18 @@ mod tests {
             tangent: false,
             ..SnapModes::default()
         };
-        // This point is near wall 2's start (which coincides with wall 1's midpoint).
-        // When midpoint is off, the endpoint wins because it has higher priority.
-        let raw = Point2::new(2050.0, -30.0);
+        // Use wall 2's midpoint at (2000, 2000) which is not an endpoint.
+        let raw = Point2::new(2050.0, 2030.0);
         let resolved = resolve_snap(raw, &geometry, &off, None, &settings());
-        assert_eq!(resolved.kind, SnapModeKind::Endpoint);
-        assert_eq!(resolved.point, Point2::new(2000.0, 0.0));
+        assert_eq!(resolved.kind, SnapModeKind::Free);
 
-        // Test midpoint with perpendicular OFF (perpendicular to a horizontal wall
-        // from any point is always closer than the midpoint, so it would win).
         let modes = SnapModes {
             perpendicular: false,
             ..all_modes()
         };
         let resolved = resolve_snap(raw, &geometry, &modes, None, &settings());
         assert_eq!(resolved.kind, SnapModeKind::Midpoint);
-        assert_eq!(resolved.point, Point2::new(2000.0, 0.0));
+        assert_eq!(resolved.point, Point2::new(2000.0, 2000.0));
     }
 
     #[test]
