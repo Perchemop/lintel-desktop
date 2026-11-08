@@ -47,7 +47,11 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         ui.separator();
 
         // Selection count.
-        let selected = if app.selection.is_some() { 1usize } else { 0usize };
+        let selected = if app.selection.is_some() {
+            1usize
+        } else {
+            0usize
+        };
         ui.label(egui::RichText::new(format!("{} selected", selected)).small());
         ui.separator();
 
