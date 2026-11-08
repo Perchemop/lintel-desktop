@@ -11,7 +11,7 @@ use lintel_core::{
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
-    units::{format_area, UnitSystem},
+    units::{UnitSystem, format_area},
 };
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
@@ -252,7 +252,9 @@ pub fn inspector(
                 let measurements = lintel_core::measurements::Measurements::new(project);
 
                 // Cache rooms for this frame to avoid repeated detection
-                let level_rooms = project.active_level().map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
+                let level_rooms = project
+                    .active_level()
+                    .map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
 
                 // Selected room (if the current selection sits inside one).
                 if let Some(Hit::Wall(wall_id)) = selection {
