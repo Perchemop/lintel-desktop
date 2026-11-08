@@ -53,7 +53,10 @@ pub enum ConstructionKind {
     InfiniteLine { point: Point2, direction: Vec2 },
     /// A line starting at `origin` and extending forever forwards.
     Ray { origin: Point2, direction: Vec2 },
-    Circle { center: Point2, radius: f64 },
+    Circle {
+        center: Point2,
+        radius: f64,
+    },
     Arc {
         center: Point2,
         radius: f64,
@@ -81,7 +84,10 @@ impl ConstructionKind {
                 (*start).is_finite() && (*end).is_finite() && (*start).distance(*end) > 0.0
             }
             ConstructionKind::InfiniteLine { point, direction }
-            | ConstructionKind::Ray { origin: point, direction } => {
+            | ConstructionKind::Ray {
+                origin: point,
+                direction,
+            } => {
                 (*point).is_finite()
                     && direction.is_finite()
                     && direction.length_sq() > f64::EPSILON
