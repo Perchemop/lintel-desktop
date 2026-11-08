@@ -216,31 +216,41 @@ guide §12.1: signed artefacts with `SHA256SUMS.txt`, and the CI-managed
 **Readiness:** 90% — code and tests complete; release gate pending. The version
 bump is not in this checkout (`apps/lintel/Cargo.toml` still reads 0.10.1).
 
-## v0.11.1 — Phase A: Table Stakes (Layers + Construction Geometry)
+## v0.11.1 — Phase A continued: Snapping + Selection + Command Palette
 
-**Status:** Planned
+**Status:** In Progress
 
 | ID | Capability | Done |
 |---|-----------|------|
-| CAP-089 | `Layer` model, protected default layer, per-entity layer assignment with serde migration | — |
-| CAP-090 | Layers palette: create/delete, visibility, lock, assign selection | — |
-| CAP-091 | Construction geometry (line, ray, circle): snap-enabled, never printed | — |
-| CAP-092 | Snapping foundation: `SnapCandidateKind` midpoint/intersection/perpendicular, source and priority order | — |
-| CAP-093 | Status bar: cursor coordinates, snap/ortho/grid chips, zoom percentage | — |
+| CAP-094 | Enhanced entity snapping (endpoint, midpoint, intersection, perpendicular, tangent, quadrant, grid, ortho) with priority ordering | — |
+| CAP-095 | Window/crossing/fence selection modes | — |
+| CAP-096 | Selection filter by entity type and layer | — |
+| CAP-097 | Command palette (Ctrl+K, fuzzy match, recent commands) | — |
+| CAP-098 | Snap visual indicators on canvas | — |
 
-**Release notes (intended):** Introduces the table-stakes working environment of
-a professional drafting tool: a layer system with a protected default layer and
-per-entity assignment, construction geometry that guides drawing but never
-prints, the candidate-and-priority foundation for enhanced snapping, and a
-persistent status bar. Existing project files load unchanged through serde
-defaults and a default-layer migration. Release gate follows guide §12.1
-(signed artefacts, `SHA256SUMS.txt`, `docs/tokens.json` ledger).
+**Foundation already on the branch:** the core layer model and construction
+geometry (`crates/lintel-core/src/layer.rs`, `construction.rs`) and the
+persistent status bar (`apps/lintel/src/status_bar.rs`) landed earlier under the
+Phase A plan (CAP-089–CAP-093); their UI wiring (layers palette, construction
+tools) still follows.
 
-**Readiness:** 0% — planned; design recorded in the 2026-11-08 elite CAD reports.
+**Release notes (intended):** Completes the Phase A working environment of a
+professional drafting tool. Snapping grows from endpoints to midpoint,
+intersection, perpendicular, tangent and quadrant candidates — plus grid and
+ortho — resolved through an explicit priority order and shown with on-canvas
+indicators; selection gains window, crossing and fence modes owned by the core
+and filtered by entity type and layer; and a searchable command palette
+(Ctrl+K) exposes every action with fuzzy matching and a recent-commands list.
+Earlier project files load unchanged. Release gate follows guide §12.1 (signed
+artefacts, `SHA256SUMS.txt.asc`, `docs/tokens.json` ledger).
+
+**Readiness:** 0% — starting the Phase A continued work (CAP-094–CAP-098).
 
 ## v0.12.0 — Phase A continued (Snapping + Selection + Command Palette)
 
-**Status:** Planned
+**Status:** Planned — being re-scoped; the enhanced-snapping, selection and
+command-palette capabilities listed below are now tracked as the v0.11.1 active
+slice.
 
 | ID | Capability | Done |
 |---|-----------|------|

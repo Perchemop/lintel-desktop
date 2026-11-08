@@ -10,9 +10,10 @@
 //! limitation is documented in `docs/architecture.md` and scheduled for the
 //! joint-resolution milestone.
 
+use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
 use crate::geom::{Bounds, Point2, Vec2, point_segment_distance};
-use crate::ids::{DimensionId, LabelId, OpeningId, WallId};
+use crate::ids::{DimensionId, LabelId, LayerId, OpeningId, WallId};
 use crate::label::PlanLabel;
 use crate::level::Level;
 use crate::opening::{Opening, OpeningKind};
@@ -66,6 +67,8 @@ pub struct Swing {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResolvedOpening {
     pub id: OpeningId,
+    /// Layer the opening is drawn on, carried so a selection can filter by it.
+    pub layer_id: LayerId,
     pub kind: OpeningKind,
     pub host: WallId,
     /// Jamb positions on the host centreline.
@@ -99,6 +102,9 @@ pub struct PlanGeometry {
     pub dimensions: Vec<Dimension>,
     pub labels: Vec<PlanLabel>,
     pub rooms: Vec<Room>,
+    /// Non-printing guides, carried so a selection can reach them without a
+    /// second lookup against the level.
+    pub construction: Vec<ConstructionEntity>,
 }
 
 impl PlanGeometry {
@@ -119,6 +125,7 @@ impl PlanGeometry {
             dimensions: level.dimensions.clone(),
             labels: level.labels.clone(),
             rooms: detect_rooms(&level.walls),
+            construction: level.construction.clone(),
         }
     }
 
@@ -259,6 +266,7 @@ fn resolve_opening(level: &Level, opening: &Opening) -> Option<ResolvedOpening> 
 
     Some(ResolvedOpening {
         id: opening.id,
+        layer_id: opening.layer_id,
         kind: opening.kind,
         host: opening.host,
         start,
@@ -339,6 +347,7 @@ mod tests {
             dimensions: Vec::new(),
             labels: Vec::new(),
             rooms: Vec::new(),
+            construction: Vec::new(),
         };
         let bounds = geometry.bounds().expect("bounds");
         // The corner is filled: the horizontal wall reaches x = 4100 and the

@@ -2,13 +2,13 @@
 //! view controls. All edits flow through `lintel_core::Command` values
 //! returned here and applied by the shell.
 
+use crate::canvas::Selection;
 use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
     geom::Point2,
-    ids::{DimensionId, LabelId, OpeningId, WallId},
-    join::Hit,
+    ids::{DimensionId, EntityId, LabelId, OpeningId, WallId},
     opening::OpeningKind,
     snap::SnapSettings,
     units::{UnitSystem, format_area},
@@ -27,18 +27,21 @@ pub struct InspectorDraft {
 pub fn inspector(
     ui: &mut egui::Ui,
     doc: &Document,
-    selection: &Option<Hit>,
+    selection: &Selection,
     snap: &mut SnapSettings,
     draft: &mut InspectorDraft,
     measurements_active: bool,
 ) -> Option<Command> {
+    // A multi-selection is edited one entity at a time: the most recent pick is
+    // the one the field edits, and the count is spelled out.
+    let selected = selection.primary();
     let element_cmd = egui::CollapsingHeader::new("Element")
         .default_open(true)
-        .show(ui, |ui| match selection {
-            Some(Hit::Wall(id)) => {
+        .show(ui, |ui| match selected {
+            Some(EntityId::Wall(id)) => {
                 let wall = {
                     let level = doc.project().active_level().expect("level");
-                    level.wall(*id).expect("wall").clone()
+                    level.wall(id).expect("wall").clone()
                 };
                 ui.label(format!(
                     "Wall {} — {:.0} mm long",
@@ -46,12 +49,12 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                wall_fields(ui, *id, &wall)
+                wall_fields(ui, id, &wall)
             }
-            Some(Hit::Opening(id)) => {
+            Some(EntityId::Opening(id)) => {
                 let opening = {
                     let level = doc.project().active_level().expect("level");
-                    level.opening(*id).expect("opening").clone()
+                    level.opening(id).expect("opening").clone()
                 };
                 ui.label(format!(
                     "{} {} — {:.0} × {:.0} mm",
@@ -61,12 +64,12 @@ pub fn inspector(
                     opening.height
                 ));
                 ui.separator();
-                opening_fields(ui, doc, *id, &opening)
+                opening_fields(ui, doc, id, &opening)
             }
-            Some(Hit::Dimension(id)) => {
+            Some(EntityId::Dimension(id)) => {
                 let dimension = {
                     let level = doc.project().active_level().expect("level");
-                    level.dimension(*id).expect("dimension").clone()
+                    level.dimension(id).expect("dimension").clone()
                 };
                 ui.label(format!(
                     "{} {} — {:.0} mm",
@@ -75,12 +78,12 @@ pub fn inspector(
                     dimension.length()
                 ));
                 ui.separator();
-                dimension_fields(ui, *id, &dimension)
+                dimension_fields(ui, id, &dimension)
             }
-            Some(Hit::Label(id)) => {
+            Some(EntityId::Label(id)) => {
                 let label = {
                     let level = doc.project().active_level().expect("level");
-                    level.label(*id).expect("label").clone()
+                    level.label(id).expect("label").clone()
                 };
                 let truncated = if label.text.chars().count() > 20 {
                     format!("{}…", label.text.chars().take(20).collect::<String>())
@@ -89,10 +92,34 @@ pub fn inspector(
                 };
                 ui.label(format!("Label {} — {}", id.value(), truncated));
                 ui.separator();
-                label_fields(ui, *id, &label)
+                label_fields(ui, id, &label)
+            }
+            Some(EntityId::Construction(id)) => {
+                // A construction guide is a helper, not the building: there is
+                // nothing to edit here, so say what it is rather than showing
+                // wall fields for it.
+                let kind = doc
+                    .project()
+                    .active_level()
+                    .and_then(|level| level.construction_entity(id))
+                    .map(|guide| guide.kind.label());
+                ui.label(format!(
+                    "Construction guide {} — {}",
+                    id.value(),
+                    kind.unwrap_or("unknown shape")
+                ));
+                ui.separator();
+                None
             }
             None => {
-                ui.label("Select a wall or opening to edit it.");
+                if selection.len() > 1 {
+                    ui.label(format!(
+                        "{} entities selected. The most recent one is edited below.",
+                        selection.len()
+                    ));
+                } else {
+                    ui.label("Select a wall or opening to edit it.");
+                }
                 None
             }
         })
@@ -257,9 +284,9 @@ pub fn inspector(
                     .map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
 
                 // Selected room (if the current selection sits inside one).
-                if let Some(Hit::Wall(wall_id)) = selection {
+                if let Some(EntityId::Wall(wall_id)) = selected {
                     let level = project.active_level().expect("level");
-                    if let Some(wall) = level.wall(*wall_id) {
+                    if let Some(wall) = level.wall(wall_id) {
                         let mid = lintel_core::geom::Point2::new(
                             (wall.start.x + wall.end.x) * 0.5,
                             (wall.start.y + wall.end.y) * 0.5,

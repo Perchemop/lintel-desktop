@@ -26,6 +26,7 @@ pub mod persistence;
 pub mod project;
 pub mod room;
 pub mod schedule;
+pub mod selection;
 pub mod snap;
 pub mod units;
 pub mod wall;
@@ -36,7 +37,9 @@ pub use dimension::{Dimension, DimensionKind};
 pub use document::Document;
 pub use error::CoreError;
 pub use geom::{Bounds, Point2};
-pub use ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
+pub use ids::{
+    ConstructionId, DimensionId, EntityId, LabelId, LayerId, LevelId, OpeningId, WallId,
+};
 pub use join::{Hit, PlanGeometry};
 pub use label::PlanLabel;
 pub use layer::{EntitySelector, EntityStyle, Layer, LayerProperty, Linetype, Rgb};
@@ -44,4 +47,5 @@ pub use measurements::{LevelTotals, Measurements, ProjectTotals};
 pub use project::Project;
 pub use room::Room;
 pub use schedule::ScheduleRow;
+pub use selection::{EntityType, Selection, SelectionFilter, SelectionMode, select};
 pub use units::{UnitSystem, format_area};

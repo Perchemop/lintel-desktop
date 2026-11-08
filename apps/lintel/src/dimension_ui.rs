@@ -3,10 +3,11 @@
 //! Pure presentation: world millimetres → screen pixels. The dimension UI
 //! never mutates the model itself.
 
-use crate::canvas::{View, world_to_screen};
+use crate::canvas::{Selection, View, world_to_screen};
 use crate::theme;
 use eframe::egui;
-use lintel_core::join::{Hit, PlanGeometry};
+use lintel_core::ids::EntityId;
+use lintel_core::join::PlanGeometry;
 
 /// Draw every dimension in `geometry` onto `painter`.
 pub fn render_dimensions(
@@ -14,10 +15,10 @@ pub fn render_dimensions(
     rect: egui::Rect,
     view: &View,
     geometry: &PlanGeometry,
-    selection: Option<Hit>,
+    selection: &Selection,
 ) {
     for dim in geometry.dimensions() {
-        let selected = matches!(selection, Some(Hit::Dimension(id)) if id == dim.id);
+        let selected = selection.contains(EntityId::Dimension(dim.id));
         let Some((a, b)) = dim.dimension_line() else {
             continue;
         };

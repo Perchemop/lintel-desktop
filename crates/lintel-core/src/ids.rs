@@ -55,6 +55,45 @@ impl LayerId {
     pub const DEFAULT: LayerId = LayerId(0);
 }
 
+/// A kind-tagged identity for any element on a level.
+///
+/// Ids come from a single project-wide counter, so the raw number is unique;
+/// carrying the kind lets a caller say exactly what an id refers to and reject
+/// a mismatch — the same reason [`crate::layer::EntitySelector`] tags its ids.
+/// It is the currency of the selection and grouping layers above the model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum EntityId {
+    Wall(WallId),
+    Opening(OpeningId),
+    Dimension(DimensionId),
+    Label(LabelId),
+    Construction(ConstructionId),
+}
+
+impl EntityId {
+    /// The raw allocation number, useful for sorting and for logging.
+    pub fn value(self) -> u64 {
+        match self {
+            EntityId::Wall(id) => id.value(),
+            EntityId::Opening(id) => id.value(),
+            EntityId::Dimension(id) => id.value(),
+            EntityId::Label(id) => id.value(),
+            EntityId::Construction(id) => id.value(),
+        }
+    }
+
+    /// Short human-readable name of the kind this id names.
+    pub fn label(self) -> &'static str {
+        match self {
+            EntityId::Wall(_) => "wall",
+            EntityId::Opening(_) => "opening",
+            EntityId::Dimension(_) => "dimension",
+            EntityId::Label(_) => "label",
+            EntityId::Construction(_) => "construction",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,5 +141,36 @@ mod tests {
         assert_eq!(json, "42");
         let back: ConstructionId = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, ConstructionId(42));
+    }
+
+    #[test]
+    fn entity_ids_name_their_kind_and_value() {
+        let ids = [
+            EntityId::Wall(WallId(1)),
+            EntityId::Opening(OpeningId(2)),
+            EntityId::Dimension(DimensionId(3)),
+            EntityId::Label(LabelId(4)),
+            EntityId::Construction(ConstructionId(5)),
+        ];
+        let labels = ["wall", "opening", "dimension", "label", "construction"];
+        for (index, id) in ids.iter().enumerate() {
+            assert_eq!(id.value(), index as u64 + 1);
+            assert_eq!(id.label(), labels[index]);
+        }
+    }
+
+    #[test]
+    fn entity_ids_round_trip_through_json() {
+        for id in [
+            EntityId::Wall(WallId(1)),
+            EntityId::Opening(OpeningId(2)),
+            EntityId::Dimension(DimensionId(3)),
+            EntityId::Label(LabelId(4)),
+            EntityId::Construction(ConstructionId(5)),
+        ] {
+            let json = serde_json::to_string(&id).expect("serialize");
+            let back: EntityId = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(back, id);
+        }
     }
 }

@@ -19,26 +19,40 @@
 
 Readiness % (v0.11.0): **90% — code and tests complete; release gate pending.**
 
-## v0.11.1 Status — PLANNED
+## v0.11.1 Status — IN PROGRESS
 
-**Phase A: Table Stakes (Layers + Construction Geometry)**, from the 2026-11-08
-elite CAD reports.
+**Phase A continued: Snapping + Selection + Command Palette**, continuing the
+2026-11-08 elite CAD reports.
 
-- [ ] `layer.rs`: `Layer`, protected default layer, per-entity assignment
-- [ ] `style.rs`: `EntityStyle.layer_id` with serde-default migration and
-      default-layer assignment on load
-- [ ] Layers palette: create/delete, visibility, lock, assign selection
-- [ ] `construction.rs`: line/ray/circle construction geometry, snap-enabled and
-      never printed
-- [ ] `snap.rs` foundation: `SnapCandidateKind` midpoint/intersection/
-      perpendicular, `SnapSource`, priority order
-- [ ] Status bar: cursor coordinates, snap/ortho/grid chips, zoom %
-- [ ] Headless tests for migration, PDF filtering and snap candidates
-- [ ] CI green, release cut with signed artefacts, `SHA256SUMS.txt` and the
-      `docs/tokens.json` ledger
+- [ ] CAP-094 — Enhanced entity snapping (endpoint, midpoint, intersection,
+      perpendicular, tangent, quadrant, grid, ortho) with priority ordering
+- [ ] CAP-095 — Window / crossing / fence selection modes
+- [ ] CAP-096 — Selection filter by entity type and layer
+- [ ] CAP-097 — Command palette (Ctrl+K, fuzzy match, recent commands)
+- [ ] CAP-098 — Snap visual indicators on canvas
+- [ ] Tests: snap candidate generation and priority ordering in `snap.rs`;
+      window/crossing/fence, add/remove sets and type/layer filters in
+      `selection.rs`
+- [ ] Release prep: bump `apps/lintel/Cargo.toml` and the core to 0.11.1
+- [ ] CI green (formatting + clippy + build + tests), PR merged, tag `v0.11.1`
+      and GitHub Release published with signed artefacts and `SHA256SUMS.txt.asc`
+- [ ] Guide §12.1 release gate: `docs/tokens.json` ledger updated by CI and
+      quoted in the release notes
 
-Readiness % (v0.11.1): **0% — planned.** Layers and construction geometry are
-prerequisites for the v0.12.0 enhanced snapping work.
+Phase A foundation already on the branch (core):
+
+- [x] `layer.rs`: `Layer`, protected default layer and per-entity assignment
+      with serde-default migration
+- [x] `construction.rs`: line/ray/circle/arc construction geometry, snap-enabled
+      and never printed
+- [x] `status_bar.rs`: cursor coordinates, snap/ortho/grid chips, selection
+      count and zoom %
+- [ ] UI wiring for the foundation: layers palette and construction tools
+- [ ] `snap.rs` candidate foundation (midpoint/intersection/perpendicular source
+      and priority order) — folded into the CAP-094 enhanced-snapping work
+
+Readiness % (v0.11.1): **0% of the Phase A continued slice (CAP-094–CAP-098);
+the layers/construction/status-bar core foundation is on the branch.**
 
 ## v0.10.1 Status — RELEASED
 

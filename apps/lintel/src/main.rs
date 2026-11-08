@@ -2,13 +2,18 @@
 //! Every user interaction goes through a `Command`; the core model updates
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
-use crate::canvas::{Canvas, Draft, View, screen_to_world};
+use crate::canvas::{
+    Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View,
+    entity_of, resolve_snap, screen_to_world,
+};
+use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
 use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    geom::{Point2, Vec2},
+    geom::{Bounds, Point2, Vec2},
+    ids::EntityId,
     join::{Hit, PlanGeometry},
 };
 
@@ -17,6 +22,7 @@ use std::sync::mpsc::{self, Receiver};
 
 mod about;
 mod canvas;
+mod command_palette;
 mod dimension_ui;
 mod inspector;
 mod release_notes;
@@ -55,9 +61,18 @@ pub struct LintelApp {
     doc: Document,
     view: View,
     tool: Tool,
-    selection: Option<Hit>,
+    /// Everything the canvas has selected: a plain click replaces it, Shift
+    /// adds to it, Ctrl removes, and a rubber band sets it.
+    selection: Selection,
+    /// Which snap modes offer candidates while drawing.
+    snap_modes: SnapModes,
     snap: lintel_core::snap::SnapSettings,
+    /// The rubber-band selection drag in progress, if any.
+    band: Option<SelectionBand>,
+    /// What the snapper settled on this frame, for the status bar readout.
+    last_snap: Option<crate::canvas::SnapReadout>,
     draft: Draft,
+    palette: CommandPalette,
     showing_about: bool,
     showing_notes: bool,
     export_open: bool,
@@ -86,9 +101,13 @@ impl LintelApp {
             doc,
             view: View::default(),
             tool: Tool::Wall,
-            selection: None,
+            selection: Selection::default(),
+            snap_modes: SnapModes::default(),
             snap: lintel_core::snap::SnapSettings::default(),
+            band: None,
+            last_snap: None,
             draft: Draft::default(),
+            palette: CommandPalette::default(),
             showing_about: false,
             showing_notes: false,
             export_open: false,
@@ -155,8 +174,9 @@ impl LintelApp {
     /// Start a brand-new empty plan, clearing selection, draft and message.
     fn new_plan(&mut self) {
         self.doc = Document::new("Untitled plan", now_epoch_s());
-        self.selection = None;
+        self.selection.clear();
         self.draft = Draft::default();
+        self.band = None;
         self.status = None;
     }
 
@@ -165,8 +185,9 @@ impl LintelApp {
         match Document::open(PathBuf::from(Self::WORKFLOW_PATH)) {
             Ok(loaded) => {
                 self.doc = loaded;
-                self.selection = None;
+                self.selection.clear();
                 self.draft = Draft::default();
+                self.band = None;
                 self.view = View::default();
             }
             Err(e) => self.note_status(format!("Could not open the plan: {e}"), now),
@@ -186,6 +207,266 @@ impl LintelApp {
             self.note_status(format!("Could not save: {e}"), now);
         }
     }
+
+    /// Select every entity on the active level. The domain runs the pick; this
+    /// only keeps the answer.
+    fn select_all(&mut self) {
+        let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+        self.selection.pick_all(&geometry);
+    }
+
+    /// Delete every selected entity, reporting the first refusal.
+    ///
+    /// Construction guides own their own delete command, so a selection that
+    /// holds one deletes it too.
+    fn delete_selection(&mut self, now: i64) {
+        let mut refusal: Option<String> = None;
+        for id in self.selection.iter() {
+            let command = match id {
+                EntityId::Wall(id) => Command::DeleteWall { id },
+                EntityId::Opening(id) => Command::DeleteOpening { id },
+                EntityId::Dimension(id) => Command::DeleteDimension { id },
+                EntityId::Label(id) => Command::DeleteLabel { id },
+                EntityId::Construction(id) => Command::DeleteConstruction { id },
+            };
+            if let Err(e) = self.doc.apply(command, now)
+                && refusal.is_none()
+            {
+                refusal = Some(format!("Could not delete: {e}"));
+            }
+        }
+        if let Some(message) = refusal {
+            self.note_status(message, now);
+        }
+        self.selection.clear();
+    }
+
+    /// Copy every selected entity, leaving the copies selected.
+    ///
+    /// The level is cloned once, so reading an entity to copy never fights the
+    /// mutable borrow of the document.
+    fn duplicate_selection(&mut self, now: i64) {
+        let offset = Vec2::new(1000.0, 1000.0);
+        let mut copies: Vec<EntityId> = Vec::new();
+        let mut refusal: Option<String> = None;
+        let level = self.doc.project().active_level().cloned();
+        let Some(level) = level else {
+            return;
+        };
+        for id in self.selection.iter() {
+            let command = match id {
+                EntityId::Wall(id) => {
+                    let Some(wall) = level.wall(id).cloned() else {
+                        continue;
+                    };
+                    Command::AddWall {
+                        start: wall.start + offset,
+                        end: wall.end + offset,
+                        thickness: wall.thickness,
+                        height: wall.height,
+                    }
+                }
+                EntityId::Dimension(id) => {
+                    let Some(dimension) = level.dimension(id).cloned() else {
+                        continue;
+                    };
+                    Command::PlaceDimension {
+                        kind: dimension.kind,
+                        start: dimension.start + offset,
+                        end: dimension.end + offset,
+                        offset: dimension.offset,
+                    }
+                }
+                EntityId::Label(id) => {
+                    let Some(label) = level.label(id).cloned() else {
+                        continue;
+                    };
+                    Command::PlaceLabel {
+                        anchor: label.anchor + offset,
+                        text: label.text.clone(),
+                    }
+                }
+                EntityId::Opening(id) => {
+                    let Some(opening) = level.opening(id).cloned() else {
+                        continue;
+                    };
+                    let Some(host) = level.wall(opening.host) else {
+                        continue;
+                    };
+                    let host_length = host.length();
+                    let new_offset = (opening.offset + 1000.0).min(host_length);
+                    Command::PlaceOpening {
+                        kind: opening.kind,
+                        host: opening.host,
+                        offset: new_offset,
+                    }
+                }
+                // A construction guide has no copy command: it is a helper, and
+                // duplicating one would clutter the plan rather than help it.
+                EntityId::Construction(_) => continue,
+            };
+            match self.doc.apply(command, now) {
+                Ok(applied) => {
+                    if let Some(id) = applied.wall {
+                        copies.push(EntityId::Wall(id));
+                    }
+                    if let Some(id) = applied.opening {
+                        copies.push(EntityId::Opening(id));
+                    }
+                    if let Some(id) = applied.dimension {
+                        copies.push(EntityId::Dimension(id));
+                    }
+                    if let Some(id) = applied.label {
+                        copies.push(EntityId::Label(id));
+                    }
+                }
+                Err(e) => {
+                    if refusal.is_none() {
+                        refusal = Some(format!("Duplicate rejected: {e}"));
+                    }
+                }
+            }
+        }
+        if let Some(message) = refusal {
+            self.note_status(message, now);
+        }
+        self.selection.set(copies);
+    }
+
+    /// Write the multi-sheet PDF drawing set next to the project file.
+    fn export_drawing_set(&mut self, now: i64) {
+        let path = PathBuf::from(format!("{}-set.pdf", self.export_spec.sheet_number));
+        match lintel_core::pdf::render_set(self.doc.project(), &self.export_spec, now) {
+            Ok(bytes) => {
+                if let Err(e) = std::fs::write(&path, &bytes) {
+                    self.note_status(format!("Could not write {}: {e}", path.display()), now);
+                }
+            }
+            Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
+        }
+    }
+
+    /// Flip between Metric and Imperial.
+    fn toggle_units(&mut self, now: i64) {
+        let units = self.doc.project().units;
+        let next = match units {
+            lintel_core::units::UnitSystem::Metric => lintel_core::units::UnitSystem::Imperial,
+            lintel_core::units::UnitSystem::Imperial => lintel_core::units::UnitSystem::Metric,
+        };
+        let _ = self.doc.apply(Command::SetUnits { units: next }, now);
+    }
+
+    /// Where a pointer position lands under the current snap settings.
+    fn snap_at(&self, world: Point2, origin: Option<Point2>) -> Point2 {
+        let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+        resolve_snap(world, &geometry, &self.snap_modes, origin, &self.snap).point
+    }
+
+    /// Labels for the active level's layers, as `(LayerId, name)`.
+    pub(crate) fn layer_labels(&self) -> Vec<(lintel_core::ids::LayerId, String)> {
+        self.doc
+            .project()
+            .active_level()
+            .map(|level| {
+                level
+                    .layers
+                    .iter()
+                    .map(|layer| (layer.id, layer.name.clone()))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    /// The layer a picker form starts on: the first one that is not the
+    /// protected default, so the destructive actions are never pointed at it.
+    pub(crate) fn first_assignable_layer_index(&self) -> usize {
+        let layers = self.layer_labels();
+        layers
+            .iter()
+            .position(|(id, _)| *id != lintel_core::ids::LayerId::DEFAULT)
+            .unwrap_or(0)
+    }
+
+    /// Apply one command, reporting a refusal in the status bar.
+    ///
+    /// Returns what the command created, so a follow-up command can name a new
+    /// entity without the UI guessing an id.
+    pub(crate) fn run_command(
+        &mut self,
+        command: Command,
+        now: i64,
+    ) -> Option<lintel_core::command::Applied> {
+        match self.doc.apply(command, now) {
+            Ok(applied) => Some(applied),
+            Err(e) => {
+                self.note_status(format!("Command rejected: {e}"), now);
+                None
+            }
+        }
+    }
+
+    /// Apply a form's commands in order, rewriting the new-layer placeholder to
+    /// the id the create returned, so its follow-up properties land on the new
+    /// layer instead of on whatever layer happens to be there.
+    pub(crate) fn run_commands(&mut self, commands: Vec<Command>, now: i64) -> bool {
+        let mut created: Option<lintel_core::ids::LayerId> = None;
+        let mut all_ok = true;
+        for command in commands {
+            let command = match command {
+                Command::SetLayerProperty { layer_id, property }
+                    if layer_id == crate::command_palette::NEW_LAYER_ID =>
+                {
+                    match created {
+                        Some(id) => Command::SetLayerProperty {
+                            layer_id: id,
+                            property,
+                        },
+                        None => {
+                            all_ok = false;
+                            continue;
+                        }
+                    }
+                }
+                other => other,
+            };
+            match self.run_command(command, now) {
+                Some(applied) => {
+                    if let Some(id) = applied.layer {
+                        created = Some(id);
+                    }
+                }
+                None => all_ok = false,
+            }
+        }
+        all_ok
+    }
+
+    /// Step one undo back.
+    pub(crate) fn undo_command(&mut self, now: i64) {
+        if self.doc.undo(now) {
+            self.selection.clear();
+            self.draft = Draft::default();
+            self.band = None;
+        }
+    }
+
+    /// Step one redo forward.
+    pub(crate) fn redo_command(&mut self, now: i64) {
+        if self.doc.redo(now) {
+            self.selection.clear();
+            self.draft = Draft::default();
+            self.band = None;
+        }
+    }
+
+    /// Open or close the command palette, sharing one rule everywhere.
+    fn toggle_palette(&mut self) {
+        if self.palette.is_open() {
+            self.palette.close();
+        } else {
+            self.palette.open();
+        }
+    }
 }
 
 impl eframe::App for LintelApp {
@@ -196,6 +477,12 @@ impl eframe::App for LintelApp {
             // Poll for the worker's result without spinning the CPU.
             ui.ctx()
                 .request_repaint_after(std::time::Duration::from_millis(500));
+        }
+        // Ctrl+K opens the command palette from anywhere, even while typing in
+        // the Inspector: it is the one shortcut that is never swallowed. This
+        // is the only place it is handled, so a press can never double-toggle.
+        if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
+            self.toggle_palette();
         }
 
         egui::CentralPanel::default().show(ui, |ui| {
@@ -243,24 +530,7 @@ impl eframe::App for LintelApp {
                         .on_hover_text("Write a multi-sheet PDF with a cover page (Ctrl+Shift+E)")
                         .clicked()
                     {
-                        let path = PathBuf::from(format!("{}-set.pdf", self.export_spec.sheet_number));
-                        match lintel_core::pdf::render_set(
-                            self.doc.project(),
-                            &self.export_spec,
-                            now,
-                        ) {
-                            Ok(bytes) => {
-                                if let Err(e) = std::fs::write(&path, &bytes) {
-                                    self.note_status(
-                                        format!("Could not write {}: {e}", path.display()),
-                                        now,
-                                    );
-                                }
-                            }
-                            Err(e) => {
-                                self.note_status(format!("Could not export the PDF: {e}"), now)
-                            }
-                        }
+                        self.export_drawing_set(now);
                     }
                     ui.separator();
                     if ui.button("Exit").on_hover_text("Close Lintel").clicked() {
@@ -268,13 +538,21 @@ impl eframe::App for LintelApp {
                     }
                 });
                 ui.menu_button("Edit", |ui| {
+                    if ui
+                        .button("Command palette…")
+                        .on_hover_text("Search every command by name (Ctrl+K)")
+                        .clicked()
+                    {
+                        self.palette.open();
+                    }
+                    ui.separator();
                     ui.add_enabled(self.doc.can_undo(), |ui: &mut egui::Ui| {
                         let response = ui
                             .button("Undo")
                             .on_hover_text("Undo the last change (Ctrl+Z)");
                         if response.clicked() {
                             self.doc.undo(now_epoch_s());
-                            self.selection = None;
+                            self.selection.clear();
                             self.draft = Draft::default();
                         }
                         response
@@ -285,7 +563,7 @@ impl eframe::App for LintelApp {
                             .on_hover_text("Redo the last undone change (Ctrl+Y)");
                         if response.clicked() {
                             self.doc.redo(now_epoch_s());
-                            self.selection = None;
+                            self.selection.clear();
                             self.draft = Draft::default();
                         }
                         response
@@ -358,11 +636,20 @@ impl eframe::App for LintelApp {
                     "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension Shift+M=Measurements)",
                 );
                 ui.separator();
+                if ui
+                    .button("Commands")
+                    .on_hover_text("Search every command by name (Ctrl+K)")
+                    .clicked()
+                {
+                    self.palette.open();
+                }
+                ui.separator();
                 ui.label(format!("Zoom: {}%", self.view.zoom_percent()));
                 ui.separator();
                 ui.label(egui::RichText::new(summary.clone()).small());
                 ui.label(
-                    egui::RichText::new("Shortcuts: W/S/D/N/M/L tools · Ctrl+N/O/S/Shift+S/E file · Ctrl+D duplicate · Z/Y undo-redo · F fit · Esc cancel · Del delete")                        .small()
+                    egui::RichText::new("Shortcuts: W/S/D/N/M/L tools | E/V/I/P/T snap modes | Ctrl+K palette | Ctrl+A select all | Shift-click and drag-box multi-select | Ctrl+N/O/S/Shift+S/E file | Ctrl+D duplicate | Z/Y undo-redo | F fit | Esc cancel | Del delete")
+                        .small()
                         .color(egui::Color32::GRAY),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -378,16 +665,18 @@ impl eframe::App for LintelApp {
                 });
             });
 
-            let geometry =
-                PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+            let level = self.doc.project().active_level().expect("level");
+            let geometry = PlanGeometry::of_level(level);
             let (response, rect) = Canvas::show(
                 ui,
                 &self.view,
                 &geometry,
-                self.selection,
+                &self.selection,
+                &self.snap_modes,
                 &self.snap,
                 &self.draft,
                 &summary,
+                self.band.as_ref(),
             );
             let dimension_painter = ui.painter_at(rect);
             crate::dimension_ui::render_dimensions(
@@ -395,7 +684,7 @@ impl eframe::App for LintelApp {
                 rect,
                 &self.view,
                 &geometry,
-                self.selection,
+                &self.selection,
             );
             if geometry.walls.is_empty() && !self.draft.active {
                 let msg1 = "Pick the Wall tool (W) and click twice to draw a wall";
@@ -417,6 +706,7 @@ impl eframe::App for LintelApp {
                 );
             }
             self.pointer_world = response.pointer_world;
+            self.last_snap = response.snap;
             self.handle_canvas_input(ui, response, rect, now);
 
             // Status bar (bottom) with version link in the bottom-right corner
@@ -440,6 +730,7 @@ impl eframe::App for LintelApp {
         });
 
         self.dialogs(ui, now);
+        crate::command_palette::show(ui, self, now);
     }
 }
 
@@ -452,218 +743,168 @@ impl LintelApp {
         now: i64,
     ) {
         let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+        // The palette owns the keyboard while it is open.
+        let canvas_focused =
+            ui.memory(|m| m.focused().is_none_or(|id| Some(id) == response.widget_id));
+        let keyboard_scope = canvas_focused && !self.palette.is_open();
 
-        if let Some(click_screen) = response.click {
+        // A click places or selects, unless a rubber band took the press.
+        if let Some(click_screen) = response.click
+            && self.band.is_none()
+        {
             let world = screen_to_world(&self.view, rect, click_screen);
-            match (self.tool, Some(world)) {
-                (Tool::Select, Some(world)) => {
-                    self.selection = geometry.hit_test(world, self.snap.anchor_tolerance);
-                    self.draft = Draft::default();
-                }
-                (Tool::Wall, Some(world)) => {
-                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
-                    if !self.draft.active {
-                        let start =
-                            lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
-                        self.draft = Draft {
-                            active: true,
-                            start,
-                            current: world,
-                        };
-                    } else {
-                        let end = lintel_core::snap::snap_point(
-                            world,
-                            &anchors,
-                            Some(self.draft.start),
-                            &self.snap,
-                        )
-                        .point;
-                        if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
-                            let applied = self
-                                .doc
-                                .apply(
-                                    Command::AddWall {
-                                        start: self.draft.start,
-                                        end,
-                                        thickness: 200.0,
-                                        height: 2800.0,
-                                    },
-                                    now,
-                                )
-                                .map_err(|e| {
-                                    self.note_status(format!("Wall rejected: {e}"), now);
-                                })
-                                .ok();
-                            if let Some(applied) = applied
-                                && let Some(wall_id) = applied.wall
-                            {
-                                self.selection = Some(Hit::Wall(wall_id));
+            let modifiers = ui.input(|i| i.modifiers);
+            match self.tool {
+                Tool::Select => {
+                    let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
+                    match hit {
+                        Some(hit) => {
+                            let id = entity_of(hit);
+                            if modifiers.shift {
+                                self.selection.toggle(id);
+                            } else if modifiers.command || modifiers.ctrl {
+                                self.selection.remove(id);
+                            } else {
+                                self.selection.replace(id);
                             }
                         }
-                        self.draft = Draft::default();
-                    }
-                }
-                (Tool::Dimension, Some(world)) => {
-                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
-                    if !self.draft.active {
-                        let start =
-                            lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
-                        self.draft = Draft {
-                            active: true,
-                            start,
-                            current: world,
-                        };
-                    } else {
-                        let end = lintel_core::snap::snap_point(
-                            world,
-                            &anchors,
-                            Some(self.draft.start),
-                            &self.snap,
-                        )
-                        .point;
-                        if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
-                            let applied = self
-                                .doc
-                                .apply(
-                                    Command::PlaceDimension {
-                                        kind: lintel_core::dimension::DimensionKind::Aligned,
-                                        start: self.draft.start,
-                                        end,
-                                        offset: lintel_core::dimension::DEFAULT_DIMENSION_OFFSET,
-                                    },
-                                    now,
-                                )
-                                .map_err(|e| {
-                                    self.note_status(format!("Dimension rejected: {e}"), now);
-                                })
-                                .ok();
-                            if let Some(applied) = applied
-                                && let Some(dim_id) = applied.dimension
-                            {
-                                self.selection = Some(Hit::Dimension(dim_id));
+                        // Clicking empty canvas clears the set, unless the click
+                        // was building one up.
+                        None => {
+                            if !modifiers.shift && !modifiers.command && !modifiers.ctrl {
+                                self.selection.clear();
                             }
                         }
-                        self.draft = Draft::default();
-                    }
-                }
-                (Tool::Label, Some(world)) => {
-                    let anchors = crate::canvas::wall_anchors_snap(&geometry);
-                    let snapped =
-                        lintel_core::snap::snap_point(world, &anchors, None, &self.snap).point;
-                    let applied = self
-                        .doc
-                        .apply(
-                            Command::PlaceLabel {
-                                anchor: snapped,
-                                text: "Note".to_string(),
-                            },
-                            now,
-                        )
-                        .map_err(|e| {
-                            self.note_status(format!("Label rejected: {e}"), now);
-                        })
-                        .ok();
-                    if let Some(applied) = applied
-                        && let Some(label_id) = applied.label
-                    {
-                        self.selection = Some(Hit::Label(label_id));
                     }
                     self.draft = Draft::default();
                 }
-                (Tool::Door | Tool::Window, Some(world)) => match self.selection {
-                    Some(Hit::Wall(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let wall = level.wall(id).expect("wall");
-                        let offset = wall.start.distance(world).clamp(0.0, wall.length());
-                        let kind = match self.tool {
-                            Tool::Door => lintel_core::opening::OpeningKind::Door,
-                            Tool::Window => lintel_core::opening::OpeningKind::Window,
-                            _ => unreachable!(),
-                        };
-                        let _ = self.doc.apply(
-                            Command::PlaceOpening {
-                                kind,
-                                host: id,
-                                offset,
-                            },
-                            now,
-                        );
-                        self.draft = Draft::default();
-                    }
-                    _ => {
-                        self.selection = geometry.hit_test(world, self.snap.anchor_tolerance);
-                    }
-                },
-                _ => {}
+                Tool::Wall => self.place_wall_at(world, now),
+                Tool::Dimension => self.place_dimension_at(world, now),
+                Tool::Label => self.place_label_at(world, now),
+                Tool::Door | Tool::Window => self.place_opening_at(world, now),
+                Tool::Measurements => {}
             }
         }
 
+        // Rubber-band selection: a drag that starts on empty canvas draws a
+        // box instead of moving something. Window (left to right) keeps only
+        // what the box encloses; crossing (right to left) takes whatever it
+        // touches; Shift adds and Ctrl removes.
+        if let Tool::Select = self.tool {
+            if response.drag_started
+                && let Some(press) = response.press
+            {
+                let press_world = screen_to_world(&self.view, rect, press);
+                let on_entity = geometry
+                    .hit_test(press_world, self.snap.anchor_tolerance)
+                    .is_some();
+                if !on_entity {
+                    let modifiers = ui.input(|i| i.modifiers);
+                    self.band = Some(SelectionBand {
+                        start: press,
+                        add: modifiers.shift,
+                        remove: modifiers.command || modifiers.ctrl,
+                    });
+                }
+            }
+            if let Some(band) = self.band.clone() {
+                if let Some(hover) = response.pointer_world {
+                    let start_world = screen_to_world(&self.view, rect, band.start);
+                    let mode = SelectionModeKind::from_direction(start_world, hover);
+                    let bounds = Bounds::from_points(&[start_world, hover]).expect("bounds");
+                    self.selection.pick_box(
+                        &geometry,
+                        bounds,
+                        mode == SelectionModeKind::Crossing,
+                        band.add,
+                        band.remove,
+                    );
+                }
+                if response.drag_stopped {
+                    self.band = None;
+                }
+            }
+        }
+
+        // Dragging a selection moves it.
         if let Some(delta) = response.drag_delta
+            && self.band.is_none()
             && let Tool::Select = self.tool
         {
             let mm = Vec2::new(
                 delta.x as f64 / self.view.px_per_mm as f64,
                 -delta.y as f64 / self.view.px_per_mm as f64,
             );
-            match self.selection {
-                Some(Hit::Wall(id)) => {
-                    let level = self.doc.project().active_level().expect("level");
-                    let wall = level.wall(id).expect("wall");
-                    let start = wall.start + mm;
-                    let end = wall.end + mm;
-                    let _ = self.doc.apply(Command::MoveWall { id, start, end }, now);
-                }
-                Some(Hit::Opening(id)) => {
-                    let level = self.doc.project().active_level().expect("level");
-                    let opening = level.opening(id).expect("opening");
-                    let host = level.wall(opening.host).expect("host wall");
-                    let dir = host.direction();
-                    let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
-                        / self.view.px_per_mm as f64;
-                    let new_offset = (opening.offset + progress).clamp(0.0, host.length());
-                    let _ = self.doc.apply(
-                        Command::MoveOpening {
-                            id,
-                            offset: new_offset,
-                        },
-                        now,
-                    );
-                }
-                Some(Hit::Dimension(id)) => {
-                    // Dragging a dimension line moves it away from what it
-                    // measures by changing the offset. The component of the
-                    // drag perpendicular to the dimension line is used, so the
-                    // line follows the pointer without sliding lengthways.
-                    let level = self.doc.project().active_level().expect("level");
-                    let dimension = level.dimension(id).expect("dimension").clone();
-                    let shift = match dimension.kind {
-                        lintel_core::dimension::DimensionKind::LinearHorizontal => mm.y,
-                        lintel_core::dimension::DimensionKind::LinearVertical => mm.x,
-                        lintel_core::dimension::DimensionKind::Aligned => {
-                            let normal = (dimension.end - dimension.start)
-                                .normalized()
-                                .perpendicular();
-                            mm.dot(normal)
+            for id in self.selection.iter() {
+                match id {
+                    EntityId::Wall(id) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        if let Some(wall) = level.wall(id) {
+                            let start = wall.start + mm;
+                            let end = wall.end + mm;
+                            let _ = self.doc.apply(Command::MoveWall { id, start, end }, now);
                         }
-                    };
-                    // An offset must stay positive; clamping keeps the line on
-                    // the far side of the measurement instead of erroring.
-                    let new_offset = (dimension.offset + shift).max(1.0);
-                    let _ = self.doc.apply(
-                        Command::SetDimensionOffset {
-                            id,
-                            offset: new_offset,
-                        },
-                        now,
-                    );
+                    }
+                    EntityId::Opening(id) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        if let Some(opening) = level.opening(id)
+                            && let Some(host) = level.wall(opening.host)
+                        {
+                            let dir = host.direction();
+                            let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
+                                / self.view.px_per_mm as f64;
+                            let new_offset = (opening.offset + progress).clamp(0.0, host.length());
+                            let _ = self.doc.apply(
+                                Command::MoveOpening {
+                                    id,
+                                    offset: new_offset,
+                                },
+                                now,
+                            );
+                        }
+                    }
+                    EntityId::Dimension(id) => {
+                        // Dragging a dimension line moves it away from what it
+                        // measures by changing the offset. The component of the
+                        // drag perpendicular to the dimension line is used, so
+                        // the line follows the pointer without sliding
+                        // lengthways.
+                        let level = self.doc.project().active_level().expect("level");
+                        if let Some(dimension) = level.dimension(id) {
+                            let dimension = dimension.clone();
+                            let shift = match dimension.kind {
+                                lintel_core::dimension::DimensionKind::LinearHorizontal => mm.y,
+                                lintel_core::dimension::DimensionKind::LinearVertical => mm.x,
+                                lintel_core::dimension::DimensionKind::Aligned => {
+                                    let normal = (dimension.end - dimension.start)
+                                        .normalized()
+                                        .perpendicular();
+                                    mm.dot(normal)
+                                }
+                            };
+                            // An offset must stay positive; clamping keeps the
+                            // line on the far side instead of erroring.
+                            let new_offset = (dimension.offset + shift).max(1.0);
+                            let _ = self.doc.apply(
+                                Command::SetDimensionOffset {
+                                    id,
+                                    offset: new_offset,
+                                },
+                                now,
+                            );
+                        }
+                    }
+                    EntityId::Label(id) => {
+                        let level = self.doc.project().active_level().expect("level");
+                        if let Some(label) = level.label(id) {
+                            let anchor = label.anchor + mm;
+                            let _ = self.doc.apply(Command::MoveLabel { id, anchor }, now);
+                        }
+                    }
+                    // A construction guide is dragged by its own tool, not by
+                    // the selection.
+                    EntityId::Construction(_) => {}
                 }
-                Some(Hit::Label(id)) => {
-                    let level = self.doc.project().active_level().expect("level");
-                    let label = level.label(id).expect("label");
-                    let anchor = label.anchor + mm;
-                    let _ = self.doc.apply(Command::MoveLabel { id, anchor }, now);
-                }
-                _ => {}
             }
         }
 
@@ -703,8 +944,6 @@ impl LintelApp {
         // Keyboard shortcuts apply when nothing has focus, or when the canvas
         // itself has it — but not while the user is typing in a text field.
         // (The canvas is focusable so screen readers and Tab can reach it.)
-        let keyboard_scope =
-            ui.memory(|m| m.focused().is_none_or(|id| Some(id) == response.widget_id));
         if keyboard_scope {
             // File shortcuts (Ctrl/Cmd + key).
             if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::N)) {
@@ -722,23 +961,17 @@ impl LintelApp {
             {
                 self.save_plan_as(now);
             }
-            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::E)) {
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::E))
+                && !ui.input(|i| i.modifiers.shift)
+            {
                 self.export_open = true;
             }
             if ui.input(|i| i.modifiers.command && i.modifiers.shift && i.key_pressed(egui::Key::E))
             {
-                let path = PathBuf::from(format!("{}-set.pdf", self.export_spec.sheet_number));
-                match lintel_core::pdf::render_set(self.doc.project(), &self.export_spec, now) {
-                    Ok(bytes) => {
-                        if let Err(e) = std::fs::write(&path, &bytes) {
-                            self.note_status(
-                                format!("Could not write {}: {e}", path.display()),
-                                now,
-                            );
-                        }
-                    }
-                    Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
-                }
+                self.export_drawing_set(now);
+            }
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::A)) {
+                self.select_all();
             }
 
             // Undo / redo.
@@ -747,142 +980,31 @@ impl LintelApp {
                 && self.doc.can_undo()
             {
                 self.doc.undo(now);
-                self.selection = None;
+                self.selection.clear();
                 self.draft = Draft::default();
             }
             if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y))
                 && self.doc.can_redo()
             {
                 self.doc.redo(now);
-                self.selection = None;
+                self.selection.clear();
                 self.draft = Draft::default();
             }
 
             // Cancellation and deletion.
             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                self.selection = None;
+                self.selection.clear();
                 self.draft = Draft::default();
+                self.band = None;
             }
             if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
             {
-                if let Some(Hit::Wall(id)) = self.selection {
-                    let _ = self.doc.apply(Command::DeleteWall { id }, now);
-                    self.selection = None;
-                }
-                if let Some(Hit::Opening(id)) = self.selection {
-                    let _ = self.doc.apply(Command::DeleteOpening { id }, now);
-                    self.selection = None;
-                }
-                if let Some(Hit::Dimension(id)) = self.selection {
-                    let _ = self.doc.apply(Command::DeleteDimension { id }, now);
-                    self.selection = None;
-                }
-                if let Some(Hit::Label(id)) = self.selection {
-                    let _ = self.doc.apply(Command::DeleteLabel { id }, now);
-                    self.selection = None;
-                }
+                self.delete_selection(now);
             }
 
-            // Plain tool / view shortcuts.
+            // Plain tool / view / snap shortcuts.
             if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::D)) {
-                let off = Vec2::new(1000.0, 1000.0);
-                match self.selection {
-                    Some(Hit::Wall(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let w = level.wall(id).expect("wall").clone();
-                        let applied = self
-                            .doc
-                            .apply(
-                                Command::AddWall {
-                                    start: w.start + off,
-                                    end: w.end + off,
-                                    thickness: w.thickness,
-                                    height: w.height,
-                                },
-                                now,
-                            )
-                            .ok();
-                        if let Some(applied) = applied
-                            && let Some(new_id) = applied.wall
-                        {
-                            self.selection = Some(Hit::Wall(new_id));
-                        }
-                    }
-                    Some(Hit::Dimension(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let d = level.dimension(id).expect("dimension").clone();
-                        let applied = self
-                            .doc
-                            .apply(
-                                Command::PlaceDimension {
-                                    kind: d.kind,
-                                    start: d.start + off,
-                                    end: d.end + off,
-                                    offset: d.offset,
-                                },
-                                now,
-                            )
-                            .ok();
-                        if let Some(applied) = applied
-                            && let Some(new_id) = applied.dimension
-                        {
-                            self.selection = Some(Hit::Dimension(new_id));
-                        }
-                    }
-                    Some(Hit::Label(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let l = level.label(id).expect("label").clone();
-                        let applied = self
-                            .doc
-                            .apply(
-                                Command::PlaceLabel {
-                                    anchor: l.anchor + off,
-                                    text: l.text.clone(),
-                                },
-                                now,
-                            )
-                            .ok();
-                        if let Some(applied) = applied
-                            && let Some(new_id) = applied.label
-                        {
-                            self.selection = Some(Hit::Label(new_id));
-                        }
-                    }
-                    Some(Hit::Opening(id)) => {
-                        let level = self.doc.project().active_level().expect("level");
-                        let o = level.opening(id).expect("opening").clone();
-                        let host = level.wall(o.host).expect("host wall");
-                        let host_len = host.length();
-                        let new_offset = (o.offset + 1000.0).min(host_len);
-                        if new_offset + o.width * 0.5 <= host_len {
-                            let applied = self
-                                .doc
-                                .apply(
-                                    Command::PlaceOpening {
-                                        kind: o.kind,
-                                        host: o.host,
-                                        offset: new_offset,
-                                    },
-                                    now,
-                                )
-                                .map_err(|e| {
-                                    self.note_status(format!("Duplicate rejected: {e}"), now);
-                                })
-                                .ok();
-                            if let Some(applied) = applied
-                                && let Some(new_id) = applied.opening
-                            {
-                                self.selection = Some(Hit::Opening(new_id));
-                            }
-                        } else {
-                            self.note_status(
-                                "Duplicate would not fit on the host wall".to_string(),
-                                now,
-                            );
-                        }
-                    }
-                    _ => {}
-                }
+                self.duplicate_selection(now);
             }
 
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::W)) {
@@ -915,7 +1037,148 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::F)) {
                 self.zoom_to_fit();
             }
+            // Snap modes. The letters are free of the tool keys and keep the
+            // drawing hand on the left of the keyboard, as CAD tools do.
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::E)) {
+                self.snap_modes.toggle(SnapModeKind::Endpoint);
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::V)) {
+                self.snap_modes.toggle(SnapModeKind::Midpoint);
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::I)) {
+                self.snap_modes.toggle(SnapModeKind::Intersection);
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::P)) {
+                self.snap_modes.toggle(SnapModeKind::Perpendicular);
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::T)) {
+                self.snap_modes.toggle(SnapModeKind::Tangent);
+            }
         }
+    }
+
+    /// Place a wall: the first click starts it, the second commits it.
+    fn place_wall_at(&mut self, world: Point2, now: i64) {
+        if !self.draft.active {
+            self.draft = Draft {
+                active: true,
+                start: self.snap_at(world, None),
+                current: world,
+            };
+            return;
+        }
+        let end = self.snap_at(world, Some(self.draft.start));
+        if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
+            let applied = self
+                .doc
+                .apply(
+                    Command::AddWall {
+                        start: self.draft.start,
+                        end,
+                        thickness: 200.0,
+                        height: 2800.0,
+                    },
+                    now,
+                )
+                .map_err(|e| self.note_status(format!("Wall rejected: {e}"), now))
+                .ok();
+            if let Some(applied) = applied
+                && let Some(wall_id) = applied.wall
+            {
+                self.selection.replace(EntityId::Wall(wall_id));
+            }
+        }
+        self.draft = Draft::default();
+    }
+
+    /// Place an aligned dimension between two picked points.
+    fn place_dimension_at(&mut self, world: Point2, now: i64) {
+        if !self.draft.active {
+            self.draft = Draft {
+                active: true,
+                start: self.snap_at(world, None),
+                current: world,
+            };
+            return;
+        }
+        let end = self.snap_at(world, Some(self.draft.start));
+        if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
+            let applied = self
+                .doc
+                .apply(
+                    Command::PlaceDimension {
+                        kind: lintel_core::dimension::DimensionKind::Aligned,
+                        start: self.draft.start,
+                        end,
+                        offset: lintel_core::dimension::DEFAULT_DIMENSION_OFFSET,
+                    },
+                    now,
+                )
+                .map_err(|e| self.note_status(format!("Dimension rejected: {e}"), now))
+                .ok();
+            if let Some(applied) = applied
+                && let Some(dim_id) = applied.dimension
+            {
+                self.selection.replace(EntityId::Dimension(dim_id));
+            }
+        }
+        self.draft = Draft::default();
+    }
+
+    /// Drop a text label at the pointer.
+    fn place_label_at(&mut self, world: Point2, now: i64) {
+        let anchor = self.snap_at(world, None);
+        let applied = self
+            .doc
+            .apply(
+                Command::PlaceLabel {
+                    anchor,
+                    text: "Note".to_string(),
+                },
+                now,
+            )
+            .map_err(|e| self.note_status(format!("Label rejected: {e}"), now))
+            .ok();
+        if let Some(applied) = applied
+            && let Some(label_id) = applied.label
+        {
+            self.selection.replace(EntityId::Label(label_id));
+        }
+        self.draft = Draft::default();
+    }
+
+    /// Place a door or window on the selected wall, at the offset nearest the
+    /// pointer; a bare click just picks what is under it.
+    fn place_opening_at(&mut self, world: Point2, now: i64) {
+        let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
+        let host = match self.selection.primary() {
+            Some(EntityId::Wall(id)) if geometry.wall(id).is_some() => Some(id),
+            _ => match geometry.hit_test(world, self.snap.anchor_tolerance) {
+                Some(Hit::Wall(id)) => Some(id),
+                _ => None,
+            },
+        };
+        let Some(host) = host else {
+            let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
+            self.selection.set_from_hit(hit);
+            return;
+        };
+        let kind = match self.tool {
+            Tool::Door => lintel_core::opening::OpeningKind::Door,
+            Tool::Window => lintel_core::opening::OpeningKind::Window,
+            _ => unreachable!("openings only come from the door or window tool"),
+        };
+        let wall = geometry.wall(host).expect("host wall");
+        let offset = wall
+            .wall
+            .start
+            .distance(world)
+            .clamp(0.0, wall.wall.length());
+        let _ = self
+            .doc
+            .apply(Command::PlaceOpening { kind, host, offset }, now);
+        self.selection.replace(EntityId::Wall(host));
+        self.draft = Draft::default();
     }
 
     fn dialogs(&mut self, ui: &mut egui::Ui, now: i64) {

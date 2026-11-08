@@ -153,7 +153,7 @@ impl core::ops::Mul<f64> for Vec2 {
 }
 
 /// Axis-aligned bounding box.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Bounds {
     pub min: Point2,
     pub max: Point2,
@@ -205,6 +205,15 @@ impl Bounds {
 
     pub fn contains(&self, p: Point2) -> bool {
         p.x >= self.min.x && p.x <= self.max.x && p.y >= self.min.y && p.y <= self.max.y
+    }
+
+    /// The same box with `min` at or below `max` on both axes. A rubber-band
+    /// drag can be started from any corner, so a raw bounds may be inverted.
+    pub fn normalised(&self) -> Bounds {
+        Bounds {
+            min: Point2::new(self.min.x.min(self.max.x), self.min.y.min(self.max.y)),
+            max: Point2::new(self.min.x.max(self.max.x), self.min.y.max(self.max.y)),
+        }
     }
 
     /// Grow the box by `margin` on every side.
@@ -329,6 +338,30 @@ mod tests {
         let json = serde_json::to_string(&original).expect("serialize");
         let back: Vec2 = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, original);
+    }
+
+    #[test]
+    fn bounds_round_trip_through_json() {
+        let original = Bounds {
+            min: Point2::new(-10.0, -20.0),
+            max: Point2::new(30.0, 40.0),
+        };
+        let json = serde_json::to_string(&original).expect("serialize");
+        let back: Bounds = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, original);
+    }
+
+    #[test]
+    fn an_inverted_bounds_normalises() {
+        let inverted = Bounds {
+            min: Point2::new(100.0, 200.0),
+            max: Point2::new(20.0, 10.0),
+        };
+        let fixed = inverted.normalised();
+        assert_eq!(fixed.min, Point2::new(20.0, 10.0));
+        assert_eq!(fixed.max, Point2::new(100.0, 200.0));
+        // An already-ordered box is unchanged.
+        assert_eq!(fixed.normalised(), fixed);
     }
 
     impl From<Point2> for Vec2 {
