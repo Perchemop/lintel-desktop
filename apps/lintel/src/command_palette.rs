@@ -845,7 +845,6 @@ impl LayerPickAction {
             LayerPickAction::Delete => "Delete layer",
         }
     }
-
 }
 
 impl PendingForm {
