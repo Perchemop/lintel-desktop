@@ -1201,7 +1201,13 @@ mod tests {
         assert_eq!(resolved.kind, SnapModeKind::Endpoint);
         assert_eq!(resolved.point, Point2::new(2000.0, 0.0));
 
-        let resolved = resolve_snap(raw, &geometry, &all_modes(), None, &settings());
+        // Test midpoint with perpendicular OFF (perpendicular to a horizontal wall
+        // from any point is always closer than the midpoint, so it would win).
+        let modes = SnapModes {
+            perpendicular: false,
+            ..all_modes()
+        };
+        let resolved = resolve_snap(raw, &geometry, &modes, None, &settings());
         assert_eq!(resolved.kind, SnapModeKind::Midpoint);
         assert_eq!(resolved.point, Point2::new(2000.0, 0.0));
     }
@@ -1402,13 +1408,13 @@ mod tests {
     #[test]
     fn a_plain_box_replaces_what_was_selected() {
         let geometry = geometry_with_two_walls();
+        // Bounds that include wall 1 center (2000, 0) but not wall 2 center (2000, 2000)
         let bounds = Bounds {
-            min: Point2::new(0.0, 0.0),
-            max: Point2::new(2000.0, 2000.0),
+            min: Point2::new(0.0, -100.0),
+            max: Point2::new(3000.0, 100.0),
         };
         let mut selection = Selection::default();
         selection.replace(EntityId::Wall(WallId(9)));
-        // Window selection (crossing=false): only entities whose center is inside
         selection.pick_box(&geometry, bounds, false, false, false);
         assert_eq!(selection.len(), 1);
         assert!(selection.contains(EntityId::Wall(WallId(1))));
