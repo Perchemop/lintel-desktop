@@ -11,7 +11,7 @@ use lintel_core::{
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
-    units::UnitSystem,
+    units::{format_area, UnitSystem},
 };
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
