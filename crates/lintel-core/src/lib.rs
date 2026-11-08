@@ -9,6 +9,7 @@
 //! user gets is the behaviour CI proves.
 
 pub mod command;
+pub mod construction;
 pub mod dimension;
 pub mod document;
 pub mod error;
@@ -16,6 +17,7 @@ pub mod geom;
 pub mod ids;
 pub mod join;
 pub mod label;
+pub mod layer;
 pub mod level;
 pub mod measurements;
 pub mod opening;
@@ -29,13 +31,15 @@ pub mod units;
 pub mod wall;
 
 pub use command::{Applied, Command};
+pub use construction::{ConstructionEntity, ConstructionKind};
 pub use dimension::{Dimension, DimensionKind};
 pub use document::Document;
 pub use error::CoreError;
 pub use geom::{Bounds, Point2};
-pub use ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+pub use ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 pub use join::{Hit, PlanGeometry};
 pub use label::PlanLabel;
+pub use layer::{EntitySelector, EntityStyle, Layer, LayerProperty, Linetype, Rgb};
 pub use measurements::{LevelTotals, Measurements, ProjectTotals};
 pub use project::Project;
 pub use room::Room;

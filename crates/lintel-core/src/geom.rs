@@ -67,7 +67,7 @@ impl core::ops::Sub<Vec2> for Point2 {
 }
 
 /// A displacement in the drawing plane, in millimetres.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
 pub struct Vec2 {
     pub x: f64,
     pub y: f64,
@@ -90,6 +90,12 @@ impl Vec2 {
 
     pub fn dot(self, other: Vec2) -> f64 {
         self.x * other.x + self.y * other.y
+    }
+
+    /// Z component of the 2D cross product; positive when `other` is
+    /// anticlockwise from `self`.
+    pub fn cross(self, other: Vec2) -> f64 {
+        self.x * other.y - self.y * other.x
     }
 
     /// Left-hand normal: rotate +90°.
@@ -306,6 +312,23 @@ mod tests {
         assert_eq!(points.len(), 5);
         assert!((points[0].distance(Point2::new(1000.0, 0.0))).abs() < 1e-9);
         assert!((points[4].distance(Point2::new(0.0, 1000.0))).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_cross_product_reports_sides() {
+        let east = Vec2::new(1.0, 0.0);
+        let north = Vec2::new(0.0, 1.0);
+        assert!((east.cross(north) - 1.0).abs() < 1e-12);
+        assert!((north.cross(east) + 1.0).abs() < 1e-12);
+        assert!(east.cross(east).abs() < 1e-12);
+    }
+
+    #[test]
+    fn a_vector_round_trips_through_json() {
+        let original = Vec2::new(12.5, -3.25);
+        let json = serde_json::to_string(&original).expect("serialize");
+        let back: Vec2 = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, original);
     }
 
     impl From<Point2> for Vec2 {

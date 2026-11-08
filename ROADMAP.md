@@ -193,4 +193,70 @@ CI evidence: PR #16 audit fixes merged; PR #17 version bump.
 | CAP-084 | Icon attribution in `ATTRIBUTION.md` | ✓ |
 | CAP-085 | Command-layer fuzz tests (never panic/corrupt/undo) | ✓ |
 
+## v0.11.0 — Measurements
+
+**Status:** In Progress — measurement code is on `main`; release pending.
+
+CI evidence: to be recorded when the 0.11.0 release workflow runs.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-086 | Area/perimeter query tool (Shift+M) with a selected-room readout | ✓ |
+| CAP-087 | Wall length totals per level and for the whole project (Inspector → Measurements) | ✓ |
+| CAP-088 | `format_area` honours `UnitSystem` (m² / ft² / in²) | ✓ |
+
+**Release notes (pending publication):** Adds a Measurements tool that reports a
+selected room's area and perimeter and swaps the Inspector to live level and
+project totals. Wall lengths, opening widths, room counts, areas and perimeters
+are shown in the project's Metric or Imperial units, and `format_area` now
+formats square millimetres consistently as m², ft² or in². The release follows
+guide §12.1: signed artefacts with `SHA256SUMS.txt`, and the CI-managed
+`docs/tokens.json` ledger updated for 0.11.0 and quoted in the published notes.
+
+**Readiness:** 90% — code and tests complete; release gate pending. The version
+bump is not in this checkout (`apps/lintel/Cargo.toml` still reads 0.10.1).
+
+## v0.11.1 — Phase A: Table Stakes (Layers + Construction Geometry)
+
+**Status:** Planned
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-089 | `Layer` model, protected default layer, per-entity layer assignment with serde migration | — |
+| CAP-090 | Layers palette: create/delete, visibility, lock, assign selection | — |
+| CAP-091 | Construction geometry (line, ray, circle): snap-enabled, never printed | — |
+| CAP-092 | Snapping foundation: `SnapCandidateKind` midpoint/intersection/perpendicular, source and priority order | — |
+| CAP-093 | Status bar: cursor coordinates, snap/ortho/grid chips, zoom percentage | — |
+
+**Release notes (intended):** Introduces the table-stakes working environment of
+a professional drafting tool: a layer system with a protected default layer and
+per-entity assignment, construction geometry that guides drawing but never
+prints, the candidate-and-priority foundation for enhanced snapping, and a
+persistent status bar. Existing project files load unchanged through serde
+defaults and a default-layer migration. Release gate follows guide §12.1
+(signed artefacts, `SHA256SUMS.txt`, `docs/tokens.json` ledger).
+
+**Readiness:** 0% — planned; design recorded in the 2026-11-08 elite CAD reports.
+
+## v0.12.0 — Phase A continued (Snapping + Selection + Command Palette)
+
+**Status:** Planned
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-094 | Enhanced entity snapping: midpoint, intersection and perpendicular candidates with on-canvas markers | — |
+| CAP-095 | Window and crossing selection in the core (`select_by_window`) with add/remove sets | — |
+| CAP-096 | Command palette (Ctrl+K): command registry, fuzzy search, keyboard navigation | — |
+| CAP-097 | Constraint-driven dimensions foundation: `DimensionAnchor`, witness-line gap/overrun, backward-compatible load | — |
+
+**Release notes (intended):** Completes Phase A. Snapping gains midpoint,
+intersection and perpendicular candidates; selection gains window and crossing
+modes owned by the core; a searchable command palette exposes every action; and
+dimensions become anchored to the geometry they measure instead of detached
+points. Earlier files load through `DimensionAnchor::Free`. Release gate follows
+guide §12.1 (signed artefacts, `SHA256SUMS.txt`, `docs/tokens.json` ledger).
+
+**Readiness:** 0% — planned; depends on v0.11.1 layers, construction geometry and
+the snapping foundation.
+
 **Unscheduled / future:** Web/WASM port, plugin architecture, collaborative editing, custom paper sizes, better on-canvas hints.

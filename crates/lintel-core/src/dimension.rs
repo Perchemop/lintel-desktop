@@ -13,7 +13,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::geom::Point2;
-use crate::ids::DimensionId;
+use crate::ids::{DimensionId, LayerId};
+use crate::layer::EntityStyle;
 
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
@@ -45,6 +46,12 @@ impl DimensionKind {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Dimension {
     pub id: DimensionId,
+    /// Layer this dimension is drawn on. Kept in step with `style.layer_id`.
+    #[serde(default)]
+    pub layer_id: LayerId,
+    /// Per-dimension overrides of the layer's appearance.
+    #[serde(default)]
+    pub style: EntityStyle,
     pub kind: DimensionKind,
     /// First measured point.
     pub start: Point2,
@@ -69,12 +76,21 @@ impl Dimension {
     ) -> Self {
         Self {
             id,
+            layer_id: LayerId::DEFAULT,
+            style: EntityStyle::default(),
             kind,
             start,
             end,
             offset,
             extension_lines: true,
         }
+    }
+
+    /// Move this dimension onto `layer_id`, keeping its style mirror in step.
+    pub fn on_layer(mut self, layer_id: LayerId) -> Self {
+        self.layer_id = layer_id;
+        self.style.layer_id = layer_id;
+        self
     }
 
     /// The measured value for this kind, in millimetres.
@@ -239,6 +255,39 @@ mod tests {
         let json = serde_json::to_string(&original).expect("serialize");
         let back: Dimension = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, original);
+    }
+
+    #[test]
+    fn a_new_dimension_starts_on_the_default_layer() {
+        let dimension = dimension(DimensionKind::LinearHorizontal);
+        assert_eq!(dimension.layer_id, LayerId::DEFAULT);
+        assert_eq!(dimension.style.layer_id, LayerId::DEFAULT);
+    }
+
+    #[test]
+    fn a_dimension_can_be_placed_on_another_layer() {
+        let dimension = dimension(DimensionKind::Aligned).on_layer(LayerId(8));
+        assert_eq!(dimension.layer_id, LayerId(8));
+        assert_eq!(dimension.style.layer_id, LayerId(8));
+        let json = serde_json::to_string(&dimension).expect("serialize");
+        let back: Dimension = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, dimension);
+    }
+
+    #[test]
+    fn a_dimension_saved_before_layers_still_loads() {
+        let json = r#"{
+            "id": 1,
+            "kind": "Aligned",
+            "start": { "x": 0.0, "y": 0.0 },
+            "end": { "x": 3000.0, "y": 0.0 },
+            "offset": 500.0,
+            "extension_lines": true
+        }"#;
+        let dimension: Dimension = serde_json::from_str(json).expect("old dimension");
+        assert_eq!(dimension.layer_id, LayerId::DEFAULT);
+        assert_eq!(dimension.style, EntityStyle::default());
+        assert!(dimension.is_valid());
     }
 
     #[test]
