@@ -443,7 +443,6 @@ impl SnapModes {
             SnapModeKind::Ortho | SnapModeKind::Grid | SnapModeKind::Free => "",
         }
     }
-
 }
 
 /// Where two segments cross, or `None` when they do not.
