@@ -272,10 +272,10 @@ pub fn inspector(
                             lintel_core::geom::Point2::new(mid.x, mid.y + 10.0),
                             lintel_core::geom::Point2::new(mid.x, mid.y - 10.0),
                         ];
-                        if let Some(rooms) = &level_rooms {
-                            if let Some(room) =
+                        if let Some(rooms) = &level_rooms
+                            && let Some(room) =
                                 rooms.iter().find(|r| probe.iter().any(|p| r.contains(*p)))
-                            {
+                        {
                                 ui.label(format!(
                                     "Selected room — area {}  perimeter {}",
                                     room.area_label(),
