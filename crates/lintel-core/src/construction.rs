@@ -392,9 +392,7 @@ mod tests {
         let inside = Point2::new(12.0 * angle.cos(), 12.0 * angle.sin());
         assert!((kind.distance_to(inside).expect("distance") - 2.0).abs() < 1e-9);
         // 180 degrees is off the arc, so the nearest end wins.
-        let outside = kind
-            .distance_to(Point2::new(-10.0, 0.0))
-            .expect("distance");
+        let outside = kind.distance_to(Point2::new(-10.0, 0.0)).expect("distance");
         assert!((outside - 200.0_f64.sqrt()).abs() < 1e-9);
     }
 
