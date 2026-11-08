@@ -1,7 +1,7 @@
 //! Typed failures. Nothing in the domain panics on bad user input: a command
 //! that cannot be honoured returns one of these instead.
 
-use crate::ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {
@@ -15,8 +15,16 @@ pub enum CoreError {
     LabelNotFound(LabelId),
     #[error("{0} does not exist")]
     LevelNotFound(LevelId),
+    #[error("{0} does not exist")]
+    LayerNotFound(LayerId),
+    #[error("{0} does not exist")]
+    ConstructionNotFound(ConstructionId),
     #[error("the last level cannot be deleted; give the project another level first")]
     LastLevel,
+    #[error("the default layer cannot be deleted")]
+    DefaultLayer,
+    #[error("{0} still has entities; move them to another layer first")]
+    LayerInUse(LayerId),
     #[error("{0}")]
     Invalid(String),
     #[error("unsupported project format {found}; this build reads up to {supported}")]
@@ -52,5 +60,13 @@ mod tests {
         assert_eq!(e.to_string(), "dimension #9 does not exist");
         let e = CoreError::LabelNotFound(LabelId(2));
         assert_eq!(e.to_string(), "label #2 does not exist");
+        let e = CoreError::LayerNotFound(LayerId(3));
+        assert_eq!(e.to_string(), "layer #3 does not exist");
+        let e = CoreError::ConstructionNotFound(ConstructionId(8));
+        assert_eq!(e.to_string(), "construction #8 does not exist");
+        let e = CoreError::DefaultLayer;
+        assert!(e.to_string().contains("default layer"));
+        let e = CoreError::LayerInUse(LayerId(4));
+        assert!(e.to_string().contains("move them"));
     }
 }

@@ -20,8 +20,12 @@ pub fn to_json(project: &Project) -> Result<String, CoreError> {
 }
 
 /// Parse and validate. The only entry point that trusts a byte string.
+///
+/// Older files are migrated in place before validation so a project written
+/// before the layers system still opens instead of being refused.
 pub fn from_json(text: &str) -> Result<Project, CoreError> {
-    let project: Project = serde_json::from_str(text)?;
+    let mut project: Project = serde_json::from_str(text)?;
+    project.migrate();
     project.validate()?;
     Ok(project)
 }

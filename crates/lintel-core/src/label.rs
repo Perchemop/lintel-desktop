@@ -7,7 +7,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::geom::Point2;
-use crate::ids::LabelId;
+use crate::ids::{LabelId, LayerId};
+use crate::layer::EntityStyle;
 
 /// Cap height a new label starts with, in millimetres.
 pub const DEFAULT_LABEL_HEIGHT_MM: f64 = 300.0;
@@ -22,6 +23,12 @@ pub const MAX_LABEL_HEIGHT_MM: f64 = 5000.0;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlanLabel {
     pub id: LabelId,
+    /// Layer this label is drawn on. Kept in step with `style.layer_id`.
+    #[serde(default)]
+    pub layer_id: LayerId,
+    /// Per-label overrides of the layer's appearance.
+    #[serde(default)]
+    pub style: EntityStyle,
     /// Point the text starts from (bottom-left of the first character).
     pub anchor: Point2,
     pub text: String,
@@ -34,10 +41,19 @@ impl PlanLabel {
     pub fn new(id: LabelId, anchor: Point2, text: impl Into<String>) -> Self {
         Self {
             id,
+            layer_id: LayerId::DEFAULT,
+            style: EntityStyle::default(),
             anchor,
             text: text.into(),
             height_mm: DEFAULT_LABEL_HEIGHT_MM,
         }
+    }
+
+    /// Move this label onto `layer_id`, keeping its style mirror in step.
+    pub fn on_layer(mut self, layer_id: LayerId) -> Self {
+        self.layer_id = layer_id;
+        self.style.layer_id = layer_id;
+        self
     }
 
     /// Finite anchor, non-blank text, height within the bounds above.
@@ -122,5 +138,33 @@ mod tests {
         let json = serde_json::to_string(&original).expect("serialize");
         let back: PlanLabel = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, original);
+    }
+
+    #[test]
+    fn a_new_label_starts_on_the_default_layer() {
+        let label = label("Hall");
+        assert_eq!(label.layer_id, LayerId::DEFAULT);
+        assert_eq!(label.style.layer_id, LayerId::DEFAULT);
+    }
+
+    #[test]
+    fn a_label_can_be_placed_on_another_layer() {
+        let label = label("Hall").on_layer(LayerId(7));
+        assert_eq!(label.layer_id, LayerId(7));
+        assert_eq!(label.style.layer_id, LayerId(7));
+    }
+
+    #[test]
+    fn a_label_saved_before_layers_still_loads() {
+        let json = r#"{
+            "id": 2,
+            "anchor": { "x": 1000.0, "y": 500.0 },
+            "text": "Hall",
+            "height_mm": 300.0
+        }"#;
+        let label: PlanLabel = serde_json::from_str(json).expect("old label");
+        assert_eq!(label.layer_id, LayerId::DEFAULT);
+        assert_eq!(label.style, EntityStyle::default());
+        assert!(label.is_valid());
     }
 }

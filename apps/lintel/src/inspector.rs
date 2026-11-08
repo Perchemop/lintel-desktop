@@ -11,7 +11,7 @@ use lintel_core::{
     join::Hit,
     opening::OpeningKind,
     snap::SnapSettings,
-    units::UnitSystem,
+    units::{UnitSystem, format_area},
 };
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
@@ -252,7 +252,9 @@ pub fn inspector(
                 let measurements = lintel_core::measurements::Measurements::new(project);
 
                 // Cache rooms for this frame to avoid repeated detection
-                let level_rooms = project.active_level().map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
+                let level_rooms = project
+                    .active_level()
+                    .map(|lvl| lintel_core::room::detect_rooms(&lvl.walls));
 
                 // Selected room (if the current selection sits inside one).
                 if let Some(Hit::Wall(wall_id)) = selection {
@@ -263,16 +265,23 @@ pub fn inspector(
                             (wall.start.y + wall.end.y) * 0.5,
                         );
                         // Midpoint lies on the wall centreline; nudge it inward a little so containment works.
-                        let probe = [mid, lintel_core::geom::Point2::new(mid.x + 10.0, mid.y), lintel_core::geom::Point2::new(mid.x - 10.0, mid.y), lintel_core::geom::Point2::new(mid.x, mid.y + 10.0), lintel_core::geom::Point2::new(mid.x, mid.y - 10.0)];
-                        if let Some(rooms) = &level_rooms {
-                            if let Some(room) = rooms.iter().find(|r| probe.iter().any(|p| r.contains(*p))) {
-                                ui.label(format!(
-                                    "Selected room — area {}  perimeter {}",
-                                    room.area_label(),
-                                    project.units.format(room.perimeter_mm)
-                                ));
-                                ui.separator();
-                            }
+                        let probe = [
+                            mid,
+                            lintel_core::geom::Point2::new(mid.x + 10.0, mid.y),
+                            lintel_core::geom::Point2::new(mid.x - 10.0, mid.y),
+                            lintel_core::geom::Point2::new(mid.x, mid.y + 10.0),
+                            lintel_core::geom::Point2::new(mid.x, mid.y - 10.0),
+                        ];
+                        if let Some(rooms) = &level_rooms
+                            && let Some(room) =
+                                rooms.iter().find(|r| probe.iter().any(|p| r.contains(*p)))
+                        {
+                            ui.label(format!(
+                                "Selected room — area {}  perimeter {}",
+                                room.area_label(),
+                                project.units.format(room.perimeter_mm)
+                            ));
+                            ui.separator();
                         }
                     }
                 }

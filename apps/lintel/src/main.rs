@@ -20,6 +20,7 @@ mod canvas;
 mod dimension_ui;
 mod inspector;
 mod release_notes;
+mod status_bar;
 mod theme;
 
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
@@ -36,7 +37,7 @@ enum Tool {
 }
 
 impl Tool {
-    fn label(self) -> &'static str {
+    pub fn label(self) -> &'static str {
         match self {
             Tool::Select => "Select",
             Tool::Wall => "Wall",
@@ -50,7 +51,7 @@ impl Tool {
 }
 
 /// Main eframe app state.
-struct LintelApp {
+pub struct LintelApp {
     doc: Document,
     view: View,
     tool: Tool,
@@ -73,6 +74,8 @@ struct LintelApp {
     status_at: i64,
     /// Draft state for the Inspector's new-storey fields.
     inspector_draft: InspectorDraft,
+    /// Last pointer position in world coordinates, for the status bar readout.
+    pointer_world: Option<lintel_core::geom::Point2>,
 }
 
 impl LintelApp {
@@ -100,6 +103,7 @@ impl LintelApp {
                 new_level_elevation: 3000.0,
                 ..InspectorDraft::default()
             },
+            pointer_world: None,
         };
         // One quiet check at startup; it fails soft when offline and never
         // blocks the UI thread.
@@ -412,22 +416,12 @@ impl eframe::App for LintelApp {
                     crate::theme::INK,
                 );
             }
+            self.pointer_world = response.pointer_world;
             self.handle_canvas_input(ui, response, rect, now);
 
-            // Bottom-right version bar per guide §12.1 suite standard
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
-                let version = ui.link(
-                    egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
-                        .small()
-                        .color(egui::Color32::GRAY),
-                );
-                if version
-                    .on_hover_text("Release notes and update status")
-                    .clicked()
-                {
-                    self.showing_notes = true;
-                }
-            });
+            // Status bar (bottom) with version link in the bottom-right corner
+            // per suite standard.
+            crate::status_bar::render(ui, self, now);
 
             egui::Window::new("Inspector")
                 .default_pos(egui::Pos2::new(4.0, 40.0))

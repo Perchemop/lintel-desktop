@@ -7,7 +7,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::ids::{OpeningId, WallId};
+use crate::ids::{LayerId, OpeningId, WallId};
+use crate::layer::EntityStyle;
 use crate::wall::Wall;
 
 pub const MIN_OPENING_WIDTH: f64 = 200.0;
@@ -60,6 +61,12 @@ impl OpeningKind {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Opening {
     pub id: OpeningId,
+    /// Layer this opening is drawn on. Kept in step with `style.layer_id`.
+    #[serde(default)]
+    pub layer_id: LayerId,
+    /// Per-opening overrides of the layer's appearance.
+    #[serde(default)]
+    pub style: EntityStyle,
     pub kind: OpeningKind,
     pub host: WallId,
     /// Centre of the opening, as a distance from the host wall's start.
@@ -76,6 +83,8 @@ impl Opening {
     pub fn new(id: OpeningId, kind: OpeningKind, host: WallId, offset: f64) -> Self {
         Self {
             id,
+            layer_id: LayerId::DEFAULT,
+            style: EntityStyle::default(),
             kind,
             host,
             offset,
@@ -84,6 +93,13 @@ impl Opening {
             sill: kind.default_sill(),
             flipped: false,
         }
+    }
+
+    /// Move this opening onto `layer_id`, keeping its style mirror in step.
+    pub fn on_layer(mut self, layer_id: LayerId) -> Self {
+        self.layer_id = layer_id;
+        self.style.layer_id = layer_id;
+        self
     }
 
     pub fn start_offset(&self) -> f64 {
@@ -205,5 +221,47 @@ mod tests {
         // A wall too short for the opening degrades to a centred start rather
         // than a negative offset.
         assert_eq!(fit_offset_centre(500.0, 900.0, 100.0), 450.0);
+    }
+
+    #[test]
+    fn a_new_opening_starts_on_the_default_layer() {
+        let door = Opening::new(OpeningId(1), OpeningKind::Door, WallId(1), 2000.0);
+        assert_eq!(door.layer_id, LayerId::DEFAULT);
+        assert_eq!(door.style.layer_id, LayerId::DEFAULT);
+    }
+
+    #[test]
+    fn an_opening_can_be_placed_on_another_layer() {
+        let door =
+            Opening::new(OpeningId(1), OpeningKind::Door, WallId(1), 2000.0).on_layer(LayerId(6));
+        assert_eq!(door.layer_id, LayerId(6));
+        assert_eq!(door.style.layer_id, LayerId(6));
+    }
+
+    #[test]
+    fn an_opening_round_trips_with_its_layer_and_style() {
+        let original =
+            Opening::new(OpeningId(2), OpeningKind::Window, WallId(1), 1000.0).on_layer(LayerId(6));
+        let json = serde_json::to_string(&original).expect("serialize");
+        let back: Opening = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, original);
+    }
+
+    #[test]
+    fn an_opening_saved_before_layers_still_loads() {
+        let json = r#"{
+            "id": 1,
+            "kind": "Door",
+            "host": 1,
+            "offset": 2000.0,
+            "width": 900.0,
+            "height": 2100.0,
+            "sill": 0.0,
+            "flipped": false
+        }"#;
+        let door: Opening = serde_json::from_str(json).expect("old opening");
+        assert_eq!(door.layer_id, LayerId::DEFAULT);
+        assert_eq!(door.style, EntityStyle::default());
+        assert!(door.fits_on(&host()));
     }
 }

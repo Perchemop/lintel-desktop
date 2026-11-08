@@ -1,5 +1,45 @@
 # Progress
 
+## v0.11.0 Status — IN PROGRESS
+
+- [x] `crates/lintel-core/src/measurements.rs` added: `Measurements`,
+      `LevelTotals`, `ProjectTotals` (room area/perimeter, level and project
+      wall/opening totals)
+- [x] `format_area` honours `UnitSystem` (m² / ft² / in²) in
+      `crates/lintel-core/src/units.rs`
+- [x] Unit tests in `measurements::tests` (area, perimeter, totals, missing
+      level, out-of-range room, JSON round-trip)
+- [x] UI: `Tool::Measurements` with Shift+M; Inspector → Measurements shows the
+      selected room, per-level totals and per-room list, and project totals
+- [ ] Release prep: bump `apps/lintel/Cargo.toml` 0.10.1 → 0.11.0 (this checkout
+      still reads 0.10.1)
+- [ ] CI green, PR merged, tag `v0.11.0` and GitHub Release published
+- [ ] Guide §12.1 release gate: signed artefacts + `SHA256SUMS.txt`,
+      `docs/tokens.json` ledger updated by CI and quoted in the release notes
+
+Readiness % (v0.11.0): **90% — code and tests complete; release gate pending.**
+
+## v0.11.1 Status — PLANNED
+
+**Phase A: Table Stakes (Layers + Construction Geometry)**, from the 2026-11-08
+elite CAD reports.
+
+- [ ] `layer.rs`: `Layer`, protected default layer, per-entity assignment
+- [ ] `style.rs`: `EntityStyle.layer_id` with serde-default migration and
+      default-layer assignment on load
+- [ ] Layers palette: create/delete, visibility, lock, assign selection
+- [ ] `construction.rs`: line/ray/circle construction geometry, snap-enabled and
+      never printed
+- [ ] `snap.rs` foundation: `SnapCandidateKind` midpoint/intersection/
+      perpendicular, `SnapSource`, priority order
+- [ ] Status bar: cursor coordinates, snap/ortho/grid chips, zoom %
+- [ ] Headless tests for migration, PDF filtering and snap candidates
+- [ ] CI green, release cut with signed artefacts, `SHA256SUMS.txt` and the
+      `docs/tokens.json` ledger
+
+Readiness % (v0.11.1): **0% — planned.** Layers and construction geometry are
+prerequisites for the v0.12.0 enhanced snapping work.
+
 ## v0.10.1 Status — RELEASED
 
 - [x] Window icon embedded via `with_icon()` + `image` crate decode
@@ -181,7 +221,11 @@ Readiness % (v0.1.0): **100% — shipped.**
 
 ## Research
 
-- [x] No large-scale research notes needed; public egui/eframe/PDF/ureq sources only
+- [x] No large-scale research notes needed for v0.1.0–v0.10.x; public
+      egui/eframe/PDF/ureq sources only
+- [x] Elite CAD feasibility reports filed 2026-11-08:
+      `ELITE_CAD_RESEARCH_SUMMARY.md`, `DOMAIN_INVESTIGATION_ELITE_CAD.md`,
+      `DOMAIN_DESIGN_SKETCHES.md`, and `docs/research/elite-*.md`
 - [x] `docs/research/` reserved for gated research before larger Tasks
 
 ## Process feedback

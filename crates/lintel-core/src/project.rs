@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::CoreError;
 use crate::geom::Bounds;
-use crate::ids::{LevelId, OpeningId};
+use crate::ids::{LayerId, LevelId, OpeningId};
+use crate::layer::Layer;
 use crate::level::Level;
 use crate::units::UnitSystem;
 
@@ -62,6 +63,48 @@ impl Project {
         let id = self.next_id;
         self.next_id = self.next_id.saturating_add(1);
         id
+    }
+
+    /// Bring a project written by an older build up to the current shape.
+    ///
+    /// Every level gains the default layer, and every entity that references a
+    /// missing layer is moved onto the default one (or onto the layer its style
+    /// already names, when that layer exists). The loader runs this before
+    /// [`Project::validate`], so old files open instead of being refused.
+    pub fn migrate(&mut self) {
+        for level in &mut self.levels {
+            if level.layer(LayerId::DEFAULT).is_none() {
+                level.layers.insert(0, Layer::default_layer());
+            }
+            let known: Vec<LayerId> = level.layers.iter().map(|layer| layer.id).collect();
+
+            for wall in &mut level.walls {
+                Self::sync_entity_layer(&mut wall.layer_id, &mut wall.style.layer_id, &known);
+            }
+            for opening in &mut level.openings {
+                Self::sync_entity_layer(&mut opening.layer_id, &mut opening.style.layer_id, &known);
+            }
+            for dimension in &mut level.dimensions {
+                Self::sync_entity_layer(
+                    &mut dimension.layer_id,
+                    &mut dimension.style.layer_id,
+                    &known,
+                );
+            }
+            for label in &mut level.labels {
+                Self::sync_entity_layer(&mut label.layer_id, &mut label.style.layer_id, &known);
+            }
+        }
+    }
+
+    /// Point both copies of an entity's layer association at a layer that
+    /// actually exists. If the entity's layer is unknown, fall back to the
+    /// default layer so validation passes.
+    fn sync_entity_layer(layer_id: &mut LayerId, style_layer_id: &mut LayerId, known: &[LayerId]) {
+        if !known.contains(layer_id) {
+            *layer_id = LayerId::DEFAULT;
+        }
+        *style_layer_id = *layer_id;
     }
 
     pub fn active_level(&self) -> Option<&Level> {

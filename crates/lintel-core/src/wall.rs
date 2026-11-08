@@ -8,7 +8,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::geom::{Point2, Vec2};
-use crate::ids::WallId;
+use crate::ids::{LayerId, WallId};
+use crate::layer::EntityStyle;
 
 /// Shortest wall the editor will create. Below this the two halves of the
 /// thickness overlap and the result is not a useful drawing element.
@@ -26,6 +27,12 @@ pub const DEFAULT_WALL_HEIGHT: f64 = 2800.0;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Wall {
     pub id: WallId,
+    /// Layer this wall is drawn on. Kept in step with `style.layer_id`.
+    #[serde(default)]
+    pub layer_id: LayerId,
+    /// Per-wall overrides of the layer's appearance.
+    #[serde(default)]
+    pub style: EntityStyle,
     pub start: Point2,
     pub end: Point2,
     /// Full thickness in millimetres, measured across the centreline.
@@ -38,11 +45,20 @@ impl Wall {
     pub fn new(id: WallId, start: Point2, end: Point2, thickness: f64, height: f64) -> Self {
         Self {
             id,
+            layer_id: LayerId::DEFAULT,
+            style: EntityStyle::default(),
             start,
             end,
             thickness,
             height,
         }
+    }
+
+    /// Move this wall onto `layer_id`, keeping its style mirror in step.
+    pub fn on_layer(mut self, layer_id: LayerId) -> Self {
+        self.layer_id = layer_id;
+        self.style.layer_id = layer_id;
+        self
     }
 
     pub fn length(&self) -> f64 {
@@ -160,5 +176,45 @@ mod tests {
     fn distance_to_centreline_is_perpendicular() {
         let w = wall((0.0, 0.0), (3000.0, 0.0));
         assert!((w.distance_to_centreline(Point2::new(1500.0, 400.0)) - 400.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_new_wall_starts_on_the_default_layer() {
+        let w = wall((0.0, 0.0), (3000.0, 0.0));
+        assert_eq!(w.layer_id, LayerId::DEFAULT);
+        assert_eq!(w.style.layer_id, LayerId::DEFAULT);
+        assert!(w.style.color_override.is_none());
+    }
+
+    #[test]
+    fn a_wall_can_be_placed_on_another_layer() {
+        let w = wall((0.0, 0.0), (3000.0, 0.0)).on_layer(LayerId(4));
+        assert_eq!(w.layer_id, LayerId(4));
+        assert_eq!(w.style.layer_id, LayerId(4));
+    }
+
+    #[test]
+    fn a_wall_round_trips_with_its_layer_and_style() {
+        let mut original = wall((0.0, 0.0), (3000.0, 0.0)).on_layer(LayerId(3));
+        original.style.color_override = Some(crate::layer::Rgb::new(10, 20, 30));
+        let json = serde_json::to_string(&original).expect("serialize");
+        let back: Wall = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, original);
+    }
+
+    #[test]
+    fn a_wall_saved_before_layers_still_loads() {
+        let json = r#"{
+            "id": 1,
+            "start": { "x": 0.0, "y": 0.0 },
+            "end": { "x": 3000.0, "y": 0.0 },
+            "thickness": 200.0,
+            "height": 2800.0
+        }"#;
+        let w: Wall = serde_json::from_str(json).expect("old wall");
+        assert_eq!(w.id, WallId(1));
+        assert_eq!(w.layer_id, LayerId::DEFAULT);
+        assert_eq!(w.style, EntityStyle::default());
+        assert!(w.is_valid());
     }
 }

@@ -6,11 +6,16 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::Point2;
-use crate::ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 use crate::label::{MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM, PlanLabel};
+use crate::layer::{
+    EntitySelector, Layer, LayerProperty, Linetype, MAX_LAYER_NAME_CHARS, MAX_LINEWEIGHT_MM,
+    MIN_LINEWEIGHT_MM, Rgb,
+};
 use crate::level::Level;
 use crate::opening::{
     MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT, MIN_OPENING_WIDTH, Opening,
@@ -112,6 +117,33 @@ pub enum Command {
     DeleteLabel {
         id: LabelId,
     },
+    CreateLayer {
+        name: String,
+        color: Option<Rgb>,
+        linetype: Linetype,
+        lineweight_mm: f64,
+    },
+    DeleteLayer {
+        layer_id: LayerId,
+    },
+    SetLayerProperty {
+        layer_id: LayerId,
+        property: LayerProperty,
+    },
+    AssignEntityToLayer {
+        entity: EntitySelector,
+        layer_id: LayerId,
+    },
+    CreateConstruction {
+        kind: ConstructionKind,
+    },
+    DeleteConstruction {
+        id: ConstructionId,
+    },
+    SetConstructionVisible {
+        id: ConstructionId,
+        visible: bool,
+    },
     AddLevel {
         name: String,
         elevation: f64,
@@ -138,6 +170,8 @@ pub struct Applied {
     pub dimension: Option<DimensionId>,
     pub label: Option<LabelId>,
     pub level: Option<LevelId>,
+    pub layer: Option<LayerId>,
+    pub construction: Option<ConstructionId>,
 }
 
 pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<Applied, CoreError> {
@@ -270,6 +304,29 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             if level.labels.len() == before {
                 return Err(CoreError::LabelNotFound(id));
             }
+            Ok(Applied::default())
+        }
+        Command::CreateLayer {
+            name,
+            color,
+            linetype,
+            lineweight_mm,
+        } => create_layer(project, name, color, linetype, lineweight_mm),
+        Command::DeleteLayer { layer_id } => delete_layer(project, layer_id),
+        Command::SetLayerProperty { layer_id, property } => {
+            set_layer_property(project, layer_id, property)
+        }
+        Command::AssignEntityToLayer { entity, layer_id } => {
+            assign_entity_to_layer(project, entity, layer_id)
+        }
+        Command::CreateConstruction { kind } => create_construction(project, kind),
+        Command::DeleteConstruction { id } => delete_construction(project, id),
+        Command::SetConstructionVisible { id, visible } => {
+            let level = active_level_mut(project)?;
+            let entity = level
+                .construction_mut(id)
+                .ok_or(CoreError::ConstructionNotFound(id))?;
+            entity.visible = visible;
             Ok(Applied::default())
         }
         Command::AddLevel { name, elevation } => add_level(project, name, elevation),
@@ -640,6 +697,192 @@ fn overlap_on(
         .filter(|o| Some(o.id) != exclude)
         .find(|o| start < o.end_offset() && end > o.start_offset())
         .map(|o| o.id)
+}
+
+fn validate_layer_name(name: &str) -> Result<(), CoreError> {
+    if name.is_empty() {
+        return Err(CoreError::invalid("a layer needs a name"));
+    }
+    if name.chars().count() > MAX_LAYER_NAME_CHARS {
+        return Err(CoreError::invalid(format!(
+            "a layer name must be at most {MAX_LAYER_NAME_CHARS} characters"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_lineweight(weight: f64) -> Result<(), CoreError> {
+    if weight.is_finite() && (MIN_LINEWEIGHT_MM..=MAX_LINEWEIGHT_MM).contains(&weight) {
+        Ok(())
+    } else {
+        Err(CoreError::invalid(format!(
+            "a lineweight must be between {MIN_LINEWEIGHT_MM} mm and {MAX_LINEWEIGHT_MM} mm"
+        )))
+    }
+}
+
+fn validate_linetype(linetype: Linetype) -> Result<(), CoreError> {
+    if linetype.is_valid() {
+        Ok(())
+    } else {
+        Err(CoreError::invalid(
+            "a linetype needs a positive dash and a non-negative gap",
+        ))
+    }
+}
+
+fn create_layer(
+    project: &mut Project,
+    name: String,
+    color: Option<Rgb>,
+    linetype: Linetype,
+    lineweight_mm: f64,
+) -> Result<Applied, CoreError> {
+    let name = name.trim().to_string();
+    validate_layer_name(&name)?;
+    validate_lineweight(lineweight_mm)?;
+    validate_linetype(linetype)?;
+
+    let level = active_level(project)?;
+    if level.layer_by_name(&name).is_some() {
+        return Err(CoreError::invalid(format!(
+            "a layer named \"{name}\" already exists"
+        )));
+    }
+
+    let id = LayerId(project.allocate_id());
+    let mut layer = Layer::new(id, name);
+    layer.color = color;
+    layer.linetype = linetype;
+    layer.lineweight_mm = lineweight_mm;
+    active_level_mut(project)?.layers.push(layer);
+    Ok(Applied {
+        layer: Some(id),
+        ..Applied::default()
+    })
+}
+
+fn delete_layer(project: &mut Project, layer_id: LayerId) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    let layer = level
+        .layer(layer_id)
+        .ok_or(CoreError::LayerNotFound(layer_id))?;
+    if layer.is_default() {
+        return Err(CoreError::DefaultLayer);
+    }
+    // Moving the contents automatically would silently change what is drawn;
+    // the user is asked to move them first instead.
+    if level.entity_count_on_layer(layer_id) > 0 {
+        return Err(CoreError::LayerInUse(layer_id));
+    }
+    let level = active_level_mut(project)?;
+    level.layers.retain(|layer| layer.id != layer_id);
+    Ok(Applied::default())
+}
+
+fn set_layer_property(
+    project: &mut Project,
+    layer_id: LayerId,
+    property: LayerProperty,
+) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    let existing = level
+        .layer(layer_id)
+        .ok_or(CoreError::LayerNotFound(layer_id))?;
+    let mut candidate = existing.clone();
+
+    match property {
+        LayerProperty::Name(name) => {
+            let name = name.trim().to_string();
+            validate_layer_name(&name)?;
+            let duplicate = level
+                .layers
+                .iter()
+                .any(|layer| layer.id != layer_id && layer.name.eq_ignore_ascii_case(&name));
+            if duplicate {
+                return Err(CoreError::invalid(format!(
+                    "a layer named \"{name}\" already exists"
+                )));
+            }
+            candidate.name = name;
+        }
+        LayerProperty::Color(color) => candidate.color = color,
+        LayerProperty::Linetype(linetype) => {
+            validate_linetype(linetype)?;
+            candidate.linetype = linetype;
+        }
+        LayerProperty::Lineweight(weight) => {
+            validate_lineweight(weight)?;
+            candidate.lineweight_mm = weight;
+        }
+        LayerProperty::Visible(visible) => candidate.visible = visible,
+        LayerProperty::Locked(locked) => candidate.locked = locked,
+        LayerProperty::Printable(printable) => candidate.printable = printable,
+    }
+
+    if !candidate.is_valid() {
+        return Err(CoreError::invalid(
+            "that change would leave the layer unusable",
+        ));
+    }
+
+    let level = active_level_mut(project)?;
+    if let Some(layer) = level.layer_mut(layer_id) {
+        *layer = candidate;
+    }
+    Ok(Applied::default())
+}
+
+fn assign_entity_to_layer(
+    project: &mut Project,
+    entity: EntitySelector,
+    layer_id: LayerId,
+) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    if level.layer(layer_id).is_none() {
+        return Err(CoreError::LayerNotFound(layer_id));
+    }
+    if level.entity_layer(entity).is_none() {
+        return Err(missing_entity(entity));
+    }
+    let level = active_level_mut(project)?;
+    level.set_entity_layer(entity, layer_id);
+    Ok(Applied::default())
+}
+
+fn missing_entity(entity: EntitySelector) -> CoreError {
+    match entity {
+        EntitySelector::Wall(id) => CoreError::WallNotFound(id),
+        EntitySelector::Opening(id) => CoreError::OpeningNotFound(id),
+        EntitySelector::Dimension(id) => CoreError::DimensionNotFound(id),
+        EntitySelector::Label(id) => CoreError::LabelNotFound(id),
+    }
+}
+
+fn create_construction(
+    project: &mut Project,
+    kind: ConstructionKind,
+) -> Result<Applied, CoreError> {
+    if let Some(reason) = kind.invalid_reason() {
+        return Err(CoreError::invalid(reason));
+    }
+    let id = ConstructionId(project.allocate_id());
+    let entity = ConstructionEntity::new(id, kind);
+    active_level_mut(project)?.construction.push(entity);
+    Ok(Applied {
+        construction: Some(id),
+        ..Applied::default()
+    })
+}
+
+fn delete_construction(project: &mut Project, id: ConstructionId) -> Result<Applied, CoreError> {
+    let level = active_level_mut(project)?;
+    let before = level.construction.len();
+    level.construction.retain(|entity| entity.id != id);
+    if level.construction.len() == before {
+        return Err(CoreError::ConstructionNotFound(id));
+    }
+    Ok(Applied::default())
 }
 
 fn add_level(project: &mut Project, name: String, elevation: f64) -> Result<Applied, CoreError> {
@@ -1265,5 +1508,363 @@ mod tests {
                 .label(id)
                 .is_none()
         );
+    }
+
+    fn add_layer(project: &mut Project, name: &str) -> LayerId {
+        let command = Command::CreateLayer {
+            name: name.into(),
+            color: None,
+            linetype: Linetype::Continuous,
+            lineweight_mm: 0.25,
+        };
+        apply_command(project, command)
+            .expect("create layer")
+            .layer
+            .expect("layer id")
+    }
+
+    #[test]
+    fn creating_a_layer_returns_its_id() {
+        let mut project = empty_project();
+        let id = add_layer(&mut project, "Walls");
+        assert_ne!(id, LayerId::DEFAULT);
+        let layer = project
+            .active_level()
+            .expect("level")
+            .layer(id)
+            .expect("layer");
+        assert_eq!(layer.name, "Walls");
+        assert!(layer.visible);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn a_rejected_layer_burns_no_id() {
+        let mut project = empty_project();
+        let before = project.next_id;
+        let applied = apply_command(
+            &mut project,
+            Command::CreateLayer {
+                name: "Walls".into(),
+                color: None,
+                linetype: Linetype::Continuous,
+                lineweight_mm: 0.25,
+            },
+        )
+        .expect("first layer");
+        assert!(applied.layer.is_some());
+        let error = apply_command(
+            &mut project,
+            Command::CreateLayer {
+                name: "walls".into(),
+                color: None,
+                linetype: Linetype::Continuous,
+                lineweight_mm: 0.25,
+            },
+        )
+        .expect_err("duplicate name");
+        assert!(error.to_string().contains("already exists"));
+        assert_eq!(project.next_id, before + 1, "only the first created an id");
+    }
+
+    #[test]
+    fn a_zero_lineweight_layer_is_refused() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::CreateLayer {
+                name: "Bad".into(),
+                color: None,
+                linetype: Linetype::Continuous,
+                lineweight_mm: 0.0,
+            },
+        )
+        .expect_err("lineweight too small");
+        assert!(error.to_string().contains("lineweight"));
+        assert_eq!(
+            project.active_level().expect("level").layers.len(),
+            1,
+            "only the default layer remains"
+        );
+    }
+
+    #[test]
+    fn the_default_layer_cannot_be_deleted() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::DeleteLayer {
+                layer_id: LayerId::DEFAULT,
+            },
+        )
+        .expect_err("default layer");
+        assert!(matches!(error, CoreError::DefaultLayer));
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(LayerId::DEFAULT)
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn a_layer_with_entities_cannot_be_deleted() {
+        let mut project = empty_project();
+        let layer = add_layer(&mut project, "Walls");
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        apply_command(
+            &mut project,
+            Command::AssignEntityToLayer {
+                entity: EntitySelector::Wall(wall),
+                layer_id: layer,
+            },
+        )
+        .expect("assign wall");
+
+        let error = apply_command(&mut project, Command::DeleteLayer { layer_id: layer })
+            .expect_err("layer in use");
+        assert!(matches!(error, CoreError::LayerInUse(_)));
+
+        apply_command(
+            &mut project,
+            Command::AssignEntityToLayer {
+                entity: EntitySelector::Wall(wall),
+                layer_id: LayerId::DEFAULT,
+            },
+        )
+        .expect("move the wall back");
+        apply_command(&mut project, Command::DeleteLayer { layer_id: layer })
+            .expect("now the layer is empty");
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(layer)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn layer_properties_change_one_at_a_time() {
+        let mut project = empty_project();
+        let layer = add_layer(&mut project, "Walls");
+
+        apply_command(
+            &mut project,
+            Command::SetLayerProperty {
+                layer_id: layer,
+                property: LayerProperty::Visible(false),
+            },
+        )
+        .expect("hide");
+        let level = project.active_level().expect("level");
+        assert!(!level.layer(layer).expect("layer").visible);
+
+        apply_command(
+            &mut project,
+            Command::SetLayerProperty {
+                layer_id: layer,
+                property: LayerProperty::Color(Some(Rgb::new(10, 20, 30))),
+            },
+        )
+        .expect("colour");
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(layer)
+                .expect("layer")
+                .color,
+            Some(Rgb::new(10, 20, 30))
+        );
+
+        let error = apply_command(
+            &mut project,
+            Command::SetLayerProperty {
+                layer_id: layer,
+                property: LayerProperty::Lineweight(99.0),
+            },
+        )
+        .expect_err("lineweight out of range");
+        assert!(error.to_string().contains("lineweight"));
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(layer)
+                .expect("layer")
+                .lineweight_mm,
+            0.25,
+            "a rejected change leaves the layer alone"
+        );
+    }
+
+    #[test]
+    fn a_layer_can_be_renamed_but_not_onto_an_existing_name() {
+        let mut project = empty_project();
+        let first = add_layer(&mut project, "Walls");
+        let second = add_layer(&mut project, "Doors");
+
+        apply_command(
+            &mut project,
+            Command::SetLayerProperty {
+                layer_id: second,
+                property: LayerProperty::Name("Openings".into()),
+            },
+        )
+        .expect("rename");
+
+        let error = apply_command(
+            &mut project,
+            Command::SetLayerProperty {
+                layer_id: second,
+                property: LayerProperty::Name("Walls".into()),
+            },
+        )
+        .expect_err("duplicate");
+        assert!(error.to_string().contains("already exists"));
+
+        let level = project.active_level().expect("level");
+        assert_eq!(level.layer(first).expect("layer").name, "Walls");
+        assert_eq!(level.layer(second).expect("layer").name, "Openings");
+    }
+
+    #[test]
+    fn assigning_an_entity_moves_it_and_its_style_copy() {
+        let mut project = empty_project();
+        let layer = add_layer(&mut project, "Walls");
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+
+        apply_command(
+            &mut project,
+            Command::AssignEntityToLayer {
+                entity: EntitySelector::Wall(wall),
+                layer_id: layer,
+            },
+        )
+        .expect("assign");
+        let level = project.active_level().expect("level");
+        let wall = level.wall(wall).expect("wall");
+        assert_eq!(wall.layer_id, layer);
+        assert_eq!(wall.style.layer_id, layer);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn assigning_to_a_missing_layer_or_entity_is_reported() {
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+
+        let error = apply_command(
+            &mut project,
+            Command::AssignEntityToLayer {
+                entity: EntitySelector::Wall(wall),
+                layer_id: LayerId(999),
+            },
+        )
+        .expect_err("missing layer");
+        assert!(matches!(error, CoreError::LayerNotFound(_)));
+
+        let error = apply_command(
+            &mut project,
+            Command::AssignEntityToLayer {
+                entity: EntitySelector::Wall(WallId(999)),
+                layer_id: LayerId::DEFAULT,
+            },
+        )
+        .expect_err("missing wall");
+        assert!(matches!(error, CoreError::WallNotFound(_)));
+    }
+
+    #[test]
+    fn construction_guides_can_be_created_retargeted_and_deleted() {
+        let mut project = empty_project();
+        let applied = apply_command(
+            &mut project,
+            Command::CreateConstruction {
+                kind: ConstructionKind::InfiniteLine {
+                    point: Point2::new(0.0, 0.0),
+                    direction: crate::geom::Vec2::new(1.0, 0.0),
+                },
+            },
+        )
+        .expect("create guide");
+        let id = applied.construction.expect("construction id");
+        assert_eq!(
+            project.active_level().expect("level").construction_count(),
+            1
+        );
+
+        apply_command(
+            &mut project,
+            Command::SetConstructionVisible { id, visible: false },
+        )
+        .expect("hide guide");
+        assert!(
+            !project
+                .active_level()
+                .expect("level")
+                .construction_entity(id)
+                .expect("guide")
+                .visible
+        );
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .visible_construction()
+                .count(),
+            0
+        );
+
+        apply_command(&mut project, Command::DeleteConstruction { id }).expect("delete guide");
+        assert_eq!(
+            project.active_level().expect("level").construction_count(),
+            0
+        );
+        let error = apply_command(&mut project, Command::DeleteConstruction { id })
+            .expect_err("already gone");
+        assert!(matches!(error, CoreError::ConstructionNotFound(_)));
+    }
+
+    #[test]
+    fn an_invalid_construction_guide_burns_no_id() {
+        let mut project = empty_project();
+        let before = project.next_id;
+        let error = apply_command(
+            &mut project,
+            Command::CreateConstruction {
+                kind: ConstructionKind::Circle {
+                    center: Point2::new(0.0, 0.0),
+                    radius: 0.0,
+                },
+            },
+        )
+        .expect_err("zero radius");
+        assert!(error.to_string().contains("positive radius"));
+        assert_eq!(project.next_id, before);
+    }
+
+    #[test]
+    fn a_construction_guide_never_prints() {
+        let mut project = empty_project();
+        let applied = apply_command(
+            &mut project,
+            Command::CreateConstruction {
+                kind: ConstructionKind::Line {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(1000.0, 0.0),
+                },
+            },
+        )
+        .expect("create guide");
+        let id = applied.construction.expect("construction id");
+        let guide = project
+            .active_level()
+            .expect("level")
+            .construction_entity(id)
+            .expect("guide");
+        assert!(!guide.print_enabled);
     }
 }

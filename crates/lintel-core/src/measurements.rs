@@ -36,6 +36,12 @@ impl LevelTotals {
     }
 }
 
+impl Default for LevelTotals {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Totals aggregated over the entire project.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct ProjectTotals {
@@ -60,6 +66,12 @@ impl ProjectTotals {
             total_room_area_mm2: 0.0,
             total_room_perimeter_mm: 0.0,
         }
+    }
+}
+
+impl Default for ProjectTotals {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -269,7 +281,9 @@ mod tests {
         let mut project = project_with_rectangle();
         // Add a second level with the same walls
         let new_level_id = LevelId(2);
-        project.levels.push(crate::level::Level::new(new_level_id, "Level 1", 3000.0));
+        project
+            .levels
+            .push(crate::level::Level::new(new_level_id, "Level 1", 3000.0));
         let level = project.level_mut(new_level_id).expect("new level");
         level.walls.push(crate::wall::Wall::new(
             crate::ids::WallId(5),

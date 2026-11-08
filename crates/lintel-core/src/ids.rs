@@ -10,7 +10,17 @@ use serde::{Deserialize, Serialize};
 macro_rules! id_type {
     ($name:ident, $label:literal) => {
         #[derive(
-            Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+            Debug,
+            Clone,
+            Copy,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+            Default,
+            Serialize,
+            Deserialize,
         )]
         #[serde(transparent)]
         pub struct $name(pub u64);
@@ -34,6 +44,16 @@ id_type!(OpeningId, "opening #{}");
 id_type!(LevelId, "level #{}");
 id_type!(DimensionId, "dimension #{}");
 id_type!(LabelId, "label #{}");
+id_type!(LayerId, "layer #{}");
+id_type!(ConstructionId, "construction #{}");
+
+impl LayerId {
+    /// The one layer every level always has: `"0"`, the default.
+    ///
+    /// It is reserved, never allocated from the project counter and cannot be
+    /// deleted, so an entity always has a legal layer to fall back to.
+    pub const DEFAULT: LayerId = LayerId(0);
+}
 
 #[cfg(test)]
 mod tests {
@@ -46,6 +66,14 @@ mod tests {
         assert_eq!(LevelId(1).to_string(), "level #1");
         assert_eq!(DimensionId(5).to_string(), "dimension #5");
         assert_eq!(LabelId(9).to_string(), "label #9");
+        assert_eq!(LayerId(2).to_string(), "layer #2");
+        assert_eq!(ConstructionId(4).to_string(), "construction #4");
+    }
+
+    #[test]
+    fn the_default_layer_id_is_zero() {
+        assert_eq!(LayerId::DEFAULT, LayerId(0));
+        assert_eq!(LayerId::default(), LayerId::DEFAULT);
     }
 
     #[test]
@@ -64,5 +92,15 @@ mod tests {
         assert_eq!(json, "42");
         let back: LabelId = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, LabelId(42));
+
+        let json = serde_json::to_string(&LayerId(42)).expect("serialize");
+        assert_eq!(json, "42");
+        let back: LayerId = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, LayerId(42));
+
+        let json = serde_json::to_string(&ConstructionId(42)).expect("serialize");
+        assert_eq!(json, "42");
+        let back: ConstructionId = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, ConstructionId(42));
     }
 }

@@ -5,10 +5,12 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
 use crate::geom::Bounds;
-use crate::ids::{DimensionId, LabelId, LevelId, OpeningId, WallId};
+use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 use crate::label::PlanLabel;
+use crate::layer::{EntitySelector, EntityStyle, Layer};
 use crate::opening::Opening;
 use crate::wall::Wall;
 
@@ -18,6 +20,10 @@ pub struct Level {
     pub name: String,
     /// Floor level in millimetres above the project datum.
     pub elevation: f64,
+    /// Layer table for this storey. Always contains
+    /// [`LayerId::DEFAULT`](crate::ids::LayerId::DEFAULT).
+    #[serde(default)]
+    pub layers: Vec<Layer>,
     pub walls: Vec<Wall>,
     pub openings: Vec<Opening>,
     /// Annotation drawn over the plan. `serde(default)` keeps files written
@@ -27,6 +33,9 @@ pub struct Level {
     /// Free text annotations drawn over the plan.
     #[serde(default)]
     pub labels: Vec<PlanLabel>,
+    /// Non-printing guides used for snapping and alignment.
+    #[serde(default)]
+    pub construction: Vec<ConstructionEntity>,
 }
 
 impl Level {
@@ -35,10 +44,12 @@ impl Level {
             id,
             name: name.into(),
             elevation,
+            layers: vec![Layer::default_layer()],
             walls: Vec::new(),
             openings: Vec::new(),
             dimensions: Vec::new(),
             labels: Vec::new(),
+            construction: Vec::new(),
         }
     }
 
@@ -72,6 +83,109 @@ impl Level {
 
     pub fn label_mut(&mut self, id: LabelId) -> Option<&mut PlanLabel> {
         self.labels.iter_mut().find(|l| l.id == id)
+    }
+
+    pub fn layer(&self, id: LayerId) -> Option<&Layer> {
+        self.layers.iter().find(|layer| layer.id == id)
+    }
+
+    pub fn layer_mut(&mut self, id: LayerId) -> Option<&mut Layer> {
+        self.layers.iter_mut().find(|layer| layer.id == id)
+    }
+
+    /// Layer by name, ignoring case. Names are unique within a level.
+    pub fn layer_by_name(&self, name: &str) -> Option<&Layer> {
+        self.layers
+            .iter()
+            .find(|layer| layer.name.eq_ignore_ascii_case(name.trim()))
+    }
+
+    /// The layer an entity sits on, if both the entity and its layer exist.
+    pub fn layer_of(&self, entity: EntitySelector) -> Option<&Layer> {
+        self.layer(self.entity_layer(entity)?)
+    }
+
+    /// The layer id recorded on an entity, whatever its kind.
+    pub fn entity_layer(&self, entity: EntitySelector) -> Option<LayerId> {
+        match entity {
+            EntitySelector::Wall(id) => self.wall(id).map(|wall| wall.layer_id),
+            EntitySelector::Opening(id) => self.opening(id).map(|opening| opening.layer_id),
+            EntitySelector::Dimension(id) => self.dimension(id).map(|dimension| dimension.layer_id),
+            EntitySelector::Label(id) => self.label(id).map(|label| label.layer_id),
+        }
+    }
+
+    /// The style of an entity, whatever its kind.
+    pub fn entity_style(&self, entity: EntitySelector) -> Option<&EntityStyle> {
+        match entity {
+            EntitySelector::Wall(id) => self.wall(id).map(|wall| &wall.style),
+            EntitySelector::Opening(id) => self.opening(id).map(|opening| &opening.style),
+            EntitySelector::Dimension(id) => self.dimension(id).map(|dimension| &dimension.style),
+            EntitySelector::Label(id) => self.label(id).map(|label| &label.style),
+        }
+    }
+
+    /// Move an entity onto `layer_id`, keeping its style mirror in step.
+    /// Returns false when the entity does not exist.
+    pub fn set_entity_layer(&mut self, entity: EntitySelector, layer_id: LayerId) -> bool {
+        let (layer, style_layer) = match entity {
+            EntitySelector::Wall(id) => match self.wall_mut(id) {
+                Some(wall) => (&mut wall.layer_id, &mut wall.style.layer_id),
+                None => return false,
+            },
+            EntitySelector::Opening(id) => match self.opening_mut(id) {
+                Some(opening) => (&mut opening.layer_id, &mut opening.style.layer_id),
+                None => return false,
+            },
+            EntitySelector::Dimension(id) => match self.dimension_mut(id) {
+                Some(dimension) => (&mut dimension.layer_id, &mut dimension.style.layer_id),
+                None => return false,
+            },
+            EntitySelector::Label(id) => match self.label_mut(id) {
+                Some(label) => (&mut label.layer_id, &mut label.style.layer_id),
+                None => return false,
+            },
+        };
+        *layer = layer_id;
+        *style_layer = layer_id;
+        true
+    }
+
+    /// How many walls, openings, dimensions and labels sit on a layer.
+    pub fn entity_count_on_layer(&self, layer_id: LayerId) -> usize {
+        self.walls.iter().filter(|w| w.layer_id == layer_id).count()
+            + self
+                .openings
+                .iter()
+                .filter(|o| o.layer_id == layer_id)
+                .count()
+            + self
+                .dimensions
+                .iter()
+                .filter(|d| d.layer_id == layer_id)
+                .count()
+            + self
+                .labels
+                .iter()
+                .filter(|l| l.layer_id == layer_id)
+                .count()
+    }
+
+    pub fn construction_entity(&self, id: ConstructionId) -> Option<&ConstructionEntity> {
+        self.construction.iter().find(|entity| entity.id == id)
+    }
+
+    pub fn construction_mut(&mut self, id: ConstructionId) -> Option<&mut ConstructionEntity> {
+        self.construction.iter_mut().find(|entity| entity.id == id)
+    }
+
+    /// Guides that are currently painted.
+    pub fn visible_construction(&self) -> impl Iterator<Item = &ConstructionEntity> {
+        self.construction.iter().filter(|entity| entity.visible)
+    }
+
+    pub fn construction_count(&self) -> usize {
+        self.construction.len()
     }
 
     pub fn openings_on(&self, wall: WallId) -> impl Iterator<Item = &Opening> {
@@ -111,6 +225,7 @@ impl Level {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::construction::ConstructionKind;
     use crate::dimension::{Dimension, DimensionKind};
     use crate::geom::Point2;
 
@@ -195,6 +310,11 @@ mod tests {
         let level: Level = serde_json::from_str(json).expect("old level");
         assert!(level.dimensions.is_empty());
         assert!(level.labels.is_empty());
+        assert!(
+            level.layers.is_empty(),
+            "the loader migrates the default layer"
+        );
+        assert!(level.construction.is_empty());
     }
 
     #[test]
@@ -223,6 +343,113 @@ mod tests {
         let json = serde_json::to_string(&level).expect("serialize");
         let back: Level = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back.labels, level.labels);
+        assert_eq!(back, level);
+    }
+
+    #[test]
+    fn a_new_level_has_the_default_layer() {
+        let level = Level::new(LevelId(1), "Level 0", 0.0);
+        assert_eq!(level.layers.len(), 1);
+        let layer = level.layer(LayerId::DEFAULT).expect("default layer");
+        assert_eq!(layer.name, "0");
+        assert!(layer.is_default());
+    }
+
+    #[test]
+    fn layers_are_found_by_id_and_name() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.layers.push(Layer::new(LayerId(2), "Walls"));
+        assert!(level.layer(LayerId(2)).is_some());
+        assert_eq!(level.layer_by_name("walls").map(|l| l.id), Some(LayerId(2)));
+        assert!(level.layer_by_name("missing").is_none());
+        level.layer_mut(LayerId(2)).expect("layer").visible = false;
+        assert!(!level.layer(LayerId(2)).expect("layer").visible);
+    }
+
+    #[test]
+    fn an_entity_can_move_layer_and_both_copies_follow() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let wall_id = WallId(2);
+        level.walls.push(Wall::new(
+            wall_id,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            200.0,
+            2800.0,
+        ));
+        let selector = EntitySelector::Wall(wall_id);
+        assert_eq!(level.entity_layer(selector), Some(LayerId::DEFAULT));
+        assert!(level.set_entity_layer(selector, LayerId(5)));
+        assert_eq!(level.entity_layer(selector), Some(LayerId(5)));
+        assert_eq!(
+            level.entity_style(selector).map(|style| style.layer_id),
+            Some(LayerId(5))
+        );
+        assert!(!level.set_entity_layer(EntitySelector::Wall(WallId(99)), LayerId(5)));
+    }
+
+    #[test]
+    fn entity_counts_are_per_layer() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.layers.push(Layer::new(LayerId(2), "Walls"));
+        level.walls.push(
+            Wall::new(
+                WallId(3),
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                200.0,
+                2800.0,
+            )
+            .on_layer(LayerId(2)),
+        );
+        level.labels.push(
+            PlanLabel::new(LabelId(4), Point2::new(100.0, 100.0), "Hall").on_layer(LayerId(2)),
+        );
+        assert_eq!(level.entity_count_on_layer(LayerId(2)), 2);
+        assert_eq!(level.entity_count_on_layer(LayerId::DEFAULT), 0);
+    }
+
+    #[test]
+    fn construction_guides_are_found_and_filtered_by_visibility() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.construction.push(ConstructionEntity::new(
+            ConstructionId(2),
+            ConstructionKind::Line {
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(1000.0, 0.0),
+            },
+        ));
+        level.construction.push(ConstructionEntity::new(
+            ConstructionId(3),
+            ConstructionKind::Circle {
+                center: Point2::new(500.0, 500.0),
+                radius: 100.0,
+            },
+        ));
+        level
+            .construction_mut(ConstructionId(3))
+            .expect("guide")
+            .visible = false;
+
+        assert_eq!(level.construction_count(), 2);
+        assert!(level.construction_entity(ConstructionId(2)).is_some());
+        assert_eq!(level.visible_construction().count(), 1);
+        assert!(level.construction_entity(ConstructionId(9)).is_none());
+    }
+
+    #[test]
+    fn layers_and_guides_survive_a_save_and_load() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.layers.push(Layer::new(LayerId(2), "Walls"));
+        level.construction.push(ConstructionEntity::new(
+            ConstructionId(3),
+            ConstructionKind::Ray {
+                origin: Point2::ORIGIN,
+                direction: crate::geom::Vec2::new(1.0, 0.0),
+            },
+        ));
+        let json = serde_json::to_string(&level).expect("serialize");
+        let back: Level = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, level);
     }
 }
