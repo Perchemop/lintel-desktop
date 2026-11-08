@@ -313,10 +313,9 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             lineweight_mm,
         } => create_layer(project, name, color, linetype, lineweight_mm),
         Command::DeleteLayer { layer_id } => delete_layer(project, layer_id),
-        Command::SetLayerProperty {
-            layer_id,
-            property,
-        } => set_layer_property(project, layer_id, property),
+        Command::SetLayerProperty { layer_id, property } => {
+            set_layer_property(project, layer_id, property)
+        }
         Command::AssignEntityToLayer { entity, layer_id } => {
             assign_entity_to_layer(project, entity, layer_id)
         }
@@ -822,7 +821,9 @@ fn set_layer_property(
     }
 
     if !candidate.is_valid() {
-        return Err(CoreError::invalid("that change would leave the layer unusable"));
+        return Err(CoreError::invalid(
+            "that change would leave the layer unusable",
+        ));
     }
 
     let level = active_level_mut(project)?;
