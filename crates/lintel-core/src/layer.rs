@@ -507,8 +507,7 @@ mod tests {
 
     #[test]
     fn an_entity_style_validates_its_overrides() {
-        let mut style = EntityStyle::default();
-        style.transparency = 1.0;
+        let mut style = EntityStyle { transparency: 1.0, ..Default::default() };
         assert!(style.is_valid());
         style.transparency = 1.5;
         assert!(!style.is_valid());
