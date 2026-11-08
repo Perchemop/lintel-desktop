@@ -64,7 +64,7 @@ pub fn inspector(
                     opening.height
                 ));
                 ui.separator();
-                opening_fields(ui, doc, *id, &opening)
+                opening_fields(ui, doc, id, &opening)
             }
             Some(EntityId::Dimension(id)) => {
                 let dimension = {
