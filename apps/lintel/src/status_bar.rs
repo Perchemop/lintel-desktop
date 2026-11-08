@@ -16,11 +16,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         // Coordinate readout (bottom-left of the bar, first thing the eye
         // lands on when checking a point), with the snap that is winning.
         let units = app.doc.project().units;
-        let coord_text = match app
-            .last_snap
-            .map(|snap| snap.point)
-            .or(app.pointer_world)
-        {
+        let coord_text = match app.last_snap.map(|snap| snap.point).or(app.pointer_world) {
             Some(p) => format!("X: {}   Y: {}", units.format(p.x), units.format(p.y)),
             None => "X: —   Y: —".to_string(),
         };

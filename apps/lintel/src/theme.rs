@@ -43,4 +43,3 @@ pub const STATUS_BG: Color32 = Color32::from_rgb(239, 232, 220);
 pub fn selection_stroke() -> egui::Stroke {
     egui::Stroke::new(2.0, COBALT)
 }
-
