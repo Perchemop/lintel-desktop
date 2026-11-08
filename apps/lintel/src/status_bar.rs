@@ -16,11 +16,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         let coord_text = match app.pointer_world {
             Some(p) => {
                 let units = app.doc.project().units;
-                format!(
-                    "X: {}   Y: {}",
-                    units.format(p.x),
-                    units.format(p.y)
-                )
+                format!("X: {}   Y: {}", units.format(p.x), units.format(p.y))
             }
             None => "X: —   Y: —".to_string(),
         };
