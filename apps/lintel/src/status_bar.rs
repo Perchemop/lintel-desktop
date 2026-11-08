@@ -26,7 +26,11 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             Some(kind) => format!("Snap: {}", kind.label()),
         };
         ui.separator();
-        ui.label(egui::RichText::new(snap_text).small().color(egui::Color32::GRAY));
+        ui.label(
+            egui::RichText::new(snap_text)
+                .small()
+                .color(egui::Color32::GRAY),
+        );
         ui.separator();
 
         // Active tool name.
