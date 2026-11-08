@@ -82,18 +82,10 @@ impl Project {
                 Self::sync_entity_layer(&mut wall.layer_id, &mut wall.style.layer_id, &known);
             }
             for opening in &mut level.openings {
-                Self::sync_entity_layer(
-                    &mut opening.layer_id,
-                    &mut opening.style.layer_id,
-                    &known,
-                );
+                Self::sync_entity_layer(&mut opening.layer_id, &mut opening.style.layer_id, &known);
             }
             for dimension in &mut level.dimensions {
-                Self::sync_entity_layer(
-                    &mut dimension.layer_id,
-                    &mut dimension.style.layer_id,
-                    &known,
-                );
+                Self::sync_entity_layer(&mut dimension.layer_id, &mut dimension.style.layer_id, &known);
             }
             for label in &mut level.labels {
                 Self::sync_entity_layer(&mut label.layer_id, &mut label.style.layer_id, &known);
