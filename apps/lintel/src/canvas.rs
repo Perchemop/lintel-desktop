@@ -1437,13 +1437,11 @@ mod tests {
             Point2::new(3000.0, 0.0),
             500.0,
         ));
-        level
-            .labels
-            .push(PlanLabel::new(
-                LabelId(4),
-                Point2::new(1000.0, 1000.0),
-                "Hall",
-            ));
+        level.labels.push(PlanLabel::new(
+            LabelId(4),
+            Point2::new(1000.0, 1000.0),
+            "Hall",
+        ));
         level.construction.push(ConstructionEntity::new(
             ConstructionId(5),
             ConstructionKind::Line {
