@@ -85,9 +85,18 @@ impl Rgb {
 pub enum Linetype {
     #[default]
     Continuous,
-    Dashed { dash: f64, gap: f64 },
-    Hidden { dash: f64, gap: f64 },
-    Center { dash: f64, gap: f64 },
+    Dashed {
+        dash: f64,
+        gap: f64,
+    },
+    Hidden {
+        dash: f64,
+        gap: f64,
+    },
+    Center {
+        dash: f64,
+        gap: f64,
+    },
 }
 
 impl Linetype {
