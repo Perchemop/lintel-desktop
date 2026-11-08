@@ -578,7 +578,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
                     selected_rect = Some(response.rect);
                 }
                 if response.clicked() {
-                    clicked = Some(*row);
+                    clicked = Some(row.clone());
                 } else if response.hovered() {
                     app.palette.selected = index;
                 }
