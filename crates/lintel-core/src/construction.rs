@@ -347,7 +347,14 @@ mod tests {
             direction: Vec2::new(1.0, 0.0),
         };
         assert!(!kind.is_bounded());
-        assert!((kind.distance_to(Point2::new(5000.0, 3.0)).expect("distance") - 3.0).abs() < 1e-9);
+        assert!(
+            (kind
+                .distance_to(Point2::new(5000.0, 3.0))
+                .expect("distance")
+                - 3.0)
+            .abs()
+            < 1e-9
+        );
         // The direction need not be a unit vector.
         let scaled = ConstructionKind::InfiniteLine {
             point: Point2::new(0.0, 0.0),
