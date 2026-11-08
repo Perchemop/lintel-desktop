@@ -3,8 +3,8 @@
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
 use crate::canvas::{
-    Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes,
-    View, entity_of, resolve_snap, screen_to_world,
+    Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View,
+    entity_of, resolve_snap, screen_to_world,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
