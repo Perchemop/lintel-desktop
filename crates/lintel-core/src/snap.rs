@@ -580,7 +580,9 @@ mod tests {
     fn candidates_include_wall_ends_midpoints_and_intersections() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
         level.walls.push(wall(1, (0.0, 0.0), (4000.0, 0.0)));
-        level.walls.push(wall(2, (1000.0, -2000.0), (1000.0, 2000.0)));
+        level
+            .walls
+            .push(wall(2, (1000.0, -2000.0), (1000.0, 2000.0)));
         let candidates = generate_snap_candidates(&level, &settings());
         let points: Vec<(Point2, SnapCandidateKind)> =
             candidates.iter().map(|c| (c.point, c.kind)).collect();
