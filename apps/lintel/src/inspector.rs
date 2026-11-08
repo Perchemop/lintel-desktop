@@ -283,7 +283,6 @@ pub fn inspector(
                                 ));
                                 ui.separator();
                             }
-                        }
                     }
                 }
 
