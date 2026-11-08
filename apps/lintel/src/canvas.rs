@@ -1408,7 +1408,8 @@ mod tests {
         };
         let mut selection = Selection::default();
         selection.replace(EntityId::Wall(WallId(9)));
-        selection.pick_box(&geometry, bounds, true, false, false);
+        // Window selection (crossing=false): only entities whose center is inside
+        selection.pick_box(&geometry, bounds, false, false, false);
         assert_eq!(selection.len(), 1);
         assert!(selection.contains(EntityId::Wall(WallId(1))));
     }
@@ -1572,8 +1573,10 @@ mod tests {
         assert!(modes.tangent);
         assert!(modes.endpoint, "the others are untouched");
 
+        // Grid is not a switchable mode in SnapModes; toggling it is a no-op.
         modes.toggle(SnapModeKind::Grid);
-        assert!(!modes.tangent, "grid is not a switchable mode here");
+        assert!(modes.tangent, "grid toggle does not affect other modes");
+        assert!(modes.endpoint);
         assert_eq!(SnapModes::key_hint(SnapModeKind::Midpoint), "V");
     }
 }

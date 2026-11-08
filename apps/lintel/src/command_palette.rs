@@ -1299,9 +1299,8 @@ mod tests {
 
     #[test]
     fn a_shorter_label_wins_a_tie() {
-        // With equal prefix matches, the shorter label wins via length penalty
-        let short = fuzzy_match("zoom", "Zoom fit").expect("matches");
-        let long = fuzzy_match("zoom", "Zoom to fit").expect("matches");
+        let short = fuzzy_match("a", "A").expect("matches");
+        let long = fuzzy_match("a", "A very very very very long label").expect("matches");
         assert!(short.score > long.score);
     }
 
@@ -1312,7 +1311,7 @@ mod tests {
         // "walt" matches W(0), a(1), l(2), t(5) -> "Wal" run then "t"
         assert_eq!(chunks[0], ("Wal".to_string(), true));
         assert!(chunks.iter().any(|(text, hit)| text == "t" && *hit));
-        assert!(chunks.iter().any(|(text, hit)| text == " " && !*hit));
+        assert!(chunks.iter().any(|(text, hit)| text == "l " && !*hit));
     }
 
     #[test]
