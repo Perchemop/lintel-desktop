@@ -1621,11 +1621,8 @@ mod tests {
         )
         .expect("assign wall");
 
-        let error = apply_command(
-            &mut project,
-            Command::DeleteLayer { layer_id: layer },
-        )
-        .expect_err("layer in use");
+        let error = apply_command(&mut project, Command::DeleteLayer { layer_id: layer })
+            .expect_err("layer in use");
         assert!(matches!(error, CoreError::LayerInUse(_)));
 
         apply_command(
