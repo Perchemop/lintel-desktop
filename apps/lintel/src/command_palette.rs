@@ -136,7 +136,7 @@ pub enum PaletteAction {
 
 impl PaletteAction {
     /// Every action, in category order.
-    pub const ALL: [PaletteAction; 37] = [
+    pub const ALL: [PaletteAction; 40] = [
         PaletteAction::SelectTool,
         PaletteAction::WallTool,
         PaletteAction::DoorTool,
@@ -446,7 +446,7 @@ fn highlight_chunks(label: &str, hits: &[usize]) -> Vec<(String, bool)> {
 }
 
 /// One row of the palette.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct Row {
     action: PaletteAction,
     recent: bool,

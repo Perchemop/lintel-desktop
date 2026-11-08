@@ -41,7 +41,7 @@ pub fn inspector(
             Some(EntityId::Wall(id)) => {
                 let wall = {
                     let level = doc.project().active_level().expect("level");
-                    level.wall(*id).expect("wall").clone()
+                    level.wall(id).expect("wall").clone()
                 };
                 ui.label(format!(
                     "Wall {} — {:.0} mm long",
@@ -49,12 +49,12 @@ pub fn inspector(
                     wall.length()
                 ));
                 ui.separator();
-                wall_fields(ui, *id, &wall)
+                wall_fields(ui, id, &wall)
             }
             Some(EntityId::Opening(id)) => {
                 let opening = {
                     let level = doc.project().active_level().expect("level");
-                    level.opening(*id).expect("opening").clone()
+                    level.opening(id).expect("opening").clone()
                 };
                 ui.label(format!(
                     "{} {} — {:.0} × {:.0} mm",
@@ -69,7 +69,7 @@ pub fn inspector(
             Some(EntityId::Dimension(id)) => {
                 let dimension = {
                     let level = doc.project().active_level().expect("level");
-                    level.dimension(*id).expect("dimension").clone()
+                    level.dimension(id).expect("dimension").clone()
                 };
                 ui.label(format!(
                     "{} {} — {:.0} mm",
@@ -78,12 +78,12 @@ pub fn inspector(
                     dimension.length()
                 ));
                 ui.separator();
-                dimension_fields(ui, *id, &dimension)
+                dimension_fields(ui, id, &dimension)
             }
             Some(EntityId::Label(id)) => {
                 let label = {
                     let level = doc.project().active_level().expect("level");
-                    level.label(*id).expect("label").clone()
+                    level.label(id).expect("label").clone()
                 };
                 let truncated = if label.text.chars().count() > 20 {
                     format!("{}…", label.text.chars().take(20).collect::<String>())
@@ -92,7 +92,7 @@ pub fn inspector(
                 };
                 ui.label(format!("Label {} — {}", id.value(), truncated));
                 ui.separator();
-                label_fields(ui, *id, &label)
+                label_fields(ui, id, &label)
             }
             Some(EntityId::Construction(id)) => {
                 // A construction guide is a helper, not the building: there is
@@ -101,7 +101,7 @@ pub fn inspector(
                 let kind = doc
                     .project()
                     .active_level()
-                    .and_then(|level| level.construction_entity(*id))
+                    .and_then(|level| level.construction_entity(id))
                     .map(|guide| guide.kind.label());
                 ui.label(format!(
                     "Construction guide {} — {}",
@@ -286,7 +286,7 @@ pub fn inspector(
                 // Selected room (if the current selection sits inside one).
                 if let Some(EntityId::Wall(wall_id)) = selected {
                     let level = project.active_level().expect("level");
-                    if let Some(wall) = level.wall(*wall_id) {
+                    if let Some(wall) = level.wall(wall_id) {
                         let mid = lintel_core::geom::Point2::new(
                             (wall.start.x + wall.end.x) * 0.5,
                             (wall.start.y + wall.end.y) * 0.5,

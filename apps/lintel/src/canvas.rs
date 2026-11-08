@@ -916,10 +916,12 @@ fn paint_construction(
     let stroke = egui::Stroke::new(1.0, CONSTRUCTION_STROKE);
     let kind = guide.kind.clone();
     match kind {
-        ConstructionKind::Line { start, end } => painter.line_segment(
-            [world_to_screen(view, rect, start), world_to_screen(view, rect, end)],
-            stroke,
-        ),
+        ConstructionKind::Line { start, end } => {
+            painter.line_segment(
+                [world_to_screen(view, rect, start), world_to_screen(view, rect, end)],
+                stroke,
+            );
+        }
         ConstructionKind::InfiniteLine { point, direction } => {
             let step = direction.normalized().scaled(GUIDE_EXTENT_MM);
             painter.line_segment(

@@ -66,7 +66,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
                 SnapModes::label(kind),
                 active,
                 kind.colour(),
-                hint,
+                &hint,
                 || app.snap_modes.toggle(kind),
             );
         }
@@ -122,7 +122,7 @@ fn chip(
     label: &str,
     active: bool,
     active_colour: egui::Color32,
-    hint: String,
+    hint: &str,
     toggle: impl FnOnce(),
 ) {
     let text = egui::RichText::new(label).small().color(if active {
