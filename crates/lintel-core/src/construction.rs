@@ -87,9 +87,7 @@ impl ConstructionKind {
                     && direction.length_sq() > f64::EPSILON
             }
             ConstructionKind::Circle { center, radius } => {
-                (*center).is_finite()
-                    && radius.is_finite()
-                    && *radius >= MIN_CONSTRUCTION_RADIUS
+                (*center).is_finite() && radius.is_finite() && *radius >= MIN_CONSTRUCTION_RADIUS
             }
             ConstructionKind::Arc {
                 center,
@@ -174,7 +172,10 @@ impl ConstructionKind {
             ConstructionKind::Line { start, end } => {
                 Some(point_segment_distance(point, *start, *end))
             }
-            ConstructionKind::InfiniteLine { point: on, direction } => {
+            ConstructionKind::InfiniteLine {
+                point: on,
+                direction,
+            } => {
                 let unit = direction.normalized();
                 Some((point - *on).cross(unit).abs())
             }
