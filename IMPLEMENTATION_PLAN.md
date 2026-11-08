@@ -13,7 +13,44 @@ Each release is a vertical slice:
 3. UI wiring: canvas, inspector, menus, keyboard shortcuts.
 4. CI green → PR → merge → release.
 
-## Active Slice — v0.11.0 “Measurements”
+## Active Slice — v0.11.1 “Phase A continued: Snapping + Selection + Command Palette”
+
+**Status:** In Progress — starting (0%).
+
+**Core**
+- `crates/lintel-core/src/snap.rs` — extend snapping from endpoints to midpoint,
+  intersection, perpendicular, tangent and quadrant candidates, with an explicit
+  candidate-kind priority order.
+- `crates/lintel-core/src/selection.rs` (new) — `select_by_window` for window,
+  crossing and fence modes with add/remove sets, plus an entity-type and layer
+  filter; pure and headless.
+- `crates/lintel-core/src/lib.rs` — re-export the selection API.
+- Foundation already on the branch (part of this slice): `layer.rs`,
+  `construction.rs` and `apps/lintel/src/status_bar.rs`.
+
+**UI**
+- `apps/lintel/src/command_palette.rs` (new) — Ctrl+K palette: fuzzy match over
+  the command registry, keyboard navigation and a recent-commands list.
+- `apps/lintel/src/canvas.rs` — on-canvas snap indicators per candidate kind; the
+  window/crossing/fence selection rectangle.
+- `apps/lintel/src/main.rs` — wire Ctrl+K, the palette, the selection modes and
+  the snap-indicator toggle.
+
+**Tests**
+- `crates/lintel-core/src/snap.rs` tests — candidate generation and priority
+  ordering.
+- `crates/lintel-core/src/selection.rs` tests — window vs crossing vs fence,
+  add/remove sets, and entity-type/layer filters.
+
+**Release gate**
+- [ ] Bump `apps/lintel/Cargo.toml` (and the core) to 0.11.1
+- [ ] CI green: formatting, clippy, build and tests
+- [ ] PR merged to `main`
+- [ ] Tag `v0.11.1` and publish the GitHub Release with signed artefacts and
+      `SHA256SUMS.txt.asc`
+- [ ] `docs/tokens.json` updated by CI and quoted in the release notes
+
+## Awaiting Release — v0.11.0 “Measurements”
 
 **Status:** In Progress — feature code is on `main`; release pending.
 
@@ -79,41 +116,10 @@ Each release is a vertical slice:
 
 ## Next Slices
 
-### v0.11.1 “Phase A: Table Stakes (Layers + Construction Geometry)”
-**Status:** Planned. Design source: `ELITE_CAD_RESEARCH_SUMMARY.md`,
-`DOMAIN_INVESTIGATION_ELITE_CAD.md`, `DOMAIN_DESIGN_SKETCHES.md`,
-`docs/research/elite-ui-investigation.md`.
-
-**Core**
-- `crates/lintel-core/src/layer.rs` — `Layer`, `LayerId`, `Linetype`; protected
-  default layer.
-- `crates/lintel-core/src/style.rs` — `EntityStyle` with `layer_id` and style
-  overrides on every entity; `#[serde(default)]` migration and default-layer
-  assignment on load.
-- `crates/lintel-core/src/construction.rs` — `ConstructionEntity`,
-  `ConstructionKind` (line, ray, circle); excluded from PDF, included as snap
-  candidates.
-- `crates/lintel-core/src/snap.rs` — `SnapCandidateKind` gains midpoint,
-  intersection and perpendicular; `SnapSource` and the priority order are the
-  foundation for v0.12.0 wiring.
-- `crates/lintel-core/src/project.rs` — validation for layer references and
-  construction entities.
-
-**UI**
-- Right dock: Layers palette (create, delete, visibility, lock, assign
-  selection).
-- Construction tools on the tool palette; construction geometry drawn in a
-  distinct non-printing style.
-- Persistent status bar: cursor coordinates, snap/ortho/grid chips, zoom %.
-- Shell restructure into docked panels, the prerequisite identified in the UI
-  investigation.
-
-**Gate:** headless tests for layer migration, construction/PDF filtering and
-snap candidates; CI green; signed release with `SHA256SUMS.txt` and
-`docs/tokens.json` updated.
-
 ### v0.12.0 “Phase A continued (Snapping + Selection + Command Palette)”
-**Status:** Planned.
+**Status:** Planned — being re-scoped; the snapping, selection and
+command-palette work below is now the v0.11.1 active slice, leaving the
+constraint-dimension foundation here.
 
 **Core**
 - Entity snapping generation for midpoint, intersection and perpendicular
@@ -141,9 +147,9 @@ release with `SHA256SUMS.txt` and `docs/tokens.json` updated.
 
 ## Dependencies
 - **Layers and construction geometry are prerequisites for enhanced snapping.**
-  v0.11.1 must land the layer model (stable entity ownership/style) and the
-  construction entities that snapping consumes before v0.12.0 wires midpoint,
-  intersection and perpendicular snapping.
+  The core layer model and construction entities landed as the Phase A
+  foundation; the v0.11.1 active slice (CAP-094) builds the enhanced snapping on
+  top of them. The layers/construction UI wiring is still outstanding.
 - `DimensionAnchor` must preserve JSON compatibility: earlier files load with
   `DimensionAnchor::Free`; save-time upgrading is heuristic only.
 - `crates/update-check` and `crates/crash-report` are now git submodules
