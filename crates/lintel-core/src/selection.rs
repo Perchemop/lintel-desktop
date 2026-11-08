@@ -65,14 +65,9 @@ pub enum SelectionMode {
     /// A rectangular window. With `crossing` false only entities whose centre
     /// falls inside are picked; with `crossing` true anything the window
     /// touches is picked as well.
-    Window {
-        bounds: Bounds,
-        crossing: bool,
-    },
+    Window { bounds: Bounds, crossing: bool },
     /// A free polyline; anything it crosses is picked.
-    Fence {
-        points: Vec<Point2>,
-    },
+    Fence { points: Vec<Point2> },
     /// Everything the filter allows.
     #[default]
     All,
