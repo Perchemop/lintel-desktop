@@ -339,10 +339,7 @@ impl LintelApp {
         match lintel_core::pdf::render_set(self.doc.project(), &self.export_spec, now) {
             Ok(bytes) => {
                 if let Err(e) = std::fs::write(&path, &bytes) {
-                    self.note_status(
-                        format!("Could not write {}: {e}", path.display()),
-                        now,
-                    );
+                    self.note_status(format!("Could not write {}: {e}", path.display()), now);
                 }
             }
             Err(e) => self.note_status(format!("Could not export the PDF: {e}"), now),
@@ -856,8 +853,7 @@ impl LintelApp {
                             let dir = host.direction();
                             let progress = ((delta.x as f64) * dir.x - (delta.y as f64) * dir.y)
                                 / self.view.px_per_mm as f64;
-                            let new_offset =
-                                (opening.offset + progress).clamp(0.0, host.length());
+                            let new_offset = (opening.offset + progress).clamp(0.0, host.length());
                             let _ = self.doc.apply(
                                 Command::MoveOpening {
                                     id,
@@ -1173,15 +1169,14 @@ impl LintelApp {
             _ => unreachable!("openings only come from the door or window tool"),
         };
         let wall = geometry.wall(host).expect("host wall");
-        let offset = wall.wall.start.distance(world).clamp(0.0, wall.wall.length());
-        let _ = self.doc.apply(
-            Command::PlaceOpening {
-                kind,
-                host,
-                offset,
-            },
-            now,
-        );
+        let offset = wall
+            .wall
+            .start
+            .distance(world)
+            .clamp(0.0, wall.wall.length());
+        let _ = self
+            .doc
+            .apply(Command::PlaceOpening { kind, host, offset }, now);
         self.selection.replace(EntityId::Wall(host));
         self.draft = Draft::default();
     }

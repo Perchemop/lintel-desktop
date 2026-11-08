@@ -490,7 +490,10 @@ fn straight_guides(geometry: &PlanGeometry) -> Vec<(Point2, Point2)> {
                 guides.push((point - step, point + step));
             }
             ConstructionKind::Ray { origin, direction } => {
-                guides.push((origin, origin + direction.normalized().scaled(GUIDE_EXTENT_MM)));
+                guides.push((
+                    origin,
+                    origin + direction.normalized().scaled(GUIDE_EXTENT_MM),
+                ));
             }
             ConstructionKind::Circle { .. } | ConstructionKind::Arc { .. } => {}
         }
@@ -918,7 +921,10 @@ fn paint_construction(
     match kind {
         ConstructionKind::Line { start, end } => {
             painter.line_segment(
-                [world_to_screen(view, rect, start), world_to_screen(view, rect, end)],
+                [
+                    world_to_screen(view, rect, start),
+                    world_to_screen(view, rect, end),
+                ],
                 stroke,
             );
         }
@@ -935,7 +941,10 @@ fn paint_construction(
         ConstructionKind::Ray { origin, direction } => {
             let far = origin + direction.normalized().scaled(GUIDE_EXTENT_MM);
             painter.line_segment(
-                [world_to_screen(view, rect, origin), world_to_screen(view, rect, far)],
+                [
+                    world_to_screen(view, rect, origin),
+                    world_to_screen(view, rect, far),
+                ],
                 stroke,
             );
         }
@@ -1229,7 +1238,9 @@ mod tests {
         let mut level = level();
         // A wall whose midpoint is exactly the other wall's end.
         level.walls.push(wall(1, (0.0, 0.0), (4000.0, 0.0)));
-        level.walls.push(wall(2, (4000.0, -2000.0), (4000.0, 2000.0)));
+        level
+            .walls
+            .push(wall(2, (4000.0, -2000.0), (4000.0, 2000.0)));
         let geometry = PlanGeometry::of_level(&level);
         let resolved = resolve_snap(
             Point2::new(4000.0, 0.0),
@@ -1428,7 +1439,11 @@ mod tests {
         ));
         level
             .labels
-            .push(PlanLabel::new(LabelId(4), Point2::new(1000.0, 1000.0), "Hall"));
+            .push(PlanLabel::new(
+                LabelId(4),
+                Point2::new(1000.0, 1000.0),
+                "Hall",
+            ));
         level.construction.push(ConstructionEntity::new(
             ConstructionId(5),
             ConstructionKind::Line {
@@ -1440,7 +1455,11 @@ mod tests {
 
         let mut selection = Selection::default();
         selection.pick_all(&geometry);
-        assert_eq!(selection.len(), 5, "walls, opening, dimension, label, guide");
+        assert_eq!(
+            selection.len(),
+            5,
+            "walls, opening, dimension, label, guide"
+        );
         assert!(selection.contains(EntityId::Opening(OpeningId(2))));
         assert!(selection.contains(EntityId::Label(LabelId(4))));
     }
@@ -1460,7 +1479,11 @@ mod tests {
 
         selection.toggle(EntityId::Wall(WallId(1)));
         assert_eq!(selection.len(), 2);
-        assert_eq!(selection.primary(), Some(EntityId::Wall(WallId(1))), "newest last");
+        assert_eq!(
+            selection.primary(),
+            Some(EntityId::Wall(WallId(1))),
+            "newest last"
+        );
 
         selection.toggle(EntityId::Wall(WallId(1)));
         assert_eq!(selection.len(), 1);
@@ -1486,7 +1509,10 @@ mod tests {
 
         selection.replace(EntityId::Wall(WallId(2)));
         selection.set_from_hit(Some(Hit::Dimension(DimensionId(9))));
-        assert_eq!(selection.primary(), Some(EntityId::Dimension(DimensionId(9))));
+        assert_eq!(
+            selection.primary(),
+            Some(EntityId::Dimension(DimensionId(9)))
+        );
     }
 
     #[test]
@@ -1500,7 +1526,10 @@ mod tests {
             entity_of(Hit::Dimension(DimensionId(3))),
             EntityId::Dimension(DimensionId(3))
         );
-        assert_eq!(entity_of(Hit::Label(LabelId(4))), EntityId::Label(LabelId(4)));
+        assert_eq!(
+            entity_of(Hit::Label(LabelId(4))),
+            EntityId::Label(LabelId(4))
+        );
     }
 
     #[test]

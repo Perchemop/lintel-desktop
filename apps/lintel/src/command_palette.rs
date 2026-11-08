@@ -296,7 +296,8 @@ impl PaletteAction {
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
-            PaletteAction::ShowAbout | PaletteAction::ShowReleaseNotes
+            PaletteAction::ShowAbout
+            | PaletteAction::ShowReleaseNotes
             | PaletteAction::CheckForUpdates => "Help",
         }
     }
@@ -458,11 +459,7 @@ struct Row {
 
 /// The rows to show: recent commands first while the query is empty, then every
 /// command the query matches, best match first.
-fn visible_rows(
-    palette: &CommandPalette,
-    doc: &Document,
-    selection: &Selection,
-) -> Vec<Row> {
+fn visible_rows(palette: &CommandPalette, doc: &Document, selection: &Selection) -> Vec<Row> {
     let mut rows: Vec<Row> = Vec::new();
     if palette.query.trim().is_empty() {
         for action in palette.recent_newest_first() {
@@ -1338,4 +1335,3 @@ mod tests {
         assert_eq!(labels.len(), PaletteAction::ALL.len(), "labels are unique");
     }
 }
-
