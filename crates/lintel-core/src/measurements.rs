@@ -36,6 +36,12 @@ impl LevelTotals {
     }
 }
 
+impl Default for LevelTotals {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Totals aggregated over the entire project.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct ProjectTotals {
