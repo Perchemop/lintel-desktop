@@ -63,6 +63,12 @@ impl ProjectTotals {
     }
 }
 
+impl Default for ProjectTotals {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Headless queries for measurement data.
 ///
 /// The model is always millimetres. Formatting for display is handled by the
