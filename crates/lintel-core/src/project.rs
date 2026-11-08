@@ -79,24 +79,24 @@ impl Project {
             let known: Vec<LayerId> = level.layers.iter().map(|layer| layer.id).collect();
 
             for wall in &mut level.walls {
-                sync_entity_layer(&mut wall.layer_id, &mut wall.style.layer_id, &known);
+                Self::sync_entity_layer(&mut wall.layer_id, &mut wall.style.layer_id, &known);
             }
             for opening in &mut level.openings {
-                sync_entity_layer(
+                Self::sync_entity_layer(
                     &mut opening.layer_id,
                     &mut opening.style.layer_id,
                     &known,
                 );
             }
             for dimension in &mut level.dimensions {
-                sync_entity_layer(
+                Self::sync_entity_layer(
                     &mut dimension.layer_id,
                     &mut dimension.style.layer_id,
                     &known,
                 );
             }
             for label in &mut level.labels {
-                sync_entity_layer(&mut label.layer_id, &mut label.style.layer_id, &known);
+                Self::sync_entity_layer(&mut label.layer_id, &mut label.style.layer_id, &known);
             }
         }
     }

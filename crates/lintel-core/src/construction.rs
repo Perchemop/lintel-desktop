@@ -78,16 +78,16 @@ impl ConstructionKind {
     pub fn is_valid(&self) -> bool {
         match self {
             ConstructionKind::Line { start, end } => {
-                start.is_finite() && end.is_finite() && start.distance(end) > 0.0
+                (*start).is_finite() && (*end).is_finite() && (*start).distance(*end) > 0.0
             }
             ConstructionKind::InfiniteLine { point, direction }
             | ConstructionKind::Ray { origin: point, direction } => {
-                point.is_finite()
+                (*point).is_finite()
                     && direction.is_finite()
                     && direction.length_sq() > f64::EPSILON
             }
             ConstructionKind::Circle { center, radius } => {
-                center.is_finite()
+                (*center).is_finite()
                     && radius.is_finite()
                     && *radius >= MIN_CONSTRUCTION_RADIUS
             }
@@ -97,7 +97,7 @@ impl ConstructionKind {
                 start_deg,
                 end_deg,
             } => {
-                center.is_finite()
+                (*center).is_finite()
                     && radius.is_finite()
                     && *radius >= MIN_CONSTRUCTION_RADIUS
                     && start_deg.is_finite()
