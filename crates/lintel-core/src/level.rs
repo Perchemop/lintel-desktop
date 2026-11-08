@@ -306,7 +306,10 @@ mod tests {
         let level: Level = serde_json::from_str(json).expect("old level");
         assert!(level.dimensions.is_empty());
         assert!(level.labels.is_empty());
-        assert!(level.layers.is_empty(), "the loader migrates the default layer");
+        assert!(
+            level.layers.is_empty(),
+            "the loader migrates the default layer"
+        );
         assert!(level.construction.is_empty());
     }
 
