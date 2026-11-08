@@ -276,13 +276,13 @@ pub fn inspector(
                             && let Some(room) =
                                 rooms.iter().find(|r| probe.iter().any(|p| r.contains(*p)))
                         {
-                                ui.label(format!(
-                                    "Selected room — area {}  perimeter {}",
-                                    room.area_label(),
-                                    project.units.format(room.perimeter_mm)
-                                ));
-                                ui.separator();
-                            }
+                            ui.label(format!(
+                                "Selected room — area {}  perimeter {}",
+                                room.area_label(),
+                                project.units.format(room.perimeter_mm)
+                            ));
+                            ui.separator();
+                        }
                     }
                 }
 
