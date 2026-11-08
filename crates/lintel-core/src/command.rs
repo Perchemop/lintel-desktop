@@ -1793,20 +1793,11 @@ mod tests {
         )
         .expect("create guide");
         let id = applied.construction.expect("construction id");
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .construction_count(),
-            1
-        );
+        assert_eq!(project.active_level().expect("level").construction_count(), 1);
 
         apply_command(
             &mut project,
-            Command::SetConstructionVisible {
-                id,
-                visible: false,
-            },
+            Command::SetConstructionVisible { id, visible: false },
         )
         .expect("hide guide");
         assert!(
@@ -1827,13 +1818,7 @@ mod tests {
         );
 
         apply_command(&mut project, Command::DeleteConstruction { id }).expect("delete guide");
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .construction_count(),
-            0
-        );
+        assert_eq!(project.active_level().expect("level").construction_count(), 0);
         let error = apply_command(&mut project, Command::DeleteConstruction { id })
             .expect_err("already gone");
         assert!(matches!(error, CoreError::ConstructionNotFound(_)));
