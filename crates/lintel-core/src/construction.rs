@@ -219,13 +219,9 @@ impl ConstructionKind {
         match self {
             ConstructionKind::Line { start, end } => Some(vec![*start, *end]),
             ConstructionKind::InfiniteLine { .. } | ConstructionKind::Ray { .. } => None,
-            ConstructionKind::Circle { center, radius } => Some(arc_points(
-                *center,
-                *radius,
-                0.0,
-                360.0,
-                segments.max(3),
-            )),
+            ConstructionKind::Circle { center, radius } => {
+                Some(arc_points(*center, *radius, 0.0, 360.0, segments.max(3)))
+            }
             ConstructionKind::Arc {
                 center,
                 radius,
@@ -352,8 +348,8 @@ mod tests {
                 .distance_to(Point2::new(5000.0, 3.0))
                 .expect("distance")
                 - 3.0)
-            .abs()
-            < 1e-9
+                .abs()
+                < 1e-9
         );
         // The direction need not be a unit vector.
         let scaled = ConstructionKind::InfiniteLine {
