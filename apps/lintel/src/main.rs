@@ -3,8 +3,8 @@
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
 use crate::canvas::{
-    Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View,
-    entity_of, resolve_snap, screen_to_world,
+    Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, SnapReadout,
+    View, entity_of, resolve_snap, screen_to_world,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
@@ -70,7 +70,7 @@ pub struct LintelApp {
     /// The rubber-band selection drag in progress, if any.
     band: Option<SelectionBand>,
     /// What the snapper settled on this frame, for the status bar readout.
-    last_snap: Option<SnapModeKind>,
+    last_snap: Option<crate::canvas::SnapReadout>,
     draft: Draft,
     palette: CommandPalette,
     showing_about: bool,
@@ -706,7 +706,7 @@ impl eframe::App for LintelApp {
                 );
             }
             self.pointer_world = response.pointer_world;
-            self.last_snap = response.snap.map(|snap| snap.kind);
+            self.last_snap = response.snap;
             self.handle_canvas_input(ui, response, rect, now);
 
             // Status bar (bottom) with version link in the bottom-right corner

@@ -44,6 +44,3 @@ pub fn selection_stroke() -> egui::Stroke {
     egui::Stroke::new(2.0, COBALT)
 }
 
-pub fn snap_radius() -> f32 {
-    6.0
-}

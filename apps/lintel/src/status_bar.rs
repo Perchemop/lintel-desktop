@@ -16,14 +16,19 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         // Coordinate readout (bottom-left of the bar, first thing the eye
         // lands on when checking a point), with the snap that is winning.
         let units = app.doc.project().units;
-        let coord_text = match app.pointer_world {
+        let coord_text = match app
+            .last_snap
+            .map(|snap| snap.point)
+            .or(app.pointer_world)
+        {
             Some(p) => format!("X: {}   Y: {}", units.format(p.x), units.format(p.y)),
             None => "X: —   Y: —".to_string(),
         };
         ui.label(egui::RichText::new(coord_text).small());
         let snap_text = match app.last_snap {
-            Some(SnapModeKind::Free) | None => "Snap: free".to_string(),
-            Some(kind) => format!("Snap: {}", kind.label()),
+            Some(snap) if snap.kind == SnapModeKind::Free => "Snap: free".to_string(),
+            Some(snap) => format!("Snap: {}", snap.kind.label()),
+            None => "Snap: free".to_string(),
         };
         ui.separator();
         ui.label(

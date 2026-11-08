@@ -8,7 +8,7 @@
 use crate::theme;
 use eframe::egui;
 use lintel_core::construction::{ConstructionEntity, ConstructionKind};
-use lintel_core::geom::{self, Bounds, Point2, Vec2};
+use lintel_core::geom::{self, Bounds, Point2};
 use lintel_core::ids::EntityId;
 use lintel_core::join::{Hit, PlanGeometry};
 use lintel_core::selection::{SelectionFilter, SelectionMode, select};
@@ -175,11 +175,6 @@ impl Selection {
         } else {
             self.add(id);
         }
-    }
-
-    /// Replace the whole set with a pick the domain just ran.
-    pub fn set_from_pick(&mut self, picked: Vec<EntityId>) {
-        self.ids = picked;
     }
 
     pub fn set(&mut self, ids: impl IntoIterator<Item = EntityId>) {
@@ -449,9 +444,6 @@ impl SnapModes {
         }
     }
 
-    pub fn any(self) -> bool {
-        Self::KINDS.iter().any(|kind| self.enabled(*kind))
-    }
 }
 
 /// Where two segments cross, or `None` when they do not.

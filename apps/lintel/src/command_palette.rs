@@ -395,9 +395,7 @@ pub fn fuzzy_match(query: &str, target: &str) -> Option<FuzzyMatch> {
             .skip(search_from)
             .find(|(_, candidate)| *candidate == wanted)
             .map(|(index, _)| index);
-        let Some(index) = found else {
-            return None;
-        };
+        let index = found?;
         search_from = index + 1;
         hits.push(index);
 
@@ -484,7 +482,7 @@ fn visible_rows(palette: &CommandPalette, doc: &Document, selection: &Selection)
         }
     }
     // A stable sort keeps the category order for equal scores.
-    rows.sort_by(|a, b| b.score.cmp(&a.score));
+    rows.sort_by_key(|a| std::cmp::Reverse(a.score));
     rows
 }
 
@@ -848,16 +846,6 @@ impl LayerPickAction {
         }
     }
 
-    /// The palette action that opens this form.
-    fn action(self) -> PaletteAction {
-        match self {
-            LayerPickAction::Visible => PaletteAction::LayerVisible,
-            LayerPickAction::Locked => PaletteAction::LayerLocked,
-            LayerPickAction::Printable => PaletteAction::LayerPrintable,
-            LayerPickAction::Assign => PaletteAction::AssignSelectionToLayer,
-            LayerPickAction::Delete => PaletteAction::DeleteLayer,
-        }
-    }
 }
 
 impl PendingForm {
