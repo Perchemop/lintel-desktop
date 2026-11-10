@@ -3,6 +3,66 @@
      the top. Everything above the first release heading stays invisible on
      GitHub because it is an HTML comment. -->
 
+## Lintel 0.12.1 — Constraint-Driven Dimensions
+
+**Summary.** The constraint-driven dimensions milestone's alignment release. The workspace manifests move to 0.12.1 so the shipped binaries, the Windows installer metadata source and the CI token ledger agree, and this release collects the working-environment capabilities that landed on `main` between published releases — layers and construction geometry, the persistent status bar, enhanced snapping, window/crossing/fence selection with filters, and the Ctrl+K command palette.
+
+### Added
+- Phase A working environment (CAP-089–093): a layer model with a protected default layer and per-entity assignment (`layer.rs`), line/ray/circle/arc construction geometry that snaps but never prints (`construction.rs`), and a persistent status bar showing cursor coordinates, snap/ortho/grid chips, selection count and zoom % (`status_bar.rs`).
+- Enhanced entity snapping (CAP-094, CAP-098): endpoint, midpoint, intersection, perpendicular, tangent, quadrant, grid and ortho candidates resolved through an explicit priority order, with on-canvas snap indicators.
+- Selection modes (CAP-095, CAP-096): window, crossing and fence selection owned by the core (`selection.rs`), with add/remove sets and entity-type/layer filters.
+- Command palette (CAP-097): Ctrl+K opens a searchable palette with fuzzy matching, recent commands and keyboard navigation.
+
+### Changed
+- `crates/lintel-core/Cargo.toml` and `apps/lintel/Cargo.toml` now report 0.12.1 (the manifests were stale at 0.10.1 while the release ledger already recorded 0.12.1).
+
+### Fixed
+- `RELEASE_NOTES.md` gained the missing 0.11.0 and 0.12.1 sections; earlier releases in this milestone were published with the 0.10.1 section still at the top of the notes file.
+
+### Known limitations
+- The constraint-driven dimensions foundation itself (`DimensionAnchor`, witness-line gap/overrun, the constraint solver) is designed and scoped (`DOMAIN_DESIGN_SKETCHES.md` §3, IMPLEMENTATION_PLAN "Phase B") but not yet implemented; it is the next slice.
+- Screen-reader output is verified manually, not in CI.
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, and `SHA256SUMS.txt`.
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 15,000 tokens
+
+---
+## Lintel 0.11.0 — Constraint-Driven Dimensions
+
+**Summary.** The constraint-driven dimensions milestone's measurement slice: a Measurements tool that reports a selected room's area and perimeter and swaps the Inspector to live level and project totals, all shown in the project's Metric or Imperial units.
+
+### Added
+- Measurements tool (Shift+M, CAP-086): select a room and read its area and perimeter. `crates/lintel-core/src/measurements.rs` provides `Measurements`, `LevelTotals` and `ProjectTotals` — room area/perimeter, level wall and opening length totals, and project-wide aggregation.
+- Inspector → Measurements section (CAP-087): the selected room, per-level totals, a per-room list and the project totals.
+- Unit-aware area formatting (CAP-088): `format_area` honours `UnitSystem`, formatting areas consistently as m², ft² or in².
+
+### Changed
+- Area and length readouts follow the project's unit system instead of raw millimetres.
+
+### Fixed
+- Measurements inspector room detection and caching: the selected-room readout could go stale or pick the wrong room.
+- Release notes: this section restores the notes that were missing when the release was first published (the 0.10.1 section was still at the top of the file).
+
+### Known limitations
+- Rooms have no persistent identity; naming is done via plan labels anchored inside the room (unchanged from 0.9.0).
+- Screen-reader output is verified manually, not in CI.
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, and `SHA256SUMS.txt`.
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 10,000 tokens
+
+---
 ## Lintel 0.10.1 — Window icon and installer version
 
 **Summary.** The application window and taskbar now show the Lintel icon instead of the default toolkit icon, and the Windows installer metadata reports the correct version.
