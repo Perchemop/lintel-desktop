@@ -44,6 +44,14 @@ published under tag `v0.12.1`.
       published with all assets and `SHA256SUMS.txt`
 - [x] Guide §12.1 gate: `docs/tokens.json` ledger updated by CI (30,000
       cumulative after the 2026-11-10 rebuild runs)
+- [x] Signing gate (audit F3) — capability in place 2026-11-11: repo secret
+      `GPG_PRIVATE_KEY` set (project key `09960C90…E442D0FE`, `Lintel Release
+      Signing <dev@example.com>`); public key + verification guide committed in
+      `6fdcc7d` (`resources/lintel-release-signing-public.asc`,
+      `docs/release-verification.md`). Applies to releases built from now on;
+      backfilling signatures onto the already-published 0.11.0/0.12.1 artefacts
+      was declined — re-running the workflow would inflate the CI token ledger
+      further (audit F8). First signed release: v0.13.0.
 
 Phase A foundation already on the branch (core):
 
