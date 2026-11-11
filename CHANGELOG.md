@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.12.1 — 2026-11-10
+
+### Summary
+
+Phase A of the elite CAD foundation, shipped under the `v0.12.1` tag (no
+`v0.11.1` tag was cut). Enhanced snapping, richer selection, a command palette,
+layers and construction geometry turn Lintel from a drawing tool into a
+drafting tool. Rebuilt on 2026-11-10/11 with corrected version stamps after
+the 2026-11-11 audit found released binaries self-reporting 0.10.1.
+
+### Added
+
+- Enhanced entity snapping (CAP-094): midpoint, intersection, perpendicular,
+  tangent, quadrant, grid and ortho candidates with priority ordering
+- Selection modes (CAP-095): window, crossing and fence, owned by the core
+- Selection filters (CAP-096): by entity type and by layer
+- Command palette (CAP-097): Ctrl+K, fuzzy match, recent-commands list
+- Snap visual indicators on canvas (CAP-098)
+- Layers (CAP-089): `Layer`, protected default layer, per-entity assignment
+- Construction geometry (CAP-090): line, ray, circle, arc — snap-enabled,
+  never printed
+- Status bar (CAP-091–093): cursor coordinates, snap/ortho/grid chips,
+  selection count, zoom %
+
+### Fixed
+
+- Released binaries self-reported 0.10.1 (version bumps had never been
+  committed); both manifests now carry 0.12.1 and the tag was re-pointed
+  (audit findings F1/F4)
+- Release pages showed 0.10.1 notes for newer releases; `RELEASE_NOTES.md`
+  gained 0.11.0 and 0.12.1 sections (audit finding F2)
+
+### Known issues
+
+- Releases still ship unsigned when `GPG_PRIVATE_KEY` is unset (audit F3)
+- In-app release-notes popup lags (shows 0.1.0/0.2.0 only — audit F7); both
+  scheduled for v0.13.0 (CAP-104–106)
+
+## v0.11.0 — 2026-11-09
+
+### Summary
+
+Measurements: area and perimeter become first-class, unit-aware readouts.
+
+### Added
+
+- Area/perimeter tool, Shift+M (CAP-086)
+- Level and project wall/opening totals in the Inspector (CAP-087)
+- `format_area` honours Metric/Imperial: m², ft², in² (CAP-088)
+- Unit tests for measurements, totals and JSON round-trip
+
 ## v0.8.0 — 2026-11-07
 
 ### Summary

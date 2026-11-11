@@ -1,6 +1,6 @@
 # Progress
 
-## v0.11.0 Status — IN PROGRESS
+## v0.11.0 Status — RELEASED
 
 - [x] `crates/lintel-core/src/measurements.rs` added: `Measurements`,
       `LevelTotals`, `ProjectTotals` (room area/perimeter, level and project
@@ -11,33 +11,39 @@
       level, out-of-range room, JSON round-trip)
 - [x] UI: `Tool::Measurements` with Shift+M; Inspector → Measurements shows the
       selected room, per-level totals and per-room list, and project totals
-- [ ] Release prep: bump `apps/lintel/Cargo.toml` 0.10.1 → 0.11.0 (this checkout
-      still reads 0.10.1)
-- [ ] CI green, PR merged, tag `v0.11.0` and GitHub Release published
-- [ ] Guide §12.1 release gate: signed artefacts + `SHA256SUMS.txt`,
-      `docs/tokens.json` ledger updated by CI and quoted in the release notes
+- [x] Release prep: version bumps landed in commit `803b590`
+      (2026-11-11 rebuild; the original tag shipped with a stale 0.10.1 stamp —
+      audit F1)
+- [x] CI green, tag `v0.11.0` on `main` (commit `803b590`), GitHub Release
+      published with all assets and `SHA256SUMS.txt`
+- [x] `docs/tokens.json` ledger updated by CI (CI-owned; hand commits discarded)
+- [ ] Guide §12.1 release gate: signed artefacts — `SHA256SUMS.txt.asc` still
+      absent (audit F3: GPG step silently skips when `GPG_PRIVATE_KEY` unset);
+      release notes for 0.11.0 added in `803b590`
 
-Readiness % (v0.11.0): **90% — code and tests complete; release gate pending.**
+Readiness % (v0.11.0): **95% — released; signing gate open (audit F3).**
 
-## v0.11.1 Status — IN PROGRESS
+## v0.11.1 Status — RELEASED AS 0.12.1
 
 **Phase A continued: Snapping + Selection + Command Palette**, continuing the
-2026-11-08 elite CAD reports.
+2026-11-08 elite CAD reports. No `v0.11.1` tag ever existed; this content was
+published under tag `v0.12.1`.
 
-- [ ] CAP-094 — Enhanced entity snapping (endpoint, midpoint, intersection,
+- [x] CAP-094 — Enhanced entity snapping (endpoint, midpoint, intersection,
       perpendicular, tangent, quadrant, grid, ortho) with priority ordering
-- [ ] CAP-095 — Window / crossing / fence selection modes
-- [ ] CAP-096 — Selection filter by entity type and layer
-- [ ] CAP-097 — Command palette (Ctrl+K, fuzzy match, recent commands)
-- [ ] CAP-098 — Snap visual indicators on canvas
-- [ ] Tests: snap candidate generation and priority ordering in `snap.rs`;
+- [x] CAP-095 — Window / crossing / fence selection modes
+- [x] CAP-096 — Selection filter by entity type and layer
+- [x] CAP-097 — Command palette (Ctrl+K, fuzzy match, recent commands)
+- [x] CAP-098 — Snap visual indicators on canvas
+- [x] Tests: snap candidate generation and priority ordering in `snap.rs`;
       window/crossing/fence, add/remove sets and type/layer filters in
       `selection.rs`
-- [ ] Release prep: bump `apps/lintel/Cargo.toml` and the core to 0.11.1
-- [x] CI green (formatting + clippy + build + tests), PR merged, tag `v0.11.1`
-      and GitHub Release published with signed artefacts and `SHA256SUMS.txt.asc`
-- [ ] Guide §12.1 release gate: `docs/tokens.json` ledger updated by CI and
-      quoted in the release notes
+- [x] Release prep: both `Cargo.toml` files bumped to 0.12.1 in commit
+      `803b590` (tag originally shipped with a stale 0.10.1 stamp — audit F1)
+- [x] CI green, tag `v0.12.1` on `main` (commit `803b590`), GitHub Release
+      published with all assets and `SHA256SUMS.txt`
+- [x] Guide §12.1 gate: `docs/tokens.json` ledger updated by CI (30,000
+      cumulative after the 2026-11-10 rebuild runs)
 
 Phase A foundation already on the branch (core):
 
@@ -48,11 +54,44 @@ Phase A foundation already on the branch (core):
 - [x] `status_bar.rs`: cursor coordinates, snap/ortho/grid chips, selection
       count and zoom %
 - [ ] UI wiring for the foundation: layers palette and construction tools
-- [ ] `snap.rs` candidate foundation (midpoint/intersection/perpendicular source
+      (→ v0.13.0 CAP-108)
+- [x] `snap.rs` candidate foundation (midpoint/intersection/perpendicular source
       and priority order) — folded into the CAP-094 enhanced-snapping work
 
-Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098) — CI green, PR #21 merged to `main` (commit `18a5bbf`).
-the layers/construction/status-bar core foundation is on the branch.**
+Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
+— published as 0.12.1, rebuilt 2026-11-10 (runs `42902103302` / `42902103890`).**
+
+## v0.13.0 Status — PLANNED
+
+**Anchored Dimensions & Release Governance** (CAP-100–CAP-108). Full scope in
+`ROADMAP.md`.
+
+- [ ] CAP-100 — Constraint-driven dimensions core: `DimensionAnchor`,
+      `start_anchor`/`end_anchor`/`witness_gap`/`witness_overrun`, anchor
+      resolution, backward-compatible JSON load
+- [ ] CAP-101 — Constraint solver: `Constraint` enum, `solve_constraints`,
+      `apply_constraints_to_anchors`
+- [ ] CAP-102 — Anchor commands: `SetDimensionStartAnchor`/`EndAnchor`,
+      `SetDimensionWitnessGap`/`Overrun` with undo and validation
+- [ ] CAP-103 — Anchor UI: inspector fields, click-to-place witness lines,
+      grip editing
+- [ ] CAP-104 — Update verification: checksum (+ signature) check in
+      `update-check`; cache TTL honoured
+- [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
+- [ ] CAP-106 — Release governance: version guard + signing enforcement in
+      `release.yml`; single `v`-tag convention
+- [ ] CAP-107 — Documentation parity: capability-inventory through CAP-099,
+      parity rows, CHANGELOG/ROADMAP/PROGRESS reconciled
+- [ ] CAP-108 — Phase A UI completion: layers palette + construction tools
+      fully wired
+
+**Starting point:** the constraint-dimension core (dimension anchors, witness
+lines, `constraint.rs`, anchor commands) exists on the `opencode/ci` branch
+only — it is **not merged to `main`**, which has no `constraint.rs` and no
+`DimensionAnchor`. First slice: land that core, then UI (CAP-103), then the
+governance and docs items.
+
+Readiness % (v0.13.0): **0% — planned; core slice waiting on branch landing.**
 
 ## v0.10.1 Status — RELEASED
 

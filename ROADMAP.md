@@ -247,12 +247,19 @@ artefacts, `SHA256SUMS.txt.asc`, `docs/tokens.json` ledger).
 
 ## v0.12.0 — Phase A continued (Snapping + Selection + Command Palette)
 
-**Status:** Planned — the v0.11.1 active slice (enhanced snapping, selection, command palette) is complete. v0.12.0 will add constraint-driven dimensions and dimension anchoring.
+**Status:** Published as **0.12.1** — the Phase A content (enhanced snapping,
+selection modes, command palette, layers, construction geometry, status bar)
+was released under tag `v0.12.1` (commit `803b590`, rebuilt 2026-11-10 with
+correct version stamps). The constraint-dimension rows below (CAP-109, CAP-110)
+are **not in that release**; they move to v0.13.0 as CAP-100/CAP-103. This
+section is retained for history; the collision where it reused CAP-097/098
+(already consumed by v0.11.1's command palette and snap indicators) is resolved
+by renumbering.
 
 | ID | Capability | Done |
 |---|-----------|------|
-| CAP-097 | Constraint-driven dimensions foundation: `DimensionAnchor`, witness-line gap/overrun, backward-compatible load | — |
-| CAP-098 | Dimension anchor UI: click-to-place witness lines, grip editing | — |
+| CAP-109 | Constraint-driven dimensions foundation: `DimensionAnchor`, witness-line gap/overrun, backward-compatible load | — |
+| CAP-110 | Dimension anchor UI: click-to-place witness lines, grip editing | — |
 | CAP-099 | Drawing set / sheet layout with title blocks and viewport linking | — |
 
 **Release notes (intended):** Completes Phase A. Snapping gains midpoint,
@@ -265,4 +272,50 @@ guide §12.1 (signed artefacts, `SHA256SUMS.txt`, `docs/tokens.json` ledger).
 **Readiness:** 0% — planned; depends on v0.11.1 layers, construction geometry and
 the snapping foundation.
 
-**Unscheduled / future:** Web/WASM port, plugin architecture, collaborative editing, custom paper sizes, better on-canvas hints.
+## v0.13.0 — Anchored Dimensions & Release Governance
+
+**Status:** Planned — v0.12.1 shipped Phase A (enhanced snapping, selection modes, command
+palette, layers, construction geometry, status bar). v0.13.0 lands Phase B
+(constraint-driven dimensions, currently on `opencode/ci`, unmerged), closes the
+release-governance defects found in the 2026-11-11 audit (unsigned artefacts,
+in-app update without checksum verification, stale embedded release notes), and
+restores documentation parity.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-100 | Constraint-driven dimensions core: `DimensionAnchor` (`wall_id`, `param`, `perpendicular`), `start_anchor`/`end_anchor`/`witness_gap`/`witness_overrun` on `Dimension`, anchor resolution (`effective_start`/`effective_end`), backward-compatible JSON load | — |
+| CAP-101 | Constraint solver: `Constraint` enum (`PerpendicularDistance`, `FixedAngle`, `EqualLength`), `solve_constraints`, `apply_constraints_to_anchors`; dimensions follow wall moves | — |
+| CAP-102 | Anchor commands: `SetDimensionStartAnchor`, `SetDimensionEndAnchor`, `SetDimensionWitnessGap`, `SetDimensionWitnessOverrun` with undo, validation and persistence | — |
+| CAP-103 | Anchor UI: inspector fields for anchors and witness gap/overrun, click-to-place witness lines on canvas, grip editing | — |
+| CAP-104 | Update verification: `update-check` verifies `SHA256SUMS` (and `.asc` signature when present) before surfacing an update; cache TTL honoured instead of `check_uncached` | — |
+| CAP-105 | In-app release notes generated from `RELEASE_NOTES.md` at build time (or CI-synced), so the popup can never drift from the published notes; reconcile legacy pre-0.10.0 token totals | — |
+| CAP-106 | Release governance: `release.yml` fails when the tag does not match `CARGO_PKG_VERSION`, and when `GPG_PRIVATE_KEY` is unset (no more silent unsigned publishes); one tag convention (`v`-prefixed) | — |
+| CAP-107 | Documentation parity: `docs/capability-inventory.md` extended through CAP-099 with status + evidence, `docs/parity.md` rows for 0.9.0–0.13.0, CHANGELOG/ROADMAP/PROGRESS reconciled to published tags | — |
+| CAP-108 | Phase A UI completion: layers palette and construction tools fully wired and reachable from the UI (palette, menu, shortcuts) | — |
+
+**Release notes (intended):** Dimensions become anchored to the geometry they
+measure: an anchor ties a measured point to a wall at a parametric position, so
+moving a wall drags the dimension with it; witness lines gain editable gap and
+overrun; a constraint solver keeps anchored dimensions correct as geometry
+changes. The in-app update flow now verifies published checksums before
+surfacing a new release, and the release-notes popup is generated from the same
+source that feeds GitHub releases, ending version drift. Releases are signed
+and version-guarded by CI. Earlier project files load unchanged.
+
+**Release gate (guide §12.1):** signed artefacts (`SHA256SUMS.txt.asc`),
+`docs/tokens.json` ledger updated by CI and quoted in the release notes,
+version bump landed before the tag, `RELEASE_TOKENS` set for a credible ledger
+figure.
+
+**Audit traceability:** CAP-100–103 close audit findings F1/F4 (versioned,
+tagged releases containing the promised code); CAP-104–105 close F3/F7 (update
+verification, notes drift); CAP-106 closes F3/F8 (signing, ledger defaults);
+CAP-107 closes the doc-parity gap (audit §4/§8 rec 1); CAP-108 closes audit §8
+rec 3.
+
+**Readiness:** 0% — planned; depends on landing the `opencode/ci`
+constraint-dimension slice and the v0.12.1 rebuild confirming version stamps.
+
+**Unscheduled / future:** Web/WASM port, plugin architecture, collaborative
+editing, custom paper sizes, better on-canvas hints, blocks/symbols, sheet
+layout with title blocks (CAP-099), 3D/structural/IFC track (separate roadmap).
