@@ -651,7 +651,9 @@ fn dimension_fields(
                 .range(0.0..=100000.0)
                 .suffix(" mm"),
         )
-        .on_hover_text("Gap between a measured point and the start of its witness line in mm (min 0).");
+        .on_hover_text(
+            "Gap between a measured point and the start of its witness line in mm (min 0).",
+        );
         if ui
             .button("Apply")
             .on_hover_text("Apply the new witness gap.")
@@ -692,23 +694,32 @@ fn dimension_fields(
                     egui::RichText::new("wall missing — using stored point")
                         .color(crate::theme::TEXT_MUTED),
                 );
-                format!("anchored to Wall {} at {:.0}%", anchor.wall_id.value(), anchor.param * 100.0)
+                format!(
+                    "anchored to Wall {} at {:.0}%",
+                    anchor.wall_id.value(),
+                    anchor.param * 100.0
+                )
             } else {
-                format!("anchored to Wall {} at {:.0}%", anchor.wall_id.value(), anchor.param * 100.0)
+                format!(
+                    "anchored to Wall {} at {:.0}%",
+                    anchor.wall_id.value(),
+                    anchor.param * 100.0
+                )
             }
         }
         None => "not anchored (free point)".to_string(),
     };
     ui.label(start_state);
-    let mut start_wall = dimension
-        .start_anchor
-        .map(|a| a.wall_id.0)
-        .unwrap_or(0);
+    let mut start_wall = dimension.start_anchor.map(|a| a.wall_id.0).unwrap_or(0);
     let mut start_param = dimension.start_anchor.map(|a| a.param).unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
-        ui.add(egui::DragValue::new(&mut start_wall).speed(1.0).range(0..=u64::MAX))
-            .on_hover_text("Id of the wall to anchor the start point to.");
+        ui.add(
+            egui::DragValue::new(&mut start_wall)
+                .speed(1.0)
+                .range(0..=u64::MAX),
+        )
+        .on_hover_text("Id of the wall to anchor the start point to.");
         ui.label("Param:");
         ui.add(
             egui::DragValue::new(&mut start_param)
@@ -765,8 +776,12 @@ fn dimension_fields(
     let mut end_param = dimension.end_anchor.map(|a| a.param).unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
-        ui.add(egui::DragValue::new(&mut end_wall).speed(1.0).range(0..=u64::MAX))
-            .on_hover_text("Id of the wall to anchor the end point to.");
+        ui.add(
+            egui::DragValue::new(&mut end_wall)
+                .speed(1.0)
+                .range(0..=u64::MAX),
+        )
+        .on_hover_text("Id of the wall to anchor the end point to.");
         ui.label("Param:");
         ui.add(
             egui::DragValue::new(&mut end_param)
