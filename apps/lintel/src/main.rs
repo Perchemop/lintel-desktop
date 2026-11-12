@@ -155,9 +155,9 @@ impl LintelApp {
                 Ok(mut checker) => checker.check(about::REPO, env!("CARGO_PKG_VERSION")),
                 // A poisoned lock only happens if a previous check panicked;
                 // fail soft rather than panicking the UI thread too.
-                Err(_) => update_check::UpdateStatus::Unknown(
-                    "update checker lock poisoned".to_string(),
-                ),
+                Err(_) => {
+                    update_check::UpdateStatus::Unknown("update checker lock poisoned".to_string())
+                }
             };
             let _ = tx.send(status);
         });

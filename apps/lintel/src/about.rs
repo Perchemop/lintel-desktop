@@ -138,7 +138,11 @@ pub fn update_window(ui: &mut egui::Ui, open: &mut bool, status: Option<&UpdateS
                 if let Some(sha256) = asset.sha256() {
                     line = format!("{line} — SHA-256 {sha256}");
                 }
-                ui.label(egui::RichText::new(line).small().color(crate::theme::TEXT_MUTED));
+                ui.label(
+                    egui::RichText::new(line)
+                        .small()
+                        .color(crate::theme::TEXT_MUTED),
+                );
             }
             ui.hyperlink_to(
                 "How to verify the download",
