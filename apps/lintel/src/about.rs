@@ -87,7 +87,9 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
                 ui.add_space(4.0);
                 if ui
                     .button("Update")
-                    .on_hover_text("Check for updates and open download page")
+                    .on_hover_text(
+                        "Opens the release page — Lintel never installs updates for you.",
+                    )
                     .clicked()
                 {
                     ui.ctx().open_url(egui::OpenUrl::new_tab(
@@ -128,6 +130,20 @@ pub fn update_window(ui: &mut egui::Ui, open: &mut bool, status: Option<&UpdateS
                 let preview = release.notes.lines().take(6).collect::<Vec<_>>().join("\n");
                 ui.label(egui::RichText::new(preview).small());
             }
+            // Surface the published checksum manifest and, when GitHub supplies
+            // one, its SHA-256, so the download can be verified by hand. A
+            // release with no manifest shows nothing extra — no dead UI.
+            if let Some(asset) = release.checksum_asset() {
+                let mut line = asset.name.clone();
+                if let Some(sha256) = asset.sha256() {
+                    line = format!("{line} — SHA-256 {sha256}");
+                }
+                ui.label(egui::RichText::new(line).small().color(crate::theme::TEXT_MUTED));
+            }
+            ui.hyperlink_to(
+                "How to verify the download",
+                format!("https://github.com/{REPO}/blob/main/docs/release-verification.md"),
+            );
             ui.add_space(4.0);
             ui.horizontal(|ui| {
                 if ui.button("Open download page").clicked() {
