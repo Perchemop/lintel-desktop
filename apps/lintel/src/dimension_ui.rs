@@ -8,6 +8,7 @@ use crate::theme;
 use eframe::egui;
 use lintel_core::ids::EntityId;
 use lintel_core::join::PlanGeometry;
+use lintel_core::level::Level;
 
 /// Draw every dimension in `geometry` onto `painter`.
 pub fn render_dimensions(
@@ -16,25 +17,32 @@ pub fn render_dimensions(
     view: &View,
     geometry: &PlanGeometry,
     selection: &Selection,
+    level: &Level,
 ) {
     for dim in geometry.dimensions() {
         let selected = selection.contains(EntityId::Dimension(dim.id));
-        let Some((a, b)) = dim.dimension_line() else {
+        let Some((a, b)) = dim.dimension_line_at(Some(level)) else {
             continue;
         };
         let sa = world_to_screen(view, rect, a);
         let sb = world_to_screen(view, rect, b);
-        let ss = world_to_screen(view, rect, dim.start);
-        let se = world_to_screen(view, rect, dim.end);
+        let ss = world_to_screen(view, rect, dim.effective_start(Some(level)));
+        let se = world_to_screen(view, rect, dim.effective_end(Some(level)));
 
         let stroke_color = if selected { theme::COBALT } else { theme::INK };
         let line_stroke = egui::Stroke::new(1.0, stroke_color);
 
-        // Extension lines (witness lines) from measured points to the
-        // dimension line endpoints.
-        if dim.extension_lines {
-            painter.line_segment([ss, sa], line_stroke);
-            painter.line_segment([se, sb], line_stroke);
+        // Witness lines (extension lines) from measured points to the
+        // dimension line endpoints, when enabled and valid.
+        if let Some((from, to)) = dim.start_witness_line(Some(level)) {
+            let sfrom = world_to_screen(view, rect, from);
+            let sto = world_to_screen(view, rect, to);
+            painter.line_segment([sfrom, sto], line_stroke);
+        }
+        if let Some((from, to)) = dim.end_witness_line(Some(level)) {
+            let sfrom = world_to_screen(view, rect, from);
+            let sto = world_to_screen(view, rect, to);
+            painter.line_segment([sfrom, sto], line_stroke);
         }
 
         // Dimension line itself.
@@ -56,12 +64,22 @@ pub fn render_dimensions(
         } else if angle <= -std::f32::consts::FRAC_PI_2 {
             angle += std::f32::consts::PI;
         }
-        let label = format!("{:.0} mm", dim.length());
+        let label = format!("{:.0} mm", dim.length_at(Some(level)));
         let font = egui::FontId::proportional(11.0);
         let galley = painter.layout_no_wrap(label, font, stroke_color);
         let pos = egui::Pos2::new(mid.x, mid.y) + normal * 8.0;
         let shape = egui::epaint::TextShape::new(pos, galley, stroke_color)
             .with_angle_and_anchor(angle, egui::Align2::CENTER_CENTER);
         painter.add(shape);
+
+        // Grip markers on anchored measured points.
+        if dim.start_anchor.is_some() {
+            let r = egui::Rect::from_center_size(ss, egui::vec2(4.0, 4.0));
+            painter.rect_filled(r, 0.0, theme::COBALT);
+        }
+        if dim.end_anchor.is_some() {
+            let r = egui::Rect::from_center_size(se, egui::vec2(4.0, 4.0));
+            painter.rect_filled(r, 0.0, theme::COBALT);
+        }
     }
 }
