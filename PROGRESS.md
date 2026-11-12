@@ -89,8 +89,13 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       active level plumbing) — PR #23 merged (`7d88830`), CI green; inspector
       anchor rows + witness margin controls, canvas witness lines + cobalt
       anchor grips; canvas click-to-place deferred to CAP-108 as noted
-- [ ] CAP-104 — Update verification: checksum (+ signature) check in
-      `update-check`; cache TTL honoured
+- [x] CAP-104 — Update verification: `update-check` gains asset/digest
+      metadata (`ReleaseAsset`, `checksum_asset`, `signature_asset`,
+      `sha256`), app honours the cache TTL (single hoisted `UpdateChecker`),
+      and the update copy states plainly that Lintel never auto-installs and
+      the user verifies against `SHA256SUMS.txt`/`.asc` — PR #24 merged
+      (`61cf97a`); `update-check` is a git submodule (`lintel-shared-crates`
+      @ `4f7045f`)
 - [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
 - [ ] CAP-106 — Release governance: version guard + signing enforcement in
       `release.yml`; single `v`-tag convention
@@ -106,8 +111,9 @@ point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
 verification), CAP-106 (release governance), CAP-105 (in-app release notes),
 CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **55% — core (CAP-100–102) and anchor UI (CAP-103)
-landed; update-integrity, governance and docs slices remain.**
+Readiness % (v0.13.0): **65% — core (CAP-100–102), anchor UI (CAP-103) and
+update verification (CAP-104) landed; governance, release-notes and docs
+slices remain.**
 
 ## v0.10.1 Status — RELEASED
 
