@@ -84,9 +84,11 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
 - [x] CAP-102 — Anchor commands: `SetDimensionStartAnchor`/`EndAnchor`,
       `SetDimensionWitnessGap`/`Overrun` with validation
       (`DimensionNotFound`, param-in-[0,1], margins ≥ 0) — PR #22
-- [ ] CAP-103 — Anchor UI: inspector fields, click-to-place witness lines,
+- [x] CAP-103 — Anchor UI: inspector fields, click-to-place witness lines,
       grip editing (renderer adopts `dimension_line_at`/`witness_line` +
-      active level plumbing)
+      active level plumbing) — PR #23 merged (`7d88830`), CI green; inspector
+      anchor rows + witness margin controls, canvas witness lines + cobalt
+      anchor grips; canvas click-to-place deferred to CAP-108 as noted
 - [ ] CAP-104 — Update verification: checksum (+ signature) check in
       `update-check`; cache TTL honoured
 - [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
@@ -98,13 +100,14 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       fully wired
 
 **Landed:** the core slice merged to `main` at `b4a7df1` (merge of PR #22,
-commit `2b07f58`, 2026-11-11). Constraint persistence on `Level` is still an
-open design point (solver takes an explicit `&[Constraint]`); noted for
-CAP-103's follow-through. Next slice: CAP-103 anchor UI (ui-dev), then
-governance/docs.
+commit `2b07f58`, 2026-11-11); the anchor UI merged at `7d88830` (merge of
+PR #23, 2026-11-12). Constraint persistence on `Level` is still an open design
+point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
+verification), CAP-106 (release governance), CAP-105 (in-app release notes),
+CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **40% — core (CAP-100–102) landed; UI, governance and
-docs slices remain.**
+Readiness % (v0.13.0): **55% — core (CAP-100–102) and anchor UI (CAP-103)
+landed; update-integrity, governance and docs slices remain.**
 
 ## v0.10.1 Status — RELEASED
 
