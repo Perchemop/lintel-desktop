@@ -73,10 +73,10 @@ pub fn inspector(
                     "{} {} — {:.0} mm",
                     dimension.kind.label(),
                     id.value(),
-                    dimension.length_at(Some(&level))
+                    dimension.length_at(Some(level))
                 ));
                 ui.separator();
-                dimension_fields(ui, id, &dimension, &level)
+                dimension_fields(ui, id, &dimension, level)
             }
             Some(EntityId::Label(id)) => {
                 let label = {
