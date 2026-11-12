@@ -79,6 +79,10 @@ pub struct LintelApp {
     export_spec: lintel_core::pdf::SheetSpec,
     /// Receives the result of an in-flight update check, if any.
     update_rx: Option<Receiver<update_check::UpdateStatus>>,
+    /// The shared update checker, kept for the life of the app so its
+    /// [`update_check::CACHE_TTL`] cache actually holds across checks. Shared
+    /// behind a mutex because the blocking check runs on a worker thread.
+    update_checker: std::sync::Arc<std::sync::Mutex<update_check::UpdateChecker>>,
     /// The last completed update check, if any.
     update_status: Option<update_check::UpdateStatus>,
     /// Whether the "update available" prompt is showing.
@@ -97,6 +101,8 @@ impl LintelApp {
     fn new() -> Self {
         let now = now_epoch_s();
         let doc = Document::new("Untitled plan", now);
+        let update_checker =
+            std::sync::Arc::new(std::sync::Mutex::new(update_check::UpdateChecker::new()));
         let mut app = Self {
             doc,
             view: View::default(),
@@ -113,6 +119,7 @@ impl LintelApp {
             export_open: false,
             export_spec: lintel_core::pdf::SheetSpec::default(),
             update_rx: None,
+            update_checker,
             update_status: None,
             update_open: false,
             status: None,
@@ -132,15 +139,26 @@ impl LintelApp {
 
     /// Kick off an update check on a worker thread. A no-op while one is
     /// already in flight.
+    ///
+    /// The shared [`update_check::UpdateChecker`] is reused, so the cached
+    /// result stands for `CACHE_TTL`: repeated checks inside that window return
+    /// the cache instead of hitting the GitHub API again.
     fn start_update_check(&mut self) {
         if self.update_rx.is_some() {
             return;
         }
         let (tx, rx) = mpsc::channel();
         self.update_rx = Some(rx);
+        let checker = std::sync::Arc::clone(&self.update_checker);
         std::thread::spawn(move || {
-            let checker = update_check::UpdateChecker::new();
-            let status = checker.check_uncached(about::REPO, env!("CARGO_PKG_VERSION"));
+            let status = match checker.lock() {
+                Ok(mut checker) => checker.check(about::REPO, env!("CARGO_PKG_VERSION")),
+                // A poisoned lock only happens if a previous check panicked;
+                // fail soft rather than panicking the UI thread too.
+                Err(_) => {
+                    update_check::UpdateStatus::Unknown("update checker lock poisoned".to_string())
+                }
+            };
             let _ = tx.send(status);
         });
     }
