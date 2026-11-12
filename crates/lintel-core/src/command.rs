@@ -7,7 +7,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::construction::{ConstructionEntity, ConstructionKind};
-use crate::dimension::{Dimension, DimensionKind};
+use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::Point2;
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
@@ -98,6 +98,22 @@ pub enum Command {
     SetDimensionExtensionLines {
         id: DimensionId,
         extension_lines: bool,
+    },
+    SetDimensionStartAnchor {
+        id: DimensionId,
+        anchor: Option<DimensionAnchor>,
+    },
+    SetDimensionEndAnchor {
+        id: DimensionId,
+        anchor: Option<DimensionAnchor>,
+    },
+    SetDimensionWitnessGap {
+        id: DimensionId,
+        gap: f64,
+    },
+    SetDimensionWitnessOverrun {
+        id: DimensionId,
+        overrun: f64,
     },
     DeleteDimension {
         id: DimensionId,
@@ -265,6 +281,26 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             dimension.extension_lines = extension_lines;
             Ok(Applied::default())
         }
+        Command::SetDimensionStartAnchor { id, anchor } => {
+            validate_anchor(anchor.as_ref())?;
+            dimension_mut(project, id)?.start_anchor = anchor;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionEndAnchor { id, anchor } => {
+            validate_anchor(anchor.as_ref())?;
+            dimension_mut(project, id)?.end_anchor = anchor;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionWitnessGap { id, gap } => {
+            validate_witness_margin(gap, "gap")?;
+            dimension_mut(project, id)?.witness_gap = gap;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionWitnessOverrun { id, overrun } => {
+            validate_witness_margin(overrun, "overrun")?;
+            dimension_mut(project, id)?.witness_overrun = overrun;
+            Ok(Applied::default())
+        }
         Command::DeleteDimension { id } => {
             let level = active_level_mut(project)?;
             let before = level.dimensions.len();
@@ -373,6 +409,12 @@ fn wall_mut(project: &mut Project, id: WallId) -> Result<&mut Wall, CoreError> {
         .ok_or(CoreError::WallNotFound(id))
 }
 
+fn dimension_mut(project: &mut Project, id: DimensionId) -> Result<&mut Dimension, CoreError> {
+    active_level_mut(project)?
+        .dimension_mut(id)
+        .ok_or(CoreError::DimensionNotFound(id))
+}
+
 fn validate_thickness(thickness: f64) -> Result<(), CoreError> {
     if thickness.is_finite() && (MIN_WALL_THICKNESS..=MAX_WALL_THICKNESS).contains(&thickness) {
         Ok(())
@@ -470,6 +512,25 @@ fn validate_dimension_offset(offset: f64) -> Result<(), CoreError> {
         Err(CoreError::invalid(
             "a dimension offset must be a distance greater than zero",
         ))
+    }
+}
+
+fn validate_anchor(anchor: Option<&DimensionAnchor>) -> Result<(), CoreError> {
+    if anchor.is_some_and(|anchor| !anchor.is_valid()) {
+        return Err(CoreError::invalid(
+            "a dimension anchor must sit between the ends of its wall",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_witness_margin(margin: f64, what: &str) -> Result<(), CoreError> {
+    if margin.is_finite() && margin >= 0.0 {
+        Ok(())
+    } else {
+        Err(CoreError::invalid(format!(
+            "a witness-line {what} must be a distance of zero or more"
+        )))
     }
 }
 
@@ -922,6 +983,7 @@ fn delete_level(project: &mut Project, id: LevelId) -> Result<Applied, CoreError
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dimension::DEFAULT_WITNESS_GAP;
     use crate::project::Project;
 
     fn empty_project() -> Project {
@@ -1345,6 +1407,207 @@ mod tests {
             .expect("dimension")
             .extension_lines;
         assert!(extension_lines);
+    }
+
+    fn dimension_anchor(project: &Project, id: DimensionId) -> Option<DimensionAnchor> {
+        project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .start_anchor
+    }
+
+    #[test]
+    fn a_dimension_can_be_anchored_to_a_wall() {
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id,
+                anchor: Some(DimensionAnchor::new(wall, 0.25)),
+            },
+        )
+        .expect("anchor the start");
+        let anchor = dimension_anchor(&project, id).expect("start anchor");
+        assert_eq!(anchor.wall_id, wall);
+        assert_eq!(anchor.param, 0.25);
+        assert!(!anchor.perpendicular);
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .dimension(id)
+                .expect("dimension")
+                .end_anchor
+                .is_none(),
+            "only the requested end is anchored"
+        );
+
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor { id, anchor: None },
+        )
+        .expect("clear the start anchor");
+        assert!(dimension_anchor(&project, id).is_none());
+    }
+
+    #[test]
+    fn an_anchor_parameter_must_lie_on_its_wall() {
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let id = place_horizontal(&mut project);
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionEndAnchor {
+                id,
+                anchor: Some(DimensionAnchor::new(wall, 1.5)),
+            },
+        )
+        .expect_err("past the end of the wall");
+        assert!(error.to_string().contains("between the ends"));
+
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionEndAnchor {
+                id,
+                anchor: Some(DimensionAnchor::new(wall, f64::NAN)),
+            },
+        )
+        .expect_err("not a number");
+        assert!(error.to_string().contains("between the ends"));
+
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .dimension(id)
+                .expect("dimension")
+                .end_anchor
+                .is_none(),
+            "a rejected anchor leaves the dimension alone"
+        );
+    }
+
+    #[test]
+    fn witness_margins_can_be_set() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::SetDimensionWitnessGap { id, gap: 150.0 },
+        )
+        .expect("set the gap");
+        apply_command(
+            &mut project,
+            Command::SetDimensionWitnessOverrun { id, overrun: 75.0 },
+        )
+        .expect("set the overrun");
+        let dimension = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert_eq!(dimension.witness_gap, 150.0);
+        assert_eq!(dimension.witness_overrun, 75.0);
+    }
+
+    #[test]
+    fn witness_margins_must_be_distances() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionWitnessGap { id, gap: -1.0 },
+        )
+        .expect_err("a negative gap");
+        assert!(error.to_string().contains("zero or more"));
+
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionWitnessOverrun {
+                id,
+                overrun: f64::INFINITY,
+            },
+        )
+        .expect_err("an infinite overrun");
+        assert!(error.to_string().contains("zero or more"));
+
+        let gap = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .witness_gap;
+        assert_eq!(gap, DEFAULT_WITNESS_GAP, "a rejected margin is ignored");
+    }
+
+    #[test]
+    fn anchoring_a_missing_dimension_reports_it_gone() {
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let missing = DimensionId(999);
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id: missing,
+                anchor: Some(DimensionAnchor::new(wall, 0.5)),
+            },
+        )
+        .expect_err("no such dimension");
+        let CoreError::DimensionNotFound(id) = error else {
+            panic!("expected a missing-dimension error");
+        };
+        assert_eq!(id, missing);
+
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionEndAnchor {
+                id: missing,
+                anchor: None,
+            },
+        )
+        .expect_err("no such dimension");
+        assert!(matches!(error, CoreError::DimensionNotFound(_)));
+
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionWitnessGap {
+                id: missing,
+                gap: 100.0,
+            },
+        )
+        .expect_err("no such dimension");
+        assert!(matches!(error, CoreError::DimensionNotFound(_)));
+    }
+
+    #[test]
+    fn the_new_dimension_commands_round_trip_through_json() {
+        let commands = [
+            Command::SetDimensionStartAnchor {
+                id: DimensionId(3),
+                anchor: Some(DimensionAnchor::new(WallId(7), 0.5)),
+            },
+            Command::SetDimensionEndAnchor {
+                id: DimensionId(3),
+                anchor: None,
+            },
+            Command::SetDimensionWitnessGap {
+                id: DimensionId(3),
+                gap: 150.0,
+            },
+            Command::SetDimensionWitnessOverrun {
+                id: DimensionId(3),
+                overrun: 50.0,
+            },
+        ];
+        for command in commands {
+            let json = serde_json::to_string(&command).expect("serialize");
+            let back: Command = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(back, command);
+        }
     }
 
     fn add_label(project: &mut Project, text: &str) -> LabelId {

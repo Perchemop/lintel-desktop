@@ -9,6 +9,7 @@
 //! user gets is the behaviour CI proves.
 
 pub mod command;
+pub mod constraint;
 pub mod construction;
 pub mod dimension;
 pub mod document;
@@ -32,8 +33,11 @@ pub mod units;
 pub mod wall;
 
 pub use command::{Applied, Command};
+pub use constraint::{
+    Constraint, ResolvedConstraint, apply_constraints_to_anchors, solve_constraints,
+};
 pub use construction::{ConstructionEntity, ConstructionKind};
-pub use dimension::{Dimension, DimensionKind};
+pub use dimension::{Dimension, DimensionAnchor, DimensionKind};
 pub use document::Document;
 pub use error::CoreError;
 pub use geom::{Bounds, Point2};
