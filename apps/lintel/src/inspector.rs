@@ -67,18 +67,16 @@ pub fn inspector(
                 opening_fields(ui, doc, id, &opening)
             }
             Some(EntityId::Dimension(id)) => {
-                let dimension = {
-                    let level = doc.project().active_level().expect("level");
-                    level.dimension(id).expect("dimension").clone()
-                };
+                let level = doc.project().active_level().expect("level");
+                let dimension = level.dimension(id).expect("dimension").clone();
                 ui.label(format!(
                     "{} {} — {:.0} mm",
                     dimension.kind.label(),
                     id.value(),
-                    dimension.length()
+                    dimension.length_at(Some(&level))
                 ));
                 ui.separator();
-                dimension_fields(ui, id, &dimension)
+                dimension_fields(ui, id, &dimension, &level)
             }
             Some(EntityId::Label(id)) => {
                 let label = {
@@ -579,6 +577,7 @@ fn dimension_fields(
     ui: &mut egui::Ui,
     id: DimensionId,
     dimension: &lintel_core::dimension::Dimension,
+    level: &lintel_core::level::Level,
 ) -> Option<Command> {
     let mut command: Option<Command> = None;
 
@@ -641,6 +640,164 @@ fn dimension_fields(
             extension_lines,
         });
     }
+
+    // Witness margins.
+    let mut gap = dimension.witness_gap;
+    ui.horizontal(|ui| {
+        ui.label("Witness gap:");
+        ui.add(
+            egui::DragValue::new(&mut gap)
+                .speed(1.0)
+                .range(0.0..=100000.0)
+                .suffix(" mm"),
+        )
+        .on_hover_text("Gap between a measured point and the start of its witness line in mm (min 0).");
+        if ui
+            .button("Apply")
+            .on_hover_text("Apply the new witness gap.")
+            .clicked()
+            && (gap - dimension.witness_gap).abs() > f64::EPSILON
+        {
+            command = Some(Command::SetDimensionWitnessGap { id, gap });
+        }
+    });
+
+    let mut overrun = dimension.witness_overrun;
+    ui.horizontal(|ui| {
+        ui.label("Witness overrun:");
+        ui.add(
+            egui::DragValue::new(&mut overrun)
+                .speed(1.0)
+                .range(0.0..=100000.0)
+                .suffix(" mm"),
+        )
+        .on_hover_text("How far a witness line runs past the dimension line in mm (min 0).");
+        if ui
+            .button("Apply")
+            .on_hover_text("Apply the new witness overrun.")
+            .clicked()
+            && (overrun - dimension.witness_overrun).abs() > f64::EPSILON
+        {
+            command = Some(Command::SetDimensionWitnessOverrun { id, overrun });
+        }
+    });
+
+    // Start anchor.
+    ui.separator();
+    ui.label("Start anchor");
+    let start_state = match dimension.start_anchor {
+        Some(anchor) => {
+            if level.wall(anchor.wall_id).is_none() {
+                ui.label(
+                    egui::RichText::new("wall missing — using stored point")
+                        .color(crate::theme::TEXT_MUTED),
+                );
+                format!("anchored to Wall {} at {:.0}%", anchor.wall_id.value(), anchor.param * 100.0)
+            } else {
+                format!("anchored to Wall {} at {:.0}%", anchor.wall_id.value(), anchor.param * 100.0)
+            }
+        }
+        None => "not anchored (free point)".to_string(),
+    };
+    ui.label(start_state);
+    let mut start_wall = dimension
+        .start_anchor
+        .map(|a| a.wall_id.0)
+        .unwrap_or(0);
+    let mut start_param = dimension.start_anchor.map(|a| a.param).unwrap_or(0.0);
+    ui.horizontal(|ui| {
+        ui.label("Wall id:");
+        ui.add(egui::DragValue::new(&mut start_wall).speed(1.0).range(0..=u64::MAX))
+            .on_hover_text("Id of the wall to anchor the start point to.");
+        ui.label("Param:");
+        ui.add(
+            egui::DragValue::new(&mut start_param)
+                .speed(0.01)
+                .range(0.0..=1.0)
+                .suffix(" (0–1)"),
+        )
+        .on_hover_text("Fraction along the wall the measured point follows (0 = start, 1 = end).");
+    });
+    ui.horizontal(|ui| {
+        if ui
+            .button("Set")
+            .on_hover_text("Anchor the start point to the chosen wall and fraction.")
+            .clicked()
+        {
+            command = Some(Command::SetDimensionStartAnchor {
+                id,
+                anchor: Some(lintel_core::dimension::DimensionAnchor::new(
+                    lintel_core::ids::WallId(start_wall),
+                    start_param,
+                )),
+            });
+        }
+        if ui
+            .button("Clear")
+            .on_hover_text("Remove the start anchor, keeping the stored point.")
+            .clicked()
+        {
+            command = Some(Command::SetDimensionStartAnchor { id, anchor: None });
+        }
+    });
+
+    // End anchor.
+    ui.separator();
+    ui.label("End anchor");
+    let end_state = match dimension.end_anchor {
+        Some(anchor) => {
+            if level.wall(anchor.wall_id).is_none() {
+                ui.label(
+                    egui::RichText::new("wall missing — using stored point")
+                        .color(crate::theme::TEXT_MUTED),
+                );
+            }
+            format!(
+                "anchored to Wall {} at {:.0}%",
+                anchor.wall_id.value(),
+                anchor.param * 100.0
+            )
+        }
+        None => "not anchored (free point)".to_string(),
+    };
+    ui.label(end_state);
+    let mut end_wall = dimension.end_anchor.map(|a| a.wall_id.0).unwrap_or(0);
+    let mut end_param = dimension.end_anchor.map(|a| a.param).unwrap_or(0.0);
+    ui.horizontal(|ui| {
+        ui.label("Wall id:");
+        ui.add(egui::DragValue::new(&mut end_wall).speed(1.0).range(0..=u64::MAX))
+            .on_hover_text("Id of the wall to anchor the end point to.");
+        ui.label("Param:");
+        ui.add(
+            egui::DragValue::new(&mut end_param)
+                .speed(0.01)
+                .range(0.0..=1.0)
+                .suffix(" (0–1)"),
+        )
+        .on_hover_text("Fraction along the wall the measured point follows (0 = start, 1 = end).");
+    });
+    ui.horizontal(|ui| {
+        if ui
+            .button("Set")
+            .on_hover_text("Anchor the end point to the chosen wall and fraction.")
+            .clicked()
+        {
+            command = Some(Command::SetDimensionEndAnchor {
+                id,
+                anchor: Some(lintel_core::dimension::DimensionAnchor::new(
+                    lintel_core::ids::WallId(end_wall),
+                    end_param,
+                )),
+            });
+        }
+        if ui
+            .button("Clear")
+            .on_hover_text("Remove the end anchor, keeping the stored point.")
+            .clicked()
+        {
+            command = Some(Command::SetDimensionEndAnchor { id, anchor: None });
+        }
+    });
 
     command
 }

@@ -685,6 +685,7 @@ impl eframe::App for LintelApp {
                 &self.view,
                 &geometry,
                 &self.selection,
+                level,
             );
             if geometry.walls.is_empty() && !self.draft.active {
                 let msg1 = "Pick the Wall tool (W) and click twice to draw a wall";

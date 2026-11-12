@@ -8,6 +8,7 @@ use eframe::egui::Color32;
 
 pub const PAPER: Color32 = Color32::from_rgb(252, 248, 242); // warm off-white sheet
 pub const INK: Color32 = Color32::from_rgb(26, 24, 22); // near-black graphite
+pub const TEXT_MUTED: Color32 = Color32::from_rgb(110, 110, 110); // secondary / muted text
 
 pub const COBALT: Color32 = Color32::from_rgb(18, 78, 120); // selection / active tool
 pub const GREEN: Color32 = Color32::from_rgb(34, 158, 96); // endpoint snap
