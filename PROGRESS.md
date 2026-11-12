@@ -69,20 +69,24 @@ Phase A foundation already on the branch (core):
 Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
 — published as 0.12.1, rebuilt 2026-11-10 (runs `42902103302` / `42902103890`).**
 
-## v0.13.0 Status — PLANNED
+## v0.13.0 Status — IN PROGRESS
 
 **Anchored Dimensions & Release Governance** (CAP-100–CAP-108). Full scope in
 `ROADMAP.md`.
 
-- [ ] CAP-100 — Constraint-driven dimensions core: `DimensionAnchor`,
+- [x] CAP-100 — Constraint-driven dimensions core: `DimensionAnchor`,
       `start_anchor`/`end_anchor`/`witness_gap`/`witness_overrun`, anchor
-      resolution, backward-compatible JSON load
-- [ ] CAP-101 — Constraint solver: `Constraint` enum, `solve_constraints`,
-      `apply_constraints_to_anchors`
-- [ ] CAP-102 — Anchor commands: `SetDimensionStartAnchor`/`EndAnchor`,
-      `SetDimensionWitnessGap`/`Overrun` with undo and validation
+      resolution, backward-compatible JSON load — PR #22 merged (`2b07f58`),
+      CI run green (check + 3-platform build-matrix), 24 new tests
+- [x] CAP-101 — Constraint solver: `Constraint` enum, `solve_constraints`,
+      `apply_constraints_to_anchors` (now also updates the stored fallback
+      point) — PR #22
+- [x] CAP-102 — Anchor commands: `SetDimensionStartAnchor`/`EndAnchor`,
+      `SetDimensionWitnessGap`/`Overrun` with validation
+      (`DimensionNotFound`, param-in-[0,1], margins ≥ 0) — PR #22
 - [ ] CAP-103 — Anchor UI: inspector fields, click-to-place witness lines,
-      grip editing
+      grip editing (renderer adopts `dimension_line_at`/`witness_line` +
+      active level plumbing)
 - [ ] CAP-104 — Update verification: checksum (+ signature) check in
       `update-check`; cache TTL honoured
 - [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
@@ -93,13 +97,14 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
 - [ ] CAP-108 — Phase A UI completion: layers palette + construction tools
       fully wired
 
-**Starting point:** the constraint-dimension core (dimension anchors, witness
-lines, `constraint.rs`, anchor commands) exists on the `opencode/ci` branch
-only — it is **not merged to `main`**, which has no `constraint.rs` and no
-`DimensionAnchor`. First slice: land that core, then UI (CAP-103), then the
-governance and docs items.
+**Landed:** the core slice merged to `main` at `b4a7df1` (merge of PR #22,
+commit `2b07f58`, 2026-11-11). Constraint persistence on `Level` is still an
+open design point (solver takes an explicit `&[Constraint]`); noted for
+CAP-103's follow-through. Next slice: CAP-103 anchor UI (ui-dev), then
+governance/docs.
 
-Readiness % (v0.13.0): **0% — planned; core slice waiting on branch landing.**
+Readiness % (v0.13.0): **40% — core (CAP-100–102) landed; UI, governance and
+docs slices remain.**
 
 ## v0.10.1 Status — RELEASED
 
