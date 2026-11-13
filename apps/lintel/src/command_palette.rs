@@ -124,6 +124,13 @@ pub enum PaletteAction {
     LayerPrintable,
     AssignSelectionToLayer,
     DeleteLayer,
+    // Construction.
+    ConstructionLineTool,
+    ConstructionRayTool,
+    ConstructionCircleTool,
+    ConstructionArcTool,
+    ConstructionVisible,
+    DeleteConstruction,
     // Project.
     RenameProject,
     AddStorey,
@@ -136,7 +143,7 @@ pub enum PaletteAction {
 
 impl PaletteAction {
     /// Every action, in category order.
-    pub const ALL: [PaletteAction; 40] = [
+    pub const ALL: [PaletteAction; 46] = [
         PaletteAction::SelectTool,
         PaletteAction::WallTool,
         PaletteAction::DoorTool,
@@ -171,6 +178,12 @@ impl PaletteAction {
         PaletteAction::LayerPrintable,
         PaletteAction::AssignSelectionToLayer,
         PaletteAction::DeleteLayer,
+        PaletteAction::ConstructionLineTool,
+        PaletteAction::ConstructionRayTool,
+        PaletteAction::ConstructionCircleTool,
+        PaletteAction::ConstructionArcTool,
+        PaletteAction::ConstructionVisible,
+        PaletteAction::DeleteConstruction,
         PaletteAction::RenameProject,
         PaletteAction::AddStorey,
         PaletteAction::DeleteStorey,
@@ -215,6 +228,12 @@ impl PaletteAction {
             PaletteAction::LayerPrintable => "Layer printable",
             PaletteAction::AssignSelectionToLayer => "Assign selection to layer",
             PaletteAction::DeleteLayer => "Delete layer",
+            PaletteAction::ConstructionLineTool => "Construction line tool",
+            PaletteAction::ConstructionRayTool => "Construction ray tool",
+            PaletteAction::ConstructionCircleTool => "Construction circle tool",
+            PaletteAction::ConstructionArcTool => "Construction arc tool",
+            PaletteAction::ConstructionVisible => "Construction visibility",
+            PaletteAction::DeleteConstruction => "Delete construction",
             PaletteAction::RenameProject => "Rename project",
             PaletteAction::AddStorey => "Add storey",
             PaletteAction::DeleteStorey => "Delete storey",
@@ -258,6 +277,12 @@ impl PaletteAction {
             PaletteAction::ShowAbout => "?",
             PaletteAction::ShowReleaseNotes => "R",
             PaletteAction::CheckForUpdates => "U",
+            PaletteAction::ConstructionLineTool => "C",
+            PaletteAction::ConstructionRayTool => "Shift+C",
+            PaletteAction::ConstructionCircleTool => "Q",
+            PaletteAction::ConstructionArcTool => "X",
+            PaletteAction::ConstructionVisible => "Shift+V",
+            PaletteAction::DeleteConstruction => "Del",
             _ => "",
         }
     }
@@ -270,7 +295,11 @@ impl PaletteAction {
             | PaletteAction::WindowTool
             | PaletteAction::DimensionTool
             | PaletteAction::LabelTool
-            | PaletteAction::MeasurementsTool => "Tools",
+            | PaletteAction::MeasurementsTool
+            | PaletteAction::ConstructionLineTool
+            | PaletteAction::ConstructionRayTool
+            | PaletteAction::ConstructionCircleTool
+            | PaletteAction::ConstructionArcTool => "Tools",
             PaletteAction::NewPlan
             | PaletteAction::OpenPlan
             | PaletteAction::SavePlan
@@ -296,7 +325,9 @@ impl PaletteAction {
             | PaletteAction::LayerLocked
             | PaletteAction::LayerPrintable
             | PaletteAction::AssignSelectionToLayer
-            | PaletteAction::DeleteLayer => "Layers",
+            | PaletteAction::DeleteLayer
+            | PaletteAction::ConstructionVisible
+            | PaletteAction::DeleteConstruction => "Layers",
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
@@ -351,6 +382,9 @@ impl PaletteAction {
                 !selection.is_empty() && level.is_some_and(|level| level.layers.len() > 1)
             }
             PaletteAction::DeleteStorey => doc.project().levels.len() > 1,
+            PaletteAction::ConstructionVisible | PaletteAction::DeleteConstruction => selection
+                .primary()
+                .is_some_and(|id| matches!(id, EntityId::Construction(_))),
             _ => true,
         }
     }
@@ -714,6 +748,28 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
         PaletteAction::DimensionTool => app.tool = Tool::Dimension,
         PaletteAction::LabelTool => app.tool = Tool::Label,
         PaletteAction::MeasurementsTool => app.tool = Tool::Measurements,
+        PaletteAction::ConstructionLineTool => app.tool = Tool::ConstructionLine,
+        PaletteAction::ConstructionRayTool => app.tool = Tool::ConstructionRay,
+        PaletteAction::ConstructionCircleTool => app.tool = Tool::ConstructionCircle,
+        PaletteAction::ConstructionArcTool => app.tool = Tool::ConstructionArc,
+        PaletteAction::ConstructionVisible => {
+            if let Some(EntityId::Construction(id)) = app.selection.primary() {
+                let level = app.doc.project().active_level();
+                let visible = level
+                    .and_then(|l| l.construction_entity(id))
+                    .map(|e| !e.visible)
+                    .unwrap_or(true);
+                let _ = app
+                    .doc
+                    .apply(Command::SetConstructionVisible { id, visible }, now);
+            }
+        }
+        PaletteAction::DeleteConstruction => {
+            if let Some(EntityId::Construction(id)) = app.selection.primary() {
+                let _ = app.doc.apply(Command::DeleteConstruction { id }, now);
+                app.selection.clear();
+            }
+        }
         PaletteAction::NewPlan => app.new_plan(),
         PaletteAction::OpenPlan => app.open_plan(now),
         PaletteAction::SavePlan => app.save_plan(now),
