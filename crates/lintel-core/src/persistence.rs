@@ -83,9 +83,10 @@ mod tests {
     use super::*;
     use crate::command::{Applied, Command};
     use crate::document::Document;
-    use crate::geom::Point2;
+    use crate::geom::{Bounds, Point2};
     use crate::ids::{DimensionId, LevelId};
     use crate::project::UNTITLED;
+    use crate::title_block::TitleBlock;
 
     fn documented_plan() -> Document {
         let mut document = Document::new("Flat 3B", 1_760_000_000);
@@ -135,6 +136,72 @@ mod tests {
         assert_eq!(loaded.wall_count(), 1);
         assert_eq!(loaded.opening_count(), 1);
         assert_eq!(loaded.dimension_count(), 1);
+    }
+
+    #[test]
+    fn a_title_block_and_viewports_survive_a_save_and_load() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let path = directory.path().join("sheets.lintel.json");
+        let mut document = documented_plan();
+        document
+            .apply(
+                Command::SetTitleBlock {
+                    title_block: TitleBlock {
+                        company: "Acme Drafting".into(),
+                        revision: "B".into(),
+                        sheet_number: Some(101),
+                        ..TitleBlock::default()
+                    },
+                },
+                1_760_000_300,
+            )
+            .expect("set title block");
+        let level = document.project().active_level;
+        document
+            .apply(
+                Command::AddViewport {
+                    level,
+                    region: Bounds {
+                        min: Point2::new(10.0, 40.0),
+                        max: Point2::new(150.0, 140.0),
+                    },
+                    scale_denominator: 50,
+                    caption: "Unit A".into(),
+                },
+                1_760_000_400,
+            )
+            .expect("add viewport");
+
+        crate::persistence::save_atomic(document.project(), &path).expect("save");
+        let loaded = load(&path).expect("load");
+        assert_eq!(&loaded, document.project());
+        assert_eq!(loaded.title_block.sheet_number, Some(101));
+        assert_eq!(loaded.viewports.len(), 1);
+        assert_eq!(loaded.viewports[0].caption, "Unit A");
+    }
+
+    #[test]
+    fn a_project_without_sheets_loads_with_defaults() {
+        let text = r#"{
+            "format_version": 1,
+            "name": "Old plan",
+            "units": "Metric",
+            "levels": [{
+                "id": 1,
+                "name": "Level 0",
+                "elevation": 0.0,
+                "walls": [],
+                "openings": []
+            }],
+            "active_level": 1,
+            "created_epoch_s": 0,
+            "modified_epoch_s": 0,
+            "notes": "",
+            "next_id": 2
+        }"#;
+        let project = from_json(text).expect("old project loads");
+        assert_eq!(project.title_block, TitleBlock::default());
+        assert!(project.viewports.is_empty());
     }
 
     #[test]

@@ -29,7 +29,9 @@ pub mod room;
 pub mod schedule;
 pub mod selection;
 pub mod snap;
+pub mod title_block;
 pub mod units;
+pub mod viewport;
 pub mod wall;
 
 pub use command::{Applied, Command};
@@ -52,4 +54,6 @@ pub use project::Project;
 pub use room::Room;
 pub use schedule::ScheduleRow;
 pub use selection::{EntityType, Selection, SelectionFilter, SelectionMode, select};
+pub use title_block::TitleBlock;
 pub use units::{UnitSystem, format_area};
+pub use viewport::Viewport;
