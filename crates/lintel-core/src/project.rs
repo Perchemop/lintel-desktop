@@ -6,9 +6,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::constraint::{Constraint, apply_constraints_to_anchors};
 use crate::error::CoreError;
 use crate::geom::Bounds;
-use crate::ids::{LayerId, LevelId, OpeningId};
+use crate::ids::{DimensionId, LayerId, LevelId, OpeningId};
 use crate::layer::Layer;
 use crate::level::Level;
 use crate::units::UnitSystem;
@@ -140,6 +141,21 @@ impl Project {
         self.levels.iter().map(Level::dimension_count).sum()
     }
 
+    /// Re-solve every level's persisted constraints against its own geometry,
+    /// so an anchored dimension snaps back onto the wall it measures. Returns
+    /// how many dimension ends moved. Levels with no constraints are untouched.
+    pub fn solve_constraints(&mut self) -> usize {
+        self.levels
+            .iter_mut()
+            .map(|level| {
+                // `apply_constraints_to_anchors` borrows the level mutably, so
+                // the rules the level owns are read out first.
+                let constraints = level.constraints.clone();
+                apply_constraints_to_anchors(level, &constraints)
+            })
+            .sum()
+    }
+
     /// Structural integrity check, used on load and before a save.
     pub fn validate(&self) -> Result<(), CoreError> {
         if self.format_version == 0 || self.format_version > FORMAT_VERSION {
@@ -231,6 +247,8 @@ impl Project {
                 }
             }
 
+            validate_constraints(level)?;
+
             // Openings on one wall may sit side by side with zero gap, but may
             // never overlap each other.
             for wall in &level.walls {
@@ -260,6 +278,82 @@ impl Project {
     }
 }
 
+/// Check one level's persisted constraints: every rule must name geometry that
+/// level actually has, its parameters must be usable, and no two rules of the
+/// same kind may pin the same dimension.
+fn validate_constraints(level: &Level) -> Result<(), CoreError> {
+    let mut pinned = std::collections::HashSet::new();
+    let mut angled = std::collections::HashSet::new();
+    let mut paired = std::collections::HashSet::new();
+
+    for constraint in &level.constraints {
+        match constraint {
+            Constraint::PerpendicularDistance {
+                dimension,
+                wall_id,
+                param,
+            } => {
+                if level.wall(*wall_id).is_none() {
+                    return Err(CoreError::InvalidProject(format!(
+                        "constraint pins {wall_id}, which this level does not have"
+                    )));
+                }
+                ensure_dimension(level, *dimension)?;
+                if !param.is_finite() || !(0.0..=1.0).contains(param) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} has a constraint parameter outside 0..1"
+                    )));
+                }
+                if !pinned.insert(*dimension) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} is pinned by more than one constraint"
+                    )));
+                }
+            }
+            Constraint::FixedAngle { dimension, degrees } => {
+                ensure_dimension(level, *dimension)?;
+                if !degrees.is_finite() {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} has a fixed angle that is not a finite number"
+                    )));
+                }
+                if !angled.insert(*dimension) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} has more than one fixed angle"
+                    )));
+                }
+            }
+            Constraint::EqualLength { a, b } => {
+                ensure_dimension(level, *a)?;
+                ensure_dimension(level, *b)?;
+                if a == b {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{a} cannot be constrained equal to itself"
+                    )));
+                }
+                let pair = if a < b { (*a, *b) } else { (*b, *a) };
+                if !paired.insert(pair) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{a} and {b} already share an equal-length constraint"
+                    )));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Reject a constraint that names a dimension the level does not hold.
+fn ensure_dimension(level: &Level, id: DimensionId) -> Result<(), CoreError> {
+    if level.dimension(id).is_none() {
+        return Err(CoreError::InvalidProject(format!(
+            "constraint refers to {id}, which this level does not have"
+        )));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,6 +378,128 @@ mod tests {
                 2800.0,
             ));
         (project, wall_id)
+    }
+
+    fn project_with_wall_and_dimension() -> (Project, WallId, DimensionId) {
+        let (mut project, wall_id) = project_with_wall();
+        let dimension_id = DimensionId(project.allocate_id());
+        project
+            .active_level_mut()
+            .expect("active level")
+            .dimensions
+            .push(Dimension::new(
+                dimension_id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            ));
+        (project, wall_id, dimension_id)
+    }
+
+    fn push_constraint(project: &mut Project, constraint: Constraint) {
+        project
+            .active_level_mut()
+            .expect("active level")
+            .constraints
+            .push(constraint);
+    }
+
+    #[test]
+    fn validation_accepts_a_well_formed_constraint_set() {
+        let (mut project, wall_id, dimension_id) = project_with_wall_and_dimension();
+        push_constraint(
+            &mut project,
+            Constraint::PerpendicularDistance {
+                dimension: dimension_id,
+                wall_id,
+                param: 0.5,
+            },
+        );
+        push_constraint(
+            &mut project,
+            Constraint::FixedAngle {
+                dimension: dimension_id,
+                degrees: 90.0,
+            },
+        );
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn validation_catches_a_dangling_constraint_wall() {
+        let (mut project, _, dimension_id) = project_with_wall_and_dimension();
+        push_constraint(
+            &mut project,
+            Constraint::PerpendicularDistance {
+                dimension: dimension_id,
+                wall_id: WallId(999),
+                param: 0.5,
+            },
+        );
+        let error = project.validate().expect_err("dangling wall");
+        assert!(error.to_string().contains("which this level does not have"));
+    }
+
+    #[test]
+    fn validation_catches_a_dangling_constraint_dimension() {
+        let (mut project, wall_id, _) = project_with_wall_and_dimension();
+        push_constraint(
+            &mut project,
+            Constraint::PerpendicularDistance {
+                dimension: DimensionId(999),
+                wall_id,
+                param: 0.5,
+            },
+        );
+        let error = project.validate().expect_err("dangling dimension");
+        assert!(error.to_string().contains("which this level does not have"));
+    }
+
+    #[test]
+    fn validation_catches_a_constraint_parameter_outside_its_wall() {
+        let (mut project, wall_id, dimension_id) = project_with_wall_and_dimension();
+        push_constraint(
+            &mut project,
+            Constraint::PerpendicularDistance {
+                dimension: dimension_id,
+                wall_id,
+                param: 1.5,
+            },
+        );
+        let error = project.validate().expect_err("param outside 0..1");
+        assert!(error.to_string().contains("outside 0..1"));
+    }
+
+    #[test]
+    fn validation_catches_a_duplicate_constraint_pin() {
+        let (mut project, wall_id, dimension_id) = project_with_wall_and_dimension();
+        for param in [0.25, 0.75] {
+            push_constraint(
+                &mut project,
+                Constraint::PerpendicularDistance {
+                    dimension: dimension_id,
+                    wall_id,
+                    param,
+                },
+            );
+        }
+        let error = project.validate().expect_err("duplicate pin");
+        assert!(error.to_string().contains("more than one constraint"));
+    }
+
+    #[test]
+    fn validation_catches_a_self_equal_length_constraint() {
+        let (mut project, _, dimension_id) = project_with_wall_and_dimension();
+        push_constraint(
+            &mut project,
+            Constraint::EqualLength {
+                a: dimension_id,
+                b: dimension_id,
+            },
+        );
+        let error = project.validate().expect_err("self equal length");
+        assert!(error.to_string().contains("equal to itself"));
     }
 
     #[test]

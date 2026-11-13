@@ -44,6 +44,9 @@ impl Document {
     pub fn apply(&mut self, command: Command, now_epoch_s: i64) -> Result<Applied, CoreError> {
         let mut candidate = self.project.clone();
         let applied = apply_command(&mut candidate, command)?;
+        // A command that moved a wall or a dimension must leave every
+        // constrained dimension sitting on the geometry it is pinned to.
+        candidate.solve_constraints();
         if candidate == self.project {
             return Ok(applied);
         }
@@ -136,7 +139,11 @@ impl Document {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constraint::Constraint;
+    use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
     use crate::geom::Point2;
+    use crate::ids::{DimensionId, LevelId, WallId};
+    use crate::wall::Wall;
 
     fn wall(start: Point2, end: Point2) -> Command {
         Command::AddWall {
@@ -221,5 +228,59 @@ mod tests {
         let mut document = Document::new("Plan", 1);
         let error = document.save().expect_err("no path");
         assert!(error.to_string().contains("not been saved"));
+    }
+
+    #[test]
+    fn moving_a_wall_re_solves_the_constraints_that_pin_a_dimension_to_it() {
+        let mut project = Project::new("Plan", 1);
+        let wall_id = WallId(project.allocate_id());
+        let dimension_id = DimensionId(project.allocate_id());
+        {
+            let level = project.active_level_mut().expect("level");
+            level.walls.push(Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+            let mut dimension = Dimension::new(
+                dimension_id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            );
+            dimension.start_anchor = Some(DimensionAnchor::new(wall_id, 0.25));
+            level.dimensions.push(dimension);
+            level.constraints.push(Constraint::PerpendicularDistance {
+                dimension: dimension_id,
+                wall_id,
+                param: 0.25,
+            });
+        }
+
+        let mut document = Document::from_project(project);
+        document
+            .apply(
+                Command::MoveWall {
+                    id: wall_id,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(8000.0, 0.0),
+                },
+                2,
+            )
+            .expect("move wall");
+
+        let dimension = document
+            .project()
+            .level(LevelId(1))
+            .and_then(|level| level.dimension(dimension_id))
+            .expect("dimension");
+        assert_eq!(
+            dimension.start,
+            Point2::new(2000.0, 0.0),
+            "the pinned point follows the wall to a quarter of its new length"
+        );
     }
 }
