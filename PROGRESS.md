@@ -149,10 +149,21 @@ merge — first signed release; all 8 artefacts including
       with a shared validator now living in `constraint.rs` — PR #32 merged
       (`ef21549`); palette entry skipped (inspector is the discoverable home)
 
-**Landed:** persistence (CAP-111) and management UI (CAP-112); next:
-CAP-113/114 (title blocks + viewports), CAP-115 (QC checklist).
+- [x] CAP-113 — Sheet title blocks: `TitleBlock` (company, project, sheet
+      title, revision, date, drawn-by, sheet-number base), rendered as the
+      bottom-right strip on every exported sheet, `SetTitleBlock` command,
+      old files load with defaults — PR #33 merged (`cb9f5cf`)
+- [x] CAP-114 — Sheet viewports: `Viewport` (level-bound region + 1:N scale +
+      caption), multiple per level, framed and scale-fit in the PDF,
+      `AddViewport`/`RemoveViewport` commands, validate rejects dangling
+      levels/non-positive scale/off-sheet regions — PR #33
+      (simplification: walls straddling a viewport edge draw whole, not
+      clipped)
 
-Readiness % (v0.14.0): **50% — constraints complete; sheets and QC remain.**
+**Landed:** constraints (CAP-111/112) and sheets (CAP-113/114); next:
+CAP-115 (QC checklist), then the release gate.
+
+Readiness % (v0.14.0): **85% — only the QC checklist and the gate remain.**
 
 ## v0.10.1 Status — RELEASED
 
