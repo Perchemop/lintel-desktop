@@ -35,7 +35,15 @@ crates/crash-report/  shared: panic hook, scrubbed diagnostics           (guide 
 | `command` | All edits (`AddWall`, `PlaceOpening`, …); returns `Applied` |
 | `document` | Project + undo/redo + dirty tracking + atomic save/load |
 | `join` | Derived geometry: wall-band extensions at joints, door swings, hit test |
-| `snap` | Snap-to-endpoint / ortho / grid for drawing input |
+| `snap` | Snap candidates: endpoint, midpoint, intersection, perpendicular, tangent, quadrant, grid, ortho (priority-ordered) |
+| `selection` | Window/crossing/fence selection with entity-type and layer filters |
+| `layer` | Layer model: protected default layer, per-entity assignment, serde-default migration |
+| `construction` | Construction geometry (line, ray, circle, arc): snap-enabled, never printed |
+| `measurements` | Room area/perimeter, level and project wall/opening totals |
+| `label` | Free text plan labels |
+| `room` | Auto-detected rooms via planar face traversal |
+| `schedule` | Door/window schedule rows |
+| `constraint` | Constraint solver: `PerpendicularDistance`, `FixedAngle`, `EqualLength` |
 | `persistence` | Pretty JSON (`<name>.lintel.json`), atomic write via temp + rename |
 | `pdf` | Hand-written PDF 1.7 sheet: border, title block, walls, openings, dimensions |
 

@@ -106,8 +106,11 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       `--verify-tag` (single `v`-convention), and warns on the default
       `RELEASE_TOKENS`; `ci.yml` gains a version-consistency gate — PR #25
       merged (`d248b8b`)
-- [ ] CAP-107 — Documentation parity: capability-inventory through CAP-099,
-      parity rows, CHANGELOG/ROADMAP/PROGRESS reconciled
+- [x] CAP-107 — Documentation parity: capability-inventory through CAP-099,
+      parity rows, CHANGELOG/ROADMAP/PROGRESS reconciled (this slice)
+- 2026-11-13: CAP-107 complete — capability-inventory, parity, traceability,
+  architecture, decisions, README and implementation plan reconciled to published
+  tags; v0.13.0 release gate remains.
 - [x] CAP-108 — Phase A UI completion: Layers panel in the inspector
       (visible/locked toggles, honest empty state), four construction tools
       (line/ray/circle/arc) with two-click canvas flows, command-palette
@@ -122,8 +125,8 @@ point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
 verification), CAP-106 (release governance), CAP-105 (in-app release notes),
 CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **95% — CAP-100–106 and CAP-108 landed; only docs
-parity (CAP-107) remains, then the release gate.**
+Readiness % (v0.13.0): **100% — CAP-100–108 landed, docs parity (CAP-107)
+complete; release gate remains.**
 
 ## v0.10.1 Status — RELEASED
 
