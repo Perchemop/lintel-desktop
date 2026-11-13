@@ -16,12 +16,15 @@ use std::fmt::Write as _;
 
 use crate::error::CoreError;
 use crate::geom::{Bounds, Point2, Vec2, arc_points};
+use crate::ids::LevelId;
 use crate::join::PlanGeometry;
 use crate::level::Level;
 use crate::opening::OpeningKind;
 use crate::project::Project;
 use crate::schedule::opening_schedule;
+use crate::title_block::MAX_REVISION_CHARS;
 use crate::units::UnitSystem;
+use crate::viewport::Viewport;
 
 /// PostScript points per millimetre.
 pub const MM_TO_PT: f64 = 72.0 / 25.4;
@@ -163,13 +166,19 @@ pub fn render_plan(
         .ok_or(CoreError::LevelNotFound(project.active_level))?;
     let (sheet_width, sheet_height) = spec.size_mm();
 
+    let number = sheet_number_for_page(project, spec, 0);
+    let sheet_facts = SheetFacts {
+        title: &spec.sheet_title,
+        level_name: Some(&level.name),
+        sheet_number: &number,
+    };
     let mut content = Content::default();
     draw_sheet(
         &mut content,
         project,
         level,
         spec,
-        &spec.sheet_title,
+        &sheet_facts,
         produced_epoch_s,
     );
 
@@ -192,13 +201,19 @@ pub fn render_set(
 ) -> Result<Vec<u8>, CoreError> {
     let (sheet_width, sheet_height) = spec.size_mm();
 
+    let cover_number = sheet_number_for_page(project, spec, 0);
+    let cover_facts = SheetFacts {
+        title: "Drawing set",
+        level_name: None,
+        sheet_number: &cover_number,
+    };
     let mut cover = Content::default();
     draw_frame(&mut cover, sheet_width, sheet_height);
     draw_title_block(
         &mut cover,
         project,
         spec,
-        "Drawing set",
+        &cover_facts,
         sheet_width,
         produced_epoch_s,
     );
@@ -206,15 +221,19 @@ pub fn render_set(
     let mut pages: Vec<(String, f64, f64)> = vec![(cover.ops, sheet_width, sheet_height)];
 
     for (index, level) in project.levels.iter().enumerate() {
-        let mut page_spec = spec.clone();
-        page_spec.sheet_number = sheet_number_for(&spec.sheet_number, index);
+        let number = sheet_number_for_page(project, spec, index + 1);
+        let sheet_facts = SheetFacts {
+            title: &level.name,
+            level_name: Some(&level.name),
+            sheet_number: &number,
+        };
         let mut content = Content::default();
         draw_sheet(
             &mut content,
             project,
             level,
-            &page_spec,
-            &level.name,
+            spec,
+            &sheet_facts,
             produced_epoch_s,
         );
         pages.push((content.ops, sheet_width, sheet_height));
@@ -230,21 +249,31 @@ fn draw_sheet(
     project: &Project,
     level: &Level,
     spec: &SheetSpec,
-    title: &str,
+    facts: &SheetFacts<'_>,
     produced_epoch_s: i64,
 ) {
     let (sheet_width, sheet_height) = spec.size_mm();
     let geometry = PlanGeometry::of_level(level);
     draw_frame(content, sheet_width, sheet_height);
-    draw_title_block(content, project, spec, title, sheet_width, produced_epoch_s);
-    draw_plan(
-        content,
-        &geometry,
-        spec,
-        sheet_width,
-        sheet_height,
-        project.units,
-    );
+    draw_title_block(content, project, spec, facts, sheet_width, produced_epoch_s);
+    // A level with viewports is laid out through them; a plain sheet keeps the
+    // single scaled plan it has always drawn.
+    let has_viewports = project
+        .viewports
+        .iter()
+        .any(|viewport| viewport.level == level.id);
+    if has_viewports {
+        draw_viewports(content, &geometry, &project.viewports, level.id);
+    } else {
+        draw_plan(
+            content,
+            &geometry,
+            spec,
+            sheet_width,
+            sheet_height,
+            project.units,
+        );
+    }
     draw_orientation(content, spec, sheet_width, sheet_height, project.units);
     draw_schedule_placement(content, level, sheet_width, sheet_height);
 }
@@ -295,7 +324,7 @@ fn draw_cover(
     for (index, level) in project.levels.iter().enumerate() {
         let line = format!(
             "{}   {}",
-            sheet_number_for(&spec.sheet_number, index),
+            sheet_number_for_page(project, spec, index + 1),
             truncate(&level.name, 40)
         );
         content.text(Point2::new(area_x, y), 3.4, false, &line);
@@ -367,14 +396,21 @@ fn draw_frame(content: &mut Content, sheet_width: f64, sheet_height: f64) {
     content.stroke();
 }
 
+/// The title block strip, bottom-right of the sheet as drafting convention.
+///
+/// Fields the project does not set are left blank rather than filled with
+/// placeholder text: the project name, sheet title and date fall back to the
+/// project, the sheet and the export date respectively.
 fn draw_title_block(
     content: &mut Content,
     project: &Project,
     spec: &SheetSpec,
-    title: &str,
+    facts: &SheetFacts<'_>,
     sheet_width: f64,
     produced_epoch_s: i64,
 ) {
+    let block = &project.title_block;
+    let sheet_title = block.sheet_title_or(facts.title);
     let x = sheet_width - MARGIN - TITLE_BLOCK_WIDTH;
     let y = MARGIN;
 
@@ -396,41 +432,80 @@ fn draw_title_block(
     content.stroke();
 
     content.set_fill_gray(0.0);
+    // Top band: the practice, then the project name.
+    if let Some(company) = block.company() {
+        content.text(
+            Point2::new(x + 4.0, y + 40.5),
+            2.6,
+            false,
+            &truncate(company, 60),
+        );
+    }
     content.text(
-        Point2::new(x + 4.0, y + 36.0),
+        Point2::new(x + 4.0, y + 34.0),
         4.0,
         true,
-        &truncate(&project.name, 44),
+        &truncate(block.project_name_or(&project.name), 44),
     );
+    // Middle band: the sheet title, with the level beneath it when the two
+    // differ, so a default block never prints the same name twice.
     content.text(
-        Point2::new(x + 4.0, y + 21.0),
+        Point2::new(x + 4.0, y + 25.0),
         3.2,
         false,
-        &truncate(title, 52),
+        &truncate(sheet_title, 52),
     );
+    if let Some(level_name) = facts.level_name.filter(|name| *name != sheet_title) {
+        content.text(
+            Point2::new(x + 4.0, y + 18.5),
+            2.8,
+            false,
+            &truncate(level_name, 60),
+        );
+    }
+    // Bottom band, left column: scale, then the revision.
     content.text(
         Point2::new(x + 4.0, y + 9.0),
         3.0,
         false,
         &format!("Scale {}", spec.scale_label()),
     );
+    if let Some(revision) = block.revision() {
+        content.text(
+            Point2::new(x + 62.0, y + 9.0),
+            3.0,
+            false,
+            &format!("Rev {}", truncate(revision, MAX_REVISION_CHARS)),
+        );
+    }
+    // Bottom band, right column: the sheet number.
     content.text(
         Point2::new(x + 129.0, y + 9.0),
         3.0,
         false,
-        &format!("Sheet {}", truncate(&spec.sheet_number, 20)),
+        &format!("Sheet {}", truncate(facts.sheet_number, 20)),
     );
+    // Footer: the build, the author and the issue line.
     content.text(
         Point2::new(x + 4.0, y + 3.5),
         2.6,
         false,
         &format!("Lintel v{}", env!("CARGO_PKG_VERSION")),
     );
+    if let Some(drawn_by) = block.drawn_by() {
+        content.text(
+            Point2::new(x + 62.0, y + 3.5),
+            2.6,
+            false,
+            &format!("Drawn {}", truncate(drawn_by, 24)),
+        );
+    }
+    let export_date = format_date(produced_epoch_s);
     let right = format!(
         "{} {} - {}",
         spec.paper.label(),
         spec.orientation_label(),
-        format_date(produced_epoch_s)
+        block.date_or(&export_date)
     );
     content.text(Point2::new(x + 129.0, y + 3.5), 2.6, false, &right);
 }
@@ -450,12 +525,52 @@ fn draw_plan(
     let scale = 1.0 / f64::from(spec.scale_denominator.max(1));
     let area_centre = Point2::new(area_x + area_width * 0.5, area_y + area_height * 0.5);
     let model_centre = bounds.centre();
-    let model_centre_pt = model_centre;
     let origin = Point2::new(
-        area_centre.x - model_centre_pt.x * scale,
-        area_centre.y - model_centre_pt.y * scale,
+        area_centre.x - model_centre.x * scale,
+        area_centre.y - model_centre.y * scale,
     );
     let layout = SheetLayout { scale, origin };
+    let clip = Bounds {
+        min: Point2::new(area_x, area_y),
+        max: Point2::new(area_x + area_width, area_y + area_height),
+    };
+
+    draw_plan_body(content, geometry, &layout, clip);
+
+    // Overall dimensions, so the sheet says how big the plan is.
+    let bottom_left = layout.to_paper(bounds.min);
+    let top_right = layout.to_paper(bounds.max);
+    draw_dimension(
+        content,
+        Point2::new(bottom_left.x, bottom_left.y),
+        Point2::new(top_right.x, bottom_left.y),
+        -8.0,
+        false,
+        units.format(bounds.width()),
+    );
+    draw_dimension(
+        content,
+        Point2::new(top_right.x, bottom_left.y),
+        Point2::new(top_right.x, top_right.y),
+        8.0,
+        true,
+        units.format(bounds.height()),
+    );
+}
+
+/// Paint a level's walls, openings, room areas and free labels through `layout`,
+/// skipping room and label text whose paper position falls outside `clip`.
+///
+/// `clip` stands in for a real PDF clipping path. It is approximate: a wall that
+/// straddles the boundary is drawn whole, so a viewport is a scale fit rather
+/// than a byte-exact cut.
+fn draw_plan_body(
+    content: &mut Content,
+    geometry: &PlanGeometry,
+    layout: &SheetLayout,
+    clip: Bounds,
+) {
+    let scale = layout.scale;
 
     // 1. Wall bands, filled so openings read as real gaps.
     content.set_line_width(0.18);
@@ -535,31 +650,11 @@ fn draw_plan(
         }
     }
 
-    // 3. Overall dimensions, so the sheet says how big the plan is.
-    let bottom_left = layout.to_paper(bounds.min);
-    let top_right = layout.to_paper(bounds.max);
-    draw_dimension(
-        content,
-        Point2::new(bottom_left.x, bottom_left.y),
-        Point2::new(top_right.x, bottom_left.y),
-        -8.0,
-        false,
-        units.format(bounds.width()),
-    );
-    draw_dimension(
-        content,
-        Point2::new(top_right.x, bottom_left.y),
-        Point2::new(top_right.x, top_right.y),
-        8.0,
-        true,
-        units.format(bounds.height()),
-    );
-
-    // 4. Room areas, centred on each room, in light grey so walls stay dominant.
+    // 3. Room areas, centred on each room, in light grey so walls stay dominant.
     content.set_fill_gray(0.35);
     for room in geometry.rooms() {
         let paper = layout.to_paper(room.centroid);
-        if !inside_area(paper, area_x, area_y, area_width, area_height) {
+        if !inside_rect(paper, clip) {
             continue;
         }
         let label = room.area_label();
@@ -572,11 +667,11 @@ fn draw_plan(
         );
     }
 
-    // 5. Free-text labels, in black over the plan.
+    // 4. Free-text labels, in black over the plan.
     content.set_fill_gray(0.0);
     for label in geometry.labels() {
         let paper = layout.to_paper(label.anchor);
-        if !inside_area(paper, area_x, area_y, area_width, area_height) {
+        if !inside_rect(paper, clip) {
             continue;
         }
         let size = (label.height_mm * layout.scale).clamp(1.5, 12.0);
@@ -587,13 +682,74 @@ fn draw_plan(
     }
 }
 
-/// True when `point` lies inside the drawing rectangle.
-fn inside_area(point: Point2, x: f64, y: f64, width: f64, height: f64) -> bool {
+/// True when `point` lies inside the sheet rectangle `rect`.
+fn inside_rect(point: Point2, rect: Bounds) -> bool {
     point.is_finite()
-        && point.x >= x
-        && point.x <= x + width
-        && point.y >= y
-        && point.y <= y + height
+        && point.x >= rect.min.x
+        && point.x <= rect.max.x
+        && point.y >= rect.min.y
+        && point.y <= rect.max.y
+}
+
+/// Draw every viewport bound to `level` on this sheet: a frame, the level's
+/// geometry scaled into it, and the scale label and caption beneath it.
+///
+/// The clip is approximate: the geometry is scaled to sit inside the frame and
+/// room and label text outside it is skipped, but a wall that straddles the
+/// boundary is drawn whole rather than cut by a real PDF clipping path.
+fn draw_viewports(
+    content: &mut Content,
+    geometry: &PlanGeometry,
+    viewports: &[Viewport],
+    level: LevelId,
+) {
+    let bounds = geometry.bounds();
+    for viewport in viewports {
+        if viewport.level != level {
+            continue;
+        }
+        let region = viewport.region.normalised();
+        if !region.min.is_finite()
+            || !region.max.is_finite()
+            || region.width() <= 0.0
+            || region.height() <= 0.0
+        {
+            continue;
+        }
+
+        content.set_line_width(0.35);
+        content.set_stroke_gray(0.0);
+        content.rectangle(region.min.x, region.min.y, region.width(), region.height());
+        content.stroke();
+
+        if let Some(bounds) = bounds {
+            let scale = 1.0 / f64::from(viewport.scale_denominator.max(1));
+            let centre = bounds.centre();
+            let origin = Point2::new(
+                region.min.x + region.width() * 0.5 - centre.x * scale,
+                region.min.y + region.height() * 0.5 - centre.y * scale,
+            );
+            let layout = SheetLayout { scale, origin };
+            draw_plan_body(content, geometry, &layout, region);
+        }
+
+        content.set_fill_gray(0.0);
+        content.text(
+            Point2::new(region.min.x, region.min.y - 3.5),
+            3.0,
+            false,
+            &format!("Viewport {}", viewport.scale_label()),
+        );
+        let caption = viewport.caption.trim();
+        if !caption.is_empty() {
+            content.text(
+                Point2::new(region.min.x + region.width() * 0.5, region.min.y - 3.5),
+                3.0,
+                false,
+                &truncate(caption, 60),
+            );
+        }
+    }
 }
 
 /// One dimension line, offset from the measured edge. `vertical` controls
@@ -822,6 +978,14 @@ fn draw_schedule(content: &mut Content, at: Point2, level: &Level) {
     }
 }
 
+/// The per-sheet facts the title block prints, resolved by the exporter: what
+/// the sheet is called, which level it belongs to and its number.
+struct SheetFacts<'a> {
+    title: &'a str,
+    level_name: Option<&'a str>,
+    sheet_number: &'a str,
+}
+
 /// Paper-space placement: `paper = origin + model * scale`.
 struct SheetLayout {
     scale: f64,
@@ -1035,6 +1199,18 @@ fn build_pdf_pages(
     assemble(&objects, 1, 5 + 2 * n)
 }
 
+/// The sheet number printed at `position` in a set: `0` is the cover, then one
+/// position per level. A title block that names its first sheet drives the
+/// numbers; otherwise each sheet keeps its own number and the trailing digits
+/// count up.
+fn sheet_number_for_page(project: &Project, spec: &SheetSpec, position: usize) -> String {
+    match project.title_block.sheet_number {
+        Some(base) => (base as usize + position).to_string(),
+        None if position == 0 => spec.sheet_number.clone(),
+        None => sheet_number_for(&spec.sheet_number, position - 1),
+    }
+}
+
 /// Build a level's sheet number from `base` by adding `offset` to its trailing
 /// digit run, preserving that run's width (`"A-101"` + 1 → `"A-102"`,
 /// `"A-099"` + 1 → `"A-100"`). With no trailing digits a `-{offset + 1}`
@@ -1126,6 +1302,7 @@ mod tests {
     use super::*;
     use crate::command::Command;
     use crate::document::Document;
+    use crate::title_block::TitleBlock;
 
     fn plan() -> Document {
         let mut document = Document::new("Flat (3B)", 1_760_000_000);
@@ -1473,5 +1650,140 @@ mod tests {
             render_plan(document.project(), &SheetSpec::default(), 1_760_000_200).expect("render");
         let text = String::from_utf8_lossy(&bytes).to_string();
         assert!(text.contains("No doors or windows"), "{text:.400}");
+    }
+
+    fn viewport_region() -> Bounds {
+        Bounds {
+            min: Point2::new(10.0, 40.0),
+            max: Point2::new(150.0, 140.0),
+        }
+    }
+
+    fn rectangle_count(bytes: &[u8]) -> usize {
+        String::from_utf8_lossy(bytes).matches(" re\n").count()
+    }
+
+    #[test]
+    fn the_title_block_prints_the_project_fields() {
+        let document = plan();
+        let mut project = document.project().clone();
+        project.title_block = TitleBlock {
+            company: "Acme Drafting".into(),
+            project_name: "Riverside House".into(),
+            sheet_title: "Ground floor".into(),
+            revision: "B".into(),
+            date: "2026-11-14".into(),
+            drawn_by: "JD".into(),
+            sheet_number: None,
+        };
+        let bytes = render_plan(&project, &SheetSpec::default(), 1).expect("render");
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("Acme Drafting"), "{text:.400}");
+        assert!(text.contains("Riverside House"));
+        assert!(text.contains("(Ground floor)"));
+        assert!(text.contains("Rev B"));
+        assert!(text.contains("Drawn JD"));
+        assert!(text.contains("2026-11-14"), "the block's own date is used");
+    }
+
+    #[test]
+    fn a_default_title_block_still_prints_a_date_and_no_junk() {
+        let document = plan();
+        let bytes = render_plan(document.project(), &SheetSpec::default(), 0).expect("render");
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("1970-01-01"), "the export date is printed");
+        assert!(!text.contains("Rev "), "no revision is invented");
+        assert!(!text.contains("Drawn "), "no author is invented");
+    }
+
+    #[test]
+    fn a_title_block_first_sheet_number_drives_the_set() {
+        let document = plan();
+        let spec = SheetSpec::default();
+        // Without an override each sheet keeps its own number.
+        assert_eq!(sheet_number_for_page(document.project(), &spec, 0), "A-101");
+        assert_eq!(sheet_number_for_page(document.project(), &spec, 2), "A-102");
+
+        let mut project = document.project().clone();
+        project.title_block.sheet_number = Some(101);
+        assert_eq!(sheet_number_for_page(&project, &spec, 0), "101");
+        assert_eq!(sheet_number_for_page(&project, &spec, 1), "102");
+        assert_eq!(sheet_number_for_page(&project, &spec, 3), "104");
+    }
+
+    #[test]
+    fn a_title_block_sheet_number_overrides_the_sheet_number() {
+        let document = plan();
+        let mut project = document.project().clone();
+        project.title_block.sheet_number = Some(101);
+        let bytes = render_plan(&project, &SheetSpec::default(), 1).expect("render");
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("(Sheet 101)"), "{text:.400}");
+        assert!(!text.contains("(Sheet A-101)"));
+    }
+
+    #[test]
+    fn a_viewport_is_framed_and_captioned_on_its_sheet() {
+        let document = plan();
+        let baseline = render(&document);
+        let mut project = document.project().clone();
+        let viewport = Viewport::new(
+            project.active_level,
+            viewport_region(),
+            50,
+            "Ground floor unit".to_string(),
+        );
+        project.viewports.push(viewport);
+        let bytes = render_plan(&project, &SheetSpec::default(), 1_760_000_200).expect("render");
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("(Ground floor unit)"), "{text:.600}");
+        assert!(
+            text.contains("(Viewport 1:50)"),
+            "the scale label is printed"
+        );
+        assert!(
+            rectangle_count(&bytes) > rectangle_count(&baseline),
+            "the viewport adds a frame"
+        );
+    }
+
+    #[test]
+    fn a_viewport_scale_changes_what_is_drawn() {
+        let document = plan();
+        let render_at = |scale: u32| {
+            let mut project = document.project().clone();
+            let viewport = Viewport::new(
+                project.active_level,
+                viewport_region(),
+                scale,
+                String::new(),
+            );
+            project.viewports.push(viewport);
+            render_plan(&project, &SheetSpec::default(), 1).expect("render")
+        };
+        assert_ne!(
+            render_at(20),
+            render_at(200),
+            "1:20 and 1:200 should not draw the same sheet"
+        );
+    }
+
+    #[test]
+    fn an_empty_level_with_a_viewport_still_prints_the_frame() {
+        let document = Document::new("Empty plan", 1_760_000_000);
+        let mut project = document.project().clone();
+        let viewport = Viewport::new(
+            project.active_level,
+            viewport_region(),
+            50,
+            "Bare unit".to_string(),
+        );
+        project.viewports.push(viewport);
+        let bytes = render_plan(&project, &SheetSpec::default(), 1).expect("render");
+        assert_valid_xref(&bytes);
+        let text = String::from_utf8_lossy(&bytes).to_string();
+        assert!(text.contains("(Bare unit)"), "{text:.400}");
+        // No geometry, so no wall fill, but the frame is still there.
+        assert!(!text.contains("B\n"));
     }
 }

@@ -10,7 +10,7 @@ use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 use crate::error::CoreError;
-use crate::geom::Point2;
+use crate::geom::{Bounds, Point2};
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 use crate::label::{MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM, PlanLabel};
 use crate::layer::{
@@ -23,7 +23,9 @@ use crate::opening::{
     OpeningKind,
 };
 use crate::project::Project;
+use crate::title_block::TitleBlock;
 use crate::units::UnitSystem;
+use crate::viewport::{MAX_CAPTION_CHARS, Viewport};
 use crate::wall::{
     MAX_WALL_HEIGHT, MAX_WALL_THICKNESS, MIN_WALL_HEIGHT, MIN_WALL_LENGTH, MIN_WALL_THICKNESS, Wall,
 };
@@ -181,6 +183,18 @@ pub enum Command {
         constraint: Constraint,
     },
     RemoveConstraint {
+        index: usize,
+    },
+    SetTitleBlock {
+        title_block: TitleBlock,
+    },
+    AddViewport {
+        level: LevelId,
+        region: Bounds,
+        scale_denominator: u32,
+        caption: String,
+    },
+    RemoveViewport {
         index: usize,
     },
 }
@@ -395,6 +409,14 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
         }
         Command::AddConstraint { constraint } => add_constraint(project, constraint),
         Command::RemoveConstraint { index } => remove_constraint(project, index),
+        Command::SetTitleBlock { title_block } => set_title_block(project, title_block),
+        Command::AddViewport {
+            level,
+            region,
+            scale_denominator,
+            caption,
+        } => add_viewport(project, level, region, scale_denominator, caption),
+        Command::RemoveViewport { index } => remove_viewport(project, index),
     }
 }
 
@@ -1005,6 +1027,63 @@ fn remove_constraint(project: &mut Project, index: usize) -> Result<Applied, Cor
         return Err(CoreError::invalid("constraint index out of range"));
     }
     level.constraints.remove(index);
+    Ok(Applied::default())
+}
+
+fn set_title_block(project: &mut Project, title_block: TitleBlock) -> Result<Applied, CoreError> {
+    let title_block = TitleBlock {
+        company: title_block.company.trim().to_string(),
+        project_name: title_block.project_name.trim().to_string(),
+        sheet_title: title_block.sheet_title.trim().to_string(),
+        revision: title_block.revision.trim().to_string(),
+        date: title_block.date.trim().to_string(),
+        drawn_by: title_block.drawn_by.trim().to_string(),
+        sheet_number: title_block.sheet_number,
+    };
+    title_block.validate()?;
+    project.title_block = title_block;
+    Ok(Applied::default())
+}
+
+fn validate_viewport(project: &Project, viewport: &Viewport) -> Result<(), CoreError> {
+    if project.level(viewport.level).is_none() {
+        return Err(CoreError::LevelNotFound(viewport.level));
+    }
+    if !viewport.is_valid() {
+        return Err(CoreError::invalid(
+            "a viewport needs a positive scale and a region with an area",
+        ));
+    }
+    if !viewport.is_within_sheet() {
+        return Err(CoreError::invalid("a viewport region must lie on the sheet"));
+    }
+    if viewport.caption.chars().count() > MAX_CAPTION_CHARS {
+        return Err(CoreError::invalid(format!(
+            "a viewport caption must be at most {MAX_CAPTION_CHARS} characters"
+        )));
+    }
+    Ok(())
+}
+
+fn add_viewport(
+    project: &mut Project,
+    level: LevelId,
+    region: Bounds,
+    scale_denominator: u32,
+    caption: String,
+) -> Result<Applied, CoreError> {
+    let caption = caption.trim().to_string();
+    let viewport = Viewport::new(level, region, scale_denominator, caption);
+    validate_viewport(project, &viewport)?;
+    project.viewports.push(viewport);
+    Ok(Applied::default())
+}
+
+fn remove_viewport(project: &mut Project, index: usize) -> Result<Applied, CoreError> {
+    if index >= project.viewports.len() {
+        return Err(CoreError::invalid("viewport index out of range"));
+    }
+    project.viewports.remove(index);
     Ok(Applied::default())
 }
 
@@ -2300,5 +2379,265 @@ mod tests {
                 .constraints
                 .is_empty()
         );
+    }
+
+    fn viewport_region() -> Bounds {
+        Bounds {
+            min: Point2::new(10.0, 40.0),
+            max: Point2::new(150.0, 140.0),
+        }
+    }
+
+    #[test]
+    fn setting_the_title_block_replaces_it_and_trims_whitespace() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::SetTitleBlock {
+                title_block: TitleBlock {
+                    company: "  Acme Drafting  ".into(),
+                    project_name: "  Riverside House  ".into(),
+                    sheet_title: "Ground floor".into(),
+                    revision: " A ".into(),
+                    date: "2026-11-14".into(),
+                    drawn_by: " JD ".into(),
+                    sheet_number: Some(101),
+                },
+            },
+        )
+        .expect("set title block");
+        let block = &project.title_block;
+        assert_eq!(block.company, "Acme Drafting");
+        assert_eq!(block.project_name, "Riverside House");
+        assert_eq!(block.revision, "A");
+        assert_eq!(block.drawn_by, "JD");
+        assert_eq!(block.sheet_number, Some(101));
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn a_rejected_title_block_leaves_the_old_one_alone() {
+        let mut project = empty_project();
+        let before = project.title_block.clone();
+        let error = apply_command(
+            &mut project,
+            Command::SetTitleBlock {
+                title_block: TitleBlock {
+                    revision: "WAY-TOO-LONG".into(),
+                    ..TitleBlock::default()
+                },
+            },
+        )
+        .expect_err("long revision");
+        assert!(error.to_string().contains("at most 8 characters"));
+        assert_eq!(project.title_block, before, "the old block is untouched");
+
+        let error = apply_command(
+            &mut project,
+            Command::SetTitleBlock {
+                title_block: TitleBlock {
+                    sheet_number: Some(0),
+                    ..TitleBlock::default()
+                },
+            },
+        )
+        .expect_err("zero sheet number");
+        assert!(error.to_string().contains("1 or more"));
+    }
+
+    #[test]
+    fn a_set_title_block_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        document
+            .apply(
+                Command::SetTitleBlock {
+                    title_block: TitleBlock {
+                        project_name: "Riverside House".into(),
+                        ..TitleBlock::default()
+                    },
+                },
+                1_760_000_100,
+            )
+            .expect("set title block");
+        assert_eq!(
+            document.project().title_block.project_name,
+            "Riverside House"
+        );
+        assert!(document.undo(1_760_000_200));
+        assert_eq!(
+            document.project().title_block,
+            TitleBlock::default(),
+            "undo restores the default block"
+        );
+        assert!(document.redo(1_760_000_300));
+        assert_eq!(
+            document.project().title_block.project_name,
+            "Riverside House"
+        );
+    }
+
+    #[test]
+    fn adding_a_viewport_appends_it() {
+        let mut project = empty_project();
+        let level = project.active_level;
+        apply_command(
+            &mut project,
+            Command::AddViewport {
+                level,
+                region: viewport_region(),
+                scale_denominator: 50,
+                caption: "  Ground floor unit  ".into(),
+            },
+        )
+        .expect("add viewport");
+        assert_eq!(project.viewports.len(), 1);
+        assert_eq!(project.viewports[0].caption, "Ground floor unit");
+        assert_eq!(project.viewports[0].level, level);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn a_viewport_bound_to_a_missing_level_is_refused() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::AddViewport {
+                level: LevelId(999),
+                region: viewport_region(),
+                scale_denominator: 50,
+                caption: String::new(),
+            },
+        )
+        .expect_err("missing level");
+        assert!(matches!(error, CoreError::LevelNotFound(_)));
+        assert!(project.viewports.is_empty());
+    }
+
+    #[test]
+    fn a_viewport_with_a_zero_scale_or_bad_region_is_refused() {
+        let mut project = empty_project();
+        let level = project.active_level;
+        let error = apply_command(
+            &mut project,
+            Command::AddViewport {
+                level,
+                region: viewport_region(),
+                scale_denominator: 0,
+                caption: String::new(),
+            },
+        )
+        .expect_err("zero scale");
+        assert!(error.to_string().contains("positive scale"));
+
+        let flat = Bounds {
+            min: Point2::new(10.0, 10.0),
+            max: Point2::new(10.0, 100.0),
+        };
+        let error = apply_command(
+            &mut project,
+            Command::AddViewport {
+                level,
+                region: flat,
+                scale_denominator: 50,
+                caption: String::new(),
+            },
+        )
+        .expect_err("flat region");
+        assert!(error.to_string().contains("region with an area"));
+
+        let off_sheet = Bounds {
+            min: Point2::new(0.0, 0.0),
+            max: Point2::new(5000.0, 5000.0),
+        };
+        let error = apply_command(
+            &mut project,
+            Command::AddViewport {
+                level,
+                region: off_sheet,
+                scale_denominator: 50,
+                caption: String::new(),
+            },
+        )
+        .expect_err("region off the sheet");
+        assert!(error.to_string().contains("lie on the sheet"));
+        assert!(project.viewports.is_empty());
+    }
+
+    #[test]
+    fn removing_a_viewport_by_index_works_and_is_bounds_checked() {
+        let mut project = empty_project();
+        let level = project.active_level;
+        for _ in 0..2 {
+            apply_command(
+                &mut project,
+                Command::AddViewport {
+                    level,
+                    region: viewport_region(),
+                    scale_denominator: 50,
+                    caption: String::new(),
+                },
+            )
+            .expect("add viewport");
+        }
+        apply_command(&mut project, Command::RemoveViewport { index: 0 }).expect("remove");
+        assert_eq!(project.viewports.len(), 1);
+        let error = apply_command(&mut project, Command::RemoveViewport { index: 5 })
+            .expect_err("out of bounds");
+        assert!(error.to_string().contains("out of range"));
+    }
+
+    #[test]
+    fn an_added_viewport_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let level = document.project().active_level;
+        document
+            .apply(
+                Command::AddViewport {
+                    level,
+                    region: viewport_region(),
+                    scale_denominator: 50,
+                    caption: "Unit A".into(),
+                },
+                1_760_000_100,
+            )
+            .expect("add viewport");
+        assert_eq!(document.project().viewports.len(), 1);
+        assert!(document.undo(1_760_000_200));
+        assert!(document.project().viewports.is_empty());
+        assert!(document.redo(1_760_000_300));
+        assert_eq!(document.project().viewports.len(), 1);
+    }
+
+    #[test]
+    fn the_sheet_commands_round_trip_through_json() {
+        let commands = [
+            Command::SetTitleBlock {
+                title_block: TitleBlock {
+                    company: "Acme".into(),
+                    revision: "B".into(),
+                    sheet_number: Some(101),
+                    ..TitleBlock::default()
+                },
+            },
+            Command::AddViewport {
+                level: LevelId(1),
+                region: Bounds {
+                    min: Point2::new(10.0, 40.0),
+                    max: Point2::new(150.0, 140.0),
+                },
+                scale_denominator: 50,
+                caption: "Unit A".into(),
+            },
+            Command::RemoveViewport { index: 2 },
+        ];
+        for command in commands {
+            let json = serde_json::to_string(&command).expect("serialize");
+            let back: Command = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(back, command);
+        }
     }
 }

@@ -12,7 +12,9 @@ use crate::geom::Bounds;
 use crate::ids::{LayerId, LevelId, OpeningId};
 use crate::layer::Layer;
 use crate::level::Level;
+use crate::title_block::TitleBlock;
 use crate::units::UnitSystem;
+use crate::viewport::Viewport;
 
 /// Current on-disk format. A file written by a newer build is refused rather
 /// than half-understood.
@@ -31,6 +33,14 @@ pub struct Project {
     pub created_epoch_s: i64,
     pub modified_epoch_s: i64,
     pub notes: String,
+    /// Title block printed on every exported sheet. Old files load with a
+    /// default block, so a sheet always carries one.
+    #[serde(default)]
+    pub title_block: TitleBlock,
+    /// Sheet viewports: framed windows onto a level at their own scale.
+    /// `serde(default)` keeps files written before viewports existed readable.
+    #[serde(default)]
+    pub viewports: Vec<Viewport>,
     /// Monotonic identity source. Stored so a reopened file keeps allocating
     /// fresh ids instead of reusing a deleted wall's number.
     pub next_id: u64,
@@ -55,6 +65,8 @@ impl Project {
             created_epoch_s: now_epoch_s,
             modified_epoch_s: now_epoch_s,
             notes: String::new(),
+            title_block: TitleBlock::default(),
+            viewports: Vec::new(),
             next_id: 2,
         }
     }
@@ -274,6 +286,29 @@ impl Project {
             ));
         }
 
+        self.title_block
+            .validate()
+            .map_err(|error| CoreError::InvalidProject(error.to_string()))?;
+
+        for viewport in &self.viewports {
+            if self.level(viewport.level).is_none() {
+                return Err(CoreError::InvalidProject(format!(
+                    "a viewport is bound to {}, which this project does not have",
+                    viewport.level
+                )));
+            }
+            if !viewport.is_valid() {
+                return Err(CoreError::InvalidProject(
+                    "a viewport has a non-positive scale or an empty region".into(),
+                ));
+            }
+            if !viewport.is_within_sheet() {
+                return Err(CoreError::InvalidProject(
+                    "a viewport region lies outside the sheet".into(),
+                ));
+            }
+        }
+
         Ok(())
     }
 }
@@ -290,7 +325,7 @@ mod tests {
     use super::*;
     use crate::constraint::Constraint;
     use crate::dimension::{Dimension, DimensionKind};
-    use crate::geom::Point2;
+    use crate::geom::{Bounds, Point2};
     use crate::ids::{DimensionId, WallId};
     use crate::opening::{Opening, OpeningKind};
     use crate::wall::Wall;
@@ -546,6 +581,110 @@ mod tests {
             ));
         let error = project.validate().expect_err("zero length");
         assert!(error.to_string().contains("zero length"));
+    }
+
+    fn viewport_region(x0: f64, y0: f64, x1: f64, y1: f64) -> Bounds {
+        Bounds {
+            min: Point2::new(x0, y0),
+            max: Point2::new(x1, y1),
+        }
+    }
+
+    #[test]
+    fn a_new_project_has_a_default_title_block_and_no_viewports() {
+        let project = Project::new("Flat 3B", 1);
+        assert_eq!(project.title_block, TitleBlock::default());
+        assert!(project.viewports.is_empty());
+    }
+
+    #[test]
+    fn a_valid_viewport_passes_validation() {
+        let mut project = Project::new("Flat 3B", 1);
+        let viewport = Viewport::new(
+            LevelId(1),
+            viewport_region(10.0, 40.0, 150.0, 140.0),
+            50,
+            "Ground floor".to_string(),
+        );
+        project.viewports.push(viewport);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn validation_catches_a_viewport_bound_to_a_missing_level() {
+        let mut project = Project::new("Flat 3B", 1);
+        let viewport = Viewport::new(
+            LevelId(999),
+            viewport_region(10.0, 40.0, 150.0, 140.0),
+            50,
+            String::new(),
+        );
+        project.viewports.push(viewport);
+        let error = project.validate().expect_err("dangling level");
+        assert!(
+            error.to_string().contains("which this project does not have")
+        );
+    }
+
+    #[test]
+    fn validation_catches_a_viewport_with_a_non_positive_scale() {
+        let mut project = Project::new("Flat 3B", 1);
+        let viewport = Viewport::new(
+            LevelId(1),
+            viewport_region(10.0, 40.0, 150.0, 140.0),
+            0,
+            String::new(),
+        );
+        project.viewports.push(viewport);
+        let error = project.validate().expect_err("zero scale");
+        assert!(error.to_string().contains("non-positive scale"));
+    }
+
+    #[test]
+    fn validation_catches_a_viewport_region_off_the_sheet() {
+        let mut project = Project::new("Flat 3B", 1);
+        let viewport = Viewport::new(
+            LevelId(1),
+            viewport_region(0.0, 0.0, 5000.0, 5000.0),
+            100,
+            String::new(),
+        );
+        project.viewports.push(viewport);
+        let error = project.validate().expect_err("region off the sheet");
+        assert!(error.to_string().contains("outside the sheet"));
+    }
+
+    #[test]
+    fn validation_catches_a_zero_sheet_number_on_the_title_block() {
+        let mut project = Project::new("Flat 3B", 1);
+        project.title_block.sheet_number = Some(0);
+        let error = project.validate().expect_err("zero sheet number");
+        assert!(error.to_string().contains("1 or more"));
+    }
+
+    #[test]
+    fn projects_saved_before_title_blocks_and_viewports_still_load() {
+        let json = r#"{
+            "format_version": 1,
+            "name": "Old plan",
+            "units": "Metric",
+            "levels": [{
+                "id": 1,
+                "name": "Level 0",
+                "elevation": 0.0,
+                "walls": [],
+                "openings": []
+            }],
+            "active_level": 1,
+            "created_epoch_s": 0,
+            "modified_epoch_s": 0,
+            "notes": "",
+            "next_id": 2
+        }"#;
+        let project: Project = serde_json::from_str(json).expect("old project loads");
+        assert_eq!(project.title_block, TitleBlock::default());
+        assert!(project.viewports.is_empty());
+        assert!(project.validate().is_ok());
     }
 
     #[test]
