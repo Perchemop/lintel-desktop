@@ -255,6 +255,25 @@ mod tests {
     }
 
     #[test]
+    fn a_stored_constraint_repoints_the_anchored_dimension_on_solve() {
+        let mut level = level_with_wall();
+        level.dimensions[0].start_anchor = Some(DimensionAnchor::new(WALL, 0.1));
+        let constraint = perpendicular(0.75);
+        level.constraints.push(constraint.clone());
+
+        let constraints = level.constraints.clone();
+        let moved = apply_constraints_to_anchors(&mut level, &constraints);
+
+        assert_eq!(moved, 1);
+        assert_eq!(
+            level.dimensions[0].start,
+            Point2::new(3000.0, 0.0),
+            "the anchored end lands on the wall point the constraint names"
+        );
+        assert_eq!(level.constraints, vec![constraint]);
+    }
+
+    #[test]
     fn constraints_round_trip_through_json() {
         let constraint = perpendicular(0.6);
         let json = serde_json::to_string(&constraint).expect("serialize");

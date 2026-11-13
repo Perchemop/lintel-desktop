@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::constraint::Constraint;
 use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
 use crate::geom::Bounds;
@@ -36,6 +37,11 @@ pub struct Level {
     /// Non-printing guides used for snapping and alignment.
     #[serde(default)]
     pub construction: Vec<ConstructionEntity>,
+    /// Rules that keep an anchored dimension true to the walls it measures.
+    /// `serde(default)` keeps files written before constraints existed
+    /// readable.
+    #[serde(default)]
+    pub constraints: Vec<Constraint>,
 }
 
 impl Level {
@@ -50,6 +56,7 @@ impl Level {
             dimensions: Vec::new(),
             labels: Vec::new(),
             construction: Vec::new(),
+            constraints: Vec::new(),
         }
     }
 
@@ -315,6 +322,41 @@ mod tests {
             "the loader migrates the default layer"
         );
         assert!(level.construction.is_empty());
+        assert!(level.constraints.is_empty());
+    }
+
+    #[test]
+    fn levels_saved_before_constraints_still_load() {
+        let json = r#"{
+            "id": 1,
+            "name": "Level 0",
+            "elevation": 0.0,
+            "walls": [],
+            "openings": []
+        }"#;
+        let level: Level = serde_json::from_str(json).expect("old level");
+        assert!(
+            level.constraints.is_empty(),
+            "a level written before constraints existed loads with none"
+        );
+    }
+
+    #[test]
+    fn constraints_survive_a_save_and_load() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.constraints.push(Constraint::PerpendicularDistance {
+            dimension: DimensionId(7),
+            wall_id: WallId(2),
+            param: 0.25,
+        });
+        level.constraints.push(Constraint::EqualLength {
+            a: DimensionId(7),
+            b: DimensionId(8),
+        });
+        let json = serde_json::to_string(&level).expect("serialize");
+        let back: Level = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.constraints, level.constraints);
+        assert_eq!(back, level);
     }
 
     #[test]

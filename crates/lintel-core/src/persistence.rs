@@ -22,11 +22,14 @@ pub fn to_json(project: &Project) -> Result<String, CoreError> {
 /// Parse and validate. The only entry point that trusts a byte string.
 ///
 /// Older files are migrated in place before validation so a project written
-/// before the layers system still opens instead of being refused.
+/// before the layers system still opens instead of being refused. A validated
+/// project then has its constraints solved, so an anchored dimension resumes
+/// on the wall its constraint names the moment the file opens.
 pub fn from_json(text: &str) -> Result<Project, CoreError> {
     let mut project: Project = serde_json::from_str(text)?;
     project.migrate();
     project.validate()?;
+    project.solve_constraints();
     Ok(project)
 }
 
@@ -81,6 +84,7 @@ mod tests {
     use crate::command::{Applied, Command};
     use crate::document::Document;
     use crate::geom::Point2;
+    use crate::ids::{DimensionId, LevelId};
     use crate::project::UNTITLED;
 
     fn documented_plan() -> Document {
@@ -131,6 +135,62 @@ mod tests {
         assert_eq!(loaded.wall_count(), 1);
         assert_eq!(loaded.opening_count(), 1);
         assert_eq!(loaded.dimension_count(), 1);
+    }
+
+    #[test]
+    fn a_constrained_dimension_is_solved_when_the_file_loads() {
+        let text = r#"{
+            "format_version": 1,
+            "name": "Constrained",
+            "units": "Metric",
+            "levels": [{
+                "id": 1,
+                "name": "Level 0",
+                "elevation": 0.0,
+                "walls": [{
+                    "id": 2,
+                    "start": { "x": 0.0, "y": 0.0 },
+                    "end": { "x": 4000.0, "y": 0.0 },
+                    "thickness": 200.0,
+                    "height": 2800.0
+                }],
+                "openings": [],
+                "dimensions": [{
+                    "id": 3,
+                    "kind": "LinearHorizontal",
+                    "start": { "x": 0.0, "y": 0.0 },
+                    "end": { "x": 3000.0, "y": 0.0 },
+                    "offset": 500.0,
+                    "extension_lines": true,
+                    "start_anchor": { "wall_id": 2, "param": 0.25 }
+                }],
+                "constraints": [{
+                    "PerpendicularDistance": {
+                        "dimension": 3,
+                        "wall_id": 2,
+                        "param": 0.5
+                    }
+                }]
+            }],
+            "active_level": 1,
+            "created_epoch_s": 0,
+            "modified_epoch_s": 0,
+            "notes": "",
+            "next_id": 4
+        }"#;
+        let project = from_json(text).expect("constrained project loads");
+        let dimension = project
+            .level(LevelId(1))
+            .and_then(|level| level.dimension(DimensionId(3)))
+            .expect("dimension");
+        assert_eq!(
+            dimension.start,
+            Point2::new(2000.0, 0.0),
+            "the anchored point snaps onto the wall it is constrained to"
+        );
+        let anchor = dimension.start_anchor.expect("start anchor");
+        assert_eq!(anchor.param, 0.5);
+        assert!(anchor.perpendicular, "the solver flags the pinned anchor");
     }
 
     #[test]
