@@ -1093,9 +1093,7 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::X)) {
                 self.tool = Tool::ConstructionArc;
             }
-            if plain_keys
-                && ui.input(|i| i.key_pressed(egui::Key::V) && i.modifiers.shift)
-            {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::V) && i.modifiers.shift) {
                 // Toggle visibility of the selected construction (CAP-108).
                 if let Some(EntityId::Construction(id)) = self.selection.primary() {
                     let visible = self
@@ -1105,13 +1103,9 @@ impl LintelApp {
                         .and_then(|level| level.construction_entity(id))
                         .map(|entity| !entity.visible)
                         .unwrap_or(true);
-                    let _ = self.doc.apply(
-                        Command::SetConstructionVisible {
-                            id: *id,
-                            visible,
-                        },
-                        now,
-                    );
+                    let _ = self
+                        .doc
+                        .apply(Command::SetConstructionVisible { id: *id, visible }, now);
                 }
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::G)) {
