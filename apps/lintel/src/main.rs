@@ -1226,10 +1226,9 @@ impl LintelApp {
         let end = self.snap_at(world, Some(self.draft.start));
         let start = self.draft.start;
         let kind = match self.tool {
-            Tool::ConstructionLine => lintel_core::construction::ConstructionKind::Line {
-                start,
-                end,
-            },
+            Tool::ConstructionLine => {
+                lintel_core::construction::ConstructionKind::Line { start, end }
+            }
             Tool::ConstructionRay => lintel_core::construction::ConstructionKind::Ray {
                 origin: start,
                 direction: lintel_core::geom::Vec2::new(end.x - start.x, end.y - start.y),
@@ -1253,7 +1252,9 @@ impl LintelApp {
                 return;
             }
         };
-        if start.distance(end) > MIN_WALL_LENGTH_DRAG || matches!(self.tool, Tool::ConstructionCircle | Tool::ConstructionArc) {
+        if start.distance(end) > MIN_WALL_LENGTH_DRAG
+            || matches!(self.tool, Tool::ConstructionCircle | Tool::ConstructionArc)
+        {
             let applied = self
                 .doc
                 .apply(Command::CreateConstruction { kind }, now)

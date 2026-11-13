@@ -290,10 +290,10 @@ impl PaletteAction {
             | PaletteAction::DimensionTool
             | PaletteAction::LabelTool
             | PaletteAction::MeasurementsTool
-             | PaletteAction::ConstructionLineTool
-             | PaletteAction::ConstructionRayTool
-             | PaletteAction::ConstructionCircleTool
-             | PaletteAction::ConstructionArcTool => "Tools",
+            | PaletteAction::ConstructionLineTool
+            | PaletteAction::ConstructionRayTool
+            | PaletteAction::ConstructionCircleTool
+            | PaletteAction::ConstructionArcTool => "Tools",
             PaletteAction::NewPlan
             | PaletteAction::OpenPlan
             | PaletteAction::SavePlan
@@ -320,8 +320,8 @@ impl PaletteAction {
             | PaletteAction::LayerPrintable
             | PaletteAction::AssignSelectionToLayer
             | PaletteAction::DeleteLayer
-             | PaletteAction::ConstructionVisible
-             | PaletteAction::DeleteConstruction => "Layers",
+            | PaletteAction::ConstructionVisible
+            | PaletteAction::DeleteConstruction => "Layers",
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
@@ -376,10 +376,9 @@ impl PaletteAction {
                 !selection.is_empty() && level.is_some_and(|level| level.layers.len() > 1)
             }
             PaletteAction::DeleteStorey => doc.project().levels.len() > 1,
-            PaletteAction::ConstructionVisible
-            | PaletteAction::DeleteConstruction => {
-                selection.primary().is_some_and(|id| matches!(id, EntityId::Construction(_)))
-            }
+            PaletteAction::ConstructionVisible | PaletteAction::DeleteConstruction => selection
+                .primary()
+                .is_some_and(|id| matches!(id, EntityId::Construction(_))),
             _ => true,
         }
     }
@@ -754,7 +753,9 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
                     .and_then(|l| l.construction_entity(id))
                     .map(|e| !e.visible)
                     .unwrap_or(true);
-                let _ = app.doc.apply(Command::SetConstructionVisible { id, visible }, now);
+                let _ = app
+                    .doc
+                    .apply(Command::SetConstructionVisible { id, visible }, now);
             }
         }
         PaletteAction::DeleteConstruction => {
