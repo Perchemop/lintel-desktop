@@ -6,10 +6,10 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::constraint::{Constraint, apply_constraints_to_anchors};
+use crate::constraint::apply_constraints_to_anchors;
 use crate::error::CoreError;
 use crate::geom::Bounds;
-use crate::ids::{DimensionId, LayerId, LevelId, OpeningId};
+use crate::ids::{LayerId, LevelId, OpeningId};
 use crate::layer::Layer;
 use crate::level::Level;
 use crate::units::UnitSystem;
@@ -288,6 +288,7 @@ fn validate_constraints(level: &Level) -> Result<(), CoreError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constraint::Constraint;
     use crate::dimension::{Dimension, DimensionKind};
     use crate::geom::Point2;
     use crate::ids::{DimensionId, WallId};
