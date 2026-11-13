@@ -6,6 +6,7 @@ use crate::canvas::Selection;
 use eframe::egui;
 use lintel_core::{
     command::Command,
+    constraint::Constraint,
     document::Document,
     geom::Point2,
     ids::{DimensionId, EntityId, LabelId, OpeningId, WallId},
@@ -16,12 +17,39 @@ use lintel_core::{
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
 /// committed when the user presses Apply / Add).
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct InspectorDraft {
     /// Name being typed for a new storey.
     pub new_level_name: String,
     /// Elevation being typed for a new storey, in millimetres.
     pub new_level_elevation: f64,
+    /// Which constraint kind the Add form is building (0=perp,1=fixed,2=equal).
+    pub constraint_kind: i32,
+    /// Dimension id for the draft constraint.
+    pub constraint_dim: u64,
+    /// Wall id for a perpendicular constraint.
+    pub constraint_wall: u64,
+    /// Param for a perpendicular constraint.
+    pub constraint_param: f64,
+    /// Degrees for a fixed-angle constraint.
+    pub constraint_degrees: f64,
+    /// Second dimension id for an equal-length constraint.
+    pub constraint_dim_b: u64,
+}
+
+impl Default for InspectorDraft {
+    fn default() -> Self {
+        Self {
+            new_level_name: String::new(),
+            new_level_elevation: 0.0,
+            constraint_kind: 0,
+            constraint_dim: 0,
+            constraint_wall: 0,
+            constraint_param: 0.5,
+            constraint_degrees: 90.0,
+            constraint_dim_b: 0,
+        }
+    }
 }
 
 pub fn inspector(
@@ -443,6 +471,158 @@ pub fn inspector(
 
     ui.separator();
 
+    let constraints_cmd = egui::CollapsingHeader::new("Constraints")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            let constraints = level.constraints.clone();
+            let mut command: Option<Command> = None;
+            if constraints.is_empty() {
+                ui.label(
+                    egui::RichText::new(
+                        "No constraints yet — add one to pin a dimension to the geometry.",
+                    )
+                    .color(crate::theme::TEXT_MUTED),
+                );
+            } else {
+                for (index, c) in constraints.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        let text = match c {
+                            Constraint::PerpendicularDistance {
+                                dimension,
+                                wall_id,
+                                param,
+                            } => format!(
+                                "Perpendicular — dimension {} to wall {} at {:.0}%",
+                                dimension.value(),
+                                wall_id.value(),
+                                param * 100.0
+                            ),
+                            Constraint::FixedAngle { dimension, degrees } => format!(
+                                "Fixed angle — dimension {} at {:.0}°",
+                                dimension.value(),
+                                degrees
+                            ),
+                            Constraint::EqualLength { a, b } => {
+                                format!("Equal length — dimensions {} = {}", a.value(), b.value())
+                            }
+                        };
+                        ui.label(text);
+                        if ui
+                            .button("Remove")
+                            .on_hover_text("Remove this constraint.")
+                            .clicked()
+                        {
+                            command = Some(Command::RemoveConstraint { index });
+                        }
+                    });
+                }
+            }
+            ui.separator();
+            ui.label("Add constraint");
+            ui.horizontal(|ui| {
+                ui.radio_value(&mut draft.constraint_kind, 0, "Perpendicular")
+                    .on_hover_text("Pin a dimension's measured point to a wall.");
+                ui.radio_value(&mut draft.constraint_kind, 1, "Fixed angle")
+                    .on_hover_text("Keep a fixed angle on a dimension.");
+                ui.radio_value(&mut draft.constraint_kind, 2, "Equal length")
+                    .on_hover_text("Keep two dimensions the same length.");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Dimension:");
+                ui.add(
+                    egui::DragValue::new(&mut draft.constraint_dim)
+                        .speed(1.0)
+                        .range(0..=u64::MAX),
+                )
+                .on_hover_text("Id of the dimension to constrain.");
+            });
+            match draft.constraint_kind {
+                0 => {
+                    ui.horizontal(|ui| {
+                        ui.label("Wall:");
+                        ui.add(
+                            egui::DragValue::new(&mut draft.constraint_wall)
+                                .speed(1.0)
+                                .range(0..=u64::MAX),
+                        )
+                        .on_hover_text("Id of the wall to pin to.");
+                        ui.label("Param:");
+                        ui.add(
+                            egui::DragValue::new(&mut draft.constraint_param)
+                                .speed(0.01)
+                                .range(0.0..=1.0),
+                        )
+                        .on_hover_text("Fraction along the wall (0–1).");
+                    });
+                }
+                1 => {
+                    ui.horizontal(|ui| {
+                        ui.label("Degrees:");
+                        ui.add(
+                            egui::DragValue::new(&mut draft.constraint_degrees)
+                                .speed(1.0)
+                                .range(0.0..=360.0),
+                        )
+                        .on_hover_text("Fixed angle in degrees.");
+                    });
+                }
+                _ => {
+                    ui.horizontal(|ui| {
+                        ui.label("Second dimension:");
+                        ui.add(
+                            egui::DragValue::new(&mut draft.constraint_dim_b)
+                                .speed(1.0)
+                                .range(0..=u64::MAX),
+                        )
+                        .on_hover_text("Id of the other dimension.");
+                    });
+                }
+            }
+            let valid = match draft.constraint_kind {
+                0 => {
+                    draft.constraint_param >= 0.0
+                        && draft.constraint_param <= 1.0
+                        && draft.constraint_wall > 0
+                        && draft.constraint_dim > 0
+                }
+                2 => {
+                    draft.constraint_dim_b > 0
+                        && draft.constraint_dim_b != draft.constraint_dim
+                        && draft.constraint_dim > 0
+                }
+                _ => draft.constraint_dim > 0,
+            };
+            if ui
+                .add_enabled(valid, egui::Button::new("Add"))
+                .on_hover_text("Add the constraint.")
+                .clicked()
+            {
+                use lintel_core::ids::{DimensionId, WallId};
+                let c = match draft.constraint_kind {
+                    0 => Constraint::PerpendicularDistance {
+                        dimension: DimensionId(draft.constraint_dim),
+                        wall_id: WallId(draft.constraint_wall),
+                        param: draft.constraint_param,
+                    },
+                    1 => Constraint::FixedAngle {
+                        dimension: DimensionId(draft.constraint_dim),
+                        degrees: draft.constraint_degrees,
+                    },
+                    _ => Constraint::EqualLength {
+                        a: DimensionId(draft.constraint_dim),
+                        b: DimensionId(draft.constraint_dim_b),
+                    },
+                };
+                command = Some(Command::AddConstraint { constraint: c });
+            }
+            command
+        })
+        .body_returned
+        .flatten();
+
+    ui.separator();
+
     let schedule_cmd = egui::CollapsingHeader::new("Schedule")
         .default_open(false)
         .show(ui, |ui| {
@@ -470,6 +650,7 @@ pub fn inspector(
         .or(storeys_cmd)
         .or(view_cmd)
         .or(layers_cmd)
+        .or(constraints_cmd)
         .or(rooms_cmd)
         .or(schedule_cmd)
         .or(measurements_cmd)
