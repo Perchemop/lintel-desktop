@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — v0.13.0 (in progress)
+
+### Added
+
+- Anchored dimensions: `DimensionAnchor` ties a measured point to a wall at a
+  parametric position, so moving a wall drags the dimension with it; witness
+  lines gain editable gap and overrun (CAP-100–CAP-103)
+- Constraint solver keeps anchored dimensions correct as geometry changes
+  (CAP-101)
+- Construction tools (line, ray, circle, arc) reachable from the UI with
+  two-click canvas flows, palette entries and shortcuts (CAP-108)
+- Layers panel in the Inspector (visibility/lock toggles) (CAP-108)
+- Update flow verifies published `SHA256SUMS`/`.asc` before surfacing an update
+  and honours the cache TTL (CAP-104)
+- In-app release notes are generated from `RELEASE_NOTES.md` (CAP-105)
+
+### Changed
+
+- Releases are signed and version-guarded by CI; one `v`-prefixed tag convention
+  (CAP-106)
+- Documentation parity: capability inventory, parity evidence, traceability and
+  architecture reconciled to published tags (CAP-107)
+
 ## v0.12.1 — 2026-11-10
 
 ### Summary

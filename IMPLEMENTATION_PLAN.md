@@ -15,7 +15,7 @@ Each release is a vertical slice:
 
 ## Active Slice — v0.11.1 “Phase A continued: Snapping + Selection + Command Palette”
 
-**Status:** **Complete** (PR #21 merged to `main`, CI green).
+**Status:** **Complete** — published as 0.12.1 (PR #21 merged to `main`, CI green).
 
 **Core**
 - `crates/lintel-core/src/snap.rs` — extend snapping from endpoints to midpoint,
@@ -43,11 +43,10 @@ Each release is a vertical slice:
   add/remove sets, and entity-type/layer filters.
 
 **Release gate**
-- [x] Bump `apps/lintel/Cargo.toml` (and the core) to 0.11.1
+- [x] Bump `apps/lintel/Cargo.toml` (and the core) to 0.11.1 (later 0.12.1)
 - [x] CI green: formatting, clippy, build and tests
 - [x] PR merged to `main`
-- [ ] Tag `v0.11.1` and publish the GitHub Release with signed artefacts and
-      `SHA256SUMS.txt.asc`
+- [x] Published as tag `v0.12.1` (no `v0.11.1` tag; see DECISIONS.md D-030)
 
 ---
 
@@ -74,7 +73,7 @@ Each release is a vertical slice:
 - Constraint solver: perpendicular distance holds under wall moves.
 - [ ] `docs/tokens.json` updated by CI and quoted in the release notes
 
-## Awaiting Release — v0.11.0 “Measurements”
+## Released — v0.11.0 “Measurements” (tag `v0.11.0`, commit `803b590`)
 
 **Status:** In Progress — feature code is on `main`; release pending.
 
@@ -98,12 +97,11 @@ Each release is a vertical slice:
   totals and per-room list, project totals.
 
 **Release gate**
-- [ ] Bump `apps/lintel/Cargo.toml` 0.10.1 → 0.11.0 (this checkout still reads
-      0.10.1)
-- [ ] CI green and PR merged
-- [ ] Signed release artefacts + `SHA256SUMS.txt`
-- [ ] `docs/tokens.json` updated by CI and quoted in the release notes
-- [ ] GitHub Release published for v0.11.0
+- [x] Bump `apps/lintel/Cargo.toml` 0.10.1 → 0.11.0 (commit `803b590`)
+- [x] CI green and PR merged
+- [x] Release artefacts + `SHA256SUMS.txt`
+- [x] `docs/tokens.json` updated by CI
+- [x] GitHub Release published for v0.11.0
 
 ## Completed Slices
 
@@ -140,7 +138,7 @@ Each release is a vertical slice:
 
 ## Next Slices
 
-### v0.12.0 “Phase A continued (Snapping + Selection + Command Palette)”
+### v0.12.0 / 0.12.1 “Phase A (Snapping + Selection + Command Palette)” — published as 0.12.1
 **Status:** Planned — being re-scoped; the snapping, selection and
 command-palette work below is now the v0.11.1 active slice, leaving the
 constraint-dimension foundation here.

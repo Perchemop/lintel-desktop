@@ -26,7 +26,8 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 - **Place doors and windows.** Pick the Door or Window tool and click on a wall. Openings sit inside the wall and can be moved, resized, or flipped.
 - **Add and delete storeys.** Organise your building floor by floor, name each storey and set its elevation.
 - **Add dimension lines.** Annotate the plan with measurements; drag a dimension line to move it, or edit its offset precisely.
-- **Work in your units.** Switch the whole plan between metric (mm) and imperial (feet/inches), and rename the project, from the Inspector.
+- **Measure areas and lengths.** Shift+M reports a selected room's area and perimeter; the Inspector shows level and project wall/opening totals (0.11.0).
+- **Snap and select precisely.** Snapping to endpoints, midpoints, intersections and more, plus window/crossing/fence selection and a Ctrl+K command palette (0.12.1).- **Work in your units.** Switch the whole plan between metric (mm) and imperial (feet/inches), and rename the project, from the Inspector.
 - **Undo and redo.** Every change can be stepped back.
 - **Save and reopen plans.** Plans are saved as plain JSON files — a simple, readable format you can back up or copy anywhere.
 - **Export a PDF sheet.** Turn the current level into a PDF sheet with a border, title block, scale label, and sheet number — from **File → Export sheet…** or Ctrl+E.
@@ -44,11 +45,13 @@ That's it — Lintel opens with a blank sheet and a toolbar on the side.
 
 ## Project status and roadmap
 
-Lintel is young and actively developed. Version 0.8.0 fixes keyboard focus so
-shortcuts keep working after you tab to the canvas; 0.7.0 made every capability
-reachable from the interface; a real Windows installer arrived in 0.5.0; and
-dimension lines and joint resolution in 0.2.0. Screen-reader spot-checks on
-Windows/macOS are next. See:
+Lintel is young and actively developed. The 0.12.1 release adds enhanced
+snapping, window/crossing/fence selection, a Ctrl+K command palette, layers and
+construction geometry; 0.11.0 added a measurements tool with unit-aware area and
+perimeter readouts; 0.8.0 fixed keyboard focus so shortcuts keep working after
+you tab to the canvas; and 0.5.0 brought a real Windows installer. Work in
+progress for v0.13.0: anchored dimensions and construction tools in the UI.
+Screen-reader spot-checks on Windows/macOS are next. See:
 
 - [`ROADMAP.md`](ROADMAP.md) — what is done and what is planned
 - [`CHANGELOG.md`](CHANGELOG.md) — release-by-release history

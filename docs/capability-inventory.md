@@ -39,7 +39,6 @@ run, recorded in `docs/parity.md`).
 
 | ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
 |---|---|---|---|---|---|
-| CAP-021 | Joint resolution for unequal wall thicknesses | Walls of different thicknesses close cleanly at outside corners | `resolve_wall` extends each end by half the *other* wall's thickness; tests pass | — | implemented |
 | CAP-026 | Dimension lines | Aligned/horizontal/vertical dimension between two points with an offset | `Command::PlaceDimension`; `PlanGeometry` reports it | — | implemented |
 | CAP-027 | Dimension placement / move / delete | Two clicks place, dragging moves the line, Delete removes | `PlaceDimension`, `SetDimensionOffset` (drag), `DeleteDimension` | — | implemented |
 | CAP-028 | Dimension offset editing | Inspector changes the offset; zero/negative rejected | `Command::SetDimensionOffset` validation | — | implemented |
@@ -47,6 +46,7 @@ run, recorded in `docs/parity.md`).
 | CAP-030 | Dimension validation | Zero-length and non-positive offset rejected with plain messages | Command validation strings | — | implemented |
 | CAP-031 | Dimension undo/redo | Undo restores the previous state; redo re-applies | `Document::undo` / `redo` for dimension commands | — | implemented |
 | CAP-032 | Dimension persistence | Save/load preserves dimensions | `Document::save_as` / `open` round-trip | — | implemented |
+| CAP-033 | Dimension hit testing priority (over walls) | Clicking a dimension selects it; priority over the wall band | `PlanGeometry::hit_test` checks dimensions first | — | implemented |
 | CAP-040 | Crash reporting | A panic writes a scrubbed JSON report; nothing is sent automatically | `crash-report` unit tests | guide §7.1 | implemented |
 | CAP-041 | Update check | Queries the GitHub Releases API, compares versions, fails soft offline | `update-check` unit tests | guide §7.2 | implemented |
 | CAP-042 | In-app release notes | Toolbar version opens a window with all notes + token metrics | `apps/lintel/src/about.rs` | guide §9 | implemented |
@@ -77,6 +77,72 @@ run, recorded in `docs/parity.md`).
 | CAP-067 | Level summary unit-tested | Empty, singular and multi-storey summary cases covered | `main.rs` `#[cfg(test)]` | guide §9 | implemented |
 | CAP-068 | Focus review recorded | Tab order, visible focus, Escape dismissal, no trapping | `ACCESSIBILITY.md` | guide II.21.4 | implemented |
 
+## v0.9.0 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-069 | Auto-detected rooms | Planar face traversal lists enclosed rooms with area | `room::tests` | — | implemented |
+| CAP-070 | Free text plan labels | Place, move, delete text labels on the plan | `command::tests::label::*` | — | implemented |
+| CAP-071 | Opening schedule | Door/window schedule rows generated per level | `schedule::tests` | — | implemented |
+| CAP-072 | Multi-sheet PDF drawing set | Cover, north arrow, scale bar, per-sheet schedule | `pdf::tests::render_set_*` | — | implemented |
+| CAP-073 | Room area captions | Room area shown on canvas | `canvas.rs` | — | implemented |
+| CAP-074 | Label tool + duplicate + export | L key, Ctrl+D duplicate, Ctrl+Shift+E export drawing set | `main.rs` | — | implemented |
+
+## v0.10.0 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-075 | CI-managed token ledger | `docs/tokens.json` updated by CI on each tag | `release.yml` | guide §12.1 | implemented |
+| CAP-076 | Release signing step | `release.yml` signs artefacts when key present | `release.yml` | guide §12.1 | implemented |
+| CAP-077 | Development docs | `docs/development.md` added | — | guide §12.1 | implemented |
+| CAP-078 | Property-based fuzz tests | Geometry and command-layer proptests | `properties.rs` | guide §12.1 | implemented |
+| CAP-079 | Version UI bottom-right | Version in bottom-right; Release Notes popup + Update button | `about.rs` | guide §12.1 | implemented |
+| CAP-080 | Window icon embedded | Icon embedded via `include_bytes!` + `image` crate | `main.rs` | guide §12.1 | implemented |
+
+## v0.10.1 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-081 | Window icon via `with_icon()` | App window shows the Lintel icon | `main.rs` | — | implemented |
+| CAP-082 | SVG icon source | `resources/icons/lintel.svg` canonical source | — | — | implemented |
+| CAP-083 | Windows `.iss` version fix | Installer version corrected to 0.10.1 | `resources/windows/lintel.iss` | — | implemented |
+| CAP-084 | Icon attribution | `ATTRIBUTION.md` records icon licence | `ATTRIBUTION.md` | — | implemented |
+| CAP-085 | Command-layer fuzz (never panic/corrupt/undo) | Proptest cases in `properties.rs` | `properties.rs` | — | implemented |
+
+## v0.11.0 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-086 | Area/perimeter query tool | Shift+M reports selected room area and perimeter | `measurements::tests` | — | implemented |
+| CAP-087 | Wall length totals | Level and project totals in Inspector → Measurements | `measurements::tests` | — | implemented |
+| CAP-088 | `format_area` honours units | m² / ft² / in² output | `units::tests` | — | implemented |
+
+## Phase A foundation (v0.11.1/v0.12.1) capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-089 | Layers | `Layer`, protected default layer, per-entity assignment | `layer::tests` | — | implemented |
+| CAP-090 | Construction geometry | Line/ray/circle/arc, snap-enabled, never printed | `construction::tests` | — | implemented |
+| CAP-091 | Status bar: cursor coordinates | Cursor position shown | `status_bar.rs` | — | implemented |
+| CAP-092 | Status bar: snap/ortho/grid chips | Mode chips shown | `status_bar.rs` | — | implemented |
+| CAP-093 | Status bar: selection count + zoom % | Counts and zoom shown | `status_bar.rs` | — | implemented |
+
+## v0.11.1 capabilities (published as 0.12.1)
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-094 | Enhanced entity snapping | Endpoint/midpoint/intersection/perpendicular/tangent/quadrant/grid/ortho with priority | `snap::tests` | — | implemented |
+| CAP-095 | Window/crossing/fence selection | Selection modes owned by core | `selection::tests` | — | implemented |
+| CAP-096 | Selection filters | By entity type and layer | `selection::tests` | — | implemented |
+| CAP-097 | Command palette | Ctrl+K, fuzzy match, recent commands | `command_palette.rs` | — | implemented |
+| CAP-098 | Snap visual indicators | On-canvas indicators per candidate kind | `canvas.rs` | — | implemented |
+
+## v0.12.0 / v0.13.0 future capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-099 | Drawing set / sheet layout | Title blocks and viewport linking | — | — | not started |
+
 ## Explicitly out of scope for v0.1.0
 
 | ID | Capability | Reason |
@@ -99,6 +165,9 @@ Readiness % (v0.5.0): **100% — shipped** (CI `42099183213`; release `0.5.0`).
 Readiness % (v0.6.0): **100% — shipped** (CI `42192427679`; release `0.6.0`).
 Readiness % (v0.7.0): **100% — shipped** (CI `42211261713`; release `0.7.0`).
 Readiness % (v0.8.0): **100% — shipped** (CI `42294376007`; release `0.8.0`).
-
-Still planned for v0.7.0: screen-reader output spot-checks on Windows/macOS,
-Linux AppImage execution on an x86_64 host, keyboard-focus management review.
+Readiness % (v0.9.0): **100% — shipped** (release `0.9.0`).
+Readiness % (v0.10.0): **100% — shipped** (release `0.10.0`).
+Readiness % (v0.10.1): **100% — shipped** (release `0.10.1`).
+Readiness % (v0.11.0): **100% — shipped** (tag `v0.11.0`, commit `803b590`).
+Readiness % (v0.12.1): **100% — shipped** (Phase A; tag `v0.12.1`, rebuilt 2026-11-10).
+Readiness % (v0.13.0): **in progress** — CAP-100–CAP-108 landed; docs parity (CAP-107) in flight; unreleased.
