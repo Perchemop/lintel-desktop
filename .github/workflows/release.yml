@@ -328,6 +328,12 @@ jobs:
         fi
         mapfile -t artefacts <<< "$ARTEFACTS"
         gh release upload "$ref" "${artefacts[@]}" --clobber
+        # The signature is produced after the collect step, so it is uploaded
+        # here; tag builds always have it (signing is enforced), dispatch
+        # builds do not.
+        if [ -f dist/SHA256SUMS.txt.asc ]; then
+          gh release upload "$ref" dist/SHA256SUMS.txt.asc --clobber
+        fi
         gh release edit "$ref" --draft=false
 
     - name: Update docs/tokens.json ledger (guide §12.1)
