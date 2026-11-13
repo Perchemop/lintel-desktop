@@ -1,3 +1,8 @@
+## v0.14.0 — 2026-11-14
+
+### Summary
+
+Constraints persist and re-solve; sheets gain title blocks and level-bound viewports; a QC checklist codifies release verification.
 # Changelog
 
 All notable changes to this project will be documented in this file.

@@ -1,3 +1,33 @@
+## Lintel 0.14.0 — Constraint Persistence & Sheet Layout
+
+**Summary.** Constraints become part of the drawing: they are saved with the project, re-solved on load and after every wall move, and managed from the Inspector. Sheets gain proper title blocks and level-bound viewports, so a drawing set reads like an issued document. A release QC checklist codifies what the pipeline cannot see.
+
+### Added
+- Constraint persistence (CAP-111): a level stores its constraints; they survive save/load, are re-solved the moment a file opens and after every wall edit; validation rejects dangling references, out-of-range parameters, self-equal-length and duplicate pins
+- Constraint management (CAP-112): an Inspector panel lists a level's constraints with remove buttons and an add-form for perpendicular, fixed-angle and equal-length rules; shared validation rules live once in the core
+- Sheet title blocks (CAP-113): every exported sheet carries a bordered bottom-right block — company, project, sheet title, level, scale, revision, drawn-by, date and sheet number; blank fields stay blank
+- Sheet viewports (CAP-114): a level can be placed on a sheet multiple times through framed, scale-fit viewports (1:N) with optional captions; viewports are validated (level exists, positive scale, on-sheet regions)
+- QC codified (CAP-115): `docs/qc/release-checklist.md` — signed-artefact verification, AppImage smoke, screen-reader pass, ledger consistency, each with executable commands and sign-off lines
+
+### Changed
+- The release-notes popup and the published GitHub release both derive from `RELEASE_NOTES.md`, which now carries the 0.14.0 section
+- Title-block sheet numbering: an optional base number in the title block drives A-101-style numbering across the drawing set
+
+### Known limitations
+- Walls straddling a viewport boundary are drawn whole rather than clipped
+- Circle and arc construction flows remain simplified (radius from two clicks; fixed 90° arc)
+- Constraint objects do not yet appear in the command palette (Inspector is the home)
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 50,000 tokens
+
+---
 ## Lintel 0.13.0 — Anchored Dimensions & Release Governance
 
 **Summary.** Dimensions become anchored to the geometry they measure: an anchor ties a measured point to a wall at a parametric position, so moving a wall drags the dimension with it. Witness lines gain editable gap and overrun, a constraint solver keeps anchored dimensions correct as geometry changes, and the whole elite-CAD Phase A surface (construction tools, layers, snapping, selection, command palette) is now fully reachable from the UI. The release pipeline is governed: signed artefacts are enforced, tags must match crate versions, and the in-app release notes are generated from the same file that feeds GitHub releases.
