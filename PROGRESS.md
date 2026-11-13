@@ -132,6 +132,22 @@ merge — first signed release; all 8 artefacts including
       `SHA256SUMS.txt.asc`, workflow now uploads the signature (PR #30,
       `76a774b`)).**
 
+## v0.14.0 Status — IN PROGRESS
+
+**Constraint Persistence & Sheet Layout** (CAP-111–115). Full scope in
+`ROADMAP.md`.
+
+- [x] CAP-111 — Constraint persistence: `constraints: Vec<Constraint>` on
+      `Level` (serde default), `Project::solve_constraints()` re-solves after
+      every command and on file load, `Project::validate` rejects dangling
+      walls/dimensions, out-of-range params, self-equal-length and duplicate
+      pins — PR #31 merged; old project files load with an empty list
+
+**Landed:** the persistence slice; next: CAP-112 (constraint management UI),
+CAP-113/114 (title blocks + viewports), CAP-115 (QC checklist).
+
+Readiness % (v0.14.0): **25% — CAP-111 landed; UI, sheets and QC remain.**
+
 ## v0.10.1 Status — RELEASED
 
 - [x] Window icon embedded via `with_icon()` + `image` crate decode
