@@ -160,10 +160,16 @@ merge — first signed release; all 8 artefacts including
       (simplification: walls straddling a viewport edge draw whole, not
       clipped)
 
-**Landed:** constraints (CAP-111/112) and sheets (CAP-113/114); next:
-CAP-115 (QC checklist), then the release gate.
+- [x] CAP-115 — QC codified: `docs/qc/release-checklist.md` — six sections
+      covering pipeline gates, signed-artefact verification (executable
+      commands), AppImage smoke, screen-reader pass, ledger consistency and
+      post-release duties, each with sign-off lines
 
-Readiness % (v0.14.0): **85% — only the QC checklist and the gate remain.**
+**Landed:** all five capabilities (CAP-111–115); the release gate follows
+(version bump, notes, tag — the signed pipeline does the rest).
+
+Readiness % (v0.14.0): **100% — implementation complete; release gate
+pending.**
 
 ## v0.10.1 Status — RELEASED
 
