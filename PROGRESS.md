@@ -96,7 +96,10 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       the user verifies against `SHA256SUMS.txt`/`.asc` — PR #24 merged
       (`61cf97a`); `update-check` is a git submodule (`lintel-shared-crates`
       @ `4f7045f`)
-- [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
+- [x] CAP-105 — In-app release notes parsed at runtime from
+      `include_str!("../../../RELEASE_NOTES.md")` — single source of truth,
+      drift impossible; ledger-era figures surfaced, pre-ledger releases
+      marked "predates the token ledger"; PR #26 merged
 - [x] CAP-106 — Release governance: `release.yml` now fails when the tag does
       not match both crate versions, refuses to publish unsigned (and
       self-verifies the signature), anchors releases to the real git tag with
@@ -115,10 +118,8 @@ point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
 verification), CAP-106 (release governance), CAP-105 (in-app release notes),
 CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **75% — core (CAP-100–102), anchor UI (CAP-103),
-update verification (CAP-104) and release governance (CAP-106) landed;
-release-notes sync (CAP-105), docs parity (CAP-107) and Phase A UI completion
-(CAP-108) remain.**
+Readiness % (v0.13.0): **85% — CAP-100–106 landed; docs parity (CAP-107) and
+Phase A UI completion (CAP-108) remain.**
 
 ## v0.10.1 Status — RELEASED
 
