@@ -6,6 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 use crate::error::CoreError;
@@ -175,6 +176,12 @@ pub enum Command {
     },
     RenameProject {
         name: String,
+    },
+    AddConstraint {
+        constraint: Constraint,
+    },
+    RemoveConstraint {
+        index: usize,
     },
 }
 
@@ -386,6 +393,8 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             project.name = trimmed.to_string();
             Ok(Applied::default())
         }
+        Command::AddConstraint { constraint } => add_constraint(project, constraint),
+        Command::RemoveConstraint { index } => remove_constraint(project, index),
     }
 }
 
@@ -977,6 +986,25 @@ fn delete_level(project: &mut Project, id: LevelId) -> Result<Applied, CoreError
             project.active_level = first.id;
         }
     }
+    Ok(Applied::default())
+}
+
+fn add_constraint(project: &mut Project, constraint: Constraint) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    let mut candidate = level.clone();
+    candidate.constraints.push(constraint.clone());
+    crate::constraint::validate_constraints(&candidate)?;
+    let level = active_level_mut(project)?;
+    level.constraints.push(constraint);
+    Ok(Applied::default())
+}
+
+fn remove_constraint(project: &mut Project, index: usize) -> Result<Applied, CoreError> {
+    let level = active_level_mut(project)?;
+    if index >= level.constraints.len() {
+        return Err(CoreError::invalid("constraint index out of range"));
+    }
+    level.constraints.remove(index);
     Ok(Applied::default())
 }
 
@@ -2129,5 +2157,124 @@ mod tests {
             .construction_entity(id)
             .expect("guide");
         assert!(!guide.print_enabled);
+    }
+
+    #[test]
+    fn adding_a_constraint_pushes_it_onto_the_active_level() {
+        use crate::constraint::Constraint;
+        let mut project = empty_project();
+        // Need a dimension and wall for a perpendicular constraint.
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let dim = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim,
+                    wall_id: wall,
+                    param: 0.5,
+                },
+            },
+        )
+        .expect("add constraint");
+        assert_eq!(
+            project.active_level().expect("level").constraints.len(),
+            1
+        );
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn adding_an_invalid_constraint_is_rejected() {
+        use crate::constraint::Constraint;
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let dim = place_horizontal(&mut project);
+        let error = apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim,
+                    wall_id: wall,
+                    param: 1.5,
+                },
+            },
+        )
+        .expect_err("param out of range");
+        assert!(error.to_string().contains("outside 0..1"));
+        assert!(project.active_level().expect("level").constraints.is_empty());
+    }
+
+    #[test]
+    fn removing_a_constraint_by_index_works() {
+        use crate::constraint::Constraint;
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let dim = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim,
+                    wall_id: wall,
+                    param: 0.5,
+                },
+            },
+        )
+        .expect("add constraint");
+        apply_command(&mut project, Command::RemoveConstraint { index: 0 }).expect("remove");
+        assert!(project.active_level().expect("level").constraints.is_empty());
+        let error = apply_command(&mut project, Command::RemoveConstraint { index: 0 })
+            .expect_err("out of bounds");
+        assert!(error.to_string().contains("out of range"));
+    }
+
+    #[test]
+    fn an_added_constraint_can_be_undone() {
+        use crate::constraint::Constraint;
+        use crate::document::Document;
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        // set up wall + dimension via commands
+        let wall = document
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                1_760_000_010,
+            )
+            .expect("wall")
+            .wall
+            .expect("wall id");
+        let dim = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(3000.0, 0.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("dimension")
+            .dimension
+            .expect("dim id");
+        document
+            .apply(
+                Command::AddConstraint {
+                    constraint: Constraint::PerpendicularDistance {
+                        dimension: dim,
+                        wall_id: wall,
+                        param: 0.5,
+                    },
+                },
+                1_760_000_030,
+            )
+            .expect("add constraint");
+        assert_eq!(document.project().active_level().expect("level").constraints.len(), 1);
+        assert!(document.undo(1_760_000_040));
+        assert!(document.project().active_level().expect("level").constraints.is_empty());
     }
 }

@@ -15,9 +15,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::dimension::DimensionAnchor;
+use crate::error::CoreError;
 use crate::geom::Point2;
 use crate::ids::{DimensionId, WallId};
 use crate::level::Level;
+
+use std::collections::HashSet;
 
 /// A rule that ties a dimension to the geometry it measures.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -145,6 +148,96 @@ fn resolve(level: &Level, constraint: &Constraint) -> Option<ResolvedConstraint>
         constraint: constraint.clone(),
         point,
     })
+}
+
+/// Validate a single constraint against `level`: every referenced wall and
+/// dimension must exist on the level, and the rule's own parameters must be
+/// usable. Cross-constraint duplicate checks live in [`validate_constraints`].
+pub fn validate_constraint(level: &Level, constraint: &Constraint) -> Result<(), CoreError> {
+    match constraint {
+        Constraint::PerpendicularDistance {
+            dimension,
+            wall_id,
+            param,
+        } => {
+            if level.wall(*wall_id).is_none() {
+                return Err(CoreError::InvalidProject(format!(
+                    "constraint pins {wall_id}, which this level does not have"
+                )));
+            }
+            ensure_dimension(level, *dimension)?;
+            if !param.is_finite() || !(0.0..=1.0).contains(param) {
+                return Err(CoreError::InvalidProject(format!(
+                    "{dimension} has a constraint parameter outside 0..1"
+                )));
+            }
+        }
+        Constraint::FixedAngle { dimension, degrees } => {
+            ensure_dimension(level, *dimension)?;
+            if !degrees.is_finite() {
+                return Err(CoreError::InvalidProject(format!(
+                    "{dimension} has a fixed angle that is not a finite number"
+                )));
+            }
+        }
+        Constraint::EqualLength { a, b } => {
+            ensure_dimension(level, *a)?;
+            ensure_dimension(level, *b)?;
+            if a == b {
+                return Err(CoreError::InvalidProject(format!(
+                    "{a} cannot be constrained equal to itself"
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Validate every constraint on `level`, including cross-constraint duplicate
+/// rules: no dimension may be pinned by more than one perpendicular
+/// constraint, fixed-angle constraint, or equal-length pair.
+pub fn validate_constraints(level: &Level) -> Result<(), CoreError> {
+    let mut pinned: HashSet<DimensionId> = HashSet::new();
+    let mut angled: HashSet<DimensionId> = HashSet::new();
+    let mut paired: HashSet<(DimensionId, DimensionId)> = HashSet::new();
+
+    for constraint in &level.constraints {
+        validate_constraint(level, constraint)?;
+        match constraint {
+            Constraint::PerpendicularDistance { dimension, .. } => {
+                if !pinned.insert(*dimension) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} is pinned by more than one constraint"
+                    )));
+                }
+            }
+            Constraint::FixedAngle { dimension, .. } => {
+                if !angled.insert(*dimension) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{dimension} has more than one fixed angle"
+                    )));
+                }
+            }
+            Constraint::EqualLength { a, b } => {
+                let pair = if a < b { (*a, *b) } else { (*b, *a) };
+                if !paired.insert(pair) {
+                    return Err(CoreError::InvalidProject(format!(
+                        "{a} and {b} already share an equal-length constraint"
+                    )));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn ensure_dimension(level: &Level, id: DimensionId) -> Result<(), CoreError> {
+    if level.dimension(id).is_none() {
+        return Err(CoreError::InvalidProject(format!(
+            "constraint refers to {id}, which this level does not have"
+        )));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

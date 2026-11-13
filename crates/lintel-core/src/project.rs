@@ -282,76 +282,7 @@ impl Project {
 /// level actually has, its parameters must be usable, and no two rules of the
 /// same kind may pin the same dimension.
 fn validate_constraints(level: &Level) -> Result<(), CoreError> {
-    let mut pinned = std::collections::HashSet::new();
-    let mut angled = std::collections::HashSet::new();
-    let mut paired = std::collections::HashSet::new();
-
-    for constraint in &level.constraints {
-        match constraint {
-            Constraint::PerpendicularDistance {
-                dimension,
-                wall_id,
-                param,
-            } => {
-                if level.wall(*wall_id).is_none() {
-                    return Err(CoreError::InvalidProject(format!(
-                        "constraint pins {wall_id}, which this level does not have"
-                    )));
-                }
-                ensure_dimension(level, *dimension)?;
-                if !param.is_finite() || !(0.0..=1.0).contains(param) {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{dimension} has a constraint parameter outside 0..1"
-                    )));
-                }
-                if !pinned.insert(*dimension) {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{dimension} is pinned by more than one constraint"
-                    )));
-                }
-            }
-            Constraint::FixedAngle { dimension, degrees } => {
-                ensure_dimension(level, *dimension)?;
-                if !degrees.is_finite() {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{dimension} has a fixed angle that is not a finite number"
-                    )));
-                }
-                if !angled.insert(*dimension) {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{dimension} has more than one fixed angle"
-                    )));
-                }
-            }
-            Constraint::EqualLength { a, b } => {
-                ensure_dimension(level, *a)?;
-                ensure_dimension(level, *b)?;
-                if a == b {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{a} cannot be constrained equal to itself"
-                    )));
-                }
-                let pair = if a < b { (*a, *b) } else { (*b, *a) };
-                if !paired.insert(pair) {
-                    return Err(CoreError::InvalidProject(format!(
-                        "{a} and {b} already share an equal-length constraint"
-                    )));
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-/// Reject a constraint that names a dimension the level does not hold.
-fn ensure_dimension(level: &Level, id: DimensionId) -> Result<(), CoreError> {
-    if level.dimension(id).is_none() {
-        return Err(CoreError::InvalidProject(format!(
-            "constraint refers to {id}, which this level does not have"
-        )));
-    }
-    Ok(())
+    crate::constraint::validate_constraints(level)
 }
 
 #[cfg(test)]
