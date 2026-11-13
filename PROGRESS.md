@@ -143,10 +143,16 @@ merge — first signed release; all 8 artefacts including
       walls/dimensions, out-of-range params, self-equal-length and duplicate
       pins — PR #31 merged; old project files load with an empty list
 
-**Landed:** the persistence slice; next: CAP-112 (constraint management UI),
+- [x] CAP-112 — Constraint management UI: Inspector "Constraints" panel
+      (list + Remove per row, add-form with kind/dimension/wall/param/degrees,
+      honest empty state); core `AddConstraint`/`RemoveConstraint` commands
+      with a shared validator now living in `constraint.rs` — PR #32 merged
+      (`ef21549`); palette entry skipped (inspector is the discoverable home)
+
+**Landed:** persistence (CAP-111) and management UI (CAP-112); next:
 CAP-113/114 (title blocks + viewports), CAP-115 (QC checklist).
 
-Readiness % (v0.14.0): **25% — CAP-111 landed; UI, sheets and QC remain.**
+Readiness % (v0.14.0): **50% — constraints complete; sheets and QC remain.**
 
 ## v0.10.1 Status — RELEASED
 
