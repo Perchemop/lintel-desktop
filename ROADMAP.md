@@ -260,7 +260,7 @@ by renumbering.
 |---|-----------|------|
 | CAP-109 | Constraint-driven dimensions foundation: `DimensionAnchor`, witness-line gap/overrun, backward-compatible load | — |
 | CAP-110 | Dimension anchor UI: click-to-place witness lines, grip editing | — |
-| CAP-099 | Drawing set / sheet layout with title blocks and viewport linking | — |
+| CAP-099 | Drawing set / sheet layout with title blocks and viewport linking — scope moved to v0.14.0 as CAP-113/114 (D-030 numbering) | — |
 
 **Release notes (intended):** Completes Phase A. Snapping gains midpoint,
 intersection and perpendicular candidates; selection gains window and crossing
@@ -316,6 +316,35 @@ rec 3.
 **Readiness:** 0% — planned; depends on landing the `opencode/ci`
 constraint-dimension slice and the v0.12.1 rebuild confirming version stamps.
 
+## v0.14.0 — Constraint Persistence & Sheet Layout
+
+**Status:** Planned — v0.13.0 shipped anchored dimensions, a constraint solver
+that takes an explicit list, and a governed signed release pipeline. v0.14.0
+makes constraints first-class persisted data (so they survive save/load and
+fire on wall moves), completes the sheet story with title blocks and viewports
+(CAP-099), and codifies the manual QC that the 2026-11-11 audit left open.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-111 | Constraint persistence: `constraints: Vec<Constraint>` on `Level` with serde defaults, `Project::validate` rules (dangling walls, duplicate pins, param ranges), constraints solved on load | — |
+| CAP-112 | Constraint management UI: list, add and remove a level's constraints from the inspector; the solver runs after wall edits so anchored dimensions stay correct without manual re-solve | — |
+| CAP-113 | Sheet title blocks: every exported sheet carries a title block (project name, sheet number/title, level, scale, date, revision) drawn in the PDF and reflected in the drawing-set export | — |
+| CAP-114 | Sheet viewports: a sheet may hold multiple viewports, each bound to a level region, with per-viewport scale; the drawing set lays them out on the sheet | — |
+| CAP-115 | QC codified: `docs/qc/release-checklist.md` — signed-artefact verification steps, AppImage execution smoke test, screen-reader pass — each with an executable command or a named manual procedure and a sign-off line | — |
+
+**Release notes (intended):** Constraints become part of the drawing: they are
+saved with the project, re-solved on load and after every wall move, and
+managed from the Inspector. Sheets gain proper title blocks and multiple
+level-bound viewports, so a drawing set reads like a issued document rather
+than a collection of pages. Earlier project files load unchanged.
+
+**Release gate (guide §12.1):** signed artefacts, `docs/tokens.json` ledger
+updated by CI and quoted in the release notes, version bump before the tag,
+`RELEASE_TOKENS` set for the release.
+
+**Readiness:** 0% — planned; CAP-111 is the foundation slice (core first, UI
+second, sheets third, QC last).
+
 **Unscheduled / future:** Web/WASM port, plugin architecture, collaborative
-editing, custom paper sizes, better on-canvas hints, blocks/symbols, sheet
-layout with title blocks (CAP-099), 3D/structural/IFC track (separate roadmap).
+editing, custom paper sizes, on-canvas hints, blocks/symbols, 3D/structural/IFC
+track (separate roadmap).
