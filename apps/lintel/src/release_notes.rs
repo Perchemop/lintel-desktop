@@ -233,15 +233,15 @@ mod tests {
     fn releases_parses_every_published_version() {
         let rs = releases();
         assert!(rs.len() >= 14, "got {}", rs.len());
-        assert_eq!(rs.first().unwrap().version, "0.12.1");
+        assert_eq!(rs.first().unwrap().version, "0.13.0");
         assert_eq!(rs.last().unwrap().version, "0.1.0");
     }
 
     #[test]
     fn ledger_era_releases_carry_token_figures() {
         let rs = releases();
-        let r12 = rs.iter().find(|r| r.version == "0.12.1").unwrap();
-        assert_eq!(r12.tokens_this_release, Some(5000));
+        let r13 = rs.iter().find(|r| r.version == "0.13.0").unwrap();
+        assert_eq!(r13.tokens_this_release, Some(5000));
         let r10 = rs.iter().find(|r| r.version == "0.10.0").unwrap();
         assert_eq!(r10.tokens_this_release, Some(5000));
     }
@@ -258,15 +258,15 @@ mod tests {
     #[test]
     fn summaries_and_bullets_are_captured() {
         let rs = releases();
-        let r12 = rs.iter().find(|r| r.version == "0.12.1").unwrap();
-        assert!(!r12.summary.is_empty());
-        assert!(r12.summary.to_lowercase().contains("dimension"));
+        let r13 = rs.iter().find(|r| r.version == "0.13.0").unwrap();
+        assert!(!r13.summary.is_empty());
+        assert!(r13.summary.to_lowercase().contains("dimension"));
         let r101 = rs.iter().find(|r| r.version == "0.10.1").unwrap();
         assert!(!r101.added.is_empty());
     }
 
     #[test]
     fn latest_cumulative_tokens_matches_the_newest_entry() {
-        assert_eq!(latest_cumulative_tokens(), Some(15000));
+        assert_eq!(latest_cumulative_tokens(), Some(45000));
     }
 }
