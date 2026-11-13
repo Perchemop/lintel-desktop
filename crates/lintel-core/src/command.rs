@@ -2177,10 +2177,7 @@ mod tests {
             },
         )
         .expect("add constraint");
-        assert_eq!(
-            project.active_level().expect("level").constraints.len(),
-            1
-        );
+        assert_eq!(project.active_level().expect("level").constraints.len(), 1);
         assert!(project.validate().is_ok());
     }
 
@@ -2202,7 +2199,13 @@ mod tests {
         )
         .expect_err("param out of range");
         assert!(error.to_string().contains("outside 0..1"));
-        assert!(project.active_level().expect("level").constraints.is_empty());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .constraints
+                .is_empty()
+        );
     }
 
     #[test]
@@ -2223,7 +2226,13 @@ mod tests {
         )
         .expect("add constraint");
         apply_command(&mut project, Command::RemoveConstraint { index: 0 }).expect("remove");
-        assert!(project.active_level().expect("level").constraints.is_empty());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .constraints
+                .is_empty()
+        );
         let error = apply_command(&mut project, Command::RemoveConstraint { index: 0 })
             .expect_err("out of bounds");
         assert!(error.to_string().contains("out of range"));
@@ -2273,8 +2282,23 @@ mod tests {
                 1_760_000_030,
             )
             .expect("add constraint");
-        assert_eq!(document.project().active_level().expect("level").constraints.len(), 1);
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            1
+        );
         assert!(document.undo(1_760_000_040));
-        assert!(document.project().active_level().expect("level").constraints.is_empty());
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .is_empty()
+        );
     }
 }
