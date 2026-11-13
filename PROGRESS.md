@@ -128,7 +128,9 @@ release-notes sync `1a43bea` (PR #26); Phase A UI completion `e86f697`
 
 Readiness % (v0.13.0): **100% — CAP-100–108 all landed; release gate executed
 (both crates at 0.13.0, notes quoting the ledger, tag `v0.13.0` cut after
-merge — first signed release).**
+merge — first signed release; all 8 artefacts including
+      `SHA256SUMS.txt.asc`, workflow now uploads the signature (PR #30,
+      `76a774b`)).**
 
 ## v0.10.1 Status — RELEASED
 
