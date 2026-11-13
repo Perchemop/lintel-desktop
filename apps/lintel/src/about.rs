@@ -52,33 +52,49 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
         .default_size([580.0, 480.0])
         .show(ui, |ui| {
             ui.label(egui::RichText::new("Lintel release history").strong());
-            ui.label(egui::RichText::new(release_notes::TOKEN_METRIC_NOTE).small());
             ui.separator();
             egui::ScrollArea::vertical().show(ui, |ui| {
-                for release in release_notes::RELEASES {
-                    let heading = format!("v{} — {}", release.version, release.date);
+                for release in release_notes::releases() {
+                    let heading = format!("v{}", release.version);
                     ui.collapsing(heading, |ui| {
-                        ui.label(egui::RichText::new(release.summary).italics());
+                        ui.label(egui::RichText::new(&release.summary).italics());
                         ui.add_space(4.0);
-                        section(ui, "Added", release.added);
-                        section(ui, "Changed", release.changed);
-                        section(ui, "Fixed", release.fixed);
-                        section(ui, "Known limitations", release.known_limitations);
+                        section(ui, "Added", &release.added);
+                        section(ui, "Changed", &release.changed);
+                        section(ui, "Fixed", &release.fixed);
+                        section(ui, "Known limitations", &release.known_limitations);
                         ui.add_space(4.0);
-                        ui.label(
-                            egui::RichText::new(format!(
-                                "Approx. tokens this release: {}",
-                                release.tokens_this_release
-                            ))
-                            .small(),
-                        );
+                        match release.tokens_this_release {
+                            Some(n) => {
+                                ui.label(
+                                    egui::RichText::new(format!(
+                                        "Approx. tokens this release: {n}"
+                                    ))
+                                    .small(),
+                                );
+                            }
+                            None => {
+                                ui.label(
+                                    egui::RichText::new("predates the token ledger")
+                                        .small()
+                                        .color(crate::theme::TEXT_MUTED),
+                                );
+                            }
+                        }
                     });
                 }
                 ui.separator();
-                ui.label(format!(
-                    "Approx. total tokens since development began: {}",
-                    release_notes::TOTAL_TOKENS
-                ));
+                if let Some(total) = release_notes::latest_cumulative_tokens() {
+                    ui.label(format!(
+                        "Approx. total tokens since development began: {total}"
+                    ));
+                    ui.separator();
+                }
+                ui.label(
+                    egui::RichText::new(release_notes::TOKEN_METRIC_NOTE)
+                        .small()
+                        .color(crate::theme::TEXT_MUTED),
+                );
                 ui.separator();
                 ui.hyperlink_to(
                     "View releases on GitHub",
@@ -100,7 +116,7 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
         });
 }
 
-fn section(ui: &mut egui::Ui, title: &str, items: &[&str]) {
+fn section(ui: &mut egui::Ui, title: &str, items: &[String]) {
     if items.is_empty() {
         return;
     }
