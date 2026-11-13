@@ -27,7 +27,7 @@ pub struct ReleaseNote {
 }
 
 /// The embedded release-notes file, single source of truth.
-const RELEASE_NOTES_MD: &str = include_str!("../../RELEASE_NOTES.md");
+const RELEASE_NOTES_MD: &str = include_str!("../../../RELEASE_NOTES.md");
 
 /// Explains how the token figures below should be read.
 pub const TOKEN_METRIC_NOTE: &str = "Ledger-era figures come from the CI-managed \
