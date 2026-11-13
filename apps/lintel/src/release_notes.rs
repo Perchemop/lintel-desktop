@@ -9,8 +9,6 @@
 pub struct ReleaseNote {
     /// Version string, without a leading `v`.
     pub version: String,
-    /// Release date, `YYYY-MM-DD` (absent from the notes file).
-    pub date: String,
     /// One-or-two-sentence honest summary.
     pub summary: String,
     /// What the release added.
@@ -122,7 +120,6 @@ fn parse_section(text: &str) -> Option<ReleaseNote> {
 
     Some(ReleaseNote {
         version,
-        date: String::new(),
         summary,
         added,
         changed,
@@ -193,12 +190,11 @@ fn token_line(lines: &[&str], label: &str) -> Option<u64> {
 fn extract_number(text: &str, label: &str) -> Option<u64> {
     for line in text.lines() {
         let t = line.trim();
-        if t.contains(label) {
-            if let Some(after) = t.split(label).nth(1) {
-                if let Some(n) = extract_number_str(after) {
-                    return Some(n);
-                }
-            }
+        if t.contains(label)
+            && let Some(after) = t.split(label).nth(1)
+            && let Some(n) = extract_number_str(after)
+        {
+            return Some(n);
         }
     }
     None
