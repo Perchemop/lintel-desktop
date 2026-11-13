@@ -1079,6 +1079,41 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::L)) {
                 self.tool = Tool::Label;
             }
+            // Construction tools (CAP-108): the C family, plus Q and X for the
+            // round and curved kinds.
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::C) && !i.modifiers.shift) {
+                self.tool = Tool::ConstructionLine;
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::C) && i.modifiers.shift) {
+                self.tool = Tool::ConstructionRay;
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::Q)) {
+                self.tool = Tool::ConstructionCircle;
+            }
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::X)) {
+                self.tool = Tool::ConstructionArc;
+            }
+            if plain_keys
+                && ui.input(|i| i.key_pressed(egui::Key::V) && i.modifiers.shift)
+            {
+                // Toggle visibility of the selected construction (CAP-108).
+                if let Some(EntityId::Construction(id)) = self.selection.primary() {
+                    let visible = self
+                        .doc
+                        .project()
+                        .active_level()
+                        .and_then(|level| level.construction_entity(id))
+                        .map(|entity| !entity.visible)
+                        .unwrap_or(true);
+                    let _ = self.doc.apply(
+                        Command::SetConstructionVisible {
+                            id: *id,
+                            visible,
+                        },
+                        now,
+                    );
+                }
+            }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::G)) {
                 self.snap.grid_enabled = !self.snap.grid_enabled;
             }
@@ -1093,7 +1128,7 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::E)) {
                 self.snap_modes.toggle(SnapModeKind::Endpoint);
             }
-            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::V)) {
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::V) && !i.modifiers.shift) {
                 self.snap_modes.toggle(SnapModeKind::Midpoint);
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::I)) {

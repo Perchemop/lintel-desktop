@@ -277,6 +277,12 @@ impl PaletteAction {
             PaletteAction::ShowAbout => "?",
             PaletteAction::ShowReleaseNotes => "R",
             PaletteAction::CheckForUpdates => "U",
+            PaletteAction::ConstructionLineTool => "C",
+            PaletteAction::ConstructionRayTool => "Shift+C",
+            PaletteAction::ConstructionCircleTool => "Q",
+            PaletteAction::ConstructionArcTool => "X",
+            PaletteAction::ConstructionVisible => "Shift+V",
+            PaletteAction::DeleteConstruction => "Del",
             _ => "",
         }
     }
