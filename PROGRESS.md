@@ -165,11 +165,16 @@ merge — first signed release; all 8 artefacts including
       commands), AppImage smoke, screen-reader pass, ledger consistency and
       post-release duties, each with sign-off lines
 
-**Landed:** all five capabilities (CAP-111–115); the release gate follows
-(version bump, notes, tag — the signed pipeline does the rest).
+- [x] Release gate: both crates bumped 0.13.0 → 0.14.0; `RELEASE_NOTES.md`
+      0.14.0 section; CHANGELOG dated; CI green; tag `v0.14.0` cut — release
+      run `43529660411` green, all 8 artefacts published **including
+      `SHA256SUMS.txt.asc` signed by the pipeline on the first pass**;
+      ledger at 50,000 cumulative
 
-Readiness % (v0.14.0): **100% — implementation complete; release gate
-pending.**
+**Landed:** all five capabilities (CAP-111–115) and the release.
+
+Readiness % (v0.14.0): **100% — shipped:**
+https://github.com/Perchemop/lintel-desktop/releases/tag/v0.14.0
 
 ## v0.10.1 Status — RELEASED
 
