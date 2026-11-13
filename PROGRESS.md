@@ -108,8 +108,12 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       merged (`d248b8b`)
 - [ ] CAP-107 — Documentation parity: capability-inventory through CAP-099,
       parity rows, CHANGELOG/ROADMAP/PROGRESS reconciled
-- [ ] CAP-108 — Phase A UI completion: layers palette + construction tools
-      fully wired
+- [x] CAP-108 — Phase A UI completion: Layers panel in the inspector
+      (visible/locked toggles, honest empty state), four construction tools
+      (line/ray/circle/arc) with two-click canvas flows, command-palette
+      entries for every construction action, wired shortcuts (C/Shift+C/Q/X,
+      Shift+V toggles selected-construction visibility, Del deletes), and
+      canvas click-to-place dimension anchors — PR #27 merged
 
 **Landed:** the core slice merged to `main` at `b4a7df1` (merge of PR #22,
 commit `2b07f58`, 2026-11-11); the anchor UI merged at `7d88830` (merge of
@@ -118,8 +122,8 @@ point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
 verification), CAP-106 (release governance), CAP-105 (in-app release notes),
 CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **85% — CAP-100–106 landed; docs parity (CAP-107) and
-Phase A UI completion (CAP-108) remain.**
+Readiness % (v0.13.0): **95% — CAP-100–106 and CAP-108 landed; only docs
+parity (CAP-107) remains, then the release gate.**
 
 ## v0.10.1 Status — RELEASED
 
