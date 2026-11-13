@@ -1,3 +1,41 @@
+## Lintel 0.13.0 — Anchored Dimensions & Release Governance
+
+**Summary.** Dimensions become anchored to the geometry they measure: an anchor ties a measured point to a wall at a parametric position, so moving a wall drags the dimension with it. Witness lines gain editable gap and overrun, a constraint solver keeps anchored dimensions correct as geometry changes, and the whole elite-CAD Phase A surface (construction tools, layers, snapping, selection, command palette) is now fully reachable from the UI. The release pipeline is governed: signed artefacts are enforced, tags must match crate versions, and the in-app release notes are generated from the same file that feeds GitHub releases.
+
+### Added
+- Constraint-driven dimensions core (CAP-100): `DimensionAnchor` ties a measured point to a wall at a fraction along it; witness-line gap and overrun (200 mm / 100 mm defaults); anchored dimensions follow wall moves; old project files load unchanged
+- Constraint solver (CAP-101): `PerpendicularDistance`, `FixedAngle` and `EqualLength` constraints with `solve_constraints`; applying a constraint moves the anchored point and its stored fallback
+- Anchor commands (CAP-102): set/clear start and end anchors, set witness gap and overrun — validated, undoable, persisted
+- Anchor UI (CAP-103): inspector anchor rows ("anchored to Wall N at P%"), witness margin controls, canvas witness lines drawn with gap and overrun, cobalt grip markers on anchored points
+- Construction tools (CAP-108): line, ray, circle and arc with two-click canvas flows; Layers panel with visibility/lock toggles; command-palette entries for every construction action
+- Keyboard reachability (CAP-108): C/Shift+C/Q/X select the construction tools, Shift+V toggles the selected construction's visibility, Del deletes it; clicking near a wall while placing a dimension anchors that endpoint to the wall
+- Update verification metadata (CAP-104): the update popup surfaces the release's `SHA256SUMS.txt` manifest and digest and links the verification guide; Lintel states plainly that it never installs updates for you
+- Release governance (CAP-106): CI refuses to publish when the tag does not match the crate versions or when signing is unavailable, verifies its own signature, anchors releases to the real git tag, and warns when the token figure is the default
+- Documentation parity (CAP-107): capability inventory, parity evidence, traceability and architecture docs extended through CAP-108
+
+### Changed
+- In-app release notes are parsed at runtime from `RELEASE_NOTES.md` (CAP-105), so the popup can never drift from the published notes; releases before the token ledger are marked "predates the token ledger"
+- The update check honours its one-hour cache instead of hitting GitHub on every click
+- GitHub releases are anchored to `v`-prefixed git tags going forward
+
+### Fixed
+- Released binaries self-reporting a stale version is now structurally impossible: CI fails the release when tag and crate versions disagree
+- Silent unsigned releases are no longer possible: the workflow fails without `GPG_PRIVATE_KEY` and verifies its own signature before publishing
+
+### Known limitations
+- Constraint objects are not yet persisted on the level (the solver takes an explicit list); sheet layout with title blocks (CAP-099) and constraint persistence are the next planning targets
+- Circle and arc construction flows are simplified (radius from two clicks; fixed 90-degree arc)
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 45,000 tokens
+
+---
 <!-- This file is attached verbatim to every GitHub Release by
      .github/workflows/release.yml (--notes-file). The newest release belongs at
      the top. Everything above the first release heading stays invisible on
