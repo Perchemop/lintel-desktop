@@ -1105,7 +1105,7 @@ impl LintelApp {
                         .unwrap_or(true);
                     let _ = self
                         .doc
-                        .apply(Command::SetConstructionVisible { id: *id, visible }, now);
+                        .apply(Command::SetConstructionVisible { id, visible }, now);
                 }
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::G)) {
