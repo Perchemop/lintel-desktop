@@ -40,6 +40,10 @@ enum Tool {
     Dimension,
     Label,
     Measurements,
+    ConstructionLine,
+    ConstructionRay,
+    ConstructionCircle,
+    ConstructionArc,
 }
 
 impl Tool {
@@ -52,6 +56,10 @@ impl Tool {
             Tool::Dimension => "Dimension",
             Tool::Label => "Label",
             Tool::Measurements => "Measurements",
+            Tool::ConstructionLine => "Construction line",
+            Tool::ConstructionRay => "Construction ray",
+            Tool::ConstructionCircle => "Construction circle",
+            Tool::ConstructionArc => "Construction arc",
         }
     }
 }
@@ -649,6 +657,26 @@ impl eframe::App for LintelApp {
                             Tool::Measurements,
                             Tool::Measurements.label(),
                         );
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::ConstructionLine,
+                            Tool::ConstructionLine.label(),
+                        );
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::ConstructionRay,
+                            Tool::ConstructionRay.label(),
+                        );
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::ConstructionCircle,
+                            Tool::ConstructionCircle.label(),
+                        );
+                        ui.selectable_value(
+                            &mut self.tool,
+                            Tool::ConstructionArc,
+                            Tool::ConstructionArc.label(),
+                        );
                     });
                 tool_response.response.on_hover_text(
                     "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension Shift+M=Measurements)",
@@ -801,6 +829,10 @@ impl LintelApp {
                 Tool::Dimension => self.place_dimension_at(world, now),
                 Tool::Label => self.place_label_at(world, now),
                 Tool::Door | Tool::Window => self.place_opening_at(world, now),
+                Tool::ConstructionLine
+                | Tool::ConstructionRay
+                | Tool::ConstructionCircle
+                | Tool::ConstructionArc => self.place_construction_at(world, now),
                 Tool::Measurements => {}
             }
         }
@@ -1122,12 +1154,13 @@ impl LintelApp {
         }
         let end = self.snap_at(world, Some(self.draft.start));
         if end.distance(self.draft.start) > MIN_WALL_LENGTH_DRAG {
+            let start_world = self.draft.start;
             let applied = self
                 .doc
                 .apply(
                     Command::PlaceDimension {
                         kind: lintel_core::dimension::DimensionKind::Aligned,
-                        start: self.draft.start,
+                        start: start_world,
                         end,
                         offset: lintel_core::dimension::DEFAULT_DIMENSION_OFFSET,
                     },
@@ -1138,7 +1171,98 @@ impl LintelApp {
             if let Some(applied) = applied
                 && let Some(dim_id) = applied.dimension
             {
+                // Anchor the measured points to any wall they land on, so the
+                // dimension follows the wall when it moves.
+                let geometry = lintel_core::join::PlanGeometry::of_level(
+                    self.doc.project().active_level().expect("level"),
+                );
+                for (point, is_start) in [(start_world, true), (end, false)] {
+                    if let Some(hit) = geometry.hit_test(point, self.snap.anchor_tolerance)
+                        && let lintel_core::join::Hit::Wall(wall_id) = hit
+                    {
+                        let wall = geometry.wall(wall_id).expect("wall");
+                        let dx = wall.wall.end.x - wall.wall.start.x;
+                        let dy = wall.wall.end.y - wall.wall.start.y;
+                        let len_sq = dx * dx + dy * dy;
+                        let param = if len_sq > 0.0 {
+                            (((point.x - wall.wall.start.x) * dx
+                                + (point.y - wall.wall.start.y) * dy)
+                                / len_sq)
+                                .clamp(0.0, 1.0)
+                        } else {
+                            0.0
+                        };
+                        let anchor = lintel_core::dimension::DimensionAnchor::new(wall_id, param);
+                        let cmd = if is_start {
+                            Command::SetDimensionStartAnchor {
+                                id: dim_id,
+                                anchor: Some(anchor),
+                            }
+                        } else {
+                            Command::SetDimensionEndAnchor {
+                                id: dim_id,
+                                anchor: Some(anchor),
+                            }
+                        };
+                        let _ = self.doc.apply(cmd, now);
+                    }
+                }
                 self.selection.replace(EntityId::Dimension(dim_id));
+            }
+        }
+        self.draft = Draft::default();
+    }
+
+    /// Place a construction guide: first click sets the anchor, second commits.
+    fn place_construction_at(&mut self, world: Point2, now: i64) {
+        if !self.draft.active {
+            self.draft = Draft {
+                active: true,
+                start: self.snap_at(world, None),
+                current: world,
+            };
+            return;
+        }
+        let end = self.snap_at(world, Some(self.draft.start));
+        let start = self.draft.start;
+        let kind = match self.tool {
+            Tool::ConstructionLine => lintel_core::construction::ConstructionKind::Line {
+                start,
+                end,
+            },
+            Tool::ConstructionRay => lintel_core::construction::ConstructionKind::Ray {
+                origin: start,
+                direction: lintel_core::geom::Vec2::new(end.x - start.x, end.y - start.y),
+            },
+            Tool::ConstructionCircle => lintel_core::construction::ConstructionKind::Circle {
+                center: start,
+                radius: start.distance(end).max(1.0),
+            },
+            Tool::ConstructionArc => {
+                let radius = start.distance(end).max(1.0);
+                let start_deg = (end - start).angle_degrees();
+                lintel_core::construction::ConstructionKind::Arc {
+                    center: start,
+                    radius,
+                    start_deg,
+                    end_deg: start_deg + 90.0,
+                }
+            }
+            _ => {
+                self.draft = Draft::default();
+                return;
+            }
+        };
+        if start.distance(end) > MIN_WALL_LENGTH_DRAG || matches!(self.tool, Tool::ConstructionCircle | Tool::ConstructionArc) {
+            let applied = self
+                .doc
+                .apply(Command::CreateConstruction { kind }, now)
+                .map_err(|e| self.note_status(format!("Construction rejected: {e}"), now))
+                .ok();
+            if let Some(applied) = applied
+                && let Some(cid) = applied.construction
+            {
+                self.selection.replace(EntityId::Construction(cid));
             }
         }
         self.draft = Draft::default();

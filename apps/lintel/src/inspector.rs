@@ -398,6 +398,51 @@ pub fn inspector(
 
     ui.separator();
 
+    let layers_cmd = egui::CollapsingHeader::new("Layers")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            if level.layers.is_empty() {
+                ui.label("No layers yet — create one (Ctrl+K).");
+                return None::<Command>;
+            }
+            let mut command: Option<Command> = None;
+            for layer in &level.layers {
+                ui.horizontal(|ui| {
+                    ui.label(&layer.name);
+                    let mut visible = layer.visible;
+                    if ui
+                        .checkbox(&mut visible, "Visible")
+                        .on_hover_text("Hidden layers are neither drawn nor picked.")
+                        .changed()
+                        && visible != layer.visible
+                    {
+                        command = Some(Command::SetLayerProperty {
+                            layer_id: layer.id,
+                            property: lintel_core::layer::LayerProperty::Visible(visible),
+                        });
+                    }
+                    let mut locked = layer.locked;
+                    if ui
+                        .checkbox(&mut locked, "Locked")
+                        .on_hover_text("A locked layer is drawn but cannot be edited.")
+                        .changed()
+                        && locked != layer.locked
+                    {
+                        command = Some(Command::SetLayerProperty {
+                            layer_id: layer.id,
+                            property: lintel_core::layer::LayerProperty::Locked(locked),
+                        });
+                    }
+                });
+            }
+            command
+        })
+        .body_returned
+        .flatten();
+
+    ui.separator();
+
     let schedule_cmd = egui::CollapsingHeader::new("Schedule")
         .default_open(false)
         .show(ui, |ui| {
@@ -424,6 +469,7 @@ pub fn inspector(
         .or(project_cmd)
         .or(storeys_cmd)
         .or(view_cmd)
+        .or(layers_cmd)
         .or(rooms_cmd)
         .or(schedule_cmd)
         .or(measurements_cmd)
