@@ -269,15 +269,37 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
+        # Guide §12.1: a release is signed or it does not ship (audit F3).
+        # Refuse to publish unsigned rather than skipping silently.
         if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
-          echo "GPG_PRIVATE_KEY not set; skipping release signing"
-          exit 0
+          echo "::error::GPG_PRIVATE_KEY is not set; refusing to publish an unsigned release"
+          exit 1
         fi
         echo "${GPG_PRIVATE_KEY}" | gpg --import --batch --yes
         gpg --batch --yes --armor --detach-sign dist/SHA256SUMS.txt
+        sig_check=$(gpg --verify dist/SHA256SUMS.txt.asc dist/SHA256SUMS.txt 2>&1 || true)
+        echo "$sig_check"
+        echo "$sig_check" | grep -q "Good signature" || {
+          echo "::error::signature verification of SHA256SUMS.txt failed"
+          exit 1
+        }
         ls -la dist/SHA256SUMS.txt.asc
       env:
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
+    - name: Verify tag matches crate version (audit F1)
+      if: ${{ github.ref_type == 'tag' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        tag="${GITHUB_REF_NAME#v}"
+        app=$(grep -m1 '^version' apps/lintel/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
+        core=$(grep -m1 '^version' crates/lintel-core/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
+        echo "tag=$tag apps/lintel=$app crates/lintel-core=$core"
+        if [ "$tag" != "$app" ] || [ "$tag" != "$core" ]; then
+          echo "::error::tag $tag does not match crate versions (app $app, core $core); bump before tagging"
+          exit 1
+        fi
 
     - name: Publish GitHub release
       env:
@@ -286,21 +308,27 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
+        # One tag convention: the release is anchored to the real git tag
+        # (`v…`). --verify-tag refuses to invent a tag (audit F4).
+        ref="${GITHUB_REF_NAME}"
         tag="${GITHUB_REF_NAME#v}"
         if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
           prerelease=()
+          verify=(--verify-tag)
         else
           tag="dispatch-$(date -u +%Y%m%d-%H%M%S)"
+          ref="$tag"
           prerelease=(--prerelease)
+          verify=()
         fi
-        if ! gh release view "$tag" >/dev/null 2>&1; then
-          gh release create "$tag" --title "Lintel ${tag}" --notes-file RELEASE_NOTES.md "${prerelease[@]}"
+        if ! gh release view "$ref" >/dev/null 2>&1; then
+          gh release create "$ref" ${verify[@]+"${verify[@]}"} --title "Lintel ${tag}" --notes-file RELEASE_NOTES.md "${prerelease[@]}"
         else
-          echo "release $tag already exists; uploading assets"
+          echo "release $ref already exists; uploading assets"
         fi
         mapfile -t artefacts <<< "$ARTEFACTS"
-        gh release upload "$tag" "${artefacts[@]}" --clobber
-        gh release edit "$tag" --draft=false
+        gh release upload "$ref" "${artefacts[@]}" --clobber
+        gh release edit "$ref" --draft=false
 
     - name: Update docs/tokens.json ledger (guide §12.1)
       if: ${{ github.ref_type == 'tag' }}
@@ -311,7 +339,11 @@ jobs:
         set -euo pipefail
         tag="${GITHUB_REF_NAME#v}"
         # Token count for this release: use RELEASE_TOKENS env var if set,
-        # otherwise a conservative estimate.
+        # otherwise a conservative estimate (audit F8: warn — do not imply
+        # the default is a measured value).
+        if [ -z "${RELEASE_TOKENS:-}" ]; then
+          echo "::warning::RELEASE_TOKENS not set; recording the 5000 default"
+        fi
         release_tokens="${RELEASE_TOKENS:-5000}"
         git config user.name "Lintel Dev"
         git config user.email "dev@example.com"
