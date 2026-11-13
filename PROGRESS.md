@@ -119,14 +119,16 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       canvas click-to-place dimension anchors — PR #27 merged
 
 **Landed:** the core slice merged to `main` at `b4a7df1` (merge of PR #22,
-commit `2b07f58`, 2026-11-11); the anchor UI merged at `7d88830` (merge of
-PR #23, 2026-11-12). Constraint persistence on `Level` is still an open design
-point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
-verification), CAP-106 (release governance), CAP-105 (in-app release notes),
-CAP-107 (docs parity), CAP-108 (Phase A UI completion).
+commit `2b07f58`, 2026-11-11); anchor UI `7d88830` (PR #23); update
+verification `61cf97a` (PR #24); release governance `d248b8b` (PR #25);
+release-notes sync `1a43bea` (PR #26); Phase A UI completion `e86f697`
+(PR #27); documentation parity `4a590fd` (PR #28). Constraint persistence on
+`Level` is still an open design point (solver takes an explicit
+`&[Constraint]`) — next planning target alongside CAP-099 sheet layout.
 
-Readiness % (v0.13.0): **100% — CAP-100–108 landed, docs parity (CAP-107)
-complete; release gate remains.**
+Readiness % (v0.13.0): **100% — CAP-100–108 all landed; release gate executed
+(both crates at 0.13.0, notes quoting the ledger, tag `v0.13.0` cut after
+merge — first signed release).**
 
 ## v0.10.1 Status — RELEASED
 
