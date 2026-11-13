@@ -53,6 +53,16 @@ jobs:
     - name: Tests (headless, no display)
       run: cargo test --workspace
 
+    - name: Version consistency (audit F1)
+      run: |
+        app=$(grep -m1 '^version' apps/lintel/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
+        core=$(grep -m1 '^version' crates/lintel-core/Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')
+        echo "apps/lintel=$app crates/lintel-core=$core"
+        if [ "$app" != "$core" ]; then
+          echo "::error::apps/lintel ($app) and crates/lintel-core ($core) versions disagree"
+          exit 1
+        fi
+
     - name: Build release (primary OS)
       run: cargo build --release
 
