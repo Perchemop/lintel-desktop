@@ -97,8 +97,12 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       (`61cf97a`); `update-check` is a git submodule (`lintel-shared-crates`
       @ `4f7045f`)
 - [ ] CAP-105 — In-app release notes generated from `RELEASE_NOTES.md`
-- [ ] CAP-106 — Release governance: version guard + signing enforcement in
-      `release.yml`; single `v`-tag convention
+- [x] CAP-106 — Release governance: `release.yml` now fails when the tag does
+      not match both crate versions, refuses to publish unsigned (and
+      self-verifies the signature), anchors releases to the real git tag with
+      `--verify-tag` (single `v`-convention), and warns on the default
+      `RELEASE_TOKENS`; `ci.yml` gains a version-consistency gate — PR #25
+      merged (`d248b8b`)
 - [ ] CAP-107 — Documentation parity: capability-inventory through CAP-099,
       parity rows, CHANGELOG/ROADMAP/PROGRESS reconciled
 - [ ] CAP-108 — Phase A UI completion: layers palette + construction tools
@@ -111,9 +115,10 @@ point (solver takes an explicit `&[Constraint]`). Next slices: CAP-104 (update
 verification), CAP-106 (release governance), CAP-105 (in-app release notes),
 CAP-107 (docs parity), CAP-108 (Phase A UI completion).
 
-Readiness % (v0.13.0): **65% — core (CAP-100–102), anchor UI (CAP-103) and
-update verification (CAP-104) landed; governance, release-notes and docs
-slices remain.**
+Readiness % (v0.13.0): **75% — core (CAP-100–102), anchor UI (CAP-103),
+update verification (CAP-104) and release governance (CAP-106) landed;
+release-notes sync (CAP-105), docs parity (CAP-107) and Phase A UI completion
+(CAP-108) remain.**
 
 ## v0.10.1 Status — RELEASED
 
