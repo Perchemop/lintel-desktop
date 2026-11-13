@@ -1055,7 +1055,9 @@ fn validate_viewport(project: &Project, viewport: &Viewport) -> Result<(), CoreE
         ));
     }
     if !viewport.is_within_sheet() {
-        return Err(CoreError::invalid("a viewport region must lie on the sheet"));
+        return Err(CoreError::invalid(
+            "a viewport region must lie on the sheet",
+        ));
     }
     if viewport.caption.chars().count() > MAX_CAPTION_CHARS {
         return Err(CoreError::invalid(format!(

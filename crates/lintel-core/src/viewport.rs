@@ -124,12 +124,7 @@ mod tests {
 
     #[test]
     fn a_zero_scale_is_not_valid() {
-        let viewport = Viewport::new(
-            LevelId(1),
-            region(0.0, 0.0, 100.0, 100.0),
-            0,
-            String::new(),
-        );
+        let viewport = Viewport::new(LevelId(1), region(0.0, 0.0, 100.0, 100.0), 0, String::new());
         assert!(!viewport.is_valid());
         assert!(!viewport.is_within_sheet());
     }

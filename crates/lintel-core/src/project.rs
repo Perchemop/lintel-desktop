@@ -622,7 +622,9 @@ mod tests {
         project.viewports.push(viewport);
         let error = project.validate().expect_err("dangling level");
         assert!(
-            error.to_string().contains("which this project does not have")
+            error
+                .to_string()
+                .contains("which this project does not have")
         );
     }
 

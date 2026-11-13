@@ -221,7 +221,13 @@ mod tests {
 
     #[test]
     fn a_malformed_date_is_rejected() {
-        for date in ["14/11/2026", "2026-13-01", "2026-00-10", "not a date", "2026-1-1"] {
+        for date in [
+            "14/11/2026",
+            "2026-13-01",
+            "2026-00-10",
+            "not a date",
+            "2026-1-1",
+        ] {
             let block = TitleBlock {
                 date: date.into(),
                 ..TitleBlock::default()
