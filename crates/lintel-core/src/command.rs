@@ -1,5 +1,4 @@
 //! Every edit the user can make is a `Command`.
-
 //!
 //! The UI never mutates the model directly: it sends a command and renders the
 //! result (addendum K.3). That is what makes the workflow tests in
@@ -7,32 +6,213 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::{Bounds, Point2};
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
-use crate::label::{PlanLabel, MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM};
+use crate::label::{MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM, PlanLabel};
 use crate::layer::{
-    EntitySelector, Layer, LayerProperty, Linetype, Rgb, MAX_LAYER_NAME_CHARS, MAX_LINEWEIGHT_MM,
-    MIN_LINEWEIGHT_MM,
+    EntitySelector, Layer, LayerProperty, Linetype, MAX_LAYER_NAME_CHARS, MAX_LINEWEIGHT_MM,
+    MIN_LINEWEIGHT_MM, Rgb,
 };
 use crate::level::Level;
 use crate::opening::{
-    Opening, OpeningKind, MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT,
-    MIN_OPENING_WIDTH,
+    MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT, MIN_OPENING_WIDTH, Opening,
+    OpeningKind,
 };
 use crate::project::Project;
 use crate::title_block::TitleBlock;
 use crate::units::UnitSystem;
-use crate::viewport::{Viewport, MAX_CAPTION_CHARS};
+use crate::viewport::{MAX_CAPTION_CHARS, Viewport};
 use crate::wall::{
-    Wall, MAX_WALL_HEIGHT, MAX_WALL_THICKNESS, MIN_WALL_HEIGHT, MIN_WALL_LENGTH, MIN_WALL_THICKNESS,
+    MAX_WALL_HEIGHT, MAX_WALL_THICKNESS, MIN_WALL_HEIGHT, MIN_WALL_LENGTH, MIN_WALL_THICKNESS, Wall,
 };
 
-//! What a successful command created, so the UI can select it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Command {
+    AddWall {
+        start: Point2,
+        end: Point2,
+        thickness: f64,
+        height: f64,
+    },
+    MoveWall {
+        id: WallId,
+        start: Point2,
+        end: Point2,
+    },
+    SetWallThickness {
+        id: WallId,
+        thickness: f64,
+    },
+    SetWallHeight {
+        id: WallId,
+        height: f64,
+    },
+    DeleteWall {
+        id: WallId,
+    },
+    PlaceOpening {
+        kind: OpeningKind,
+        host: WallId,
+        offset: f64,
+    },
+    MoveOpening {
+        id: OpeningId,
+        offset: f64,
+    },
+    SetOpeningKind {
+        id: OpeningId,
+        kind: OpeningKind,
+    },
+    SetOpeningSize {
+        id: OpeningId,
+        width: f64,
+        height: f64,
+        sill: f64,
+    },
+    FlipOpening {
+        id: OpeningId,
+    },
+    DeleteOpening {
+        id: OpeningId,
+    },
+    PlaceDimension {
+        kind: DimensionKind,
+        start: Point2,
+        end: Point2,
+        offset: f64,
+    },
+    MoveDimension {
+        id: DimensionId,
+        start: Point2,
+        end: Point2,
+    },
+    SetDimensionOffset {
+        id: DimensionId,
+        offset: f64,
+    },
+    SetDimensionKind {
+        id: DimensionId,
+        kind: DimensionKind,
+    },
+    SetDimensionExtensionLines {
+        id: DimensionId,
+        extension_lines: bool,
+    },
+    SetDimensionStartAnchor {
+        id: DimensionId,
+        anchor: Option<DimensionAnchor>,
+    },
+    SetDimensionEndAnchor {
+        id: DimensionId,
+        anchor: Option<DimensionAnchor>,
+    },
+    SetDimensionWitnessGap {
+        id: DimensionId,
+        gap: f64,
+    },
+    SetDimensionWitnessOverrun {
+        id: DimensionId,
+        overrun: f64,
+    },
+    DeleteDimension {
+        id: DimensionId,
+    },
+    PlaceLabel {
+        anchor: Point2,
+        text: String,
+    },
+    SetLabelText {
+        id: LabelId,
+        text: String,
+    },
+    MoveLabel {
+        id: LabelId,
+        anchor: Point2,
+    },
+    DeleteLabel {
+        id: LabelId,
+    },
+    CreateLayer {
+        name: String,
+        color: Option<Rgb>,
+        linetype: Linetype,
+        lineweight_mm: f64,
+    },
+    DeleteLayer {
+        layer_id: LayerId,
+    },
+    SetLayerProperty {
+        layer_id: LayerId,
+        property: LayerProperty,
+    },
+    AssignEntityToLayer {
+        entity: EntitySelector,
+        layer_id: LayerId,
+    },
+    CreateConstruction {
+        kind: ConstructionKind,
+    },
+    DeleteConstruction {
+        id: ConstructionId,
+    },
+    SetConstructionVisible {
+        id: ConstructionId,
+        visible: bool,
+    },
+    AddLevel {
+        name: String,
+        elevation: f64,
+    },
+    DeleteLevel {
+        id: LevelId,
+    },
+    SetActiveLevel {
+        id: LevelId,
+    },
+    SetUnits {
+        units: UnitSystem,
+    },
+    RenameProject {
+        name: String,
+    },
+    AddConstraint {
+        constraint: Constraint,
+    },
+    RemoveConstraint {
+        index: usize,
+    },
+    SetTitleBlock {
+        title_block: TitleBlock,
+    },
+    AddViewport {
+        level: LevelId,
+        region: Bounds,
+        scale_denominator: u32,
+        caption: String,
+    },
+    RemoveViewport {
+        index: usize,
+    },
+    AddBlockDef {
+        block: BlockDef,
+    },
+    RemoveBlockDef {
+        block_id: BlockId,
+    },
+    AddBlockInstance {
+        block_id: BlockId,
+        position: Point2,
+    },
+    RemoveBlockInstance {
+        block_id: BlockId,
+    },
+}
+
+/// What a successful command created, so the UI can select it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Applied {
     pub wall: Option<WallId>,
@@ -519,7 +699,7 @@ fn place_opening(
             "the new {} would overlap {}",
             kind.label().to_ascii_lowercase(),
             clash
-        ));
+        )));
     }
     let id = OpeningId(project.allocate_id());
     let opening = Opening::new(id, kind, host, offset);
@@ -1335,12 +1515,14 @@ mod tests {
         assert_eq!(document.project().dimension_count(), 0);
         assert!(document.redo(1_760_000_300));
         assert_eq!(document.project().dimension_count(), 1);
-        assert!(document
-            .project()
-            .active_level()
-            .expect("level")
-            .dimension(id)
-            .is_some());
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .dimension(id)
+                .is_some()
+        );
     }
 
     #[test]
@@ -1424,6 +1606,15 @@ mod tests {
         assert!(extension_lines);
     }
 
+    fn dimension_anchor(project: &Project, id: DimensionId) -> Option<DimensionAnchor> {
+        project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .start_anchor
+    }
+
     #[test]
     fn a_dimension_can_be_anchored_to_a_wall() {
         let mut project = empty_project();
@@ -1473,6 +1664,7 @@ mod tests {
             },
         )
         .expect_err("past the end of the wall");
+        assert!(error.to_string().contains("between the ends"));
 
         let error = apply_command(
             &mut project,
@@ -1491,7 +1683,7 @@ mod tests {
                 .dimension(id)
                 .expect("dimension")
                 .end_anchor
-                .is_none,
+                .is_none(),
             "a rejected anchor leaves the dimension alone"
         );
     }
@@ -1756,7 +1948,8 @@ mod tests {
                 .active_level()
                 .expect("level")
                 .label(id)
-                .is_none());
+                .is_none()
+        );
         assert!(document.undo(1_760_000_300));
         assert!(
             document
@@ -1764,7 +1957,8 @@ mod tests {
                 .active_level()
                 .expect("level")
                 .label(id)
-                .is_none());
+                .is_some()
+        );
         assert!(document.redo(1_760_000_400));
         assert!(
             document
@@ -1772,7 +1966,8 @@ mod tests {
                 .active_level()
                 .expect("level")
                 .label(id)
-                .is_none());
+                .is_none()
+        );
     }
 
     fn add_layer(project: &mut Project, name: &str) -> LayerId {
@@ -1864,11 +2059,13 @@ mod tests {
         )
         .expect_err("default layer");
         assert!(matches!(error, CoreError::DefaultLayer));
-        assert!(project
-            .active_level()
-            .expect("level")
-            .layer(LayerId::DEFAULT)
-            .is_some());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(LayerId::DEFAULT)
+                .is_some()
+        );
     }
 
     #[test]
@@ -1899,11 +2096,13 @@ mod tests {
         .expect("move the wall back");
         apply_command(&mut project, Command::DeleteLayer { layer_id: layer })
             .expect("now the layer is empty");
-        assert!(project
-            .active_level()
-            .expect("level")
-            .layer(layer)
-            .is_none());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .layer(layer)
+                .is_none()
+        );
     }
 
     #[test]
@@ -2025,6 +2224,7 @@ mod tests {
             },
         )
         .expect_err("missing layer");
+        assert!(matches!(error, CoreError::LayerNotFound(_)));
 
         let error = apply_command(
             &mut project,
@@ -2034,6 +2234,7 @@ mod tests {
             },
         )
         .expect_err("missing wall");
+        assert!(matches!(error, CoreError::WallNotFound(_)));
     }
 
     #[test]
@@ -2167,11 +2368,13 @@ mod tests {
         )
         .expect_err("param out of range");
         assert!(error.to_string().contains("outside 0..1"));
-        assert!(project
-            .active_level()
-            .expect("level")
-            .constraints
-            .is_empty());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .constraints
+                .is_empty()
+        );
     }
 
     #[test]
@@ -2416,6 +2619,7 @@ mod tests {
             },
         )
         .expect_err("zero scale");
+        assert!(error.to_string().contains("positive scale"));
 
         let flat = Bounds {
             min: Point2::new(10.0, 10.0),
@@ -2431,6 +2635,7 @@ mod tests {
             },
         )
         .expect_err("flat region");
+        assert!(error.to_string().contains("region with an area"));
 
         let off_sheet = Bounds {
             min: Point2::new(0.0, 0.0),
