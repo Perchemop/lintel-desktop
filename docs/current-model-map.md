@@ -11,3 +11,9 @@ to which role in this session. Updated when the provider order fails over.
 
 Provider order: OpenCode free → NVIDIA free → Groq/Google fallback. Record
 failovers here when they occur.
+
+## Guide.md sync (guide §12.3)
+
+Guide read in full at this session: all sections 0–18, Part II II.18–II.30,
+Appendix A–O. Guide revision: 2026-11-09 (added II.30 Rust GUI/UX). This
+ruleset was already synchronized to guide.md.
