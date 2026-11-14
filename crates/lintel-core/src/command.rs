@@ -2791,9 +2791,6 @@ mod tests {
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
         assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
-            Command::AddBlockInstance {
-                block_id: BlockId(1),
-                position: Point2::new(100.0, 200.0),
             },
         )
         .expect("add instance");
