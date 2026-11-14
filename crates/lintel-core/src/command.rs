@@ -2800,10 +2800,7 @@ mod tests {
         let mut project = empty_project();
         apply_command(&mut project, Command::AddBlockDef { block: block_def() })
             .expect("first def");
-        apply_command(&mut project, Command::AddBlockInstance {
-                block_id: BlockId(1),
-                position: Point2::new(100.0, 200.0),
-            })
+        apply_command(&mut project, Command::AddBlockInstance { block_id: BlockId(1), position: Point2::new(100.0, 200.0), })
             .expect("add instance");
         let error = apply_command(
             &mut project,

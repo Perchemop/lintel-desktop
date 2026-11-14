@@ -14,18 +14,7 @@ use crate::opening::Opening;
 use crate::wall::Wall;
 
 /// Identity of a block definition or a block instance.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct BlockId(pub u32);
 
