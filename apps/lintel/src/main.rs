@@ -44,6 +44,7 @@ enum Tool {
     ConstructionRay,
     ConstructionCircle,
     ConstructionArc,
+    Block,
 }
 
 impl Tool {
@@ -60,6 +61,7 @@ impl Tool {
             Tool::ConstructionRay => "Construction ray",
             Tool::ConstructionCircle => "Construction circle",
             Tool::ConstructionArc => "Construction arc",
+            Tool::Block => "Block",
         }
     }
 }
@@ -677,6 +679,7 @@ impl eframe::App for LintelApp {
                             Tool::ConstructionArc,
                             Tool::ConstructionArc.label(),
                         );
+                        ui.selectable_value(&mut self.tool, Tool::Block, Tool::Block.label());
                     });
                 tool_response.response.on_hover_text(
                     "Choose the active tool (W=Wall S=Select D=Door N=Window M=Dimension Shift+M=Measurements)",
@@ -833,6 +836,7 @@ impl LintelApp {
                 | Tool::ConstructionRay
                 | Tool::ConstructionCircle
                 | Tool::ConstructionArc => self.place_construction_at(world, now),
+                Tool::Block => self.place_block_at(world, now),
                 Tool::Measurements => {}
             }
         }
@@ -1295,6 +1299,35 @@ impl LintelApp {
                 self.selection.replace(EntityId::Construction(cid));
             }
         }
+        self.draft = Draft::default();
+    }
+
+    /// Place a block instance at the pointer.
+    fn place_block_at(&mut self, world: Point2, now: i64) {
+        let level = self.doc.project().active_level().expect("level");
+        let block_id = if self.inspector_draft.block_def_id != 0 {
+            lintel_core::BlockId(self.inspector_draft.block_def_id as u32)
+        } else {
+            match level.block_defs.first() {
+                Some(def) => def.id,
+                None => {
+                    self.note_status("No block definition selected.".to_string(), now);
+                    return;
+                }
+            }
+        };
+        // Make sure the def exists on this level.
+        if level.block_def(block_id).is_none() {
+            self.note_status("Selected block definition not found.".to_string(), now);
+            return;
+        }
+        let position = self.snap_at(world, None);
+        let applied = self
+            .doc
+            .apply(Command::AddBlockInstance { block_id, position }, now)
+            .map_err(|e| self.note_status(format!("Block rejected: {e}"), now))
+            .ok();
+        let _ = applied;
         self.draft = Draft::default();
     }
 
