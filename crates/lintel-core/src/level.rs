@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
@@ -42,6 +43,14 @@ pub struct Level {
     /// readable.
     #[serde(default)]
     pub constraints: Vec<Constraint>,
+    /// Named groups of entities that can be instanced on this level.
+    /// `serde(default)` keeps files written before blocks existed readable.
+    #[serde(default)]
+    pub block_defs: Vec<BlockDef>,
+    /// Placements of block definitions on this level.
+    /// `serde(default)` keeps files written before blocks existed readable.
+    #[serde(default)]
+    pub block_instances: Vec<BlockInstance>,
 }
 
 impl Level {
@@ -57,6 +66,8 @@ impl Level {
             labels: Vec::new(),
             construction: Vec::new(),
             constraints: Vec::new(),
+            block_defs: Vec::new(),
+            block_instances: Vec::new(),
         }
     }
 
@@ -209,6 +220,19 @@ impl Level {
 
     pub fn dimension_count(&self) -> usize {
         self.dimensions.len()
+    }
+
+    /// The block definition with `id`, if this level holds it.
+    pub fn block_def(&self, id: BlockId) -> Option<&BlockDef> {
+        self.block_defs.iter().find(|d| d.id == id)
+    }
+
+    /// Every instance that draws from `block_id`, in placement order.
+    pub fn block_instances_of_def(&self, block_id: BlockId) -> Vec<&BlockInstance> {
+        self.block_instances
+            .iter()
+            .filter(|instance| instance.block_id == block_id)
+            .collect()
     }
 
     /// Bounds of every wall band on this level, for zoom-to-fit and the sheet
@@ -493,5 +517,80 @@ mod tests {
         let json = serde_json::to_string(&level).expect("serialize");
         let back: Level = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, level);
+    }
+
+    #[test]
+    fn block_def_can_be_added_and_found() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let mut def = BlockDef::new(BlockId(1), "Header");
+        def.add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
+            crate::ids::WallId(1),
+            Point2::new(0.0, 0.0),
+            Point2::new(900.0, 0.0),
+            100.0,
+            2100.0,
+        )));
+        level.block_defs.push(def);
+        assert!(level.block_def(BlockId(1)).is_some());
+        assert_eq!(level.block_def(BlockId(1)).expect("def").name, "Header");
+        assert!(level.block_def(BlockId(99)).is_none());
+    }
+
+    #[test]
+    fn block_instances_of_def_counts_placements() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level.block_defs.push(BlockDef::new(BlockId(5), "Door"));
+        level.block_instances.push(BlockInstance::new(
+            BlockId(5),
+            Point2::new(100.0, 200.0),
+        ));
+        level.block_instances.push(BlockInstance::new(
+            BlockId(5),
+            Point2::new(300.0, 400.0),
+        ));
+        level.block_instances.push(BlockInstance::new(
+            BlockId(99),
+            Point2::new(0.0, 0.0),
+        ));
+        assert_eq!(level.block_instances_of_def(BlockId(5)).len(), 2);
+        assert_eq!(level.block_instances_of_def(BlockId(99)).len(), 1);
+        assert_eq!(level.block_instances_of_def(BlockId(7)).len(), 0);
+    }
+
+    #[test]
+    fn block_fields_load_empty_when_missing_from_file() {
+        let json = r#"{
+            "id": 1,
+            "name": "Level 0",
+            "elevation": 0.0,
+            "walls": [],
+            "openings": []
+        }"#;
+        let level: Level = serde_json::from_str(json).expect("old level");
+        assert!(level.block_defs.is_empty());
+        assert!(level.block_instances.is_empty());
+    }
+
+    #[test]
+    fn block_defs_and_instances_survive_a_save_and_load() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let mut def = BlockDef::new(BlockId(1), "Header");
+        def.add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
+            crate::ids::WallId(1),
+            Point2::new(0.0, 0.0),
+            Point2::new(900.0, 0.0),
+            100.0,
+            2100.0,
+        )));
+        level.block_defs.push(def);
+        level.block_instances.push(BlockInstance::new(
+            BlockId(1),
+            Point2::new(100.0, 200.0),
+        ));
+        let json = serde_json::to_string(&level).expect("serialize");
+        let back: Level = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, level);
+        assert_eq!(back.block_defs.len(), 1);
+        assert_eq!(back.block_instances.len(), 1);
     }
 }
