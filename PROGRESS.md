@@ -132,7 +132,7 @@ merge — first signed release; all 8 artefacts including
       `SHA256SUMS.txt.asc`, workflow now uploads the signature (PR #30,
       `76a774b`)).**
 
-## v0.14.0 Status — IN PROGRESS
+## v0.14.0 Status — RELEASED
 
 **Constraint Persistence & Sheet Layout** (CAP-111–115). Full scope in
 `ROADMAP.md`.
@@ -175,6 +175,22 @@ merge — first signed release; all 8 artefacts including
 
 Readiness % (v0.14.0): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.14.0
+
+## v0.15.0 Status — RELEASED
+
+**Blocks & Symbols, Print Polish** (CAP-116–119). All four capabilities landed and the release gate executed.
+
+- [x] CAP-116 — Block definition core: `BlockDef`/`BlockId`/`BlockInstance` types, `AddBlockDef`/`RemoveBlockDef`/`AddBlockInstance`/`RemoveBlockInstance` commands with validation, undo/redo, JSON round-trip — PR #37 merged, CI green (check + 3-platform build-matrix), 10 new tests
+- [x] CAP-117 — Block instance UI: `Tool::Block` click-to-place on canvas, inspector "Blocks" section (def listing + instance fields) — PR #38 merged, CI green
+- [x] CAP-118 — Viewport print polish: real PDF clipping path, viewport-anchored north arrow + scale bar, placement guards — PR #39 merged, CI green, 9 new tests
+- [x] CAP-119 — Constraint palette entries + solver readout in inspector — PR #40 merged, CI green
+
+- [x] Release gate: both crates bumped 0.14.0 → 0.15.0; `RELEASE_NOTES.md` 0.15.0 section quoting ledger; CHANGELOG dated; CI green; tag `v0.15.0` cut
+
+**Landed:** all four capabilities (CAP-116–119) and the release.
+
+Readiness % (v0.15.0): **100% — shipped:**
+https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 
 ## v0.10.1 Status — RELEASED
 

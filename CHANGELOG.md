@@ -1,8 +1,8 @@
-## v0.14.0 — 2026-11-14
+## v0.15.0 — 2026-11-15
 
 ### Summary
 
-Constraints persist and re-solve; sheets gain title blocks and level-bound viewports; a QC checklist codifies release verification.
+Blocks give repeatable drafting (define once, place everywhere), sheets are properly framed with clipped viewports and viewport-anchored north arrows/scale bars, and constraints enter the command palette with a solver readout.
 # Changelog
 
 All notable changes to this project will be documented in this file.
