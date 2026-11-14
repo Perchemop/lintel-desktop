@@ -13,22 +13,22 @@ use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 use crate::error::CoreError;
 use crate::geom::{Bounds, Point2};
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
-use crate::label::{MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM, PlanLabel};
+use crate::label::{PlanLabel, MAX_LABEL_HEIGHT_MM, MIN_LABEL_HEIGHT_MM};
 use crate::layer::{
-    EntitySelector, Layer, LayerProperty, Linetype, MAX_LAYER_NAME_CHARS, MAX_LINEWEIGHT_MM,
-    MIN_LINEWEIGHT_MM, Rgb,
+    EntitySelector, Layer, LayerProperty, Linetype, Rgb, MAX_LAYER_NAME_CHARS, MAX_LINEWEIGHT_MM,
+    MIN_LINEWEIGHT_MM,
 };
 use crate::level::Level;
 use crate::opening::{
-    MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT, MIN_OPENING_WIDTH, Opening,
-    OpeningKind,
+    Opening, OpeningKind, MAX_OPENING_HEIGHT, MAX_OPENING_WIDTH, MIN_OPENING_HEIGHT,
+    MIN_OPENING_WIDTH,
 };
 use crate::project::Project;
 use crate::title_block::TitleBlock;
 use crate::units::UnitSystem;
-use crate::viewport::{MAX_CAPTION_CHARS, Viewport};
+use crate::viewport::{Viewport, MAX_CAPTION_CHARS};
 use crate::wall::{
-    MAX_WALL_HEIGHT, MAX_WALL_THICKNESS, MIN_WALL_HEIGHT, MIN_WALL_LENGTH, MIN_WALL_THICKNESS, Wall,
+    Wall, MAX_WALL_HEIGHT, MAX_WALL_THICKNESS, MIN_WALL_HEIGHT, MIN_WALL_LENGTH, MIN_WALL_THICKNESS,
 };
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -1390,13 +1390,11 @@ mod tests {
         let mut project = empty_project();
         let id = place_horizontal(&mut project);
         assert_eq!(project.dimension_count(), 1);
-        assert!(
-            project
-                .active_level()
-                .expect("level")
-                .dimension(id)
-                .is_some()
-        );
+        assert!(project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .is_some());
     }
 
     #[test]
@@ -1516,14 +1514,12 @@ mod tests {
         assert_eq!(document.project().dimension_count(), 0);
         assert!(document.redo(1_760_000_300));
         assert_eq!(document.project().dimension_count(), 1);
-        assert!(
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .dimension(id)
-                .is_some()
-        );
+        assert!(document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .is_some());
     }
 
     #[test]
@@ -1943,32 +1939,26 @@ mod tests {
         document
             .apply(Command::DeleteLabel { id }, 1_760_000_200)
             .expect("delete label");
-        assert!(
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .label(id)
-                .is_none()
-        );
+        assert!(document
+            .project()
+            .active_level()
+            .expect("level")
+            .label(id)
+            .is_none());
         assert!(document.undo(1_760_000_300));
-        assert!(
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .label(id)
-                .is_some()
-        );
+        assert!(document
+            .project()
+            .active_level()
+            .expect("level")
+            .label(id)
+            .is_some());
         assert!(document.redo(1_760_000_400));
-        assert!(
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .label(id)
-                .is_none()
-        );
+        assert!(document
+            .project()
+            .active_level()
+            .expect("level")
+            .label(id)
+            .is_none());
     }
 
     fn add_layer(project: &mut Project, name: &str) -> LayerId {
@@ -2060,13 +2050,11 @@ mod tests {
         )
         .expect_err("default layer");
         assert!(matches!(error, CoreError::DefaultLayer));
-        assert!(
-            project
-                .active_level()
-                .expect("level")
-                .layer(LayerId::DEFAULT)
-                .is_some()
-        );
+        assert!(project
+            .active_level()
+            .expect("level")
+            .layer(LayerId::DEFAULT)
+            .is_some());
     }
 
     #[test]
@@ -2097,13 +2085,11 @@ mod tests {
         .expect("move the wall back");
         apply_command(&mut project, Command::DeleteLayer { layer_id: layer })
             .expect("now the layer is empty");
-        assert!(
-            project
-                .active_level()
-                .expect("level")
-                .layer(layer)
-                .is_none()
-        );
+        assert!(project
+            .active_level()
+            .expect("level")
+            .layer(layer)
+            .is_none());
     }
 
     #[test]
@@ -2369,13 +2355,11 @@ mod tests {
         )
         .expect_err("param out of range");
         assert!(error.to_string().contains("outside 0..1"));
-        assert!(
-            project
-                .active_level()
-                .expect("level")
-                .constraints
-                .is_empty()
-        );
+        assert!(project
+            .active_level()
+            .expect("level")
+            .constraints
+            .is_empty());
     }
 
     #[test]
@@ -2396,13 +2380,11 @@ mod tests {
         )
         .expect("add constraint");
         apply_command(&mut project, Command::RemoveConstraint { index: 0 }).expect("remove");
-        assert!(
-            project
-                .active_level()
-                .expect("level")
-                .constraints
-                .is_empty()
-        );
+        assert!(project
+            .active_level()
+            .expect("level")
+            .constraints
+            .is_empty());
         let error = apply_command(&mut project, Command::RemoveConstraint { index: 0 })
             .expect_err("out of bounds");
         assert!(error.to_string().contains("out of range"));
@@ -2462,14 +2444,12 @@ mod tests {
             1
         );
         assert!(document.undo(1_760_000_040));
-        assert!(
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .constraints
-                .is_empty()
-        );
+        assert!(document
+            .project()
+            .active_level()
+            .expect("level")
+            .constraints
+            .is_empty());
     }
 
     fn viewport_region() -> Bounds {
@@ -2740,8 +2720,8 @@ mod tests {
                 Point2::new(900.0, 0.0),
                 100.0,
                 2100.0,
-            )),
-        )
+            ),
+        ))
     }
 
     #[test]
@@ -2777,23 +2757,24 @@ mod tests {
     #[test]
     fn add_block_def_duplicate_name_is_rejected() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("first def");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("first def");
         let error = apply_command(
             &mut project,
-            Command::AddBlockDef { block: BlockDef::new(BlockId(2), "  DOOR  "), },
+            Command::AddBlockDef {
+                block: BlockDef::new(BlockId(2), "  DOOR  "),
+            },
         )
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
-        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
+        assert_eq!(
+            project.active_level().expect("level").block_defs.len(),
+            1,
+            "the duplicate is not stored"
+        );
         let error = apply_command(
             &mut project,
-                Command::RemoveBlockDef {
+            Command::RemoveBlockDef {
                 block_id: BlockId(1),
             },
         )
@@ -2809,13 +2790,7 @@ mod tests {
     #[test]
     fn remove_block_def_removes_it_when_unused() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("add def");
         apply_command(
             &mut project,
             Command::RemoveBlockDef {
@@ -2826,7 +2801,7 @@ mod tests {
         assert!(project.active_level().expect("level").block_defs.is_empty());
         let error = apply_command(
             &mut project,
-                Command::RemoveBlockDef {
+            Command::RemoveBlockDef {
                 block_id: BlockId(1),
             },
         )
@@ -2837,30 +2812,34 @@ mod tests {
     #[test]
     fn add_block_instance_on_missing_block_is_rejected() {
         let mut project = empty_project();
-        apply_command(&mut project, Command::AddBlockInstance {
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
                 block_id: BlockId(99),
                 position: Point2::new(100.0, 200.0),
-            })
-            .expect_err("missing block");
+            },
+        )
+        .expect_err("missing block");
         assert!(matches!(error, CoreError::BlockDefNotFound(_)));
-        assert!(project.active_level().expect("level").block_instances.is_empty());
+        assert!(project
+            .active_level()
+            .expect("level")
+            .block_instances
+            .is_empty());
     }
 
     #[test]
     fn add_block_instance_happy_path() {
         let mut project = empty_project();
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("add def");
         apply_command(
             &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(&mut project, Command::AddBlockInstance {
+            Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(2500.0, 1200.0),
-            })
-            .expect("add instance");
+            },
+        )
+        .expect("add instance");
         let level = project.active_level().expect("level");
         assert_eq!(level.block_instances.len(), 1);
         let instance = &level.block_instances[0];
@@ -2873,23 +2852,23 @@ mod tests {
     #[test]
     fn remove_block_instance_empties_all_instances_of_the_def() {
         let mut project = empty_project();
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("add def");
         apply_command(
             &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(&mut project, Command::AddBlockInstance {
+            Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(100.0, 200.0),
-            })
-            .expect("first instance");
-        apply_command(&mut project, Command::AddBlockInstance {
+            },
+        )
+        .expect("first instance");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(300.0, 400.0),
-            })
-            .expect("second instance");
+            },
+        )
+        .expect("second instance");
         assert_eq!(
             project
                 .active_level()
@@ -2898,8 +2877,13 @@ mod tests {
                 .len(),
             2
         );
-        apply_command(&mut project, Command::RemoveBlockInstance { block_id: BlockId(1) })
-            .expect("remove instances");
+        apply_command(
+            &mut project,
+            Command::RemoveBlockInstance {
+                block_id: BlockId(1),
+            },
+        )
+        .expect("remove instances");
         assert_eq!(
             project.active_level().expect("level").block_instances.len(),
             0,
@@ -2912,7 +2896,8 @@ mod tests {
         use crate::document::Document;
 
         let mut document = Document::new("Test plan", 1_760_000_000);
-        document.apply(Command::AddBlockDef { block: block_def() }, 1_760_000_100)
+        document
+            .apply(Command::AddBlockDef { block: block_def() }, 1_760_000_100)
             .expect("add block def");
         assert_eq!(
             document
@@ -2949,13 +2934,14 @@ mod tests {
     #[test]
     fn block_commands_round_trip_through_json() {
         let commands = [
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-                Command::RemoveBlockDef {
+            Command::AddBlockDef { block: block_def() },
+            Command::RemoveBlockDef {
                 block_id: BlockId(1),
             },
-            Command::AddBlockInstance { block_id: BlockId(1), position: Point2::new(100.0, 200.0) },
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
             Command::RemoveBlockInstance {
                 block_id: BlockId(1),
             },
