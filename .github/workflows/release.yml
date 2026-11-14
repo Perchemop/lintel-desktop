@@ -126,6 +126,23 @@ jobs:
         PLIST
         echo "bundle=$APP" >> "$GITHUB_OUTPUT"
 
+    - name: Build macOS DMG installer
+      if: matrix.name == 'macos-aarch64'
+      shell: bash
+      run: |
+        set -euo pipefail
+        APP="${{ steps.bundle.outputs.bundle }}"
+        test -d "$APP"
+        hdiutil create -srcfolder "$APP" -volname "Lintel" -ov -format UDZO lintel-macos-aarch64.dmg
+        ls -la lintel-macos-aarch64.dmg
+
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: matrix.name == 'macos-aarch64'
+      with:
+        name: lintel-macos-aarch64-dmg
+        path: lintel-macos-aarch64.dmg
+        if-no-files-found: error
+
     - name: Prepare artifact (${{ matrix.name }})
       shell: bash
       run: |
@@ -249,7 +266,7 @@ jobs:
       id: collect
       run: |
         set -euo pipefail
-        files=$(find dist -type f \( -name '*.zip' -o -name '*.AppImage' -o -name '*.exe' \) | sort)
+        files=$(find dist -type f \( -name '*.zip' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.dmg' \) | sort)
         : > dist/SHA256SUMS.txt
         for f in $files; do
           (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") >> dist/SHA256SUMS.txt
