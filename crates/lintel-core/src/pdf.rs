@@ -133,6 +133,16 @@ fn drawing_area(sheet_width: f64, sheet_height: f64) -> (f64, f64, f64, f64) {
     (x0, y0, width, height)
 }
 
+/// The drawing area of a sheet as a rectangle, in millimetres. A viewport that
+/// does not overlap it could never print, so the exporter skips it.
+fn sheet_drawing_area(sheet_width: f64, sheet_height: f64) -> Bounds {
+    let (x, y, width, height) = drawing_area(sheet_width, sheet_height);
+    Bounds {
+        min: Point2::new(x, y),
+        max: Point2::new(x + width, y + height),
+    }
+}
+
 /// Smallest standard scale that fits `bounds` on the given sheet. The sheet
 /// dialog offers this as "Fit", so a user with a large plan is never told to
 /// guess a scale that will not fit.
@@ -257,13 +267,23 @@ fn draw_sheet(
     draw_frame(content, sheet_width, sheet_height);
     draw_title_block(content, project, spec, facts, sheet_width, produced_epoch_s);
     // A level with viewports is laid out through them; a plain sheet keeps the
-    // single scaled plan it has always drawn.
+    // single scaled plan it has always drawn. A viewport only counts when it is
+    // well formed and could reach the sheet's drawing area, so a level whose
+    // only viewport is malformed or off-sheet still prints a plan.
+    let sheet_area = sheet_drawing_area(sheet_width, sheet_height);
     let has_viewports = project
         .viewports
         .iter()
-        .any(|viewport| viewport.level == level.id);
+        .any(|viewport| viewport_prints(viewport, level.id, sheet_area));
     if has_viewports {
-        draw_viewports(content, &geometry, &project.viewports, level.id);
+        draw_viewports(
+            content,
+            &geometry,
+            &project.viewports,
+            level.id,
+            project.units,
+            sheet_area,
+        );
     } else {
         draw_plan(
             content,
@@ -273,8 +293,11 @@ fn draw_sheet(
             sheet_height,
             project.units,
         );
+        // A plain sheet states its orientation in the page corners. A sheet
+        // laid out through viewports instead carries a north arrow and scale
+        // bar inside each viewport, so the corners are left free.
+        draw_orientation(content, spec, sheet_width, sheet_height, project.units);
     }
-    draw_orientation(content, spec, sheet_width, sheet_height, project.units);
     draw_schedule_placement(content, level, sheet_width, sheet_height);
 }
 
@@ -297,6 +320,7 @@ fn draw_orientation(
         Point2::new(area_x, area_y + 4.0),
         spec.scale_denominator,
         units,
+        area_width - 2.0,
     );
 }
 
@@ -381,6 +405,7 @@ fn draw_cover(
         Point2::new(area_x, area_y + 4.0),
         spec.scale_denominator,
         project.units,
+        area_width - 2.0,
     );
 }
 
@@ -558,12 +583,12 @@ fn draw_plan(
     );
 }
 
-/// Paint a level's walls, openings, room areas and free labels through `layout`,
-/// skipping room and label text whose paper position falls outside `clip`.
+/// Paint a level's walls, openings, room areas and free labels through `layout`.
 ///
-/// `clip` stands in for a real PDF clipping path. It is approximate: a wall that
-/// straddles the boundary is drawn whole, so a viewport is a scale fit rather
-/// than a byte-exact cut.
+/// `clip` is the paper rectangle the caller has already set as the PDF clipping
+/// path (for a viewport) or the drawing area (for a plain sheet). Geometry and
+/// text whose paper position falls wholly outside `clip` is skipped here, and
+/// anything straddling the boundary is left to the clipping path to trim.
 fn draw_plan_body(
     content: &mut Content,
     geometry: &PlanGeometry,
@@ -582,6 +607,11 @@ fn draw_plan_body(
             .iter()
             .map(|point| layout.to_paper(*point))
             .collect();
+        // A band wholly outside the clip is skipped here; one that straddles
+        // the boundary is drawn and then trimmed by the PDF clipping path.
+        if !polyline_intersects(&corners, clip) {
+            continue;
+        }
         content.path(&corners, true);
         content.fill_and_stroke();
     }
@@ -592,6 +622,10 @@ fn draw_plan_body(
         let normal: Vec2 = opening.host_direction.perpendicular();
         let start = layout.to_paper(opening.start);
         let end = layout.to_paper(opening.end);
+        // An opening whose reveal lies wholly outside the clip cannot show.
+        if !polyline_intersects(&[start, end], clip) {
+            continue;
+        }
         let paper_normal = normal.scaled(half * scale);
 
         content.set_fill_gray(1.0);
@@ -691,31 +725,66 @@ fn inside_rect(point: Point2, rect: Bounds) -> bool {
         && point.y <= rect.max.y
 }
 
-/// Draw every viewport bound to `level` on this sheet: a frame, the level's
-/// geometry scaled into it, and the scale label and caption beneath it.
+/// True when two axis-aligned rectangles overlap. Edges that touch count, so a
+/// viewport that sits flush with the drawing area still prints.
+fn rects_intersect(a: Bounds, b: Bounds) -> bool {
+    a.min.x <= b.max.x && a.max.x >= b.min.x && a.min.y <= b.max.y && a.max.y >= b.min.y
+}
+
+/// True when `viewport` is bound to `level`, is well formed, and could overlap
+/// the sheet's drawing area, so it will actually print. A malformed or
+/// off-sheet viewport is skipped rather than printed off the page.
+fn viewport_prints(viewport: &Viewport, level: LevelId, sheet_area: Bounds) -> bool {
+    viewport.level == level
+        && viewport.is_valid()
+        && rects_intersect(viewport.normalised_region(), sheet_area)
+}
+
+/// True when the paper-space bounding box of `points` overlaps `rect`. Used to
+/// drop geometry that lies wholly outside a clip before it is emitted; anything
+/// that straddles the boundary is kept and left to the PDF clipping path.
 ///
-/// The clip is approximate: the geometry is scaled to sit inside the frame and
-/// room and label text outside it is skipped, but a wall that straddles the
-/// boundary is drawn whole rather than cut by a real PDF clipping path.
+/// Returns `false` for an empty path or a non-finite coordinate, so a corrupt
+/// wall is skipped rather than drawn.
+fn polyline_intersects(points: &[Point2], rect: Bounds) -> bool {
+    let mut min = Point2::new(f64::INFINITY, f64::INFINITY);
+    let mut max = Point2::new(f64::NEG_INFINITY, f64::NEG_INFINITY);
+    for point in points {
+        if !point.is_finite() {
+            return false;
+        }
+        min = Point2::new(min.x.min(point.x), min.y.min(point.y));
+        max = Point2::new(max.x.max(point.x), max.y.max(point.y));
+    }
+    if points.is_empty() {
+        return false;
+    }
+    rects_intersect(Bounds { min, max }, rect)
+}
+
+/// Draw every viewport bound to `level` on this sheet: a frame, the level's
+/// geometry clipped to the frame, a north arrow and scale bar anchored inside
+/// the frame, and the scale label and caption beneath it.
+///
+/// The geometry is cut with a real PDF clipping path (`q … re W n … Q`), so a
+/// wall that straddles the frame edge is trimmed rather than drawn whole.
+/// Geometry wholly outside the frame is skipped before it is emitted. A
+/// viewport with a malformed region, or one that could not overlap the sheet's
+/// drawing area, is skipped rather than printed off the page.
 fn draw_viewports(
     content: &mut Content,
     geometry: &PlanGeometry,
     viewports: &[Viewport],
     level: LevelId,
+    units: UnitSystem,
+    sheet_area: Bounds,
 ) {
     let bounds = geometry.bounds();
     for viewport in viewports {
-        if viewport.level != level {
+        if !viewport_prints(viewport, level, sheet_area) {
             continue;
         }
-        let region = viewport.region.normalised();
-        if !region.min.is_finite()
-            || !region.max.is_finite()
-            || region.width() <= 0.0
-            || region.height() <= 0.0
-        {
-            continue;
-        }
+        let region = viewport.normalised_region();
 
         content.set_line_width(0.35);
         content.set_stroke_gray(0.0);
@@ -730,8 +799,26 @@ fn draw_viewports(
                 region.min.y + region.height() * 0.5 - centre.y * scale,
             );
             let layout = SheetLayout { scale, origin };
+            // A real clipping path: everything the body draws is cut at the
+            // frame, so the viewport reads as a window onto the level.
+            content.save_state();
+            content.clip_rect(region.min.x, region.min.y, region.width(), region.height());
             draw_plan_body(content, geometry, &layout, region);
+            content.restore_state();
         }
+
+        // The north arrow and scale bar travel with the viewport: they are
+        // anchored to the frame, not to the page corners, so each viewport
+        // states its own orientation and scale.
+        let arrow_size = north_arrow_size(region);
+        draw_north_arrow(content, north_arrow_anchor(region, arrow_size), arrow_size);
+        draw_scale_bar(
+            content,
+            scale_bar_anchor(region),
+            viewport.scale_denominator,
+            units,
+            (region.width() - 8.0).max(2.0),
+        );
 
         content.set_fill_gray(0.0);
         content.text(
@@ -750,6 +837,28 @@ fn draw_viewports(
             );
         }
     }
+}
+
+/// Size of a viewport's north arrow, in millimetres: a fraction of the frame so
+/// the arrow suits both a small detail window and a large plan, clamped to a
+/// legible range.
+fn north_arrow_size(region: Bounds) -> f64 {
+    (region.width().min(region.height()) * 0.12).clamp(5.0, 10.0)
+}
+
+/// Centre of a viewport's north arrow: inset from the frame's top-right corner
+/// so the arrow never touches the frame, and never leaves a small frame.
+fn north_arrow_anchor(region: Bounds, size_mm: f64) -> Point2 {
+    let inset = (size_mm * 1.5)
+        .min(region.width() * 0.5)
+        .min(region.height() * 0.5);
+    Point2::new(region.max.x - inset, region.max.y - inset)
+}
+
+/// Left end of a viewport's scale bar: just inside the frame's bottom-left
+/// corner, above the caption line.
+fn scale_bar_anchor(region: Bounds) -> Point2 {
+    Point2::new(region.min.x + 4.0, region.min.y + 5.0)
 }
 
 /// One dimension line, offset from the measured edge. `vertical` controls
@@ -832,21 +941,18 @@ fn draw_north_arrow(content: &mut Content, at: Point2, size_mm: f64) {
 }
 
 /// Scale bar drawn from `at`, its left end, towards the right. A round model
-/// length is chosen so the bar is 20-60 mm long on paper; the bar is split into
-/// a black left half and a white right half so it reads on any paper.
-fn draw_scale_bar(content: &mut Content, at: Point2, scale_denominator: u32, units: UnitSystem) {
-    const CANDIDATES: [f64; 7] = [
-        1000.0, 2000.0, 5000.0, 10_000.0, 20_000.0, 50_000.0, 100_000.0,
-    ];
-    let denominator = f64::from(scale_denominator.max(1));
-    let mut length_mm = CANDIDATES[CANDIDATES.len() - 1];
-    for candidate in CANDIDATES {
-        if candidate / denominator >= 25.0 {
-            length_mm = candidate;
-            break;
-        }
-    }
-    let bar_mm = length_mm / denominator;
+/// length is chosen so the bar is at least 25 mm long on paper and no longer
+/// than `max_bar_mm`; the bar is split into a black left half and a white right
+/// half so it reads on any paper.
+fn draw_scale_bar(
+    content: &mut Content,
+    at: Point2,
+    scale_denominator: u32,
+    units: UnitSystem,
+    max_bar_mm: f64,
+) {
+    let length_mm = scale_bar_length_mm(scale_denominator, max_bar_mm);
+    let bar_mm = length_mm / f64::from(scale_denominator.max(1));
     let half = bar_mm * 0.5;
     let height = 2.5;
 
@@ -883,6 +989,37 @@ fn draw_scale_bar(content: &mut Content, at: Point2, scale_denominator: u32, uni
         false,
         &length_text,
     );
+}
+
+/// Choose the round model length a scale bar represents, in millimetres.
+///
+/// Candidates are 1-2-5-10 multiples of 100 mm; the shortest whose bar reads at
+/// least 25 mm on paper is taken, unless it would be wider than `max_bar_mm`,
+/// in which case the longest bar that fits is used. If nothing fits (a very
+/// small frame at a fine scale) the smallest candidate is returned, so the bar
+/// is always positive and finite.
+fn scale_bar_length_mm(scale_denominator: u32, max_bar_mm: f64) -> f64 {
+    const CANDIDATES: [f64; 9] = [
+        200.0, 500.0, 1000.0, 2000.0, 5000.0, 10_000.0, 20_000.0, 50_000.0, 100_000.0,
+    ];
+    let denominator = f64::from(scale_denominator.max(1));
+    let limit = if max_bar_mm.is_finite() {
+        max_bar_mm
+    } else {
+        f64::INFINITY
+    };
+    let mut best_fit: Option<f64> = None;
+    for candidate in CANDIDATES {
+        let bar_mm = candidate / denominator;
+        if bar_mm > limit {
+            break;
+        }
+        if bar_mm >= 25.0 {
+            return candidate;
+        }
+        best_fit = Some(candidate);
+    }
+    best_fit.unwrap_or(CANDIDATES[0])
 }
 
 /// Place the opening schedule in the drawing area's bottom-right corner.
@@ -1022,6 +1159,25 @@ impl Content {
 
     fn set_line_width(&mut self, millimetres: f64) {
         let _ = writeln!(self.ops, "{} w", format_number(millimetres * MM_TO_PT));
+    }
+
+    /// Push the graphics state so a clip or a colour change can be undone with
+    /// [`Content::restore_state`].
+    fn save_state(&mut self) {
+        self.ops.push_str("q\n");
+    }
+
+    /// Pop the graphics state pushed by [`Content::save_state`].
+    fn restore_state(&mut self) {
+        self.ops.push_str("Q\n");
+    }
+
+    /// Intersect the clip with a rectangle: a rectangle path used as the
+    /// clipping path (`re W n`). Everything drawn until the matching
+    /// [`Content::restore_state`] is cut to the rectangle.
+    fn clip_rect(&mut self, x: f64, y: f64, width: f64, height: f64) {
+        self.rectangle(x, y, width, height);
+        self.ops.push_str("W n\n");
     }
 
     fn move_to(&mut self, point: Point2) {
@@ -1785,5 +1941,162 @@ mod tests {
         assert!(text.contains("(Bare unit)"), "{text:.400}");
         // No geometry, so no wall fill, but the frame is still there.
         assert!(!text.contains("B\n"));
+    }
+
+    fn bounds(x0: f64, y0: f64, x1: f64, y1: f64) -> Bounds {
+        Bounds {
+            min: Point2::new(x0, y0),
+            max: Point2::new(x1, y1),
+        }
+    }
+
+    /// A viewport on `level`, with a blank caption unless one is given.
+    fn viewport(level: LevelId, region: Bounds, scale: u32, caption: &str) -> Viewport {
+        Viewport::new(level, region, scale, caption.to_string())
+    }
+
+    fn render_with_viewports(project: &Project, viewports: Vec<Viewport>) -> String {
+        let mut project = project.clone();
+        project.viewports = viewports;
+        let bytes = render_plan(&project, &SheetSpec::default(), 1_760_000_200).expect("render");
+        assert_valid_xref(&bytes);
+        String::from_utf8_lossy(&bytes).to_string()
+    }
+
+    #[test]
+    fn a_viewport_geometry_is_cut_by_a_real_clipping_path() {
+        let document = plan();
+        let level = document.project().active_level;
+        let vp = viewport(level, viewport_region(), 50, "");
+        let text = render_with_viewports(document.project(), vec![vp]);
+        // The frame is pushed as a clipping path: `re W n` between `q` and `Q`.
+        assert!(text.contains("q\n"), "needs a saved state");
+        assert!(text.contains("Q\n"), "clip must be undone");
+        // Region (10, 40)-(150, 140) mm in points: 140 x 100 mm = 396.850 pt
+        // wide, 283.465 pt high, at (28.346, 113.386).
+        assert!(
+            text.contains("28.346 113.386 396.850 283.465 re\nW n\n"),
+            "the viewport frame is the clipping path: {text:.800}"
+        );
+    }
+
+    #[test]
+    fn geometry_wholly_outside_the_clip_is_skipped() {
+        let clip = viewport_region();
+        let inside = [Point2::new(20.0, 50.0), Point2::new(30.0, 60.0)];
+        let outside = [Point2::new(200.0, 200.0), Point2::new(210.0, 210.0)];
+        assert!(polyline_intersects(&inside, clip));
+        // A wall beyond the frame is dropped before it is emitted.
+        assert!(!polyline_intersects(&outside, clip));
+        assert!(!polyline_intersects(&[], clip));
+        assert!(
+            !polyline_intersects(&[Point2::new(f64::NAN, 0.0)], clip),
+            "a non-finite wall is skipped"
+        );
+    }
+
+    #[test]
+    fn touching_rectangles_count_as_overlapping() {
+        let a = bounds(0.0, 0.0, 10.0, 10.0);
+        let b = bounds(5.0, 5.0, 15.0, 15.0);
+        assert!(rects_intersect(a, bounds(10.0, 0.0, 20.0, 10.0)));
+        assert!(rects_intersect(a, b));
+        assert!(!rects_intersect(a, bounds(11.0, 0.0, 20.0, 10.0)));
+    }
+
+    #[test]
+    fn each_viewport_carries_its_own_north_arrow_and_scale_bar() {
+        let document = plan();
+        let level = document.project().active_level;
+        let left = viewport(level, viewport_region(), 50, "");
+        let right = viewport(level, bounds(170.0, 40.0, 310.0, 140.0), 200, "");
+        let text = render_with_viewports(document.project(), vec![left, right]);
+        // Each viewport prints its own scale bar, not the page's 1:100.
+        assert!(text.contains("(Scale 1:50)"), "{text:.800}");
+        assert!(text.contains("(Scale 1:200)"), "{text:.800}");
+        // One north arrow per viewport, and none left in the page corners.
+        assert_eq!(
+            text.matches("(N) Tj").count(),
+            2,
+            "each viewport anchors a north arrow"
+        );
+        assert_eq!(
+            text.matches("W n\n").count(),
+            2,
+            "each viewport is clipped to its frame"
+        );
+    }
+
+    #[test]
+    fn a_viewport_that_cannot_reach_the_sheet_is_skipped() {
+        let document = plan();
+        let level = document.project().active_level;
+        let baseline = render_with_viewports(document.project(), Vec::new());
+        // A region beyond even an A1 sheet could never print.
+        let off_sheet = viewport(level, bounds(500.0, 500.0, 600.0, 600.0), 50, "");
+        let text = render_with_viewports(document.project(), vec![off_sheet]);
+        assert!(
+            !text.contains("(Viewport 1:50)"),
+            "an off-sheet viewport is skipped"
+        );
+        assert_eq!(
+            rectangle_count(text.as_bytes()),
+            rectangle_count(baseline.as_bytes()),
+            "a skipped viewport adds no geometry"
+        );
+    }
+
+    #[test]
+    fn a_malformed_viewport_falls_back_to_the_scaled_plan() {
+        let document = plan();
+        let level = document.project().active_level;
+        // A zero-scale viewport is invalid, so the level prints its plain plan
+        // rather than an empty sheet.
+        let bad = viewport(level, viewport_region(), 0, "");
+        let text = render_with_viewports(document.project(), vec![bad]);
+        assert!(text.contains("B\n"), "the plan is still drawn");
+        assert!(!text.contains("(Viewport 1:0)"));
+    }
+
+    #[test]
+    fn a_viewport_north_arrow_is_sized_and_anchored_to_the_frame() {
+        let region = viewport_region();
+        assert_eq!(north_arrow_size(region), 10.0);
+        let anchor = north_arrow_anchor(region, 10.0);
+        // Inset from the top-right corner, and still inside the frame.
+        assert_eq!(anchor.x, region.max.x - 15.0);
+        assert_eq!(anchor.y, region.max.y - 15.0);
+        assert!(anchor.x > region.min.x && anchor.y > region.min.y);
+
+        // A small frame keeps a legible arrow that does not overflow.
+        let small = bounds(0.0, 0.0, 20.0, 20.0);
+        let size = north_arrow_size(small);
+        assert_eq!(size, 5.0);
+        let anchor = north_arrow_anchor(small, size);
+        assert!(anchor.x - size * 0.5 >= small.min.x);
+        assert!(anchor.y + size * 0.5 <= small.max.y);
+    }
+
+    #[test]
+    fn a_viewport_scale_bar_anchor_sits_inside_the_frame() {
+        let region = viewport_region();
+        let anchor = scale_bar_anchor(region);
+        assert!(anchor.x > region.min.x);
+        assert!(anchor.y > region.min.y);
+        assert!(anchor.x < region.max.x && anchor.y < region.max.y);
+    }
+
+    #[test]
+    fn scale_bar_length_is_a_round_fit() {
+        // 1:100 with room to spare: a 5 m bar, 50 mm on paper.
+        assert_eq!(scale_bar_length_mm(100, 60.0), 5000.0);
+        // 1:20 in a narrow frame: a 0.5 m bar, not a 1 m one that overflows.
+        assert_eq!(scale_bar_length_mm(20, 32.0), 500.0);
+        // A round length is still chosen when the fittest is not reachable.
+        assert_eq!(scale_bar_length_mm(1000, 0.5), 500.0);
+        // The bar is always positive, even with no room at all.
+        assert!(scale_bar_length_mm(1000, 0.0) > 0.0);
+        // A non-finite limit is treated as unlimited.
+        assert_eq!(scale_bar_length_mm(50, f64::INFINITY), 2000.0);
     }
 }
