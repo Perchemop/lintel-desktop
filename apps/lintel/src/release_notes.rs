@@ -286,7 +286,10 @@ mod tests {
     fn latest_cumulative_tokens_is_monotonic_with_the_ledger() {
         let total = latest_cumulative_tokens().expect("the ledger records a figure");
         assert!(total > 0);
-        let per_release: u64 = releases().iter().filter_map(|r| r.tokens_this_release).sum();
+        let per_release: u64 = releases()
+            .iter()
+            .filter_map(|r| r.tokens_this_release)
+            .sum();
         assert!(per_release <= total);
     }
 }
