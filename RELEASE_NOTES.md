@@ -1,3 +1,32 @@
+## Lintel 0.15.0 — Blocks & Symbols, Print Polish
+
+**Summary.** Blocks give you repeatable drafting: define a wall-opening-detail once, place it everywhere, change it once. Sheets are properly framed with clipped viewports and viewport-anchored north arrows and scale bars. Constraints enter the command palette with a solver readout — pinned geometry is visible, not invisible.
+
+### Added
+- Block definitions (CAP-116): named groups of entities (wall, opening, dimension, label) saved on the project; `AddBlockDef`/`RemoveBlockDef`/`AddBlockInstance`/`RemoveBlockInstance` commands with validation (non-empty name, duplicate rejection, in-use guard); undo/redo and JSON round-trip
+- Block instance UI (CAP-117): `Tool::Block` click-to-place instances on the canvas from an inspector-selected definition; inspector "Blocks" section lists definitions (name, entity count, selectable) and instances (position, rotation, flip, remove)
+- Viewport print polish (CAP-118): real PDF clipping at the viewport region (frames cut instead of drawing whole), north arrow and scale bar anchored to each viewport instead of page corners, viewport placement guards (off-sheet/malformed skipped, fallback to scaled plan)
+- Constraint palette & solver readout (CAP-119): `AddPerpendicularConstraint`/`RemoveConstraint`/`ViewConstraints` palette entries with labels, shortcuts and "Constraints" category; read-only inspector "Constraint solver" section showing count and validation status
+
+### Changed
+- Block definition names are trimmed on add; duplicate names are rejected case-insensitively
+- Page-corner north arrow/scale bar now only drawn on plain (non-viewport) sheets; viewport sheets carry orientation inside each viewport
+
+### Known limitations
+- Instance fields (position, rotation, flip) are read-only in this release; editable transforms require `MoveBlockInstance`/rotate/flip commands (deferred)
+- Block instances aren't yet hit-tested on canvas, so they can't be selected by clicking
+- `RemoveConstraint` via palette removes the last constraint (no index picker yet)
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 55,000 tokens
+
+---
 ## Lintel 0.14.0 — Constraint Persistence & Sheet Layout
 
 **Summary.** Constraints become part of the drawing: they are saved with the project, re-solved on load and after every wall move, and managed from the Inspector. Sheets gain proper title blocks and level-bound viewports, so a drawing set reads like an issued document. A release QC checklist codifies what the pipeline cannot see.
