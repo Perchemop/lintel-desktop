@@ -2777,22 +2777,29 @@ mod tests {
     #[test]
     fn add_block_def_duplicate_name_is_rejected() {
         let mut project = empty_project();
-        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
-            .expect("first def");
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("first def");
         let error = apply_command(
             &mut project,
             Command::AddBlockDef { block: BlockDef::new(BlockId(2), "  DOOR  "), },
         )
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
-        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("first def");
+            1,
+            "the duplicate is not stored"
+        );
     }
 
     #[test]
     fn remove_block_def_with_an_instance_is_rejected() {
         let mut project = empty_project();
-        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
-            .expect("first def");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("first def");
         apply_command(
             &mut project,
             Command::AddBlockInstance {
@@ -2885,7 +2892,9 @@ mod tests {
         let mut project = empty_project();
         apply_command(
             &mut project,
-            Command::AddBlockDef { block: block_def() },
+            Command::AddBlockDef {
+                block: block_def(),
+            },
         )
         .expect("add def");
         apply_command(&mut project, Command::AddBlockInstance {
@@ -2957,8 +2966,12 @@ mod tests {
     #[test]
     fn block_commands_round_trip_through_json() {
         let commands = [
-            Command::AddBlockDef { block: block_def() },
-            Command::RemoveBlockDef { block_id: BlockId(1) },
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+                Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
             Command::AddBlockInstance { block_id: BlockId(1), position: Point2::new(100.0, 200.0) },
             Command::RemoveBlockInstance {
                 block_id: BlockId(1),
