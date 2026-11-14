@@ -2790,10 +2790,8 @@ mod tests {
         )
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
-        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("first def");
-            1,
-            "the duplicate is not stored"
-        );
+        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
+    }
     }
 
     #[test]
