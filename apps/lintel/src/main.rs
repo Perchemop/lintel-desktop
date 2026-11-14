@@ -1324,13 +1324,7 @@ impl LintelApp {
         let position = self.snap_at(world, None);
         let applied = self
             .doc
-            .apply(
-                Command::AddBlockInstance {
-                    block_id,
-                    position,
-                },
-                now,
-            )
+            .apply(Command::AddBlockInstance { block_id, position }, now)
             .map_err(|e| self.note_status(format!("Block rejected: {e}"), now))
             .ok();
         let _ = applied;
