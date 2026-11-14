@@ -2793,6 +2793,15 @@ mod tests {
             1,
             "the duplicate is not stored"
         );
+        // Adding an instance makes the def ineligible for removal.
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect("add instance");
         let error = apply_command(
             &mut project,
             Command::RemoveBlockDef {
