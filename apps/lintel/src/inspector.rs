@@ -5,6 +5,7 @@
 use crate::canvas::Selection;
 use eframe::egui;
 use lintel_core::{
+    BlockId,
     command::Command,
     constraint::Constraint,
     document::Document,
@@ -14,7 +15,6 @@ use lintel_core::{
     snap::SnapSettings,
     units::{UnitSystem, format_area},
 };
-use lintel_core::BlockId;
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
 /// committed when the user presses Apply / Add).
