@@ -522,14 +522,15 @@ mod tests {
     #[test]
     fn block_def_can_be_added_and_found() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        let mut def = BlockDef::new(BlockId(1), "Header");
-        def.add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
-            crate::ids::WallId(1),
-            Point2::new(0.0, 0.0),
-            Point2::new(900.0, 0.0),
-            100.0,
-            2100.0,
-        )));
+        let def = BlockDef::new(BlockId(1), "Header").add_entity(crate::block::BlockEntity::Wall(
+            crate::wall::Wall::new(
+                crate::ids::WallId(1),
+                Point2::new(0.0, 0.0),
+                Point2::new(900.0, 0.0),
+                100.0,
+                2100.0,
+            ),
+        ));
         level.block_defs.push(def);
         assert!(level.block_def(BlockId(1)).is_some());
         assert_eq!(level.block_def(BlockId(1)).expect("def").name, "Header");
@@ -568,14 +569,15 @@ mod tests {
     #[test]
     fn block_defs_and_instances_survive_a_save_and_load() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        let mut def = BlockDef::new(BlockId(1), "Header");
-        def.add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
-            crate::ids::WallId(1),
-            Point2::new(0.0, 0.0),
-            Point2::new(900.0, 0.0),
-            100.0,
-            2100.0,
-        )));
+        let def = BlockDef::new(BlockId(1), "Header").add_entity(crate::block::BlockEntity::Wall(
+            crate::wall::Wall::new(
+                crate::ids::WallId(1),
+                Point2::new(0.0, 0.0),
+                Point2::new(900.0, 0.0),
+                100.0,
+                2100.0,
+            ),
+        ));
         level.block_defs.push(def);
         level
             .block_instances

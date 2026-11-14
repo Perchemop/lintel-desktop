@@ -58,7 +58,8 @@ impl BlockDef {
     }
 
     /// Add an entity to the definition, in block-local coordinates.
-    pub fn add_entity(&mut self, entity: BlockEntity) -> &mut Self {
+    #[must_use]
+    pub fn add_entity(mut self, entity: BlockEntity) -> Self {
         self.entities.push(entity);
         self
     }
@@ -126,7 +127,7 @@ mod tests {
 
     #[test]
     fn add_entity_appends_and_returns_self() {
-        let mut def = BlockDef::new(BlockId(1), "Header");
+        let def = BlockDef::new(BlockId(1), "Header");
         let entity = BlockEntity::Wall(Wall::new(
             WallId(1),
             Point2::new(0.0, 0.0),
@@ -135,15 +136,13 @@ mod tests {
             2800.0,
         ));
         let returned = def.add_entity(entity);
-        assert_eq!(def.entities.len(), 1);
         assert_eq!(returned.entities.len(), 1);
-        assert!(def.validate().is_ok());
+        assert!(returned.validate().is_ok());
     }
 
     #[test]
     fn block_def_entities_can_be_mixed_kinds() {
-        let mut def = BlockDef::new(BlockId(2), "Title");
-        def.add_entity(BlockEntity::Wall(Wall::new(
+        let def = BlockDef::new(BlockId(2), "Title").add_entity(BlockEntity::Wall(Wall::new(
             WallId(1),
             Point2::ORIGIN,
             Point2::new(500.0, 0.0),
@@ -181,8 +180,7 @@ mod tests {
 
     #[test]
     fn block_def_round_trips_through_json() {
-        let mut def = BlockDef::new(BlockId(3), "Door");
-        def.add_entity(BlockEntity::Wall(Wall::new(
+        let def = BlockDef::new(BlockId(3), "Door").add_entity(BlockEntity::Wall(Wall::new(
             WallId(1),
             Point2::new(0.0, 0.0),
             Point2::new(900.0, 0.0),
