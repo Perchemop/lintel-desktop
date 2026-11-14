@@ -2749,14 +2749,7 @@ mod tests {
         let mut project = empty_project();
         apply_command(&mut project, Command::AddBlockDef { block: block_def() })
             .expect("add block def");
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .block_defs
-                .len(),
-            1
-        );
+        assert_eq!(project.active_level().expect("level").block_defs.len(), 1);
         let def = project
             .active_level()
             .expect("level")
