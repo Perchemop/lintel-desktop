@@ -81,12 +81,14 @@ fn temporary_path(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::block::{BlockDef, BlockId, BlockInstance};
     use crate::command::{Applied, Command};
     use crate::document::Document;
     use crate::geom::{Bounds, Point2};
-    use crate::ids::{DimensionId, LevelId};
+    use crate::ids::{DimensionId, LevelId, WallId};
     use crate::project::UNTITLED;
     use crate::title_block::TitleBlock;
+    use crate::wall::Wall;
 
     fn documented_plan() -> Document {
         let mut document = Document::new("Flat 3B", 1_760_000_000);
@@ -380,5 +382,76 @@ mod tests {
         let reopened = Document::open(&path).expect("open");
         assert_eq!(reopened.project(), document.project());
         assert!(!reopened.dirty());
+    }
+
+    #[test]
+    fn a_level_with_block_defs_and_instances_round_trips_through_the_file() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let path = directory.path().join("blocks.lintel.json");
+        let mut document = Document::new("Flat 3B", 1_760_000_000);
+        document
+            .apply(
+                Command::AddBlockDef {
+                    block: BlockDef::new(
+                        BlockId(1),
+                        "Door",
+                    )
+                    .add_entity(crate::block::BlockEntity::Wall(Wall::new(
+                        WallId(1),
+                        Point2::new(0.0, 0.0),
+                        Point2::new(900.0, 0.0),
+                        100.0,
+                        2100.0,
+                    ))),
+                },
+                1_760_000_100,
+            )
+            .expect("add block def");
+        document
+            .apply(
+                Command::AddBlockInstance {
+                    block_id: BlockId(1),
+                    position: Point2::new(2500.0, 1200.0),
+                },
+                1_760_000_200,
+            )
+            .expect("add block instance");
+
+        crate::persistence::save_atomic(document.project(), &path).expect("save");
+        let loaded = load(&path).expect("load");
+        let level = loaded
+            .level(LevelId(1))
+            .expect("level");
+        assert_eq!(level.block_defs.len(), 1);
+        assert_eq!(level.block_defs[0].name, "Door");
+        assert_eq!(level.block_instances.len(), 1);
+        assert_eq!(level.block_instances[0].param, Point2::new(2500.0, 1200.0));
+        assert_eq!(&loaded, document.project());
+    }
+
+    #[test]
+    fn a_level_without_block_fields_loads_with_defaults() {
+        let text = r#"{
+            "format_version": 1,
+            "name": "Old plan",
+            "units": "Metric",
+            "levels": [{
+                "id": 1,
+                "name": "Level 0",
+                "elevation": 0.0,
+                "walls": [],
+                "openings": []
+            }],
+            "active_level": 1,
+            "created_epoch_s": 0,
+            "modified_epoch_s": 0,
+            "notes": "",
+            "next_id": 2
+        }"#;
+        let project = from_json(text).expect("old project loads");
+        let level = project.level(LevelId(1)).expect("level");
+        assert!(level.block_defs.is_empty());
+        assert!(level.block_instances.is_empty());
+        assert!(project.validate().is_ok());
     }
 }

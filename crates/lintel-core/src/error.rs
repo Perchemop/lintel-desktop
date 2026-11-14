@@ -1,6 +1,7 @@
 //! Typed failures. Nothing in the domain panics on bad user input: a command
 //! that cannot be honoured returns one of these instead.
 
+use crate::block::BlockId;
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +20,10 @@ pub enum CoreError {
     LayerNotFound(LayerId),
     #[error("{0} does not exist")]
     ConstructionNotFound(ConstructionId),
+    #[error("{0} does not exist")]
+    BlockDefNotFound(BlockId),
+    #[error("{} is still instanced; remove its instances first", .0)]
+    BlockDefInUse(BlockId),
     #[error("the last level cannot be deleted; give the project another level first")]
     LastLevel,
     #[error("the default layer cannot be deleted")]
@@ -68,5 +73,9 @@ mod tests {
         assert!(e.to_string().contains("default layer"));
         let e = CoreError::LayerInUse(LayerId(4));
         assert!(e.to_string().contains("move them"));
+        let e = CoreError::BlockDefNotFound(BlockId(7));
+        assert_eq!(e.to_string(), "block #7 does not exist");
+        let e = CoreError::BlockDefInUse(BlockId(3));
+        assert!(e.to_string().contains("still instanced"));
     }
 }

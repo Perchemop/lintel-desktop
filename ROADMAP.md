@@ -345,6 +345,35 @@ updated by CI and quoted in the release notes, version bump before the tag,
 **Readiness:** 0% — planned; CAP-111 is the foundation slice (core first, UI
 second, sheets third, QC last).
 
+## v0.15.0 — Blocks & Symbols, Print Polish
+
+**Status:** Planned — v0.14.0 shipped constraint persistence (CAP-111/112),
+sheet title blocks and viewports (CAP-113/114), and the QC checklist (CAP-115).
+v0.15.0 closes the two biggest ergonomic gaps that remain: reusable geometry
+(blocks/symbols) and true viewport clipping, and brings constraint management
+into the command palette.
+
+| ID | Capability | Done |
+|---|-----------|------|
+| CAP-116 | Block definitions: named groups of entities (wall, opening, dimension, label) saved on the project; insert/create/update/delete blocks; instances reference the definition | — |
+| CAP-117 | Block instance UI: place a block from a defined list onto a level (click-to-place with preview), instance identity (id, block ref, param, flip), instance fields in the inspector, a block instance schedule listing every instance with its wall | — |
+| CAP-118 | Viewport print polish: real PDF clipping at the viewport region (frames cut instead of drawing-whole), north arrow and scale bar anchored to the viewport instead of page corners; viewport placement guards | — |
+| CAP-119 | Constraint palette & solver readout: add/remove/list constraints from the command palette; a readout of the solved count vs active constraints shown in the inspector next to each dimension | — |
+
+**Release notes (intended):** Blocks and symbols give you repeatable drafting:
+define a wall-opening-detail once, place it everywhere, change it once. Sheets
+are properly framed (clipped viewports, north arrows that travel with their
+viewports), and constraints live in the command palette with a solver
+readout — pinned geometry is visible, not invisible. Earlier project files
+load unchanged.
+
+**Release gate (guide §12.1):** signed artefacts, `docs/tokens.json` ledger
+updated by CI and quoted in the release notes, version bump before the tag,
+`RELEASE_TOKENS` set for the release, QC checklist executed and filed.
+
+**Readiness:** 0% — planned; depends on v0.14.0 being shipped (it is) and on
+the constraint core being stable (it is, since CAP-111/112).
+
 **Unscheduled / future:** Web/WASM port, plugin architecture, collaborative
-editing, custom paper sizes, on-canvas hints, blocks/symbols, 3D/structural/IFC
+editing, custom paper sizes, on-canvas hints, 3D/structural/IFC
 track (separate roadmap).

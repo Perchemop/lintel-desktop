@@ -6,6 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
@@ -196,6 +197,19 @@ pub enum Command {
     },
     RemoveViewport {
         index: usize,
+    },
+    AddBlockDef {
+        block: BlockDef,
+    },
+    RemoveBlockDef {
+        block_id: BlockId,
+    },
+    AddBlockInstance {
+        block_id: BlockId,
+        position: Point2,
+    },
+    RemoveBlockInstance {
+        block_id: BlockId,
     },
 }
 
@@ -417,6 +431,15 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             caption,
         } => add_viewport(project, level, region, scale_denominator, caption),
         Command::RemoveViewport { index } => remove_viewport(project, index),
+        Command::AddBlockDef { block } => add_block_def(project, block),
+        Command::RemoveBlockDef { block_id } => remove_block_def(project, block_id),
+        Command::AddBlockInstance {
+            block_id,
+            position,
+        } => add_block_instance(project, block_id, position),
+        Command::RemoveBlockInstance { block_id } => {
+            remove_block_instance(project, block_id)
+        }
     }
 }
 
@@ -1086,6 +1109,73 @@ fn remove_viewport(project: &mut Project, index: usize) -> Result<Applied, CoreE
         return Err(CoreError::invalid("viewport index out of range"));
     }
     project.viewports.remove(index);
+    Ok(Applied::default())
+}
+
+fn add_block_def(project: &mut Project, block: BlockDef) -> Result<Applied, CoreError> {
+    block.validate()?;
+    let level = active_level(project)?;
+    if level
+        .block_defs
+        .iter()
+        .any(|d| d.name.eq_ignore_ascii_case(&block.name))
+    {
+        return Err(CoreError::invalid(format!(
+            "a block named \"{}\" already exists",
+            block.name
+        )));
+    }
+    let level = active_level_mut(project)?;
+    level.block_defs.push(block);
+    Ok(Applied::default())
+}
+
+fn remove_block_def(project: &mut Project, block_id: BlockId) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    if level.block_def(block_id).is_none() {
+        return Err(CoreError::BlockDefNotFound(block_id));
+    }
+    if !level.block_instances_of_def(block_id).is_empty() {
+        return Err(CoreError::BlockDefInUse(block_id));
+    }
+    let level = active_level_mut(project)?;
+    let before = level.block_defs.len();
+    level.block_defs.retain(|d| d.id != block_id);
+    if level.block_defs.len() == before {
+        return Err(CoreError::BlockDefNotFound(block_id));
+    }
+    Ok(Applied::default())
+}
+
+fn add_block_instance(
+    project: &mut Project,
+    block_id: BlockId,
+    position: Point2,
+) -> Result<Applied, CoreError> {
+    if !position.is_finite() {
+        return Err(CoreError::invalid("a block instance needs a finite position"));
+    }
+    let level = active_level(project)?;
+    if level.block_def(block_id).is_none() {
+        return Err(CoreError::BlockDefNotFound(block_id));
+    }
+    let id = BlockId(project.allocate_id() as u32);
+    let mut instance = BlockInstance::new(block_id, position);
+    instance.id = id;
+    let level = active_level_mut(project)?;
+    level.block_instances.push(instance);
+    Ok(Applied::default())
+}
+
+fn remove_block_instance(project: &mut Project, block_id: BlockId) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    if level.block_def(block_id).is_none() {
+        return Err(CoreError::BlockDefNotFound(block_id));
+    }
+    let level = active_level_mut(project)?;
+    level
+        .block_instances
+        .retain(|instance| instance.block_id != block_id);
     Ok(Applied::default())
 }
 
@@ -2635,6 +2725,331 @@ mod tests {
                 caption: "Unit A".into(),
             },
             Command::RemoveViewport { index: 2 },
+        ];
+        for command in commands {
+            let json = serde_json::to_string(&command).expect("serialize");
+            let back: Command = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(back, command);
+        }
+    }
+
+    fn block_def() -> BlockDef {
+        BlockDef::new(
+            BlockId(1),
+            "Door",
+        )
+        .add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
+            crate::ids::WallId(1),
+            Point2::new(0.0, 0.0),
+            Point2::new(900.0, 0.0),
+            100.0,
+            2100.0,
+        )))
+    }
+
+    #[test]
+    fn add_block_def_pushes_onto_the_active_level() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("add block def");
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .block_defs
+                .len(),
+            1
+        );
+        let def = project
+            .active_level()
+            .expect("level")
+            .block_def(BlockId(1))
+            .expect("def");
+        assert_eq!(def.name, "Door");
+        assert_eq!(def.entities.len(), 1);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn add_block_def_with_blank_name_is_rejected() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: BlockDef::new(BlockId(1), "   "),
+            },
+        )
+        .expect_err("blank name");
+        assert!(error.to_string().contains("a block needs a name"));
+        assert!(project
+            .active_level()
+            .expect("level")
+            .block_defs
+            .is_empty());
+    }
+
+    #[test]
+    fn add_block_def_duplicate_name_is_rejected() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("first def");
+        let error = apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: BlockDef::new(BlockId(2), "  DOOR  "),
+            },
+        )
+        .expect_err("duplicate name");
+        assert!(error.to_string().contains("already exists"));
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .block_defs
+                .len(),
+            1,
+            "the duplicate is not stored"
+        );
+    }
+
+    #[test]
+    fn remove_block_def_with_an_instance_is_rejected() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("add def");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect("add instance");
+        let error = apply_command(
+            &mut project,
+            Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
+        )
+        .expect_err("def in use");
+        assert!(error.to_string().contains("still instanced"));
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .block_defs
+                .len(),
+            1,
+            "the def survives a rejected removal"
+        );
+    }
+
+    #[test]
+    fn remove_block_def_removes_it_when_unused() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("add def");
+        apply_command(
+            &mut project,
+            Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
+        )
+        .expect("remove def");
+        assert!(project
+            .active_level()
+            .expect("level")
+            .block_defs
+            .is_empty());
+        let error = apply_command(
+            &mut project,
+            Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
+        )
+        .expect_err("already gone");
+        assert!(matches!(error, CoreError::BlockDefNotFound(_)));
+    }
+
+    #[test]
+    fn add_block_instance_on_missing_block_is_rejected() {
+        let mut project = empty_project();
+        let error = apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(99),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect_err("missing block");
+        assert!(matches!(error, CoreError::BlockDefNotFound(_)));
+        assert!(project
+            .active_level()
+            .expect("level")
+            .block_instances
+            .is_empty());
+    }
+
+    #[test]
+    fn add_block_instance_happy_path() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("add def");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(2500.0, 1200.0),
+            },
+        )
+        .expect("add instance");
+        let level = project.active_level().expect("level");
+        assert_eq!(level.block_instances.len(), 1);
+        let instance = &level.block_instances[0];
+        assert_eq!(instance.block_id, BlockId(1));
+        assert_eq!(instance.param, Point2::new(2500.0, 1200.0));
+        assert_eq!(instance.rotation, 0.0);
+        assert!(!instance.flipped);
+    }
+
+    #[test]
+    fn remove_block_instance_empties_all_instances_of_the_def() {
+        let mut project = empty_project();
+        apply_command(
+            &mut project,
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+        )
+        .expect("add def");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect("first instance");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(300.0, 400.0),
+            },
+        )
+        .expect("second instance");
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .block_instances_of_def(BlockId(1))
+                .len(),
+            2
+        );
+        apply_command(
+            &mut project,
+            Command::RemoveBlockInstance {
+                block_id: BlockId(1),
+            },
+        )
+        .expect("remove instances");
+        assert_eq!(
+            project
+                .active_level()
+                .expect("level")
+                .block_instances
+                .len(),
+            0,
+            "all instances of the def go"
+        );
+    }
+
+    #[test]
+    fn an_added_block_def_can_be_undone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        document
+            .apply(
+                Command::AddBlockDef {
+                    block: block_def(),
+                },
+                1_760_000_100,
+            )
+            .expect("add block def");
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .block_defs
+                .len(),
+            1
+        );
+        assert!(document.undo(1_760_000_200));
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .block_defs
+                .is_empty(),
+            "undo removes the def"
+        );
+        assert!(document.redo(1_760_000_300));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .block_defs
+                .len(),
+            1,
+            "redo restores the def"
+        );
+    }
+
+    #[test]
+    fn block_commands_round_trip_through_json() {
+        let commands = [
+            Command::AddBlockDef {
+                block: block_def(),
+            },
+            Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+            Command::RemoveBlockInstance {
+                block_id: BlockId(1),
+            },
         ];
         for command in commands {
             let json = serde_json::to_string(&command).expect("serialize");
