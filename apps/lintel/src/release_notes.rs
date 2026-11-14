@@ -228,26 +228,43 @@ fn extract_number_str(s: &str) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cmp::Ordering;
 
     #[test]
     fn releases_parses_every_published_version() {
         let rs = releases();
         assert!(rs.len() >= 14, "got {}", rs.len());
-        assert_eq!(rs.first().unwrap().version, "0.13.0");
+        // The oldest release never moves; the newest does, so assert the
+        // property (newest first, semantically) rather than a version number.
         assert_eq!(rs.last().unwrap().version, "0.1.0");
+        assert_ne!(rs.first().unwrap().version, "0.1.0");
+        assert!(update_check::Version::parse(&rs.first().unwrap().version).is_some());
+        for w in rs.windows(2) {
+            assert_eq!(
+                update_check::compare(&w[0].version, &w[1].version),
+                Some(Ordering::Greater),
+                "{} must sort after {}",
+                w[0].version,
+                w[1].version
+            );
+        }
     }
 
     #[test]
     fn ledger_era_releases_carry_token_figures() {
+        // The newest release is always ledger-era, so it must carry a figure;
+        // and the first ledger release (0.10.0) pins that history deliberately.
         let rs = releases();
-        let r13 = rs.iter().find(|r| r.version == "0.13.0").unwrap();
-        assert_eq!(r13.tokens_this_release, Some(5000));
-        let r10 = rs.iter().find(|r| r.version == "0.10.0").unwrap();
-        assert_eq!(r10.tokens_this_release, Some(5000));
+        let newest = rs.first().expect("at least one release");
+        assert_eq!(newest.tokens_this_release, Some(5000));
+        let first_ledger = rs.iter().find(|r| r.version == "0.10.0").unwrap();
+        assert_eq!(first_ledger.tokens_this_release, Some(5000));
     }
 
     #[test]
     fn pre_ledger_releases_have_no_token_figures() {
+        // 0.9.0 and 0.2.0 predate the ledger by construction, so pinning them
+        // is intentional history, not a latest-value dependency.
         let rs = releases();
         let r9 = rs.iter().find(|r| r.version == "0.9.0").unwrap();
         assert_eq!(r9.tokens_this_release, None);
@@ -258,15 +275,21 @@ mod tests {
     #[test]
     fn summaries_and_bullets_are_captured() {
         let rs = releases();
-        let r13 = rs.iter().find(|r| r.version == "0.13.0").unwrap();
-        assert!(!r13.summary.is_empty());
-        assert!(r13.summary.to_lowercase().contains("dimension"));
+        let newest = rs.first().expect("at least one release");
+        assert!(!newest.summary.is_empty());
+        assert!(rs.iter().any(|r| !r.added.is_empty()));
         let r101 = rs.iter().find(|r| r.version == "0.10.1").unwrap();
         assert!(!r101.added.is_empty());
     }
 
     #[test]
-    fn latest_cumulative_tokens_matches_the_newest_entry() {
-        assert_eq!(latest_cumulative_tokens(), Some(45000));
+    fn latest_cumulative_tokens_is_monotonic_with_the_ledger() {
+        let total = latest_cumulative_tokens().expect("the ledger records a figure");
+        assert!(total > 0);
+        let per_release: u64 = releases()
+            .iter()
+            .filter_map(|r| r.tokens_this_release)
+            .sum();
+        assert!(per_release <= total);
     }
 }
