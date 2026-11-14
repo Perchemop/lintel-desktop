@@ -1109,7 +1109,8 @@ fn remove_viewport(project: &mut Project, index: usize) -> Result<Applied, CoreE
     Ok(Applied::default())
 }
 
-fn add_block_def(project: &mut Project, block: BlockDef) -> Result<Applied, CoreError> {
+fn add_block_def(project: &mut Project, mut block: BlockDef) -> Result<Applied, CoreError> {
+    block.name = block.name.trim().to_string();
     block.validate()?;
     let level = active_level(project)?;
     if level
