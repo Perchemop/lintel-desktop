@@ -81,7 +81,7 @@ fn temporary_path(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::block::{BlockDef, BlockId, BlockInstance};
+    use crate::block::{BlockDef, BlockId};
     use crate::command::{Applied, Command};
     use crate::document::Document;
     use crate::geom::{Bounds, Point2};

@@ -2832,7 +2832,7 @@ mod tests {
     #[test]
     fn add_block_instance_on_missing_block_is_rejected() {
         let mut project = empty_project();
-        apply_command(
+        let error = apply_command(
             &mut project,
             Command::AddBlockInstance {
                 block_id: BlockId(99),
