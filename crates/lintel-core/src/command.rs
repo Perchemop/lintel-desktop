@@ -2841,11 +2841,13 @@ mod tests {
         )
         .expect_err("missing block");
         assert!(matches!(error, CoreError::BlockDefNotFound(_)));
-        assert!(project
-            .active_level()
-            .expect("level")
-            .block_instances
-            .is_empty());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .block_instances
+                .is_empty()
+        );
     }
 
     #[test]
