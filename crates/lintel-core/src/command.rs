@@ -2750,7 +2750,6 @@ mod tests {
         apply_command(&mut project, Command::AddBlockDef { block: block_def() })
             .expect("add block def");
         assert_eq!(project.active_level().expect("level").block_defs.len(), 1);
-        let def = project
             .active_level()
             .expect("level")
             .block_def(BlockId(1))
@@ -2803,11 +2802,17 @@ mod tests {
         .expect("add instance");
         let error = apply_command(
             &mut project,
-            Command::RemoveBlockDef { block_id: BlockId(1) },
+                Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
         )
         .expect_err("def in use");
         assert!(error.to_string().contains("still instanced"));
-        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the def survives a rejected removal");
+        assert_eq!(
+            project.active_level().expect("level").block_defs.len(),
+            1,
+            "the def survives a rejected removal"
+        );
     }
 
     #[test]
@@ -2815,7 +2820,9 @@ mod tests {
         let mut project = empty_project();
         apply_command(
             &mut project,
-            Command::AddBlockDef { block: block_def() },
+            Command::AddBlockDef {
+                block: block_def(),
+            },
         )
         .expect("add def");
         apply_command(
@@ -2828,7 +2835,9 @@ mod tests {
         assert!(project.active_level().expect("level").block_defs.is_empty());
         let error = apply_command(
             &mut project,
-            Command::RemoveBlockDef { block_id: BlockId(1) },
+                Command::RemoveBlockDef {
+                block_id: BlockId(1),
+            },
         )
         .expect_err("already gone");
         assert!(matches!(error, CoreError::BlockDefNotFound(_)));
@@ -2851,7 +2860,9 @@ mod tests {
         let mut project = empty_project();
         apply_command(
             &mut project,
-            Command::AddBlockDef { block: block_def() },
+            Command::AddBlockDef {
+                block: block_def(),
+            },
         )
         .expect("add def");
         apply_command(&mut project, Command::AddBlockInstance {
@@ -2896,7 +2907,11 @@ mod tests {
         );
         apply_command(&mut project, Command::RemoveBlockInstance { block_id: BlockId(1) })
             .expect("remove instances");
-        assert_eq!(project.active_level().expect("level").block_instances.len(), 0, "all instances of the def go");
+        assert_eq!(
+            project.active_level().expect("level").block_instances.len(),
+            0,
+            "all instances of the def go"
+        );
     }
 
     #[test]
