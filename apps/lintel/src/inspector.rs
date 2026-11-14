@@ -5,7 +5,6 @@
 use crate::canvas::Selection;
 use eframe::egui;
 use lintel_core::{
-    BlockId,
     command::Command,
     constraint::Constraint,
     document::Document,
