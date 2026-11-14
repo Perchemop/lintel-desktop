@@ -419,9 +419,7 @@ mod tests {
 
         crate::persistence::save_atomic(document.project(), &path).expect("save");
         let loaded = load(&path).expect("load");
-        let level = loaded
-            .level(LevelId(1))
-            .expect("level");
+        let level = loaded.level(LevelId(1)).expect("level");
         assert_eq!(level.block_defs.len(), 1);
         assert_eq!(level.block_defs[0].name, "Door");
         assert_eq!(level.block_instances.len(), 1);
