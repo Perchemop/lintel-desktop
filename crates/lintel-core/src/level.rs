@@ -540,18 +540,8 @@ mod tests {
     fn block_instances_of_def_counts_placements() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
         level.block_defs.push(BlockDef::new(BlockId(5), "Door"));
-        level.block_instances.push(BlockInstance::new(
-            BlockId(5),
-            Point2::new(100.0, 200.0),
-        ));
-        level.block_instances.push(BlockInstance::new(
-            BlockId(5),
-            Point2::new(300.0, 400.0),
-        ));
-        level.block_instances.push(BlockInstance::new(
-            BlockId(99),
-            Point2::new(0.0, 0.0),
-        ));
+        level.block_instances .push(BlockInstance::new(BlockId(5), Point2::new(100.0, 200.0)));
+        level.block_instances .push(BlockInstance::new(BlockId(5), Point2::new(300.0, 400.0)));
         assert_eq!(level.block_instances_of_def(BlockId(5)).len(), 2);
         assert_eq!(level.block_instances_of_def(BlockId(99)).len(), 1);
         assert_eq!(level.block_instances_of_def(BlockId(7)).len(), 0);
