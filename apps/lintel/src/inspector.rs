@@ -14,6 +14,7 @@ use lintel_core::{
     snap::SnapSettings,
     units::{UnitSystem, format_area},
 };
+use lintel_core::BlockId;
 
 /// Transient drafts the Inspector keeps between frames (edits that are only
 /// committed when the user presses Apply / Add).
@@ -35,6 +36,8 @@ pub struct InspectorDraft {
     pub constraint_degrees: f64,
     /// Second dimension id for an equal-length constraint.
     pub constraint_dim_b: u64,
+    /// Block definition selected for placement (raw id, 0 = none).
+    pub block_def_id: u64,
 }
 
 impl Default for InspectorDraft {
@@ -48,6 +51,7 @@ impl Default for InspectorDraft {
             constraint_param: 0.5,
             constraint_degrees: 90.0,
             constraint_dim_b: 0,
+            block_def_id: 0,
         }
     }
 }
@@ -645,6 +649,84 @@ pub fn inspector(
         .body_returned
         .flatten();
 
+    ui.separator();
+
+    let blocks_cmd = egui::CollapsingHeader::new("Blocks")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            let mut command: Option<Command> = None;
+
+            ui.label("Definitions");
+            if level.block_defs.is_empty() {
+                ui.label(
+                    egui::RichText::new("No block definitions yet.")
+                        .color(crate::theme::TEXT_MUTED),
+                );
+            } else {
+                for def in &level.block_defs {
+                    ui.horizontal(|ui| {
+                        let selected = draft.block_def_id == def.id.0 as u64;
+                        if ui
+                            .selectable_label(selected, &def.name)
+                            .on_hover_text("Select this block definition for placement.")
+                            .clicked()
+                        {
+                            draft.block_def_id = def.id.0 as u64;
+                        }
+                        ui.label(format!("{} entities", def.entities.len()));
+                        if ui
+                            .button("Remove")
+                            .on_hover_text("Remove this block definition (only when unused).")
+                            .clicked()
+                        {
+                            command = Some(Command::RemoveBlockDef {
+                                block_id: def.id,
+                            });
+                        }
+                    });
+                }
+            }
+
+            ui.separator();
+            ui.label("Instances");
+            if level.block_instances.is_empty() {
+                ui.label(
+                    egui::RichText::new("No block instances placed yet.")
+                        .color(crate::theme::TEXT_MUTED),
+                );
+            } else {
+                for inst in &level.block_instances {
+                    let def_name = level
+                        .block_def(inst.block_id)
+                        .map(|d| d.name.clone())
+                        .unwrap_or_else(|| format!("block #{}", inst.block_id.value()));
+                    ui.label(format!("{} ({})", def_name, inst.id));
+                    ui.horizontal(|ui| {
+                        ui.label(format!(
+                            "Position: {:.0}, {:.0}",
+                            inst.param.x, inst.param.y
+                        ));
+                        ui.label(format!("Rotation: {:.1}°", inst.rotation.to_degrees()));
+                        ui.label(if inst.flipped { "Flipped" } else { "Not flipped" });
+                    });
+                    if ui
+                        .button("Remove all of this def")
+                        .on_hover_text("Remove every instance of the block definition.")
+                        .clicked()
+                    {
+                        command = Some(Command::RemoveBlockInstance {
+                            block_id: inst.block_id,
+                        });
+                    }
+                }
+            }
+
+            command
+        })
+        .body_returned
+        .flatten();
+
     element_cmd
         .or(project_cmd)
         .or(storeys_cmd)
@@ -654,6 +736,7 @@ pub fn inspector(
         .or(rooms_cmd)
         .or(schedule_cmd)
         .or(measurements_cmd)
+        .or(blocks_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
