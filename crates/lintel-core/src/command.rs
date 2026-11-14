@@ -2733,15 +2733,15 @@ mod tests {
     }
 
     fn block_def() -> BlockDef {
-        BlockDef::new(BlockId(1), "Door").add_entity(crate::block::BlockEntity::Wall(
-            crate::wall::Wall::new(
-                crate::ids::WallId(1),
+        BlockDef::new(BlockId(1), "Door").add_entity(
+            crate::block::BlockEntity::Wall(Wall::new(
+                WallId(1),
                 Point2::new(0.0, 0.0),
                 Point2::new(900.0, 0.0),
                 100.0,
                 2100.0,
-            ),
-        ))
+            )),
+        )
     }
 
     #[test]
