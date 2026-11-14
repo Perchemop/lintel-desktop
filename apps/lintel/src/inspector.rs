@@ -680,9 +680,7 @@ pub fn inspector(
                             .on_hover_text("Remove this block definition (only when unused).")
                             .clicked()
                         {
-                            command = Some(Command::RemoveBlockDef {
-                                block_id: def.id,
-                            });
+                            command = Some(Command::RemoveBlockDef { block_id: def.id });
                         }
                     });
                 }
@@ -708,7 +706,11 @@ pub fn inspector(
                             inst.param.x, inst.param.y
                         ));
                         ui.label(format!("Rotation: {:.1}°", inst.rotation.to_degrees()));
-                        ui.label(if inst.flipped { "Flipped" } else { "Not flipped" });
+                        ui.label(if inst.flipped {
+                            "Flipped"
+                        } else {
+                            "Not flipped"
+                        });
                     });
                     if ui
                         .button("Remove all of this def")
