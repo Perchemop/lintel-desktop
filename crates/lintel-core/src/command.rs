@@ -6,6 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
 use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
