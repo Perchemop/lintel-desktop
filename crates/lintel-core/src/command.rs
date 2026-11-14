@@ -2791,9 +2791,6 @@ mod tests {
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
         assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
-    #[test]
-    fn remove_block_def_with_an_instance_is_rejected() {
-        let mut project = empty_project();
         apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("first def");
         apply_command(
             &mut project,
