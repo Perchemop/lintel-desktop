@@ -8,6 +8,7 @@
 //! Every workflow test runs headless against this crate, so the behaviour a
 //! user gets is the behaviour CI proves.
 
+pub mod block;
 pub mod command;
 pub mod constraint;
 pub mod construction;
@@ -34,6 +35,7 @@ pub mod units;
 pub mod viewport;
 pub mod wall;
 
+pub use block::{BlockDef, BlockEntity, BlockId, BlockInstance};
 pub use command::{Applied, Command};
 pub use constraint::{
     Constraint, ResolvedConstraint, apply_constraints_to_anchors, solve_constraints,
