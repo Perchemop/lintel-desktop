@@ -433,13 +433,10 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
         Command::RemoveViewport { index } => remove_viewport(project, index),
         Command::AddBlockDef { block } => add_block_def(project, block),
         Command::RemoveBlockDef { block_id } => remove_block_def(project, block_id),
-        Command::AddBlockInstance {
-            block_id,
-            position,
-        } => add_block_instance(project, block_id, position),
-        Command::RemoveBlockInstance { block_id } => {
-            remove_block_instance(project, block_id)
+        Command::AddBlockInstance { block_id, position } => {
+            add_block_instance(project, block_id, position)
         }
+        Command::RemoveBlockInstance { block_id } => remove_block_instance(project, block_id),
     }
 }
 
@@ -1153,7 +1150,9 @@ fn add_block_instance(
     position: Point2,
 ) -> Result<Applied, CoreError> {
     if !position.is_finite() {
-        return Err(CoreError::invalid("a block instance needs a finite position"));
+        return Err(CoreError::invalid(
+            "a block instance needs a finite position",
+        ));
     }
     let level = active_level(project)?;
     if level.block_def(block_id).is_none() {
@@ -2734,29 +2733,22 @@ mod tests {
     }
 
     fn block_def() -> BlockDef {
-        BlockDef::new(
-            BlockId(1),
-            "Door",
-        )
-        .add_entity(crate::block::BlockEntity::Wall(crate::wall::Wall::new(
-            crate::ids::WallId(1),
-            Point2::new(0.0, 0.0),
-            Point2::new(900.0, 0.0),
-            100.0,
-            2100.0,
-        )))
+        BlockDef::new(BlockId(1), "Door").add_entity(crate::block::BlockEntity::Wall(
+            crate::wall::Wall::new(
+                crate::ids::WallId(1),
+                Point2::new(0.0, 0.0),
+                Point2::new(900.0, 0.0),
+                100.0,
+                2100.0,
+            ),
+        ))
     }
 
     #[test]
     fn add_block_def_pushes_onto_the_active_level() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add block def");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("add block def");
         assert_eq!(
             project
                 .active_level()
@@ -2786,106 +2778,53 @@ mod tests {
         )
         .expect_err("blank name");
         assert!(error.to_string().contains("a block needs a name"));
-        assert!(project
-            .active_level()
-            .expect("level")
-            .block_defs
-            .is_empty());
+        assert!(project.active_level().expect("level").block_defs.is_empty());
     }
 
     #[test]
     fn add_block_def_duplicate_name_is_rejected() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("first def");
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("first def");
         let error = apply_command(
             &mut project,
-            Command::AddBlockDef {
-                block: BlockDef::new(BlockId(2), "  DOOR  "),
-            },
+            Command::AddBlockDef { block: BlockDef::new(BlockId(2), "  DOOR  "), },
         )
         .expect_err("duplicate name");
         assert!(error.to_string().contains("already exists"));
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .block_defs
-                .len(),
-            1,
-            "the duplicate is not stored"
-        );
+        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the duplicate is not stored");
     }
 
     #[test]
     fn remove_block_def_with_an_instance_is_rejected() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(
-            &mut project,
-            Command::AddBlockInstance {
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("first def");
+        apply_command(&mut project, Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(100.0, 200.0),
-            },
-        )
-        .expect("add instance");
+            })
+            .expect("add instance");
         let error = apply_command(
             &mut project,
-            Command::RemoveBlockDef {
-                block_id: BlockId(1),
-            },
+            Command::RemoveBlockDef { block_id: BlockId(1) },
         )
         .expect_err("def in use");
         assert!(error.to_string().contains("still instanced"));
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .block_defs
-                .len(),
-            1,
-            "the def survives a rejected removal"
-        );
+        assert_eq!(project.active_level().expect("level").block_defs.len(), 1, "the def survives a rejected removal");
     }
 
     #[test]
     fn remove_block_def_removes_it_when_unused() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(
-            &mut project,
-            Command::RemoveBlockDef {
-                block_id: BlockId(1),
-            },
-        )
-        .expect("remove def");
-        assert!(project
-            .active_level()
-            .expect("level")
-            .block_defs
-            .is_empty());
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("add def");
+        apply_command(&mut project, Command::RemoveBlockDef { block_id: BlockId(1) })
+            .expect("remove def");
+        assert!(project.active_level().expect("level").block_defs.is_empty());
         let error = apply_command(
             &mut project,
-            Command::RemoveBlockDef {
-                block_id: BlockId(1),
-            },
+            Command::RemoveBlockDef { block_id: BlockId(1) },
         )
         .expect_err("already gone");
         assert!(matches!(error, CoreError::BlockDefNotFound(_)));
@@ -2894,40 +2833,25 @@ mod tests {
     #[test]
     fn add_block_instance_on_missing_block_is_rejected() {
         let mut project = empty_project();
-        let error = apply_command(
-            &mut project,
-            Command::AddBlockInstance {
+        apply_command(&mut project, Command::AddBlockInstance {
                 block_id: BlockId(99),
                 position: Point2::new(100.0, 200.0),
-            },
-        )
-        .expect_err("missing block");
+            })
+            .expect_err("missing block");
         assert!(matches!(error, CoreError::BlockDefNotFound(_)));
-        assert!(project
-            .active_level()
-            .expect("level")
-            .block_instances
-            .is_empty());
+        assert!(project.active_level().expect("level").block_instances.is_empty());
     }
 
     #[test]
     fn add_block_instance_happy_path() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(
-            &mut project,
-            Command::AddBlockInstance {
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("add def");
+        apply_command(&mut project, Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(2500.0, 1200.0),
-            },
-        )
-        .expect("add instance");
+            })
+            .expect("add instance");
         let level = project.active_level().expect("level");
         assert_eq!(level.block_instances.len(), 1);
         let instance = &level.block_instances[0];
@@ -2940,29 +2864,18 @@ mod tests {
     #[test]
     fn remove_block_instance_empties_all_instances_of_the_def() {
         let mut project = empty_project();
-        apply_command(
-            &mut project,
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-        )
-        .expect("add def");
-        apply_command(
-            &mut project,
-            Command::AddBlockInstance {
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() })
+            .expect("add def");
+        apply_command(&mut project, Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(100.0, 200.0),
-            },
-        )
-        .expect("first instance");
-        apply_command(
-            &mut project,
-            Command::AddBlockInstance {
+            })
+            .expect("first instance");
+        apply_command(&mut project, Command::AddBlockInstance {
                 block_id: BlockId(1),
                 position: Point2::new(300.0, 400.0),
-            },
-        )
-        .expect("second instance");
+            })
+            .expect("second instance");
         assert_eq!(
             project
                 .active_level()
@@ -2971,22 +2884,9 @@ mod tests {
                 .len(),
             2
         );
-        apply_command(
-            &mut project,
-            Command::RemoveBlockInstance {
-                block_id: BlockId(1),
-            },
-        )
-        .expect("remove instances");
-        assert_eq!(
-            project
-                .active_level()
-                .expect("level")
-                .block_instances
-                .len(),
-            0,
-            "all instances of the def go"
-        );
+        apply_command(&mut project, Command::RemoveBlockInstance { block_id: BlockId(1) })
+            .expect("remove instances");
+        assert_eq!(project.active_level().expect("level").block_instances.len(), 0, "all instances of the def go");
     }
 
     #[test]
@@ -2994,13 +2894,7 @@ mod tests {
         use crate::document::Document;
 
         let mut document = Document::new("Test plan", 1_760_000_000);
-        document
-            .apply(
-                Command::AddBlockDef {
-                    block: block_def(),
-                },
-                1_760_000_100,
-            )
+        document.apply(Command::AddBlockDef { block: block_def() }, 1_760_000_100)
             .expect("add block def");
         assert_eq!(
             document
@@ -3037,16 +2931,9 @@ mod tests {
     #[test]
     fn block_commands_round_trip_through_json() {
         let commands = [
-            Command::AddBlockDef {
-                block: block_def(),
-            },
-            Command::RemoveBlockDef {
-                block_id: BlockId(1),
-            },
-            Command::AddBlockInstance {
-                block_id: BlockId(1),
-                position: Point2::new(100.0, 200.0),
-            },
+            Command::AddBlockDef { block: block_def() },
+            Command::RemoveBlockDef { block_id: BlockId(1) },
+            Command::AddBlockInstance { block_id: BlockId(1), position: Point2::new(100.0, 200.0) },
             Command::RemoveBlockInstance {
                 block_id: BlockId(1),
             },
