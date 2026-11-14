@@ -131,6 +131,10 @@ pub enum PaletteAction {
     ConstructionArcTool,
     ConstructionVisible,
     DeleteConstruction,
+    // Constraints.
+    AddPerpendicularConstraint,
+    RemoveConstraint,
+    ViewConstraints,
     // Project.
     RenameProject,
     AddStorey,
@@ -143,7 +147,7 @@ pub enum PaletteAction {
 
 impl PaletteAction {
     /// Every action, in category order.
-    pub const ALL: [PaletteAction; 46] = [
+    pub const ALL: [PaletteAction; 49] = [
         PaletteAction::SelectTool,
         PaletteAction::WallTool,
         PaletteAction::DoorTool,
@@ -184,6 +188,9 @@ impl PaletteAction {
         PaletteAction::ConstructionArcTool,
         PaletteAction::ConstructionVisible,
         PaletteAction::DeleteConstruction,
+        PaletteAction::AddPerpendicularConstraint,
+        PaletteAction::RemoveConstraint,
+        PaletteAction::ViewConstraints,
         PaletteAction::RenameProject,
         PaletteAction::AddStorey,
         PaletteAction::DeleteStorey,
@@ -234,6 +241,9 @@ impl PaletteAction {
             PaletteAction::ConstructionArcTool => "Construction arc tool",
             PaletteAction::ConstructionVisible => "Construction visibility",
             PaletteAction::DeleteConstruction => "Delete construction",
+            PaletteAction::AddPerpendicularConstraint => "Add Perpendicular Distance Constraint",
+            PaletteAction::RemoveConstraint => "Remove Constraint",
+            PaletteAction::ViewConstraints => "View Constraints",
             PaletteAction::RenameProject => "Rename project",
             PaletteAction::AddStorey => "Add storey",
             PaletteAction::DeleteStorey => "Delete storey",
@@ -283,6 +293,9 @@ impl PaletteAction {
             PaletteAction::ConstructionArcTool => "X",
             PaletteAction::ConstructionVisible => "Shift+V",
             PaletteAction::DeleteConstruction => "Del",
+            PaletteAction::AddPerpendicularConstraint => "Ctrl+Shift+P",
+            PaletteAction::RemoveConstraint => "Del",
+            PaletteAction::ViewConstraints => "Shift+K",
             _ => "",
         }
     }
@@ -328,6 +341,9 @@ impl PaletteAction {
             | PaletteAction::DeleteLayer
             | PaletteAction::ConstructionVisible
             | PaletteAction::DeleteConstruction => "Layers",
+            PaletteAction::AddPerpendicularConstraint
+            | PaletteAction::RemoveConstraint
+            | PaletteAction::ViewConstraints => "Constraints",
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
@@ -382,6 +398,10 @@ impl PaletteAction {
                 !selection.is_empty() && level.is_some_and(|level| level.layers.len() > 1)
             }
             PaletteAction::DeleteStorey => doc.project().levels.len() > 1,
+            PaletteAction::RemoveConstraint => doc
+                .project()
+                .active_level()
+                .is_some_and(|level| !level.constraints.is_empty()),
             PaletteAction::ConstructionVisible | PaletteAction::DeleteConstruction => selection
                 .primary()
                 .is_some_and(|id| matches!(id, EntityId::Construction(_))),
@@ -770,6 +790,16 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
                 app.selection.clear();
             }
         }
+        PaletteAction::RemoveConstraint => {
+            let level = app.doc.project().active_level();
+            if let Some(level) = level
+                && !level.constraints.is_empty()
+            {
+                let index = level.constraints.len() - 1;
+                let _ = app.doc.apply(Command::RemoveConstraint { index }, now);
+            }
+        }
+        PaletteAction::AddPerpendicularConstraint | PaletteAction::ViewConstraints => {}
         PaletteAction::NewPlan => app.new_plan(),
         PaletteAction::OpenPlan => app.open_plan(now),
         PaletteAction::SavePlan => app.save_plan(now),

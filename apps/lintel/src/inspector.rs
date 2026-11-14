@@ -410,6 +410,29 @@ pub fn inspector(
 
     ui.separator();
 
+    let solver_cmd = egui::CollapsingHeader::new("Constraint solver")
+        .default_open(false)
+        .show(ui, |ui| {
+            let level = doc.project().active_level().expect("level");
+            let constraints = &level.constraints;
+            ui.label(format!("Constraint count: {}", constraints.len()));
+            match lintel_core::constraint::validate_constraints(level) {
+                Ok(()) => {
+                    ui.label("Solver status: valid");
+                }
+                Err(error) => {
+                    ui.label(format!("Solver status: {}", error));
+                }
+            }
+            let resolved = lintel_core::constraint::solve_constraints(level, constraints).len();
+            ui.label(format!("Resolved: {} of {}", resolved, constraints.len()));
+            None::<Command>
+        })
+        .body_returned
+        .flatten();
+
+    ui.separator();
+
     let rooms_cmd = egui::CollapsingHeader::new("Rooms")
         .default_open(false)
         .show(ui, |ui| {
@@ -734,6 +757,7 @@ pub fn inspector(
         .or(view_cmd)
         .or(layers_cmd)
         .or(constraints_cmd)
+        .or(solver_cmd)
         .or(rooms_cmd)
         .or(schedule_cmd)
         .or(measurements_cmd)
