@@ -392,17 +392,15 @@ mod tests {
         document
             .apply(
                 Command::AddBlockDef {
-                    block: BlockDef::new(
-                        BlockId(1),
-                        "Door",
-                    )
-                    .add_entity(crate::block::BlockEntity::Wall(Wall::new(
-                        WallId(1),
-                        Point2::new(0.0, 0.0),
-                        Point2::new(900.0, 0.0),
-                        100.0,
-                        2100.0,
-                    ))),
+                    block: BlockDef::new(BlockId(1), "Door").add_entity(
+                        crate::block::BlockEntity::Wall(Wall::new(
+                            WallId(1),
+                            Point2::new(0.0, 0.0),
+                            Point2::new(900.0, 0.0),
+                            100.0,
+                            2100.0,
+                        )),
+                    ),
                 },
                 1_760_000_100,
             )
