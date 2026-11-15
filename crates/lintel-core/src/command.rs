@@ -3170,14 +3170,6 @@ mod tests {
             .first()
             .expect("instance")
             .id;
-        let instance = |document: &Document| {
-            document
-                .project()
-                .active_level()
-                .expect("level")
-                .block_instance(id)
-                .expect("instance")
-        };
 
         document
             .apply(
@@ -3205,32 +3197,32 @@ mod tests {
                 1_760_000_500,
             )
             .expect("flip instance");
-        let edited = instance(&document);
+        let edited = instance_of(document.project(), id);
         assert_eq!(edited.param, Point2::new(900.0, 800.0));
         assert_eq!(edited.rotation, 1.5);
         assert!(edited.flipped);
 
         assert!(document.undo(1_760_000_600));
-        assert!(!instance(&document).flipped, "undo removes the flip");
+        assert!(!instance_of(document.project(), id).flipped, "undo removes the flip");
         assert!(document.undo(1_760_000_700));
         assert_eq!(
-            instance(&document).rotation,
+            instance_of(document.project(), id).rotation,
             0.0,
             "undo removes the rotation"
         );
         assert!(document.undo(1_760_000_800));
         assert_eq!(
-            instance(&document).param,
+            instance_of(document.project(), id).param,
             Point2::new(100.0, 200.0),
             "undo removes the move"
         );
 
         assert!(document.redo(1_760_000_900));
-        assert_eq!(instance(&document).param, Point2::new(900.0, 800.0));
+        assert_eq!(instance_of(document.project(), id).param, Point2::new(900.0, 800.0));
         assert!(document.redo(1_760_001_000));
-        assert_eq!(instance(&document).rotation, 1.5);
+        assert_eq!(instance_of(document.project(), id).rotation, 1.5);
         assert!(document.redo(1_760_001_100));
-        assert!(instance(&document).flipped, "redo restores the flip");
+        assert!(instance_of(document.project(), id).flipped, "redo restores the flip");
     }
 
     #[test]
