@@ -3218,11 +3218,17 @@ mod tests {
         );
 
         assert!(document.redo(1_760_000_900));
-        assert_eq!(instance_of(document.project(), id).param, Point2::new(900.0, 800.0));
+        assert_eq!(
+            instance_of(document.project(), id).param,
+            Point2::new(900.0, 800.0)
+        );
         assert!(document.redo(1_760_001_000));
         assert_eq!(instance_of(document.project(), id).rotation, 1.5);
         assert!(document.redo(1_760_001_100));
-        assert!(instance_of(document.project(), id).flipped, "redo restores the flip");
+        assert!(
+            instance_of(document.project(), id).flipped,
+            "redo restores the flip"
+        );
     }
 
     #[test]
