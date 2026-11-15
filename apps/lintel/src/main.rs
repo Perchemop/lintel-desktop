@@ -4,7 +4,7 @@
 
 use crate::canvas::{
     Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View,
-    entity_of, resolve_snap, screen_to_world,
+    entity_of, resolve_snap, screen_to_world, world_to_screen,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
