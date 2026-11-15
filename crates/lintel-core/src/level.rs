@@ -276,6 +276,35 @@ impl Level {
         Ok(())
     }
 
+    /// Which block instance (if any) lies under `point` in level coordinates.
+    ///
+    /// Each instance's definition is transformed by its position, rotation and
+    /// flip, and the point is tested against the transformed geometry's
+    /// bounding box. Instances placed later are drawn on top, so they are
+    /// tested first. Returns `None` when the point is not finite, hits nothing,
+    /// or every instance above it references a missing definition.
+    pub fn hit_test_block_instance(&self, point: Point2) -> Option<BlockId> {
+        if !point.is_finite() {
+            return None;
+        }
+        for instance in self.block_instances.iter().rev() {
+            let Some(def) = self.block_def(instance.block_id) else {
+                continue;
+            };
+            let points: Vec<Point2> = def
+                .local_points()
+                .into_iter()
+                .map(|local| instance.transform_point(local))
+                .collect();
+            if let Some(bounds) = Bounds::from_points(&points) {
+                if bounds.contains(point) {
+                    return Some(instance.id);
+                }
+            }
+        }
+        None
+    }
+
     /// Bounds of every wall band on this level, for zoom-to-fit and the sheet
     /// layout. `None` when the level is empty.
     pub fn extent(&self) -> Option<Bounds> {
