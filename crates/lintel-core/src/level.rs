@@ -10,7 +10,7 @@ use crate::constraint::Constraint;
 use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
 use crate::error::CoreError;
-use crate::geom::Bounds;
+use crate::geom::{Bounds, Point2};
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 use crate::label::PlanLabel;
 use crate::layer::{EntitySelector, EntityStyle, Layer};
