@@ -238,7 +238,9 @@ impl Level {
 
     /// The block instance with `id`, if this level holds it.
     pub fn block_instance(&self, id: BlockId) -> Option<&BlockInstance> {
-        self.block_instances.iter().find(|instance| instance.id == id)
+        self.block_instances
+            .iter()
+            .find(|instance| instance.id == id)
     }
 
     pub fn block_instance_mut(&mut self, id: BlockId) -> Option<&mut BlockInstance> {

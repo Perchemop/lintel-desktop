@@ -3022,10 +3022,7 @@ mod tests {
             },
         )
         .expect("move instance");
-        assert_eq!(
-            instance_of(&project, id).param,
-            Point2::new(2500.0, 1200.0)
-        );
+        assert_eq!(instance_of(&project, id).param, Point2::new(2500.0, 1200.0));
         assert!(project.validate().is_ok());
     }
 
@@ -3083,7 +3080,8 @@ mod tests {
             assert!(error.to_string().contains("finite rotation"));
         }
         assert_eq!(
-            instance_of(&project, id).rotation, 0.0,
+            instance_of(&project, id).rotation,
+            0.0,
             "a rejected rotation leaves the instance alone"
         );
     }
