@@ -1,8 +1,8 @@
-## v0.15.0 — 2026-11-15
+## v0.15.1 — 2026-11-15
 
 ### Summary
 
-Blocks give repeatable drafting (define once, place everywhere), sheets are properly framed with clipped viewports and viewport-anchored north arrows/scale bars, and constraints enter the command palette with a solver readout.
+Patch release: macOS now ships a signed `.dmg` installer alongside the `.zip` archive, completing the installable-artefacts requirement for every platform. No feature changes from 0.15.0.
 # Changelog
 
 All notable changes to this project will be documented in this file.

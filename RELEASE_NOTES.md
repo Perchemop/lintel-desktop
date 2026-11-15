@@ -1,3 +1,20 @@
+## Lintel 0.15.1 — macOS Installer Fix
+
+**Summary.** Patch release: the macOS release now ships a signed `.dmg` installer alongside the `.zip` archive, satisfying the installable-artefacts requirement for every platform. No feature changes from 0.15.0.
+
+### Changed
+- Release pipeline builds and attaches `lintel-macos-aarch64.dmg` for macOS (replacing zip-only macOS artefacts)
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 60,000 tokens
+
+---
 ## Lintel 0.15.0 — Blocks & Symbols, Print Polish
 
 **Summary.** Blocks give you repeatable drafting: define a wall-opening-detail once, place it everywhere, change it once. Sheets are properly framed with clipped viewports and viewport-anchored north arrows and scale bars. Constraints enter the command palette with a solver readout — pinned geometry is visible, not invisible.

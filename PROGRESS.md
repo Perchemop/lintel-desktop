@@ -192,6 +192,18 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.14.0
 Readiness % (v0.15.0): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 
+## v0.15.1 Status — RELEASED
+
+**macOS Installer Fix.** Patch release: macOS now ships a signed `.dmg` installer alongside the `.zip` archive, completing the installable-artefacts requirement for every platform. No feature changes from 0.15.0.
+
+- [x] Release pipeline builds and attaches `lintel-macos-aarch64.dmg` for macOS — release.yml updated (PR #42 merged, CI green)
+- [x] Both crates bumped 0.15.0 → 0.15.1; `RELEASE_NOTES.md` 0.15.1 section quoting ledger; CHANGELOG dated; CI green; tag `v0.15.1` cut
+
+**Landed:** macOS .dmg installer fix.
+
+Readiness % (v0.15.1): **100% — shipped:**
+https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
+
 ## v0.10.1 Status — RELEASED
 
 - [x] Window icon embedded via `with_icon()` + `image` crate decode

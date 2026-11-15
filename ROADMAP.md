@@ -369,8 +369,22 @@ load unchanged.
 updated by CI and quoted in the release notes, version bump before the tag,
 `RELEASE_TOKENS` set for the release, QC checklist executed and filed.
 
-**Readiness:** 0% — planned; depends on v0.14.0 being shipped (it is) and on
-the constraint core being stable (it is, since CAP-111/112).
+**Readiness:** 100% — shipped.
+
+## v0.15.1 — macOS Installer Fix
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
+
+CI evidence: PR #42 green (check + build-matrix).
+
+**Release notes (intended):** Patch release: macOS now ships a signed `.dmg`
+installer alongside the `.zip` archive, completing the installable-artefacts
+requirement for every platform. No feature changes from 0.15.0.
+
+**Release gate:** signed artefacts, `docs/tokens.json` ledger updated by CI
+and quoted in the release notes, version bump before the tag.
+
+**Readiness:** 100% — shipped.
 
 **Unscheduled / future:** Web/WASM port, plugin architecture, collaborative
 editing, custom paper sizes, on-canvas hints, 3D/structural/IFC
