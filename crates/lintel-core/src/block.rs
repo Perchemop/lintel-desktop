@@ -98,7 +98,7 @@ impl BlockDef {
                     let bottom_left = label.anchor;
                     let top_right = Point2::new(
                         label.anchor.x + label.width_mm(),
-                        label.anchor.y + label.height_mm(),
+                        label.anchor.y + label.height_mm,
                     );
                     points.push(bottom_left);
                     points.push(top_right);
