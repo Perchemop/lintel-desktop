@@ -3203,7 +3203,10 @@ mod tests {
         assert!(edited.flipped);
 
         assert!(document.undo(1_760_000_600));
-        assert!(!instance_of(document.project(), id).flipped, "undo removes the flip");
+        assert!(
+            !instance_of(document.project(), id).flipped,
+            "undo removes the flip"
+        );
         assert!(document.undo(1_760_000_700));
         assert_eq!(
             instance_of(document.project(), id).rotation,
