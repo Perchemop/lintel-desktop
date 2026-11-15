@@ -22,7 +22,7 @@ pub enum CoreError {
     ConstructionNotFound(ConstructionId),
     #[error("{0} does not exist")]
     BlockDefNotFound(BlockId),
-    #[error("block instance #{value} does not exist")]
+    #[error("block instance #{} does not exist", .0.value())]
     BlockInstanceNotFound(BlockId),
     #[error("{} is still instanced; remove its instances first", .0)]
     BlockDefInUse(BlockId),
