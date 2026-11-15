@@ -435,11 +435,7 @@ impl LintelApp {
                 max_x += PAD;
                 max_y += PAD;
             }
-            if world.x >= min_x
-                && world.x <= max_x
-                && world.y >= min_y
-                && world.y <= max_y
-            {
+            if world.x >= min_x && world.x <= max_x && world.y >= min_y && world.y <= max_y {
                 return Some(instance.id);
             }
         }
