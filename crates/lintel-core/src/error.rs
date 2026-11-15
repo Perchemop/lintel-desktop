@@ -39,15 +39,27 @@ pub enum CoreError {
     #[error("the file is not a valid Lintel project: {0}")]
     InvalidProject(String),
     #[error("could not read or write the project file: {0}")]
-    Io(#[from] std::io::Error),
+    Io(std::io::Error),
     #[error("the project file is not valid JSON: {0}")]
-    Json(#[from] serde_json::Error),
+    Json(serde_json::Error),
 }
 
 impl CoreError {
     /// Shorthand for a rejected command, with a plain-language reason.
     pub fn invalid(reason: impl Into<String>) -> Self {
         CoreError::Invalid(reason.into())
+    }
+}
+
+impl From<std::io::Error> for CoreError {
+    fn from(error: std::io::Error) -> Self {
+        CoreError::Io(error)
+    }
+}
+
+impl From<serde_json::Error> for CoreError {
+    fn from(error: serde_json::Error) -> Self {
+        CoreError::Json(error)
     }
 }
 
