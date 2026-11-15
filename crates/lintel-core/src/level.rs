@@ -9,6 +9,7 @@ use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::ConstructionEntity;
 use crate::dimension::Dimension;
+use crate::error::CoreError;
 use crate::geom::Bounds;
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
 use crate::label::PlanLabel;
@@ -233,6 +234,44 @@ impl Level {
             .iter()
             .filter(|instance| instance.block_id == block_id)
             .collect()
+    }
+
+    /// The block instance with `id`, if this level holds it.
+    pub fn block_instance(&self, id: BlockId) -> Option<&BlockInstance> {
+        self.block_instances.iter().find(|instance| instance.id == id)
+    }
+
+    pub fn block_instance_mut(&mut self, id: BlockId) -> Option<&mut BlockInstance> {
+        self.block_instances
+            .iter_mut()
+            .find(|instance| instance.id == id)
+    }
+
+    /// Move the block instance with `id` to `position`. Fails when the
+    /// instance does not exist or the position is not finite.
+    pub fn move_block_instance(&mut self, id: BlockId, position: Point2) -> Result<(), CoreError> {
+        self.block_instance_mut(id)
+            .ok_or(CoreError::BlockInstanceNotFound(id))?
+            .set_position(position)
+    }
+
+    /// Rotate the block instance with `id` to `rotation` radians about its
+    /// origin. Fails when the instance does not exist or the rotation is not
+    /// finite.
+    pub fn rotate_block_instance(&mut self, id: BlockId, rotation: f64) -> Result<(), CoreError> {
+        self.block_instance_mut(id)
+            .ok_or(CoreError::BlockInstanceNotFound(id))?
+            .set_rotation(rotation)
+    }
+
+    /// Toggle the mirror flag of the block instance with `id`. Fails when the
+    /// instance does not exist.
+    pub fn flip_block_instance(&mut self, id: BlockId) -> Result<(), CoreError> {
+        let instance = self
+            .block_instance_mut(id)
+            .ok_or(CoreError::BlockInstanceNotFound(id))?;
+        instance.toggle_flip();
+        Ok(())
     }
 
     /// Bounds of every wall band on this level, for zoom-to-fit and the sheet
@@ -553,6 +592,101 @@ mod tests {
         assert_eq!(level.block_instances_of_def(BlockId(5)).len(), 2);
         assert_eq!(level.block_instances_of_def(BlockId(99)).len(), 1);
         assert_eq!(level.block_instances_of_def(BlockId(7)).len(), 0);
+    }
+
+    #[test]
+    fn block_instances_are_found_by_id() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let mut first = BlockInstance::new(BlockId(5), Point2::new(100.0, 200.0));
+        first.id = BlockId(1);
+        let mut second = BlockInstance::new(BlockId(5), Point2::new(300.0, 400.0));
+        second.id = BlockId(2);
+        level.block_instances.push(first);
+        level.block_instances.push(second);
+
+        assert_eq!(
+            level.block_instance(BlockId(2)).map(|i| i.param),
+            Some(Point2::new(300.0, 400.0))
+        );
+        level
+            .block_instance_mut(BlockId(1))
+            .expect("instance")
+            .rotation = 0.5;
+        assert_eq!(
+            level.block_instance(BlockId(1)).expect("instance").rotation,
+            0.5
+        );
+        assert!(level.block_instance(BlockId(9)).is_none());
+        assert!(level.block_instance_mut(BlockId(9)).is_none());
+    }
+
+    #[test]
+    fn block_instances_can_be_moved_rotated_and_flipped() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let mut instance = BlockInstance::new(BlockId(5), Point2::new(100.0, 200.0));
+        instance.id = BlockId(3);
+        level.block_instances.push(instance);
+
+        level
+            .move_block_instance(BlockId(3), Point2::new(900.0, 800.0))
+            .expect("move");
+        level
+            .rotate_block_instance(BlockId(3), -0.25)
+            .expect("rotate");
+        level.flip_block_instance(BlockId(3)).expect("flip");
+        level.flip_block_instance(BlockId(3)).expect("flip back");
+        let edited = level.block_instance(BlockId(3)).expect("instance");
+        assert_eq!(edited.param, Point2::new(900.0, 800.0));
+        assert_eq!(edited.rotation, -0.25);
+        assert!(!edited.flipped);
+    }
+
+    #[test]
+    fn block_instance_edits_refuse_missing_instances_and_bad_numbers() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        let mut instance = BlockInstance::new(BlockId(5), Point2::new(100.0, 200.0));
+        instance.id = BlockId(3);
+        level.block_instances.push(instance);
+        level
+            .move_block_instance(BlockId(3), Point2::new(900.0, 800.0))
+            .expect("move");
+        level
+            .rotate_block_instance(BlockId(3), -0.25)
+            .expect("rotate");
+
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let error = level
+                .move_block_instance(BlockId(3), Point2::new(bad, 0.0))
+                .expect_err("not a position");
+            assert!(error.to_string().contains("finite position"));
+            let error = level
+                .rotate_block_instance(BlockId(3), bad)
+                .expect_err("not an angle");
+            assert!(error.to_string().contains("finite rotation"));
+        }
+
+        let missing = BlockId(404);
+        assert!(matches!(
+            level.move_block_instance(missing, Point2::new(0.0, 0.0)),
+            Err(CoreError::BlockInstanceNotFound(gone)) if gone == missing
+        ));
+        assert!(matches!(
+            level.rotate_block_instance(missing, 0.0),
+            Err(CoreError::BlockInstanceNotFound(_))
+        ));
+        assert!(matches!(
+            level.flip_block_instance(missing),
+            Err(CoreError::BlockInstanceNotFound(_))
+        ));
+
+        let edited = level.block_instance(BlockId(3)).expect("instance");
+        assert_eq!(
+            edited.param,
+            Point2::new(900.0, 800.0),
+            "a rejected edit leaves the instance alone"
+        );
+        assert_eq!(edited.rotation, -0.25);
+        assert!(!edited.flipped);
     }
 
     #[test]

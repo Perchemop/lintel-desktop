@@ -103,6 +103,36 @@ impl BlockInstance {
     pub fn is_valid(&self) -> bool {
         self.param.is_finite() && self.rotation.is_finite()
     }
+
+    /// Move the instance to a new position. Fails when the position is not
+    /// finite; a rejected move leaves the instance where it was.
+    pub fn set_position(&mut self, position: Point2) -> Result<(), CoreError> {
+        if !position.is_finite() {
+            return Err(CoreError::invalid(
+                "a block instance needs a finite position",
+            ));
+        }
+        self.param = position;
+        Ok(())
+    }
+
+    /// Set the rotation in radians, measured about the block origin. Fails
+    /// when the rotation is not finite; a rejected rotation leaves the
+    /// instance as it was.
+    pub fn set_rotation(&mut self, rotation: f64) -> Result<(), CoreError> {
+        if !rotation.is_finite() {
+            return Err(CoreError::invalid(
+                "a block instance needs a finite rotation",
+            ));
+        }
+        self.rotation = rotation;
+        Ok(())
+    }
+
+    /// Toggle the mirror across the block's local x-axis.
+    pub fn toggle_flip(&mut self) {
+        self.flipped = !self.flipped;
+    }
 }
 
 #[cfg(test)]
@@ -179,6 +209,53 @@ mod tests {
     }
 
     #[test]
+    fn set_position_moves_the_instance_and_refuses_non_finite() {
+        let mut instance = BlockInstance::new(BlockId(7), Point2::new(100.0, 200.0));
+        instance
+            .set_position(Point2::new(300.0, 400.0))
+            .expect("move");
+        assert_eq!(instance.param, Point2::new(300.0, 400.0));
+
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let error = instance
+                .set_position(Point2::new(bad, 0.0))
+                .expect_err("not finite");
+            assert!(error.to_string().contains("finite position"));
+        }
+        assert_eq!(
+            instance.param,
+            Point2::new(300.0, 400.0),
+            "a rejected move leaves the instance alone"
+        );
+    }
+
+    #[test]
+    fn set_rotation_sets_the_angle_and_refuses_non_finite() {
+        let mut instance = BlockInstance::new(BlockId(7), Point2::ORIGIN);
+        instance.set_rotation(0.5).expect("rotate");
+        assert_eq!(instance.rotation, 0.5);
+
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let error = instance.set_rotation(bad).expect_err("not finite");
+            assert!(error.to_string().contains("finite rotation"));
+        }
+        assert_eq!(
+            instance.rotation, 0.5,
+            "a rejected rotation leaves the instance alone"
+        );
+    }
+
+    #[test]
+    fn toggle_flip_toggles_the_mirror() {
+        let mut instance = BlockInstance::new(BlockId(7), Point2::ORIGIN);
+        assert!(!instance.flipped);
+        instance.toggle_flip();
+        assert!(instance.flipped);
+        instance.toggle_flip();
+        assert!(!instance.flipped);
+    }
+
+    #[test]
     fn block_def_round_trips_through_json() {
         let def = BlockDef::new(BlockId(3), "Door").add_entity(BlockEntity::Wall(Wall::new(
             WallId(1),
@@ -195,6 +272,16 @@ mod tests {
     #[test]
     fn block_instance_round_trips_through_json() {
         let instance = BlockInstance::new(BlockId(4), Point2::new(100.0, 200.0));
+        let json = serde_json::to_string(&instance).expect("serialize");
+        let back: BlockInstance = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, instance);
+    }
+
+    #[test]
+    fn a_rotated_flipped_instance_round_trips_through_json() {
+        let mut instance = BlockInstance::new(BlockId(4), Point2::new(100.0, 200.0));
+        instance.set_rotation(-1.25).expect("rotate");
+        instance.toggle_flip();
         let json = serde_json::to_string(&instance).expect("serialize");
         let back: BlockInstance = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, instance);

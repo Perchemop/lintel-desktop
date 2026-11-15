@@ -211,6 +211,17 @@ pub enum Command {
     RemoveBlockInstance {
         block_id: BlockId,
     },
+    MoveBlockInstance {
+        block_instance_id: BlockId,
+        position: Point2,
+    },
+    RotateBlockInstance {
+        block_instance_id: BlockId,
+        rotation: f64,
+    },
+    FlipBlockInstance {
+        block_instance_id: BlockId,
+    },
 }
 
 /// What a successful command created, so the UI can select it.
@@ -437,6 +448,17 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             add_block_instance(project, block_id, position)
         }
         Command::RemoveBlockInstance { block_id } => remove_block_instance(project, block_id),
+        Command::MoveBlockInstance {
+            block_instance_id,
+            position,
+        } => move_block_instance(project, block_instance_id, position),
+        Command::RotateBlockInstance {
+            block_instance_id,
+            rotation,
+        } => rotate_block_instance(project, block_instance_id, rotation),
+        Command::FlipBlockInstance { block_instance_id } => {
+            flip_block_instance(project, block_instance_id)
+        }
     }
 }
 
@@ -1176,6 +1198,42 @@ fn remove_block_instance(project: &mut Project, block_id: BlockId) -> Result<App
     level
         .block_instances
         .retain(|instance| instance.block_id != block_id);
+    Ok(Applied::default())
+}
+
+fn move_block_instance(
+    project: &mut Project,
+    id: BlockId,
+    position: Point2,
+) -> Result<Applied, CoreError> {
+    if !position.is_finite() {
+        return Err(CoreError::invalid(
+            "a block instance needs a finite position",
+        ));
+    }
+    let level = active_level_mut(project)?;
+    level.move_block_instance(id, position)?;
+    Ok(Applied::default())
+}
+
+fn rotate_block_instance(
+    project: &mut Project,
+    id: BlockId,
+    rotation: f64,
+) -> Result<Applied, CoreError> {
+    if !rotation.is_finite() {
+        return Err(CoreError::invalid(
+            "a block instance needs a finite rotation",
+        ));
+    }
+    let level = active_level_mut(project)?;
+    level.rotate_block_instance(id, rotation)?;
+    Ok(Applied::default())
+}
+
+fn flip_block_instance(project: &mut Project, id: BlockId) -> Result<Applied, CoreError> {
+    let level = active_level_mut(project)?;
+    level.flip_block_instance(id)?;
     Ok(Applied::default())
 }
 
@@ -2923,6 +2981,260 @@ mod tests {
         );
     }
 
+    /// Place the test definition and one instance, returning the instance id
+    /// the command gave it.
+    fn place_block_instance(project: &mut Project) -> BlockId {
+        apply_command(project, Command::AddBlockDef { block: block_def() }).expect("add def");
+        apply_command(
+            project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect("add instance");
+        project
+            .active_level()
+            .expect("level")
+            .block_instances
+            .first()
+            .expect("instance")
+            .id
+    }
+
+    fn instance_of(project: &Project, id: BlockId) -> &BlockInstance {
+        project
+            .active_level()
+            .expect("level")
+            .block_instance(id)
+            .expect("instance")
+    }
+
+    #[test]
+    fn a_block_instance_can_be_moved() {
+        let mut project = empty_project();
+        let id = place_block_instance(&mut project);
+        apply_command(
+            &mut project,
+            Command::MoveBlockInstance {
+                block_instance_id: id,
+                position: Point2::new(2500.0, 1200.0),
+            },
+        )
+        .expect("move instance");
+        assert_eq!(
+            instance_of(&project, id).param,
+            Point2::new(2500.0, 1200.0)
+        );
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn a_block_instance_position_must_be_finite() {
+        let mut project = empty_project();
+        let id = place_block_instance(&mut project);
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let error = apply_command(
+                &mut project,
+                Command::MoveBlockInstance {
+                    block_instance_id: id,
+                    position: Point2::new(bad, 0.0),
+                },
+            )
+            .expect_err("not finite");
+            assert!(error.to_string().contains("finite position"));
+        }
+        assert_eq!(
+            instance_of(&project, id).param,
+            Point2::new(100.0, 200.0),
+            "a rejected move leaves the instance alone"
+        );
+    }
+
+    #[test]
+    fn a_block_instance_can_be_rotated() {
+        let mut project = empty_project();
+        let id = place_block_instance(&mut project);
+        apply_command(
+            &mut project,
+            Command::RotateBlockInstance {
+                block_instance_id: id,
+                rotation: 1.25,
+            },
+        )
+        .expect("rotate instance");
+        assert_eq!(instance_of(&project, id).rotation, 1.25);
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn a_block_instance_rotation_must_be_finite() {
+        let mut project = empty_project();
+        let id = place_block_instance(&mut project);
+        for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let error = apply_command(
+                &mut project,
+                Command::RotateBlockInstance {
+                    block_instance_id: id,
+                    rotation: bad,
+                },
+            )
+            .expect_err("not finite");
+            assert!(error.to_string().contains("finite rotation"));
+        }
+        assert_eq!(
+            instance_of(&project, id).rotation, 0.0,
+            "a rejected rotation leaves the instance alone"
+        );
+    }
+
+    #[test]
+    fn a_block_instance_can_be_flipped() {
+        let mut project = empty_project();
+        let id = place_block_instance(&mut project);
+        apply_command(
+            &mut project,
+            Command::FlipBlockInstance {
+                block_instance_id: id,
+            },
+        )
+        .expect("flip instance");
+        assert!(instance_of(&project, id).flipped);
+        apply_command(
+            &mut project,
+            Command::FlipBlockInstance {
+                block_instance_id: id,
+            },
+        )
+        .expect("flip back");
+        assert!(!instance_of(&project, id).flipped);
+    }
+
+    #[test]
+    fn editing_a_missing_block_instance_reports_it_gone() {
+        let mut project = empty_project();
+        let missing = BlockId(999);
+        let error = apply_command(
+            &mut project,
+            Command::MoveBlockInstance {
+                block_instance_id: missing,
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect_err("no such instance");
+        assert!(
+            matches!(error, CoreError::BlockInstanceNotFound(gone) if gone == missing),
+            "the error names the missing instance"
+        );
+
+        let error = apply_command(
+            &mut project,
+            Command::RotateBlockInstance {
+                block_instance_id: missing,
+                rotation: 0.5,
+            },
+        )
+        .expect_err("no such instance");
+        assert!(matches!(error, CoreError::BlockInstanceNotFound(_)));
+
+        let error = apply_command(
+            &mut project,
+            Command::FlipBlockInstance {
+                block_instance_id: missing,
+            },
+        )
+        .expect_err("no such instance");
+        assert!(matches!(error, CoreError::BlockInstanceNotFound(_)));
+    }
+
+    #[test]
+    fn the_block_instance_edits_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        document
+            .apply(Command::AddBlockDef { block: block_def() }, 1_760_000_100)
+            .expect("add block def");
+        document
+            .apply(
+                Command::AddBlockInstance {
+                    block_id: BlockId(1),
+                    position: Point2::new(100.0, 200.0),
+                },
+                1_760_000_200,
+            )
+            .expect("add instance");
+        let id = document
+            .project()
+            .active_level()
+            .expect("level")
+            .block_instances
+            .first()
+            .expect("instance")
+            .id;
+        let instance = |document: &Document| {
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .block_instance(id)
+                .expect("instance")
+        };
+
+        document
+            .apply(
+                Command::MoveBlockInstance {
+                    block_instance_id: id,
+                    position: Point2::new(900.0, 800.0),
+                },
+                1_760_000_300,
+            )
+            .expect("move instance");
+        document
+            .apply(
+                Command::RotateBlockInstance {
+                    block_instance_id: id,
+                    rotation: 1.5,
+                },
+                1_760_000_400,
+            )
+            .expect("rotate instance");
+        document
+            .apply(
+                Command::FlipBlockInstance {
+                    block_instance_id: id,
+                },
+                1_760_000_500,
+            )
+            .expect("flip instance");
+        let edited = instance(&document);
+        assert_eq!(edited.param, Point2::new(900.0, 800.0));
+        assert_eq!(edited.rotation, 1.5);
+        assert!(edited.flipped);
+
+        assert!(document.undo(1_760_000_600));
+        assert!(!instance(&document).flipped, "undo removes the flip");
+        assert!(document.undo(1_760_000_700));
+        assert_eq!(
+            instance(&document).rotation,
+            0.0,
+            "undo removes the rotation"
+        );
+        assert!(document.undo(1_760_000_800));
+        assert_eq!(
+            instance(&document).param,
+            Point2::new(100.0, 200.0),
+            "undo removes the move"
+        );
+
+        assert!(document.redo(1_760_000_900));
+        assert_eq!(instance(&document).param, Point2::new(900.0, 800.0));
+        assert!(document.redo(1_760_001_000));
+        assert_eq!(instance(&document).rotation, 1.5);
+        assert!(document.redo(1_760_001_100));
+        assert!(instance(&document).flipped, "redo restores the flip");
+    }
+
     #[test]
     fn an_added_block_def_can_be_undone() {
         use crate::document::Document;
@@ -2976,6 +3288,17 @@ mod tests {
             },
             Command::RemoveBlockInstance {
                 block_id: BlockId(1),
+            },
+            Command::MoveBlockInstance {
+                block_instance_id: BlockId(4),
+                position: Point2::new(300.0, 400.0),
+            },
+            Command::RotateBlockInstance {
+                block_instance_id: BlockId(4),
+                rotation: -0.75,
+            },
+            Command::FlipBlockInstance {
+                block_instance_id: BlockId(4),
             },
         ];
         for command in commands {

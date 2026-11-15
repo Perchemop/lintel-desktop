@@ -22,6 +22,8 @@ pub enum CoreError {
     ConstructionNotFound(ConstructionId),
     #[error("{0} does not exist")]
     BlockDefNotFound(BlockId),
+    #[error("block instance #{0} does not exist", .0.value())]
+    BlockInstanceNotFound(BlockId),
     #[error("{} is still instanced; remove its instances first", .0)]
     BlockDefInUse(BlockId),
     #[error("the last level cannot be deleted; give the project another level first")]
@@ -75,6 +77,8 @@ mod tests {
         assert!(e.to_string().contains("move them"));
         let e = CoreError::BlockDefNotFound(BlockId(7));
         assert_eq!(e.to_string(), "block #7 does not exist");
+        let e = CoreError::BlockInstanceNotFound(BlockId(7));
+        assert_eq!(e.to_string(), "block instance #7 does not exist");
         let e = CoreError::BlockDefInUse(BlockId(3));
         assert!(e.to_string().contains("still instanced"));
     }
