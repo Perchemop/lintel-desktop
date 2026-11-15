@@ -22,6 +22,8 @@ pub enum CoreError {
     ConstructionNotFound(ConstructionId),
     #[error("{0} does not exist")]
     BlockDefNotFound(BlockId),
+    #[error("block instance #{} does not exist", .0.value())]
+    BlockInstanceNotFound(BlockId),
     #[error("{} is still instanced; remove its instances first", .0)]
     BlockDefInUse(BlockId),
     #[error("the last level cannot be deleted; give the project another level first")]
@@ -37,15 +39,27 @@ pub enum CoreError {
     #[error("the file is not a valid Lintel project: {0}")]
     InvalidProject(String),
     #[error("could not read or write the project file: {0}")]
-    Io(#[from] std::io::Error),
+    Io(std::io::Error),
     #[error("the project file is not valid JSON: {0}")]
-    Json(#[from] serde_json::Error),
+    Json(serde_json::Error),
 }
 
 impl CoreError {
     /// Shorthand for a rejected command, with a plain-language reason.
     pub fn invalid(reason: impl Into<String>) -> Self {
         CoreError::Invalid(reason.into())
+    }
+}
+
+impl From<std::io::Error> for CoreError {
+    fn from(error: std::io::Error) -> Self {
+        CoreError::Io(error)
+    }
+}
+
+impl From<serde_json::Error> for CoreError {
+    fn from(error: serde_json::Error) -> Self {
+        CoreError::Json(error)
     }
 }
 
@@ -75,6 +89,8 @@ mod tests {
         assert!(e.to_string().contains("move them"));
         let e = CoreError::BlockDefNotFound(BlockId(7));
         assert_eq!(e.to_string(), "block #7 does not exist");
+        let e = CoreError::BlockInstanceNotFound(BlockId(7));
+        assert_eq!(e.to_string(), "block instance #7 does not exist");
         let e = CoreError::BlockDefInUse(BlockId(3));
         assert!(e.to_string().contains("still instanced"));
     }
