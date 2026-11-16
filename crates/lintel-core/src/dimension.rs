@@ -565,7 +565,10 @@ mod tests {
 
     #[test]
     fn a_new_dimension_labels_whole_millimetres() {
-        assert_eq!(dimension(DimensionKind::LinearHorizontal).label_precision, 0);
+        assert_eq!(
+            dimension(DimensionKind::LinearHorizontal).label_precision,
+            0
+        );
     }
 
     #[test]
