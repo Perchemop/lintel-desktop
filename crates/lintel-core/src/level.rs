@@ -772,7 +772,9 @@ mod tests {
     #[test]
     fn a_click_inside_an_instances_bounds_finds_it() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        level.block_defs.push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
         let mut instance = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
         instance.id = BlockId(77);
         level.block_instances.push(instance);
@@ -834,7 +836,9 @@ mod tests {
     #[test]
     fn hit_test_rejects_non_finite_points() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        level.block_defs.push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
         level
             .block_instances
             .push(BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0)));
@@ -851,7 +855,9 @@ mod tests {
     #[test]
     fn hit_test_prefers_the_topmost_instance() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        level.block_defs.push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
         let mut lower = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
         lower.id = BlockId(101);
         let mut upper = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
@@ -868,7 +874,9 @@ mod tests {
     #[test]
     fn hit_test_skips_instances_with_missing_definitions() {
         let mut level = Level::new(LevelId(1), "Level 0", 0.0);
-        level.block_defs.push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
         let mut valid = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
         valid.id = BlockId(91);
         let mut orphan = BlockInstance::new(BlockId(99), Point2::new(100.0, 200.0));
