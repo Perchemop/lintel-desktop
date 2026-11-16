@@ -253,7 +253,19 @@ impl LintelApp {
     ///
     /// Construction guides own their own delete command, so a selection that
     /// holds one deletes it too.
+    ///
+    /// A selected block instance takes precedence: it has no entry in the
+    /// ordinary selection set, so delete it directly by id and clear the
+    /// selection. A `BlockInstanceNotFound` refusal (the instance is already
+    /// gone) is reported like any other delete failure, but the selection is
+    /// cleared regardless.
     fn delete_selection(&mut self, now: i64) {
+        if let Some(id) = self.selected_block_instance.take() {
+            if let Err(e) = self.doc.apply(Command::DeleteBlockInstance { block_instance_id: id }, now) {
+                self.note_status(format!("Could not delete: {e}"), now);
+            }
+            return;
+        }
         let mut refusal: Option<String> = None;
         for id in self.selection.iter() {
             let command = match id {
@@ -1137,16 +1149,19 @@ impl LintelApp {
                 self.select_all();
             }
 
-            // Undo / redo.
+            // Undo / redo. Accept plain Z/Y as well as Ctrl+Z/Ctrl+Y; the
+            // keyboard_scope guard already keeps these from firing while typing.
             if ui
-                .input(|i| i.modifiers.command && i.key_pressed(egui::Key::Z) && !i.modifiers.shift)
+                .input(|i| {
+                    (i.modifiers.command || plain_keys) && i.key_pressed(egui::Key::Z) && !i.modifiers.shift
+                })
                 && self.doc.can_undo()
             {
                 self.doc.undo(now);
                 self.selection.clear();
                 self.draft = Draft::default();
             }
-            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::Y))
+            if ui.input(|i| (i.modifiers.command || plain_keys) && i.key_pressed(egui::Key::Y))
                 && self.doc.can_redo()
             {
                 self.doc.redo(now);

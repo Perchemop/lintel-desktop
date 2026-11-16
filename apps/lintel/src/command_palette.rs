@@ -284,9 +284,9 @@ impl PaletteAction {
             PaletteAction::ToggleGrid => "G",
             PaletteAction::ToggleOrtho => "O",
             PaletteAction::ToggleUnits => "U",
-            PaletteAction::ShowAbout => "?",
-            PaletteAction::ShowReleaseNotes => "R",
-            PaletteAction::CheckForUpdates => "U",
+            PaletteAction::ShowAbout => "",
+            PaletteAction::ShowReleaseNotes => "",
+            PaletteAction::CheckForUpdates => "",
             PaletteAction::ConstructionLineTool => "C",
             PaletteAction::ConstructionRayTool => "Shift+C",
             PaletteAction::ConstructionCircleTool => "Q",
@@ -295,7 +295,7 @@ impl PaletteAction {
             PaletteAction::DeleteConstruction => "Del",
             PaletteAction::AddPerpendicularConstraint => "Ctrl+Shift+P",
             PaletteAction::RemoveConstraint => "Del",
-            PaletteAction::ViewConstraints => "Shift+K",
+            PaletteAction::ViewConstraints => "",
             _ => "",
         }
     }
@@ -655,7 +655,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
 
     ui.separator();
     ui.label(
-        egui::RichText::new(format!("{} of {} commands", rows.len(), rows.len()))
+        egui::RichText::new(format!("{} of {} commands", rows.len(), PaletteAction::ALL.len()))
             .small()
             .color(egui::Color32::GRAY),
     );
@@ -1412,5 +1412,20 @@ mod tests {
         labels.sort_unstable();
         labels.dedup();
         assert_eq!(labels.len(), PaletteAction::ALL.len(), "labels are unique");
+    }
+
+    #[test]
+    fn palette_shortcuts_are_unique() {
+        let mut shortcuts: Vec<&str> = Vec::new();
+        for action in PaletteAction::ALL {
+            let s = action.shortcut();
+            if !s.is_empty() {
+                shortcuts.push(s);
+            }
+        }
+        let total = shortcuts.len();
+        shortcuts.sort_unstable();
+        shortcuts.dedup();
+        assert_eq!(shortcuts.len(), total, "shortcut hints must be unique");
     }
 }

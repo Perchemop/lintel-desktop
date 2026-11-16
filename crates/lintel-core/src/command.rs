@@ -215,6 +215,9 @@ pub enum Command {
     RemoveBlockInstance {
         block_id: BlockId,
     },
+    DeleteBlockInstance {
+        block_instance_id: BlockId,
+    },
     MoveBlockInstance {
         block_instance_id: BlockId,
         position: Point2,
@@ -458,6 +461,9 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
             add_block_instance(project, block_id, position)
         }
         Command::RemoveBlockInstance { block_id } => remove_block_instance(project, block_id),
+        Command::DeleteBlockInstance { block_instance_id } => {
+            delete_block_instance(project, block_instance_id)
+        }
         Command::MoveBlockInstance {
             block_instance_id,
             position,
@@ -1221,6 +1227,21 @@ fn remove_block_instance(project: &mut Project, block_id: BlockId) -> Result<App
     level
         .block_instances
         .retain(|instance| instance.block_id != block_id);
+    Ok(Applied::default())
+}
+
+fn delete_block_instance(
+    project: &mut Project,
+    block_instance_id: BlockId,
+) -> Result<Applied, CoreError> {
+    let level = active_level(project)?;
+    if level.block_instance(block_instance_id).is_none() {
+        return Err(CoreError::BlockInstanceNotFound(block_instance_id));
+    }
+    let level = active_level_mut(project)?;
+    level
+        .block_instances
+        .retain(|instance| instance.id != block_instance_id);
     Ok(Applied::default())
 }
 
@@ -3066,6 +3087,73 @@ mod tests {
         );
     }
 
+    #[test]
+    fn a_block_instance_can_be_deleted_by_id() {
+        let mut project = empty_project();
+        apply_command(&mut project, Command::AddBlockDef { block: block_def() }).expect("add def");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(100.0, 200.0),
+            },
+        )
+        .expect("first instance");
+        apply_command(
+            &mut project,
+            Command::AddBlockInstance {
+                block_id: BlockId(1),
+                position: Point2::new(300.0, 400.0),
+            },
+        )
+        .expect("second instance");
+        let ids: Vec<BlockId> = project
+            .active_level()
+            .expect("level")
+            .block_instances
+            .iter()
+            .map(|instance| instance.id)
+            .collect();
+        assert_eq!(ids.len(), 2);
+        let (gone, kept) = (ids[0], ids[1]);
+
+        apply_command(
+            &mut project,
+            Command::DeleteBlockInstance {
+                block_instance_id: gone,
+            },
+        )
+        .expect("delete one instance");
+
+        let level = project.active_level().expect("level");
+        assert!(
+            level.block_instance(gone).is_none(),
+            "only the targeted instance goes"
+        );
+        assert!(
+            level.block_instance(kept).is_some(),
+            "the other instance survives"
+        );
+        assert!(project.validate().is_ok());
+    }
+
+    #[test]
+    fn deleting_a_missing_block_instance_reports_it_gone() {
+        let mut project = empty_project();
+        let missing = BlockId(999);
+        let error = apply_command(
+            &mut project,
+            Command::DeleteBlockInstance {
+                block_instance_id: missing,
+            },
+        )
+        .expect_err("no such instance");
+        assert!(
+            matches!(error, CoreError::BlockInstanceNotFound(gone) if gone == missing),
+            "the error names the missing instance"
+        );
+    }
+
     /// Place the test definition and one instance, returning the instance id
     /// the command gave it.
     fn place_block_instance(project: &mut Project) -> BlockId {
@@ -3372,6 +3460,9 @@ mod tests {
             },
             Command::RemoveBlockInstance {
                 block_id: BlockId(1),
+            },
+            Command::DeleteBlockInstance {
+                block_instance_id: BlockId(4),
             },
             Command::MoveBlockInstance {
                 block_instance_id: BlockId(4),
