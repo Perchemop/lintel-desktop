@@ -36,6 +36,10 @@ pub const DEFAULT_WITNESS_GAP: f64 = 200.0;
 /// How far a witness line runs past the dimension line, in millimetres.
 pub const DEFAULT_WITNESS_OVERRUN: f64 = 100.0;
 
+/// The most decimal places a dimension label may show. Zero shows whole
+/// millimetres; four is fine enough for a construction drawing.
+pub const MAX_LABEL_PRECISION: u8 = 4;
+
 fn default_witness_gap() -> f64 {
     DEFAULT_WITNESS_GAP
 }
@@ -147,6 +151,9 @@ pub struct Dimension {
     /// How far a witness line runs past the dimension line, in millimetres.
     #[serde(default = "default_witness_overrun")]
     pub witness_overrun: f64,
+    /// Decimal places the drawn label shows, from 0 (whole millimetres) to 4.
+    #[serde(default)]
+    pub label_precision: u8,
 }
 
 impl Dimension {
@@ -171,6 +178,7 @@ impl Dimension {
             end_anchor: None,
             witness_gap: DEFAULT_WITNESS_GAP,
             witness_overrun: DEFAULT_WITNESS_OVERRUN,
+            label_precision: 0,
         }
     }
 
@@ -191,13 +199,17 @@ impl Dimension {
     }
 
     /// True when the geometry is finite, the measured span is non-zero for
-    /// this kind, and the offset is a positive distance.
+    /// this kind, the offset is a positive distance, and the label precision is
+    /// one the label can show.
     pub fn is_valid(&self) -> bool {
         if !self.start.is_finite() || !self.end.is_finite() {
             return false;
         }
         let length = self.length();
         if !length.is_finite() || length <= 0.0 {
+            return false;
+        }
+        if self.label_precision > MAX_LABEL_PRECISION {
             return false;
         }
         self.offset.is_finite() && self.offset > 0.0
@@ -549,6 +561,40 @@ mod tests {
         assert!(dimension.end_anchor.is_none());
         assert_eq!(dimension.witness_gap, DEFAULT_WITNESS_GAP);
         assert_eq!(dimension.witness_overrun, DEFAULT_WITNESS_OVERRUN);
+    }
+
+    #[test]
+    fn a_new_dimension_labels_whole_millimetres() {
+        assert_eq!(dimension(DimensionKind::LinearHorizontal).label_precision, 0);
+    }
+
+    #[test]
+    fn label_precision_round_trips_and_is_bounded() {
+        let mut dimension = dimension(DimensionKind::LinearHorizontal);
+        dimension.label_precision = MAX_LABEL_PRECISION;
+        assert!(dimension.is_valid());
+        let json = serde_json::to_string(&dimension).expect("serialize");
+        let back: Dimension = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.label_precision, MAX_LABEL_PRECISION);
+        assert_eq!(back, dimension);
+
+        dimension.label_precision = MAX_LABEL_PRECISION + 1;
+        assert!(!dimension.is_valid(), "a label cannot show that many places");
+    }
+
+    #[test]
+    fn a_dimension_saved_before_label_precision_still_loads() {
+        let json = r#"{
+            "id": 1,
+            "kind": "Aligned",
+            "start": { "x": 0.0, "y": 0.0 },
+            "end": { "x": 3000.0, "y": 0.0 },
+            "offset": 500.0,
+            "extension_lines": true
+        }"#;
+        let dimension: Dimension = serde_json::from_str(json).expect("old dimension");
+        assert_eq!(dimension.label_precision, 0);
+        assert!(dimension.is_valid());
     }
 
     #[test]

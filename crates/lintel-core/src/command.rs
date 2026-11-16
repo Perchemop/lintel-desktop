@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::block::{BlockDef, BlockId, BlockInstance};
 use crate::constraint::Constraint;
 use crate::construction::{ConstructionEntity, ConstructionKind};
-use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
+use crate::dimension::{Dimension, DimensionAnchor, DimensionKind, MAX_LABEL_PRECISION};
 use crate::error::CoreError;
 use crate::geom::{Bounds, Point2};
 use crate::ids::{ConstructionId, DimensionId, LabelId, LayerId, LevelId, OpeningId, WallId};
@@ -118,6 +118,10 @@ pub enum Command {
     SetDimensionWitnessOverrun {
         id: DimensionId,
         overrun: f64,
+    },
+    SetDimensionPrecision {
+        id: DimensionId,
+        precision: u8,
     },
     DeleteDimension {
         id: DimensionId,
@@ -346,6 +350,11 @@ pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<A
         Command::SetDimensionWitnessOverrun { id, overrun } => {
             validate_witness_margin(overrun, "overrun")?;
             dimension_mut(project, id)?.witness_overrun = overrun;
+            Ok(Applied::default())
+        }
+        Command::SetDimensionPrecision { id, precision } => {
+            validate_label_precision(precision)?;
+            dimension_mut(project, id)?.label_precision = precision;
             Ok(Applied::default())
         }
         Command::DeleteDimension { id } => {
@@ -604,6 +613,16 @@ fn validate_witness_margin(margin: f64, what: &str) -> Result<(), CoreError> {
     } else {
         Err(CoreError::invalid(format!(
             "a witness-line {what} must be a distance of zero or more"
+        )))
+    }
+}
+
+fn validate_label_precision(precision: u8) -> Result<(), CoreError> {
+    if precision <= MAX_LABEL_PRECISION {
+        Ok(())
+    } else {
+        Err(CoreError::invalid(format!(
+            "a dimension label shows at most {MAX_LABEL_PRECISION} decimal places"
         )))
     }
 }
@@ -1815,6 +1834,55 @@ mod tests {
     }
 
     #[test]
+    fn a_dimension_label_precision_can_be_set() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        apply_command(
+            &mut project,
+            Command::SetDimensionPrecision { id, precision: 2 },
+        )
+        .expect("set the label precision");
+        let dimension = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert_eq!(dimension.label_precision, 2);
+        assert!(project.validate().is_ok());
+
+        // The setting survives a save and a load.
+        let json = crate::persistence::to_json(&project).expect("serialize the project");
+        let reloaded = crate::persistence::from_json(&json).expect("reload the project");
+        let precision = reloaded
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .label_precision;
+        assert_eq!(precision, 2);
+    }
+
+    #[test]
+    fn a_dimension_label_precision_is_bounded() {
+        let mut project = empty_project();
+        let id = place_horizontal(&mut project);
+        let error = apply_command(
+            &mut project,
+            Command::SetDimensionPrecision { id, precision: 5 },
+        )
+        .expect_err("five decimal places is one too many");
+        assert!(error.to_string().contains("at most 4 decimal places"));
+
+        let precision = project
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension")
+            .label_precision;
+        assert_eq!(precision, 0, "a rejected precision leaves the label alone");
+    }
+
+    #[test]
     fn anchoring_a_missing_dimension_reports_it_gone() {
         let mut project = empty_project();
         let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
@@ -1871,6 +1939,10 @@ mod tests {
             Command::SetDimensionWitnessOverrun {
                 id: DimensionId(3),
                 overrun: 50.0,
+            },
+            Command::SetDimensionPrecision {
+                id: DimensionId(3),
+                precision: 2,
             },
         ];
         for command in commands {
