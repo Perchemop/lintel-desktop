@@ -234,6 +234,7 @@ pub struct Applied {
     pub level: Option<LevelId>,
     pub layer: Option<LayerId>,
     pub construction: Option<ConstructionId>,
+    pub block_instance: Option<BlockId>,
 }
 
 pub(crate) fn apply_command(project: &mut Project, command: Command) -> Result<Applied, CoreError> {
@@ -1186,7 +1187,10 @@ fn add_block_instance(
     instance.id = id;
     let level = active_level_mut(project)?;
     level.block_instances.push(instance);
-    Ok(Applied::default())
+    Ok(Applied {
+        block_instance: Some(id),
+        ..Applied::default()
+    })
 }
 
 fn remove_block_instance(project: &mut Project, block_id: BlockId) -> Result<Applied, CoreError> {
@@ -1213,7 +1217,10 @@ fn move_block_instance(
     }
     let level = active_level_mut(project)?;
     level.move_block_instance(id, position)?;
-    Ok(Applied::default())
+    Ok(Applied {
+        block_instance: Some(id),
+        ..Applied::default()
+    })
 }
 
 fn rotate_block_instance(
@@ -1228,13 +1235,19 @@ fn rotate_block_instance(
     }
     let level = active_level_mut(project)?;
     level.rotate_block_instance(id, rotation)?;
-    Ok(Applied::default())
+    Ok(Applied {
+        block_instance: Some(id),
+        ..Applied::default()
+    })
 }
 
 fn flip_block_instance(project: &mut Project, id: BlockId) -> Result<Applied, CoreError> {
     let level = active_level_mut(project)?;
     level.flip_block_instance(id)?;
-    Ok(Applied::default())
+    Ok(Applied {
+        block_instance: Some(id),
+        ..Applied::default()
+    })
 }
 
 #[cfg(test)]

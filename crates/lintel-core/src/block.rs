@@ -71,6 +71,43 @@ impl BlockDef {
         }
         Ok(())
     }
+
+    /// Every point of this definition's geometry, in block-local coordinates.
+    ///
+    /// Walls contribute their footprint corners (or their endpoints when the
+    /// band has no usable footprint), dimensions contribute their measured
+    /// points and labels contribute their text extent. An opening sits on its
+    /// host wall's band, which the wall's footprint already covers, so it
+    /// contributes no extra points of its own.
+    pub fn local_points(&self) -> Vec<Point2> {
+        let mut points = Vec::new();
+        for entity in &self.entities {
+            match entity {
+                BlockEntity::Wall(wall) => match wall.footprint() {
+                    Some(corners) => points.extend_from_slice(&corners),
+                    None => {
+                        points.push(wall.start);
+                        points.push(wall.end);
+                    }
+                },
+                BlockEntity::Dimension(dimension) => {
+                    points.push(dimension.start);
+                    points.push(dimension.end);
+                }
+                BlockEntity::Label(label) => {
+                    let bottom_left = label.anchor;
+                    let top_right = Point2::new(
+                        label.anchor.x + label.width_mm(),
+                        label.anchor.y + label.height_mm,
+                    );
+                    points.push(bottom_left);
+                    points.push(top_right);
+                }
+                BlockEntity::Opening(_opening) => {}
+            }
+        }
+        points
+    }
 }
 
 /// One placement of a block definition on a level.
@@ -132,6 +169,19 @@ impl BlockInstance {
     /// Toggle the mirror across the block's local x-axis.
     pub fn toggle_flip(&mut self) {
         self.flipped = !self.flipped;
+    }
+
+    /// Map a block-local point onto the level. The flip is applied across the
+    /// local x-axis first, then the rotation about the block origin, then the
+    /// translation by the instance's position.
+    pub fn transform_point(&self, local: Point2) -> Point2 {
+        let (sin, cos) = self.rotation.sin_cos();
+        // Mirror across the local x-axis before anything else rotates it.
+        let y = if self.flipped { -local.y } else { local.y };
+        Point2::new(
+            self.param.x + local.x * cos - y * sin,
+            self.param.y + local.x * sin + y * cos,
+        )
     }
 }
 

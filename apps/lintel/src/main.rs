@@ -4,12 +4,13 @@
 
 use crate::canvas::{
     Canvas, Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View,
-    entity_of, resolve_snap, screen_to_world,
+    entity_of, resolve_snap, screen_to_world, world_to_screen,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
 use eframe::egui;
 use lintel_core::{
+    BlockId,
     command::Command,
     document::Document,
     geom::{Bounds, Point2, Vec2},
@@ -105,6 +106,8 @@ pub struct LintelApp {
     inspector_draft: InspectorDraft,
     /// Last pointer position in world coordinates, for the status bar readout.
     pointer_world: Option<lintel_core::geom::Point2>,
+    /// Currently selected block instance, if any.
+    selected_block_instance: Option<BlockId>,
 }
 
 impl LintelApp {
@@ -140,6 +143,7 @@ impl LintelApp {
                 ..InspectorDraft::default()
             },
             pointer_world: None,
+            selected_block_instance: None,
         };
         // One quiet check at startup; it fails soft when offline and never
         // blocks the UI thread.
@@ -206,6 +210,7 @@ impl LintelApp {
         self.draft = Draft::default();
         self.band = None;
         self.status = None;
+        self.selected_block_instance = None;
     }
 
     /// Open the plan at the fixed workflow path.
@@ -217,6 +222,7 @@ impl LintelApp {
                 self.draft = Draft::default();
                 self.band = None;
                 self.view = View::default();
+                self.selected_block_instance = None;
             }
             Err(e) => self.note_status(format!("Could not open the plan: {e}"), now),
         }
@@ -388,6 +394,52 @@ impl LintelApp {
     fn snap_at(&self, world: Point2, origin: Option<Point2>) -> Point2 {
         let geometry = PlanGeometry::of_level(self.doc.project().active_level().expect("level"));
         resolve_snap(world, &geometry, &self.snap_modes, origin, &self.snap).point
+    }
+
+    /// Simple hit test for block instances: returns the instance whose
+    /// transformed definition bounds contain `world`.
+    fn hit_block_instance(&self, world: Point2) -> Option<BlockId> {
+        let level = self.doc.project().active_level()?;
+        // Iterate in reverse so the topmost (last placed) instance wins.
+        for instance in level.block_instances.iter().rev() {
+            let def = level.block_def(instance.block_id);
+            // Build a bounding box from the transformed local points. Fall back
+            // to a small square around the instance origin when the definition
+            // has no geometry of its own.
+            let mut min_x = f64::INFINITY;
+            let mut min_y = f64::INFINITY;
+            let mut max_x = f64::NEG_INFINITY;
+            let mut max_y = f64::NEG_INFINITY;
+            let mut any = false;
+            if let Some(def) = def {
+                for local in def.local_points() {
+                    let p = instance.transform_point(local);
+                    min_x = min_x.min(p.x);
+                    min_y = min_y.min(p.y);
+                    max_x = max_x.max(p.x);
+                    max_y = max_y.max(p.y);
+                    any = true;
+                }
+            }
+            if !any {
+                const HALF: f64 = 250.0;
+                min_x = instance.param.x - HALF;
+                min_y = instance.param.y - HALF;
+                max_x = instance.param.x + HALF;
+                max_y = instance.param.y + HALF;
+            } else {
+                // Pad the bounds a little so thin geometry is still clickable.
+                const PAD: f64 = 50.0;
+                min_x -= PAD;
+                min_y -= PAD;
+                max_x += PAD;
+                max_y += PAD;
+            }
+            if world.x >= min_x && world.x <= max_x && world.y >= min_y && world.y <= max_y {
+                return Some(instance.id);
+            }
+        }
+        None
     }
 
     /// Labels for the active level's layers, as `(LayerId, name)`.
@@ -757,6 +809,47 @@ impl eframe::App for LintelApp {
             }
             self.pointer_world = response.pointer_world;
             self.last_snap = response.snap;
+            // Highlight the selected block instance, if any.
+            if let Some(id) = self.selected_block_instance {
+                let level = self.doc.project().active_level();
+                if let Some(level) = level
+                    && let Some(instance) = level.block_instance(id)
+                {
+                    let def = level.block_def(instance.block_id);
+                    let mut min_x = f64::INFINITY;
+                    let mut min_y = f64::INFINITY;
+                    let mut max_x = f64::NEG_INFINITY;
+                    let mut max_y = f64::NEG_INFINITY;
+                    let mut any = false;
+                    if let Some(def) = def {
+                        for local in def.local_points() {
+                            let p = instance.transform_point(local);
+                            min_x = min_x.min(p.x);
+                            min_y = min_y.min(p.y);
+                            max_x = max_x.max(p.x);
+                            max_y = max_y.max(p.y);
+                            any = true;
+                        }
+                    }
+                    if !any {
+                        const HALF: f64 = 250.0;
+                        min_x = instance.param.x - HALF;
+                        min_y = instance.param.y - HALF;
+                        max_x = instance.param.x + HALF;
+                        max_y = instance.param.y + HALF;
+                    }
+                    let a = world_to_screen(&self.view, rect, Point2::new(min_x, min_y));
+                    let b = world_to_screen(&self.view, rect, Point2::new(max_x, max_y));
+                    let r = egui::Rect::from_two_pos(a, b);
+                    let painter = ui.painter_at(rect);
+                    painter.rect_stroke(
+                        r,
+                        0.0,
+                        egui::Stroke::new(2.0, egui::Color32::from_rgb(220, 60, 60)),
+                        egui::StrokeKind::Outside,
+                    );
+                }
+            }
             self.handle_canvas_input(ui, response, rect, now);
 
             // Status bar (bottom) with version link in the bottom-right corner
@@ -773,6 +866,7 @@ impl eframe::App for LintelApp {
                         &mut self.snap,
                         &mut self.inspector_draft,
                         self.tool == Tool::Measurements,
+                        self.selected_block_instance,
                     ) {
                         let _ = self.doc.apply(cmd, now);
                     }
@@ -806,23 +900,37 @@ impl LintelApp {
             let modifiers = ui.input(|i| i.modifiers);
             match self.tool {
                 Tool::Select => {
-                    let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
-                    match hit {
-                        Some(hit) => {
-                            let id = entity_of(hit);
-                            if modifiers.shift {
-                                self.selection.toggle(id);
-                            } else if modifiers.command || modifiers.ctrl {
-                                self.selection.remove(id);
-                            } else {
-                                self.selection.replace(id);
-                            }
+                    // Block instances are picked before ordinary entities: a
+                    // click inside an instance's bounds selects the instance
+                    // rather than whatever happens to lie beneath it.
+                    let instance_hit = self.hit_block_instance(world);
+                    if let Some(id) = instance_hit {
+                        if modifiers.shift || modifiers.command || modifiers.ctrl {
+                            // Keep single-selection semantics for instances.
+                        } else {
+                            self.selection.clear();
                         }
-                        // Clicking empty canvas clears the set, unless the click
-                        // was building one up.
-                        None => {
-                            if !modifiers.shift && !modifiers.command && !modifiers.ctrl {
-                                self.selection.clear();
+                        self.selected_block_instance = Some(id);
+                    } else {
+                        self.selected_block_instance = None;
+                        let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
+                        match hit {
+                            Some(hit) => {
+                                let id = entity_of(hit);
+                                if modifiers.shift {
+                                    self.selection.toggle(id);
+                                } else if modifiers.command || modifiers.ctrl {
+                                    self.selection.remove(id);
+                                } else {
+                                    self.selection.replace(id);
+                                }
+                            }
+                            // Clicking empty canvas clears the set, unless the click
+                            // was building one up.
+                            None => {
+                                if !modifiers.shift && !modifiers.command && !modifiers.ctrl {
+                                    self.selection.clear();
+                                }
                             }
                         }
                     }
@@ -1051,6 +1159,7 @@ impl LintelApp {
                 self.selection.clear();
                 self.draft = Draft::default();
                 self.band = None;
+                self.selected_block_instance = None;
             }
             if ui.input(|i| i.key_pressed(egui::Key::Delete) || i.key_pressed(egui::Key::Backspace))
             {

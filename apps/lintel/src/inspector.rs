@@ -5,6 +5,7 @@
 use crate::canvas::Selection;
 use eframe::egui;
 use lintel_core::{
+    BlockId,
     command::Command,
     constraint::Constraint,
     document::Document,
@@ -62,6 +63,7 @@ pub fn inspector(
     snap: &mut SnapSettings,
     draft: &mut InspectorDraft,
     measurements_active: bool,
+    selected_block_instance: Option<BlockId>,
 ) -> Option<Command> {
     // A multi-selection is edited one entity at a time: the most recent pick is
     // the one the field edits, and the count is spelled out.
@@ -751,6 +753,30 @@ pub fn inspector(
         .body_returned
         .flatten();
 
+    let block_instance_cmd = egui::CollapsingHeader::new("Block instance")
+        .default_open(true)
+        .show(ui, |ui| match selected_block_instance {
+            None => {
+                ui.label("No block instance selected.");
+                None
+            }
+            Some(id) => {
+                let inst = doc
+                    .project()
+                    .active_level()
+                    .and_then(|l| l.block_instance(id).cloned());
+                match inst {
+                    None => {
+                        ui.label("Selected instance no longer exists.");
+                        None
+                    }
+                    Some(instance) => block_instance_fields(ui, id, &instance),
+                }
+            }
+        })
+        .body_returned
+        .flatten();
+
     element_cmd
         .or(project_cmd)
         .or(storeys_cmd)
@@ -762,6 +788,7 @@ pub fn inspector(
         .or(schedule_cmd)
         .or(measurements_cmd)
         .or(blocks_cmd)
+        .or(block_instance_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
@@ -1192,6 +1219,62 @@ fn label_fields(
     if ui.button("Delete").clicked() {
         command = Some(Command::DeleteLabel { id });
     }
+
+    command
+}
+
+fn block_instance_fields(
+    ui: &mut egui::Ui,
+    id: BlockId,
+    instance: &lintel_core::block::BlockInstance,
+) -> Option<Command> {
+    let mut command: Option<Command> = None;
+
+    let mut x = instance.param.x;
+    let mut y = instance.param.y;
+    ui.horizontal(|ui| {
+        ui.label("X:");
+        ui.add(egui::DragValue::new(&mut x).speed(10.0).suffix(" mm"));
+        ui.label("Y:");
+        ui.add(egui::DragValue::new(&mut y).speed(10.0).suffix(" mm"));
+        if ui.button("Apply").clicked()
+            && ((x - instance.param.x).abs() > f64::EPSILON
+                || (y - instance.param.y).abs() > f64::EPSILON)
+        {
+            command = Some(Command::MoveBlockInstance {
+                block_instance_id: id,
+                position: Point2::new(x, y),
+            });
+        }
+    });
+
+    let mut degrees = instance.rotation.to_degrees();
+    ui.horizontal(|ui| {
+        ui.label("Rotation:");
+        ui.add(egui::DragValue::new(&mut degrees).speed(1.0).suffix("°"));
+        if ui.button("Apply").clicked()
+            && (degrees - instance.rotation.to_degrees()).abs() > f64::EPSILON
+        {
+            command = Some(Command::RotateBlockInstance {
+                block_instance_id: id,
+                rotation: degrees.to_radians(),
+            });
+        }
+    });
+
+    let mut flipped = instance.flipped;
+    ui.horizontal(|ui| {
+        if ui
+            .checkbox(&mut flipped, "Flipped")
+            .on_hover_text("Mirror the block across its local x-axis.")
+            .changed()
+            && flipped != instance.flipped
+        {
+            command = Some(Command::FlipBlockInstance {
+                block_instance_id: id,
+            });
+        }
+    });
 
     command
 }
