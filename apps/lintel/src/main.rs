@@ -1151,11 +1151,11 @@ impl LintelApp {
 
             // Undo / redo. Accept plain Z/Y as well as Ctrl+Z/Ctrl+Y; the
             // keyboard_scope guard already keeps these from firing while typing.
-            if ui
-                .input(|i| {
-                    (i.modifiers.command || plain_keys) && i.key_pressed(egui::Key::Z) && !i.modifiers.shift
-                })
-                && self.doc.can_undo()
+            if ui.input(|i| {
+                (i.modifiers.command || plain_keys)
+                    && i.key_pressed(egui::Key::Z)
+                    && !i.modifiers.shift
+            }) && self.doc.can_undo()
             {
                 self.doc.undo(now);
                 self.selection.clear();
