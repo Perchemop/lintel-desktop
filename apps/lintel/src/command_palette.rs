@@ -655,9 +655,13 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
 
     ui.separator();
     ui.label(
-        egui::RichText::new(format!("{} of {} commands", rows.len(), PaletteAction::ALL.len()))
-            .small()
-            .color(egui::Color32::GRAY),
+        egui::RichText::new(format!(
+            "{} of {} commands",
+            rows.len(),
+            PaletteAction::ALL.len()
+        ))
+        .small()
+        .color(egui::Color32::GRAY),
     );
 }
 
