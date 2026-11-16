@@ -162,6 +162,7 @@ run, recorded in `docs/parity.md`).
 | CAP-123 | Canvas hit-testing and click-to-select | Clicking the Select tool selects the topmost instance under the pointer, outlined in red; Esc clears | `Level::hit_test_block_instance` rejects a non-finite point and tests transformed definition bounds; `apps/lintel/src/main.rs` `hit_block_instance` | — | implemented |
 | CAP-124 | Editable instance fields | Inspector "Block instance" section edits X/Y position, rotation and flip with honest empty states | `apps/lintel/src/inspector.rs` `block_instance_fields` | — | implemented |
 | CAP-125 | Auto-select after an edit | `Applied.block_instance` reports the affected instance so the UI selects it after add/move/rotate/flip | `command::tests::the_block_instance_edits_can_be_undone_and_redone`; `apps/lintel/src/main.rs` | — | implemented |
+| CAP-126 | Dimension label precision | The Inspector "Precision:" control (0–4 dp) changes how many decimal places the drawn dimension label shows; old files load at 0 | `command::tests::a_dimension_label_precision_can_be_set`, `a_dimension_label_precision_is_bounded`, `a_dimension_saved_before_label_precision_still_loads`; `apps/lintel/src/dimension_ui.rs` | — | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -195,3 +196,4 @@ Readiness % (v0.14.0): **100% — shipped** (CAP-111–CAP-115; release `v0.14.0
 Readiness % (v0.15.0): **100% — shipped** (CAP-116–CAP-119; release `v0.15.0`).
 Readiness % (v0.15.1): **100% — shipped** (macOS `.dmg` installer; release `v0.15.1`).
 Readiness % (v0.16.0): **100% of CAP-120–CAP-125 — merged; release tag pending.**
+Readiness % (v0.17.0): **100% of CAP-126 — merged; release tag pending.**

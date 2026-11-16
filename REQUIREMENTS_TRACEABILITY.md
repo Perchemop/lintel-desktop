@@ -111,6 +111,11 @@ Maps user-facing capabilities to source, tests, and releases. Follows guide §11
 | R-16.5 | Editable Inspector instance fields | CAP-124 | `apps/lintel/src/inspector.rs` | v0.16.0 |
 | R-16.6 | Auto-select the affected instance | CAP-125 | `command::tests::the_block_instance_edits_can_be_undone_and_redone` | v0.16.0 |
 
+### v0.17.0 Dimension Label Precision
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-17.1 | Per-dimension label precision (0–4 dp) via Inspector "Precision:" control; old files load at 0 | CAP-126 | `dimension::tests::a_new_dimension_labels_whole_millimetres`, `label_precision_round_trips_and_is_bounded`, `a_dimension_saved_before_label_precision_still_loads`; `command::tests::a_dimension_label_precision_can_be_set`, `a_dimension_label_precision_is_bounded`, `the_new_dimension_commands_round_trip_through_json`; UI `dimension_fields`, `render_dimensions` | v0.17.0 |
+
 ## Suite Standards Compliance
 Guide §12.1 — Suite-wide standards:
 - Token ledger `docs/tokens.json` — **implemented** (CI-managed; updated on each tag).
@@ -123,3 +128,4 @@ Guide §12.1 — Suite-wide standards:
 - 2026-11-07: Added v0.9.0 traceability rows.
 - 2026-11-13: Extended traceability through v0.13.0; corrected suite-standards status (ledger/submodule/signing/version UI).
 - 2026-11-16: Extended traceability through v0.16.0; added the missing v0.14.0 (CAP-111–CAP-115) and v0.15.0 (CAP-116–CAP-119) rows and recorded CAP-120–CAP-125 merged.
+- 2026-11-16: CAP-126 (dimension label precision) merged via PR #48.
