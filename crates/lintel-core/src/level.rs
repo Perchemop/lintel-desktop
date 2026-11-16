@@ -882,6 +882,9 @@ mod tests {
             Some(BlockId(91))
         );
         // With nothing under the point at all, the answer is None.
-        assert_eq!(level.hit_test_block_instance(Point2::new(5000.0, 0.0)), None);
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(5000.0, 0.0)),
+            None
+        );
     }
 }
