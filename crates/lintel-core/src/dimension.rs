@@ -579,7 +579,10 @@ mod tests {
         assert_eq!(back, dimension);
 
         dimension.label_precision = MAX_LABEL_PRECISION + 1;
-        assert!(!dimension.is_valid(), "a label cannot show that many places");
+        assert!(
+            !dimension.is_valid(),
+            "a label cannot show that many places"
+        );
     }
 
     #[test]
