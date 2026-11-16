@@ -784,7 +784,10 @@ mod tests {
             level.hit_test_block_instance(Point2::new(500.0, 200.0)),
             Some(BlockId(77))
         );
-        assert_eq!(level.hit_test_block_instance(Point2::new(5000.0, 5000.0)), None);
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(5000.0, 5000.0)),
+            None
+        );
     }
 
     #[test]
@@ -820,7 +823,10 @@ mod tests {
             level.hit_test_block_instance(Point2::new(-500.0, 0.0)),
             Some(BlockId(82))
         );
-        assert_eq!(level.hit_test_block_instance(Point2::new(500.0, 0.0)), None);
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(500.0, 0.0)),
+            None
+        );
 
         let mut flipped = BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0));
         flipped.id = BlockId(83);
@@ -830,7 +836,10 @@ mod tests {
             level.hit_test_block_instance(Point2::new(0.0, -500.0)),
             Some(BlockId(83))
         );
-        assert_eq!(level.hit_test_block_instance(Point2::new(0.0, 500.0)), None);
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(0.0, 500.0)),
+            None
+        );
     }
 
     #[test]
