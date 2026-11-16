@@ -164,6 +164,12 @@ each green CI run; percentages move only from evidence.
 | CAP-124 | `apps/lintel/src/inspector.rs` `block_instance_fields` (X/Y, rotation, flip, empty states) | `43822843607` (PR #46) | verified |
 | CAP-125 | `Applied.block_instance` + auto-select in `apps/lintel/src/main.rs`; `command::tests::the_block_instance_edits_can_be_undone_and_redone` | `43822843607` (PR #46) | verified |
 
+## v0.17.0 — Dimension Label Precision
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-126 | `Dimension::label_precision` + `SetDimensionPrecision` validator + six domain tests (`a_new_dimension_labels_whole_millimetres`, `label_precision_round_trips_and_is_bounded`, `a_dimension_saved_before_label_precision_still_loads`, `a_dimension_label_precision_can_be_set`, `a_dimension_label_precision_is_bounded`, extended `the_new_dimension_commands_round_trip_through_json`); UI `dimension_fields` precision control + `render_dimensions` label format | `43847513509` (PR #48) | verified |
+
 ## v0.8.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0 —

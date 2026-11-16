@@ -204,6 +204,19 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
+## v0.17.0 Status — IN PROGRESS
+
+**Dimension Label Precision** (CAP-126). One capability, landed on `main`.
+
+- [x] CAP-126 — Per-dimension label precision: `Dimension.label_precision`
+      (0–4 decimal places, serde default 0 so old files load unchanged),
+      `Command::SetDimensionPrecision` with domain validation (rejected values
+      leave the dimension untouched), Inspector "Precision:" control and a
+      canvas/PDF label honouring the setting — PR #48 merged, CI green
+      (run `43847513509`)
+
+**Landed:** CAP-126 (PR #48, run `43847513509`, merge commit `e5b808d`).
+
 ## v0.16.0 Status — RELEASE PREP
 
 **Block Instance Editing & Canvas Selection** (CAP-120–125). All six capabilities landed and are merged to `main`; the release gate (notes, changelog, version bumps, tag) is this change.
@@ -403,9 +416,10 @@ Readiness % (v0.2.0): **100% — shipped.**
 
 ### Still planned (v0.2.x / v0.3.0)
 
-- [ ] Dimension kind selector + extension-line toggle + label precision
-- [ ] Rotated dimensions labels for vertical/aligned dimensions
-- [ ] Installers (AppImage, MSI, macOS .app)
+- [x] Dimension kind selector + extension-line toggle (landed v0.2.x polish, PR #5)
+- [x] Rotated dimension labels for vertical/aligned dimensions (landed v0.2.x polish, PR #5)
+- [x] Label precision (CAP-126, v0.17.0 work — PR #48)
+- [x] Installers (AppImage, signed Windows setup .exe, macOS .dmg — shipped since v0.15.1; MSI/.app bundle formats remain optional)
 - [ ] Accessibility, empty states and keyboard-focus management
 
 ## v0.1.0 Status — RELEASED
