@@ -84,6 +84,33 @@ Maps user-facing capabilities to source, tests, and releases. Follows guide §11
 | R-13.8 | Documentation parity | CAP-107 | docs | v0.13.0 (unreleased) |
 | R-13.9 | Phase A UI completion | CAP-108 | `inspector.rs`, `canvas.rs` | v0.13.0 (unreleased) |
 
+### v0.14.0 Constraint Persistence & Sheet Layout
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-14.1 | Constraint persistence on the level | CAP-111 | `level::tests::constraints_survive_a_save_and_load` | v0.14.0 |
+| R-14.2 | Constraint management UI and commands | CAP-112 | `command::tests::adding_a_constraint_pushes_it_onto_the_active_level` | v0.14.0 |
+| R-14.3 | Sheet title blocks | CAP-113 | `pdf::tests::the_title_block_prints_the_project_fields` | v0.14.0 |
+| R-14.4 | Sheet viewports | CAP-114 | `pdf::tests::a_viewport_is_framed_and_captioned_on_its_sheet` | v0.14.0 |
+| R-14.5 | Release QC checklist | CAP-115 | `docs/qc/release-checklist.md` | v0.14.0 |
+
+### v0.15.0 Blocks & Symbols, Print Polish
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-15.1 | Block definitions and instances | CAP-116 | `command::tests::add_block_instance_happy_path` | v0.15.0 |
+| R-15.2 | Block instance placement UI | CAP-117 | `apps/lintel/src/main.rs`, `inspector.rs` | v0.15.0 |
+| R-15.3 | Viewport print polish | CAP-118 | `pdf::tests::a_viewport_geometry_is_cut_by_a_real_clipping_path` | v0.15.0 |
+| R-15.4 | Constraint palette and solver readout | CAP-119 | `command_palette.rs`, `inspector.rs` | v0.15.0 |
+
+### v0.16.0 Block Instance Editing & Canvas Selection
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-16.1 | Move block instances | CAP-120 | `command::tests::a_block_instance_can_be_moved` | v0.16.0 |
+| R-16.2 | Rotate block instances | CAP-121 | `command::tests::a_block_instance_can_be_rotated` | v0.16.0 |
+| R-16.3 | Flip block instances | CAP-122 | `block::tests::toggle_flip_toggles_the_mirror` | v0.16.0 |
+| R-16.4 | Canvas hit-testing and click-to-select | CAP-123 | `Level::hit_test_block_instance`, `apps/lintel/src/main.rs` | v0.16.0 |
+| R-16.5 | Editable Inspector instance fields | CAP-124 | `apps/lintel/src/inspector.rs` | v0.16.0 |
+| R-16.6 | Auto-select the affected instance | CAP-125 | `command::tests::the_block_instance_edits_can_be_undone_and_redone` | v0.16.0 |
+
 ## Suite Standards Compliance
 Guide §12.1 — Suite-wide standards:
 - Token ledger `docs/tokens.json` — **implemented** (CI-managed; updated on each tag).
@@ -95,3 +122,4 @@ Guide §12.1 — Suite-wide standards:
 ## Change log
 - 2026-11-07: Added v0.9.0 traceability rows.
 - 2026-11-13: Extended traceability through v0.13.0; corrected suite-standards status (ledger/submodule/signing/version UI).
+- 2026-11-16: Extended traceability through v0.16.0; added the missing v0.14.0 (CAP-111–CAP-115) and v0.15.0 (CAP-116–CAP-119) rows and recorded CAP-120–CAP-125 merged.

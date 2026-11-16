@@ -1,14 +1,43 @@
-## v0.15.1 — 2026-11-15
-
-### Summary
-
-Patch release: macOS now ships a signed `.dmg` installer alongside the `.zip` archive, completing the installable-artefacts requirement for every platform. No feature changes from 0.15.0.
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## v0.16.0 — 2026-11-16
+
+### Added
+
+- Move block instances: `MoveBlockInstance` and `Level::move_block_instance`
+  reposition an instance; non-finite positions are rejected and a rejected move
+  leaves the instance unchanged (CAP-120)
+- Rotate block instances: `RotateBlockInstance` and
+  `Level::rotate_block_instance` set the rotation in radians; non-finite angles
+  are rejected (CAP-121)
+- Flip block instances: `FlipBlockInstance` and `BlockInstance::toggle_flip`
+  mirror an instance across its local x-axis (CAP-122)
+- Canvas hit-testing and click-to-select: `Level::hit_test_block_instance`
+  returns the topmost instance under a point, the Select tool prefers instances
+  over ordinary entities, the selected instance is outlined in red and Esc
+  clears the selection (CAP-123)
+- Editable Inspector fields: a "Block instance" section with X/Y position,
+  rotation in degrees and a Flipped checkbox, each applying the matching
+  command, with honest empty states (CAP-124)
+- `Applied.block_instance` reports the affected instance so the UI selects it
+  after add, move, rotate or flip (CAP-125)
+
+### Changed
+
+- Block instances are selectable on the canvas, and the Inspector's position,
+  rotation and flip fields are live instead of read-only (resolves both
+  limitations published in v0.15.0)
+
+## v0.15.1 — 2026-11-15
+
+### Summary
+
+Patch release: macOS now ships a signed `.dmg` installer alongside the `.zip` archive, completing the installable-artefacts requirement for every platform. No feature changes from 0.15.0.
 
 ## v0.13.0 — 2026-11-13
 

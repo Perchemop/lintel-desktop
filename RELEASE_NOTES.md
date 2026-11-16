@@ -1,3 +1,33 @@
+## Lintel 0.16.0 — Block Instance Editing & Canvas Selection
+
+**Summary.** Block instances become editable objects rather than fixed placements: click one on the canvas to select it, then move, rotate and flip it from the Inspector. This resolves both limitations published in 0.15.0 — the instance fields are now live, and instances are hit-tested by clicking.
+
+### Added
+- Move a block instance (CAP-120): set a new X/Y position from the Inspector or with `MoveBlockInstance`; non-finite positions are rejected and a rejected move leaves the instance where it was, with undo/redo and JSON round-trip
+- Rotate a block instance (CAP-121): set the rotation in degrees from the Inspector or with `RotateBlockInstance`; non-finite angles are rejected and the instance keeps its previous rotation
+- Flip a block instance (CAP-122): the Inspector's Flipped checkbox and `FlipBlockInstance` mirror an instance across its local x-axis
+- Select an instance on the canvas (CAP-123): the Select tool hit-tests block instances — the topmost instance under the pointer wins, it is drawn with a red outline, and Esc clears the selection
+- Editable Inspector fields (CAP-124): a "Block instance" section with X/Y position, rotation in degrees and a Flipped checkbox, each applying the matching command; it shows "No block instance selected." when nothing is selected and "Selected instance no longer exists." when the instance has gone
+- Auto-select after an edit (CAP-125): the command result reports the affected instance, so the Inspector stays on the instance you just added, moved, rotated or flipped
+
+### Changed
+- Block instances are now clickable on the canvas in the Select tool and are tested before ordinary entities
+- The Inspector's block-instance position, rotation and flip fields are live instead of read-only
+
+### Known limitations
+- Block instance bounds are bounding-box approximations, so clicking inside the bounding rectangle of a thin rotated wall still selects it
+- Multi-selection of instances is not supported; one instance is selected at a time
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.json` (CI-managed ledger, guide §12.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 65,000 tokens
+
+---
 ## Lintel 0.15.1 — macOS Installer Fix
 
 **Summary.** Patch release: the macOS release now ships a signed `.dmg` installer alongside the `.zip` archive, satisfying the installable-artefacts requirement for every platform. No feature changes from 0.15.0.

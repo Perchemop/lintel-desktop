@@ -204,6 +204,43 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
+## v0.16.0 Status — RELEASE PREP
+
+**Block Instance Editing & Canvas Selection** (CAP-120–125). All six capabilities landed and are merged to `main`; the release gate (notes, changelog, version bumps, tag) is this change.
+
+- [x] CAP-120 — Move block instances: `Command::MoveBlockInstance` +
+      `Level::move_block_instance` with finite-position validation, undo/redo and
+      JSON round-trip — PR #45 merged, CI green (run `43708368391`)
+- [x] CAP-121 — Rotate block instances: `Command::RotateBlockInstance` +
+      `Level::rotate_block_instance` with finite-rotation validation — PR #45
+      merged, CI green (run `43708368391`)
+- [x] CAP-122 — Flip block instances: `Command::FlipBlockInstance` +
+      `BlockInstance::toggle_flip` — PR #45 merged, CI green (run `43708368391`)
+- [x] CAP-123 — Canvas hit-testing and click-to-select:
+      `Level::hit_test_block_instance` (transformed definition bounds, topmost
+      instance wins, non-finite point rejected), `BlockDef::local_points` +
+      `BlockInstance::transform_point`; `Tool::Select` prefers instances, red
+      outline, Esc clears — PR #46 (`74e02c7`), CI green (run `43822843607`)
+- [x] CAP-124 — Editable instance fields in the Inspector: "Block instance"
+      section (X/Y position, rotation degrees, Flipped checkbox) applying
+      `MoveBlockInstance`/`RotateBlockInstance`/`FlipBlockInstance`, honest
+      empty states — PR #46 (run `43822843607`)
+- [x] CAP-125 — `Applied.block_instance` auto-selects the affected instance
+      after add/move/rotate/flip — PR #46 (run `43822843607`)
+- [x] Release gate prep: both crates bumped 0.15.1 → 0.16.0; `RELEASE_NOTES.md`
+      0.16.0 section quoting the ledger; CHANGELOG dated; inventory, parity and
+      traceability extended through CAP-125
+- [ ] Tag `v0.16.0` after this change merges, then confirm the release run and
+      the signed artefacts
+
+**Landed:** all six capabilities (CAP-120–125), merged in PR #45 (run
+`43708368391`) and PR #46 (run `43822843607`, merge commit `d318a96`). Resolves
+both limitations published in v0.15.0: read-only instance fields and no canvas
+hit-testing.
+
+Readiness % (v0.16.0): **100% of CAP-120–125 — merged; release tag pending
+after this change.**
+
 ## v0.10.1 Status — RELEASED
 
 - [x] Window icon embedded via `with_icon()` + `image` crate decode

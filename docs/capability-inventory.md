@@ -137,11 +137,31 @@ run, recorded in `docs/parity.md`).
 | CAP-097 | Command palette | Ctrl+K, fuzzy match, recent commands | `command_palette.rs` | — | implemented |
 | CAP-098 | Snap visual indicators | On-canvas indicators per candidate kind | `canvas.rs` | — | implemented |
 
-## v0.12.0 / v0.13.0 future capabilities
+## v0.12.0–v0.13.0 capabilities
 
 | ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
 |---|---|---|---|---|---|
-| CAP-099 | Drawing set / sheet layout | Title blocks and viewport linking | — | — | not started |
+| CAP-099 | Drawing set / sheet layout | Title blocks and viewport linking | `pdf::tests::render_set_*` | — | implemented (CAP-113/CAP-114) |
+
+## v0.14.0–v0.16.0 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-111 | Constraint persistence | A level stores its constraints; they survive save/load and re-solve on load and after wall edits | `level::tests::constraints_survive_a_save_and_load`; `Project::validate` | — | implemented |
+| CAP-112 | Constraint management | Inspector lists a level's constraints with Remove per row and an add form for perpendicular, fixed-angle and equal-length rules | `command::tests::adding_a_constraint_pushes_it_onto_the_active_level`, `removing_a_constraint_by_index_works`; `inspector.rs` | — | implemented |
+| CAP-113 | Sheet title blocks | Every exported sheet carries a bottom-right title block (company, project, sheet title, level, scale, revision, drawn-by, date, number) | `pdf::tests::the_title_block_prints_the_project_fields`; `command::tests::setting_the_title_block_replaces_it_and_trims_whitespace` | — | implemented |
+| CAP-114 | Sheet viewports | A level can be placed on a sheet several times through framed, scale-fit viewports with optional captions; invalid viewports are rejected | `pdf::tests::a_viewport_is_framed_and_captioned_on_its_sheet`; `command::tests::a_viewport_bound_to_a_missing_level_is_refused` | — | implemented |
+| CAP-115 | Release QC checklist | `docs/qc/release-checklist.md` covers signed artefacts, AppImage smoke, screen-reader pass and ledger consistency with sign-off lines | `docs/qc/release-checklist.md` | guide §2.5 | implemented |
+| CAP-116 | Block definitions | Named groups of entities stored on the project; add/remove definitions and instances are validated, undoable and persist | `command::tests::add_block_def_pushes_onto_the_active_level`; `level::tests::block_defs_and_instances_survive_a_save_and_load` | — | implemented |
+| CAP-117 | Block instance placement UI | `Tool::Block` places an instance on the canvas from an inspector-selected definition; the inspector lists definitions and instances | `apps/lintel/src/main.rs`; `apps/lintel/src/inspector.rs` | — | implemented |
+| CAP-118 | Viewport print polish | Real PDF clipping at the viewport region, viewport-anchored north arrow and scale bar, placement guards with fallback | `pdf::tests::a_viewport_geometry_is_cut_by_a_real_clipping_path`, `each_viewport_carries_its_own_north_arrow_and_scale_bar` | — | implemented |
+| CAP-119 | Constraint palette and solver readout | Constraint entries in the command palette and a read-only inspector "Constraint solver" section with count and validation status | `command_palette.rs`; `inspector.rs` | — | implemented |
+| CAP-120 | Move a block instance | Change an instance's X/Y position from the inspector or command; non-finite positions rejected and the instance left unchanged | `command::tests::a_block_instance_can_be_moved`, `a_block_instance_position_must_be_finite`; `level::tests::block_instances_can_be_moved_rotated_and_flipped` | — | implemented |
+| CAP-121 | Rotate a block instance | Change an instance's rotation; non-finite angles rejected | `command::tests::a_block_instance_can_be_rotated`, `a_block_instance_rotation_must_be_finite` | — | implemented |
+| CAP-122 | Flip a block instance | Mirror an instance across its local x-axis | `command::tests::a_block_instance_can_be_flipped`; `block::tests::toggle_flip_toggles_the_mirror` | — | implemented |
+| CAP-123 | Canvas hit-testing and click-to-select | Clicking the Select tool selects the topmost instance under the pointer, outlined in red; Esc clears | `Level::hit_test_block_instance` rejects a non-finite point and tests transformed definition bounds; `apps/lintel/src/main.rs` `hit_block_instance` | — | implemented |
+| CAP-124 | Editable instance fields | Inspector "Block instance" section edits X/Y position, rotation and flip with honest empty states | `apps/lintel/src/inspector.rs` `block_instance_fields` | — | implemented |
+| CAP-125 | Auto-select after an edit | `Applied.block_instance` reports the affected instance so the UI selects it after add/move/rotate/flip | `command::tests::the_block_instance_edits_can_be_undone_and_redone`; `apps/lintel/src/main.rs` | — | implemented |
 
 ## Explicitly out of scope for v0.1.0
 
@@ -170,4 +190,8 @@ Readiness % (v0.10.0): **100% — shipped** (release `0.10.0`).
 Readiness % (v0.10.1): **100% — shipped** (release `0.10.1`).
 Readiness % (v0.11.0): **100% — shipped** (tag `v0.11.0`, commit `803b590`).
 Readiness % (v0.12.1): **100% — shipped** (Phase A; tag `v0.12.1`, rebuilt 2026-11-10).
-Readiness % (v0.13.0): **in progress** — CAP-100–CAP-108 landed; docs parity (CAP-107) in flight; unreleased.
+Readiness % (v0.13.0): **100% — shipped** (CAP-100–CAP-108; first signed release).
+Readiness % (v0.14.0): **100% — shipped** (CAP-111–CAP-115; release `v0.14.0`).
+Readiness % (v0.15.0): **100% — shipped** (CAP-116–CAP-119; release `v0.15.0`).
+Readiness % (v0.15.1): **100% — shipped** (macOS `.dmg` installer; release `v0.15.1`).
+Readiness % (v0.16.0): **100% of CAP-120–CAP-125 — merged; release tag pending.**
