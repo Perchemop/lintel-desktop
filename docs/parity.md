@@ -160,7 +160,7 @@ each green CI run; percentages move only from evidence.
 | CAP-120 | `command::tests::a_block_instance_can_be_moved`, `a_block_instance_position_must_be_finite`; `level::tests::block_instances_can_be_moved_rotated_and_flipped` | `43708368391` (PR #45) | verified |
 | CAP-121 | `command::tests::a_block_instance_can_be_rotated`, `a_block_instance_rotation_must_be_finite` | `43708368391` (PR #45) | verified |
 | CAP-122 | `command::tests::a_block_instance_can_be_flipped`; `block::tests::toggle_flip_toggles_the_mirror` | `43708368391` (PR #45) | verified |
-| CAP-123 | `Level::hit_test_block_instance`; `apps/lintel/src/main.rs` `hit_block_instance` (UI path; no direct unit test) | `43822843607` (PR #46) | verified |
+| CAP-123 | `Level::hit_test_block_instance` with five unit tests (`a_click_inside_an_instances_bounds_finds_it`, `hit_test_respects_rotation_and_flip`, `hit_test_rejects_non_finite_points`, `hit_test_prefers_the_topmost_instance`, `hit_test_skips_instances_with_missing_definitions`); UI path `apps/lintel/src/main.rs` `hit_block_instance` | `43822843607` (PR #46), `302f1dcb` (PR #47) | verified |
 | CAP-124 | `apps/lintel/src/inspector.rs` `block_instance_fields` (X/Y, rotation, flip, empty states) | `43822843607` (PR #46) | verified |
 | CAP-125 | `Applied.block_instance` + auto-select in `apps/lintel/src/main.rs`; `command::tests::the_block_instance_edits_can_be_undone_and_redone` | `43822843607` (PR #46) | verified |
 
