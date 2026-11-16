@@ -134,7 +134,6 @@ pub enum PaletteAction {
     // Constraints.
     AddPerpendicularConstraint,
     RemoveConstraint,
-    ViewConstraints,
     // Project.
     RenameProject,
     AddStorey,
@@ -190,7 +189,6 @@ impl PaletteAction {
         PaletteAction::DeleteConstruction,
         PaletteAction::AddPerpendicularConstraint,
         PaletteAction::RemoveConstraint,
-        PaletteAction::ViewConstraints,
         PaletteAction::RenameProject,
         PaletteAction::AddStorey,
         PaletteAction::DeleteStorey,
@@ -243,7 +241,6 @@ impl PaletteAction {
             PaletteAction::DeleteConstruction => "Delete construction",
             PaletteAction::AddPerpendicularConstraint => "Add Perpendicular Distance Constraint",
             PaletteAction::RemoveConstraint => "Remove Constraint",
-            PaletteAction::ViewConstraints => "View Constraints",
             PaletteAction::RenameProject => "Rename project",
             PaletteAction::AddStorey => "Add storey",
             PaletteAction::DeleteStorey => "Delete storey",
@@ -285,8 +282,8 @@ impl PaletteAction {
             PaletteAction::ToggleOrtho => "O",
             PaletteAction::ToggleUnits => "U",
             PaletteAction::ShowAbout => "",
-            PaletteAction::ShowReleaseNotes => "",
-            PaletteAction::CheckForUpdates => "",
+            PaletteAction::ShowReleaseNotes => "R",
+            PaletteAction::CheckForUpdates => "Ctrl+U",
             PaletteAction::ConstructionLineTool => "C",
             PaletteAction::ConstructionRayTool => "Shift+C",
             PaletteAction::ConstructionCircleTool => "Q",
@@ -342,8 +339,7 @@ impl PaletteAction {
             | PaletteAction::ConstructionVisible
             | PaletteAction::DeleteConstruction => "Layers",
             PaletteAction::AddPerpendicularConstraint
-            | PaletteAction::RemoveConstraint
-            | PaletteAction::ViewConstraints => "Constraints",
+            | PaletteAction::RemoveConstraint => "Constraints",
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
@@ -803,7 +799,7 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
                 let _ = app.doc.apply(Command::RemoveConstraint { index }, now);
             }
         }
-        PaletteAction::AddPerpendicularConstraint | PaletteAction::ViewConstraints => {}
+        PaletteAction::AddPerpendicularConstraint => {}
         PaletteAction::NewPlan => app.new_plan(),
         PaletteAction::OpenPlan => app.open_plan(now),
         PaletteAction::SavePlan => app.save_plan(now),
@@ -1410,7 +1406,14 @@ mod tests {
         for action in PaletteAction::ALL {
             assert!(!action.label().is_empty(), "{action:?} needs a label");
             assert!(!action.category().is_empty());
-            assert!(!action.shortcut().is_empty() || action.needs_parameters());
+            // Every action is keyboard-reachable or opens a parameter form,
+            // except About: it is menu-reachable (Help ▸ About Lintel…) and
+            // `?` is not a typeable egui key, so it carries no hint.
+            let menu_only = matches!(action, PaletteAction::ShowAbout);
+            assert!(
+                !action.shortcut().is_empty() || action.needs_parameters() || menu_only,
+                "{action:?} needs a wired shortcut, a parameter form or a menu path"
+            );
             labels.push(action.label());
         }
         labels.sort_unstable();
@@ -1423,7 +1426,10 @@ mod tests {
         let mut shortcuts: Vec<&str> = Vec::new();
         for action in PaletteAction::ALL {
             let s = action.shortcut();
-            if !s.is_empty() {
+            // `Del` is context-dependent by design: whichever selection kind
+            // exists (entity, construction or constraint) is what it deletes,
+            // so several actions may share the hint.
+            if !s.is_empty() && s != "Del" {
                 shortcuts.push(s);
             }
         }

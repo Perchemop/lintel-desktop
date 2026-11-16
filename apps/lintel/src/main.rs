@@ -1267,6 +1267,16 @@ impl LintelApp {
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::T)) {
                 self.snap_modes.toggle(SnapModeKind::Tangent);
             }
+            // Release notes (palette + menu share the flow; R mirrors the
+            // palette hint).
+            if plain_keys && ui.input(|i| i.key_pressed(egui::Key::R)) {
+                self.showing_notes = true;
+            }
+            // Check for updates (Ctrl+U mirrors the palette hint).
+            if ui.input(|i| i.modifiers.command && i.key_pressed(egui::Key::U)) {
+                self.start_update_check();
+                self.showing_about = true;
+            }
         }
     }
 

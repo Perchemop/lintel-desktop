@@ -32,6 +32,8 @@ Generated from code on 2026-11-16 (`apps/lintel/src/main.rs` keyboard block and
 | X | Construction arc tool | main.rs keyboard block |
 | Shift+V | Toggle construction visibility | main.rs keyboard block |
 | F | Zoom to fit | main.rs keyboard block |
+| R | Release notes | main.rs keyboard block |
+| Ctrl+U | Check for updates | main.rs keyboard block |
 | Ctrl+K | Command palette | main.rs ui() (global) |
 
 ## Palette navigation
@@ -80,4 +82,7 @@ Generated from code on 2026-11-16 (`apps/lintel/src/main.rs` keyboard block and
 | X | Construction arc tool |
 | Shift+V | Construction visibility |
 | Ctrl+Shift+P | Add Perpendicular Distance Constraint |
-Why empty (removed): ShowAbout (?), ShowReleaseNotes (R), CheckForUpdates (U), ViewConstraints (Shift+K) — no wired handler.
+Why empty: ShowAbout only — it is menu-reachable (Help ▸ About Lintel…) and `?`
+is not a typeable egui key. R (Release notes) and Ctrl+U (Check for updates)
+are wired in `main.rs`. The dead "View Constraints" palette entry was removed
+(it executed nothing; constraints are read in the Inspector's solver section).
