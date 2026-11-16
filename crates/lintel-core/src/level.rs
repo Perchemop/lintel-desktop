@@ -756,4 +756,146 @@ mod tests {
         assert_eq!(back.block_defs.len(), 1);
         assert_eq!(back.block_instances.len(), 1);
     }
+
+    fn wall_def(def_id: BlockId, wall_id: crate::ids::WallId, length: f64) -> BlockDef {
+        BlockDef::new(def_id, "Header").add_entity(crate::block::BlockEntity::Wall(
+            crate::wall::Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(length, 0.0),
+                100.0,
+                2100.0,
+            ),
+        ))
+    }
+
+    #[test]
+    fn a_click_inside_an_instances_bounds_finds_it() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        let mut instance = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
+        instance.id = BlockId(77);
+        level.block_instances.push(instance);
+
+        // The wall band (x 0..900, y ±50) lands at x 100..1000, y 150..250.
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(500.0, 200.0)),
+            Some(BlockId(77))
+        );
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(5000.0, 5000.0)),
+            None
+        );
+    }
+
+    #[test]
+    fn hit_test_respects_rotation_and_flip() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        // A vertical measuring line spans local y 0..1000 at x = 0, which the
+        // flip mirrors below the block origin and a quarter turn swings onto
+        // the negative x-axis.
+        let def = BlockDef::new(BlockId(1), "Marker").add_entity(
+            crate::block::BlockEntity::Dimension(crate::dimension::Dimension::new(
+                crate::ids::DimensionId(1),
+                DimensionKind::LinearVertical,
+                Point2::new(0.0, 0.0),
+                Point2::new(0.0, 1000.0),
+                0.0,
+            )),
+        );
+        level.block_defs.push(def);
+
+        let mut plain = BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0));
+        plain.id = BlockId(81);
+        level.block_instances.push(plain);
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(0.0, 500.0)),
+            Some(BlockId(81))
+        );
+
+        let mut rotated = BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0));
+        rotated.id = BlockId(82);
+        rotated.rotation = std::f64::consts::FRAC_PI_2;
+        level.block_instances[0] = rotated;
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(-500.0, 0.0)),
+            Some(BlockId(82))
+        );
+        assert_eq!(level.hit_test_block_instance(Point2::new(500.0, 0.0)), None);
+
+        let mut flipped = BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0));
+        flipped.id = BlockId(83);
+        flipped.toggle_flip();
+        level.block_instances[0] = flipped;
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(0.0, -500.0)),
+            Some(BlockId(83))
+        );
+        assert_eq!(level.hit_test_block_instance(Point2::new(0.0, 500.0)), None);
+    }
+
+    #[test]
+    fn hit_test_rejects_non_finite_points() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        level
+            .block_instances
+            .push(BlockInstance::new(BlockId(1), Point2::new(0.0, 0.0)));
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(f64::NAN, 0.0)),
+            None
+        );
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(0.0, f64::INFINITY)),
+            None
+        );
+    }
+
+    #[test]
+    fn hit_test_prefers_the_topmost_instance() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        let mut lower = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
+        lower.id = BlockId(101);
+        let mut upper = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
+        upper.id = BlockId(102);
+        level.block_instances.push(lower);
+        level.block_instances.push(upper);
+        // Both bounds cover the point; the later-placed instance is on top.
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(500.0, 200.0)),
+            Some(BlockId(102))
+        );
+    }
+
+    #[test]
+    fn hit_test_skips_instances_with_missing_definitions() {
+        let mut level = Level::new(LevelId(1), "Level 0", 0.0);
+        level
+            .block_defs
+            .push(wall_def(BlockId(1), crate::ids::WallId(1), 900.0));
+        let mut valid = BlockInstance::new(BlockId(1), Point2::new(100.0, 200.0));
+        valid.id = BlockId(91);
+        let mut orphan = BlockInstance::new(BlockId(99), Point2::new(100.0, 200.0));
+        orphan.id = BlockId(92);
+        level.block_instances.push(valid);
+        level.block_instances.push(orphan);
+        // The orphan sits on top but has no definition, so the valid
+        // instance underneath answers the query.
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(500.0, 200.0)),
+            Some(BlockId(91))
+        );
+        // With nothing under the point at all, the answer is None.
+        assert_eq!(
+            level.hit_test_block_instance(Point2::new(5000.0, 0.0)),
+            None
+        );
+    }
 }

@@ -134,6 +134,36 @@ each green CI run; percentages move only from evidence.
 | CAP-107 | Documentation parity | this slice | implemented (unreleased) |
 | CAP-108 | Phase A UI completion | PR #27 `e86f697` | implemented (unreleased) |
 
+## v0.14.0 — Constraint Persistence & Sheet Layout
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-111 | `Level.constraints` (serde default), `Project::validate`, `level::tests::constraints_survive_a_save_and_load` | PR #31 | verified |
+| CAP-112 | `AddConstraint`/`RemoveConstraint` + `inspector.rs` Constraints panel; `command::tests::adding_a_constraint_pushes_it_onto_the_active_level` | PR #32 `ef21549` | verified |
+| CAP-113 | `TitleBlock` + `SetTitleBlock`; `pdf::tests::the_title_block_prints_the_project_fields` | PR #33 `cb9f5cf` | verified |
+| CAP-114 | `Viewport` + framed scale-fit rendering; `pdf::tests::a_viewport_is_framed_and_captioned_on_its_sheet` | PR #33 | verified |
+| CAP-115 | `docs/qc/release-checklist.md` (six sections with sign-off lines) | release run `43529660411` | verified |
+
+## v0.15.0 — Blocks & Symbols, Print Polish
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-116 | `BlockDef`/`BlockInstance` + add/remove commands; `command::tests::add_block_instance_happy_path`, `block_commands_round_trip_through_json` | PR #37 | verified |
+| CAP-117 | `Tool::Block` placement and inspector "Blocks" section (`apps/lintel/src/main.rs`, `inspector.rs`) | PR #38 | verified |
+| CAP-118 | `pdf::tests::a_viewport_geometry_is_cut_by_a_real_clipping_path`, `each_viewport_carries_its_own_north_arrow_and_scale_bar` | PR #39 | verified |
+| CAP-119 | `AddConstraint` palette entries + read-only inspector "Constraint solver" readout | PR #40 | verified |
+
+## v0.16.0 — Block Instance Editing & Canvas Selection
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-120 | `command::tests::a_block_instance_can_be_moved`, `a_block_instance_position_must_be_finite`; `level::tests::block_instances_can_be_moved_rotated_and_flipped` | `43708368391` (PR #45) | verified |
+| CAP-121 | `command::tests::a_block_instance_can_be_rotated`, `a_block_instance_rotation_must_be_finite` | `43708368391` (PR #45) | verified |
+| CAP-122 | `command::tests::a_block_instance_can_be_flipped`; `block::tests::toggle_flip_toggles_the_mirror` | `43708368391` (PR #45) | verified |
+| CAP-123 | `Level::hit_test_block_instance` with five unit tests (`a_click_inside_an_instances_bounds_finds_it`, `hit_test_respects_rotation_and_flip`, `hit_test_rejects_non_finite_points`, `hit_test_prefers_the_topmost_instance`, `hit_test_skips_instances_with_missing_definitions`); UI path `apps/lintel/src/main.rs` `hit_block_instance` | `43822843607` (PR #46), `302f1dcb` (PR #47) | verified |
+| CAP-124 | `apps/lintel/src/inspector.rs` `block_instance_fields` (X/Y, rotation, flip, empty states) | `43822843607` (PR #46) | verified |
+| CAP-125 | `Applied.block_instance` + auto-select in `apps/lintel/src/main.rs`; `command::tests::the_block_instance_edits_can_be_undone_and_redone` | `43822843607` (PR #46) | verified |
+
 ## v0.8.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0 —
