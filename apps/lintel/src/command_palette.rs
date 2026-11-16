@@ -292,7 +292,6 @@ impl PaletteAction {
             PaletteAction::DeleteConstruction => "Del",
             PaletteAction::AddPerpendicularConstraint => "Ctrl+Shift+P",
             PaletteAction::RemoveConstraint => "Del",
-            PaletteAction::ViewConstraints => "",
             _ => "",
         }
     }
