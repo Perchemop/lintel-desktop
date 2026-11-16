@@ -970,6 +970,22 @@ fn dimension_fields(
         return Some(Command::SetDimensionKind { id, kind });
     }
 
+    let mut precision = dimension.label_precision as f64;
+    ui.horizontal(|ui| {
+        ui.label("Precision:");
+        ui.add(
+            egui::DragValue::new(&mut precision)
+                .speed(1.0)
+                .range(0.0..=4.0)
+                .suffix(" dp"),
+        )
+        .on_hover_text("Decimal places shown on the drawn dimension label (0–4).");
+    });
+    let precision = precision.round().clamp(0.0, 4.0) as u8;
+    if precision != dimension.label_precision {
+        return Some(Command::SetDimensionPrecision { id, precision });
+    }
+
     let mut offset = dimension.offset;
     ui.horizontal(|ui| {
         ui.label("Offset:");

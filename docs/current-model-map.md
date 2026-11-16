@@ -58,3 +58,15 @@ Available skill directories under `~/.config/opencode/skills/` include: `rust-en
 - CI green before asking client to try a build
 - Release ships installable artefacts per platform (not just zips) plus `SHA256SUMS.txt` + `.asc`
 - Release tag is ancestor of `main` before declaring completion
+
+## Guide synchronization record (§12.3)
+
+- **2026-11-16 — guide.md dated 2026-11-16 (1,557 lines) read in full** (§0–18,
+  II.18–II.30, §12, §19–22) and diffed against the agent ruleset
+  (`~/.config/opencode/AGENTS.md`). Ruleset updated with: §6.1 Versioning
+  Policy (semver, pre-releases, tag-after-green), §6.3 readiness-% formulas +
+  CHANGELOG-as-source-of-truth, §6.5 Emergency/Security Releases, §7.2
+  updater token persistence (keychain, minimal scopes) and required signature
+  verification with `docs/update-signing.md` pointer, and the §22 pstack
+  rigor posture (already carried from the same-day sync). Design guidelines
+  re-pointed to guide §20/§21; `~/design-guidelines.md` deprecated.

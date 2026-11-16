@@ -64,7 +64,11 @@ pub fn render_dimensions(
         } else if angle <= -std::f32::consts::FRAC_PI_2 {
             angle += std::f32::consts::PI;
         }
-        let label = format!("{:.0} mm", dim.length_at(Some(level)));
+        let label = format!(
+            "{:.*} mm",
+            dim.label_precision as usize,
+            dim.length_at(Some(level))
+        );
         let font = egui::FontId::proportional(11.0);
         let galley = painter.layout_no_wrap(label, font, stroke_color);
         let pos = egui::Pos2::new(mid.x, mid.y) + normal * 8.0;
