@@ -261,7 +261,12 @@ impl LintelApp {
     /// cleared regardless.
     fn delete_selection(&mut self, now: i64) {
         if let Some(id) = self.selected_block_instance.take() {
-            if let Err(e) = self.doc.apply(Command::DeleteBlockInstance { block_instance_id: id }, now) {
+            if let Err(e) = self.doc.apply(
+                Command::DeleteBlockInstance {
+                    block_instance_id: id,
+                },
+                now,
+            ) {
                 self.note_status(format!("Could not delete: {e}"), now);
             }
             return;
