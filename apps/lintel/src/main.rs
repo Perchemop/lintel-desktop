@@ -10,13 +10,13 @@ use crate::command_palette::CommandPalette;
 use crate::inspector::{InspectorDraft, inspector};
 use eframe::egui;
 use lintel_core::{
+    BlockId,
     command::Command,
     document::Document,
     geom::{Bounds, Point2, Vec2},
     ids::EntityId,
     join::{Hit, PlanGeometry},
 };
-use lintel_core::BlockId;
 
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
