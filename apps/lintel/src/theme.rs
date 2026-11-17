@@ -65,11 +65,16 @@ pub const PALETTE_CATEGORY: Color32 = Color32::from_rgb(105, 105, 105); // 5.2:1
 /// Convert an egui colour to a plain RGB tuple (alpha dropped). Useful for the
 /// WCAG contrast helpers below, which operate on `(u8, u8, u8)` so they have
 /// no egui dependency in the maths.
+// Consumed by the `theme_colours_meet_wcag_aa` merge-gate test (guide
+// II.30.7.1); the binary itself does not call it yet, hence the allow.
+#[allow(dead_code)]
 pub fn rgb_of(colour: Color32) -> (u8, u8, u8) {
     (colour.r(), colour.g(), colour.b())
 }
 
 /// Relative luminance per WCAG 2.2 (sRGB linearised). Guide II.30.7.1.
+// Consumed by the contrast merge-gate test; see `rgb_of`.
+#[allow(dead_code)]
 pub fn relative_luminance(rgb: (u8, u8, u8)) -> f64 {
     fn channel(c: u8) -> f64 {
         let c = c as f64 / 255.0;
@@ -83,6 +88,8 @@ pub fn relative_luminance(rgb: (u8, u8, u8)) -> f64 {
 }
 
 /// Contrast ratio `(L1 + 0.05) / (L2 + 0.05)`, lighter over darker.
+// Consumed by the contrast merge-gate test; see `rgb_of`.
+#[allow(dead_code)]
 pub fn contrast_ratio(a: (u8, u8, u8), b: (u8, u8, u8)) -> f64 {
     let la = relative_luminance(a);
     let lb = relative_luminance(b);
