@@ -66,7 +66,7 @@ pub const PALETTE_CATEGORY: Color32 = Color32::from_rgb(105, 105, 105); // 5.2:1
 /// WCAG contrast helpers below, which operate on `(u8, u8, u8)` so they have
 /// no egui dependency in the maths.
 pub fn rgb_of(colour: Color32) -> (u8, u8, u8) {
-    (colour.r, colour.g, colour.b)
+    (colour.r(), colour.g(), colour.b())
 }
 
 /// Relative luminance per WCAG 2.2 (sRGB linearised). Guide II.30.7.1.
