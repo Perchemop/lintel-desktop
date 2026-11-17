@@ -46,10 +46,7 @@ fn inspector_sections_labelled() {
 fn canvas_summary_accessible() {
     harness::run(app(), |tree| {
         let canvas = tree.canvas();
-        assert!(
-            canvas.role().is_some(),
-            "canvas missing AccessKit role"
-        );
+        assert!(canvas.role().is_some(), "canvas missing AccessKit role");
         let name = canvas.name();
         let summary = plan_summary(&Project::default());
         assert!(
