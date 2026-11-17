@@ -118,7 +118,7 @@ Maps user-facing capabilities to source, tests, and releases. Follows guide §11
 
 ## Suite Standards Compliance
 Guide §12.1 — Suite-wide standards:
-- Token ledger `docs/tokens.json` — **implemented** (CI-managed; updated on each tag).
+- Token ledger `docs/tokens.md` — **implemented** (CI-managed; updated on each tag).
 - `crates/update-check` shared submodule — **implemented** (git submodule of `Perchemop/lintel-shared-crates`; see DECISIONS.md D-029).
 - Auto-update signature + SHA256SUMS verification — **implemented as of CAP-106** (release.yml fails unsigned; self-verifies signature).
 - Version UI bottom-right + Release Notes popup with token metrics + Update button — **implemented** (v0.10.0+).

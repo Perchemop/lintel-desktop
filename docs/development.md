@@ -119,8 +119,8 @@ Core tests run headless — no `DISPLAY`, GPU, or window server required.
 2. Bump versions in `apps/lintel/Cargo.toml` and `crates/lintel-core/Cargo.toml`.
 3. Tag with `vX.Y.Z` and push — `release.yml` builds multi-platform artefacts,
    generates `SHA256SUMS.txt`, and publishes the GitHub Release.
-4. CI updates `docs/tokens.json` on each semver tag.
-5. Release notes must reference `docs/tokens.json` ledger values.
+4. CI updates `docs/tokens.md` on each semver tag.
+5. Release notes must reference `docs/tokens.md` ledger values.
 
 ## Clean-room rules
 

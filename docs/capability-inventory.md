@@ -92,7 +92,7 @@ run, recorded in `docs/parity.md`).
 
 | ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
 |---|---|---|---|---|---|
-| CAP-075 | CI-managed token ledger | `docs/tokens.json` updated by CI on each tag | `release.yml` | guide §12.1 | implemented |
+| CAP-075 | CI-managed token ledger | `docs/tokens.md` updated by CI on each tag | `release.yml` | guide §12.1 | implemented |
 | CAP-076 | Release signing step | `release.yml` signs artefacts when key present | `release.yml` | guide §12.1 | implemented |
 | CAP-077 | Development docs | `docs/development.md` added | — | guide §12.1 | implemented |
 | CAP-078 | Property-based fuzz tests | Geometry and command-layer proptests | `properties.rs` | guide §12.1 | implemented |

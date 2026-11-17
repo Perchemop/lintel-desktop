@@ -16,7 +16,7 @@
       audit F1)
 - [x] CI green, tag `v0.11.0` on `main` (commit `803b590`), GitHub Release
       published with all assets and `SHA256SUMS.txt`
-- [x] `docs/tokens.json` ledger updated by CI (CI-owned; hand commits discarded)
+- [x] `docs/tokens.md` ledger updated by CI (CI-owned; hand commits discarded)
 - [ ] Guide §12.1 release gate: signed artefacts — `SHA256SUMS.txt.asc` still
       absent (audit F3: GPG step silently skips when `GPG_PRIVATE_KEY` unset);
       release notes for 0.11.0 added in `803b590`
@@ -42,7 +42,7 @@ published under tag `v0.12.1`.
       `803b590` (tag originally shipped with a stale 0.10.1 stamp — audit F1)
 - [x] CI green, tag `v0.12.1` on `main` (commit `803b590`), GitHub Release
       published with all assets and `SHA256SUMS.txt`
-- [x] Guide §12.1 gate: `docs/tokens.json` ledger updated by CI (30,000
+- [x] Guide §12.1 gate: `docs/tokens.md` ledger updated by CI (30,000
       cumulative after the 2026-11-10 rebuild runs)
 - [x] Signing gate (audit F3) — capability in place 2026-11-11: repo secret
       `GPG_PRIVATE_KEY` set (project key `09960C90…E442D0FE`, `Lintel Release
@@ -264,13 +264,13 @@ after this change.**
 - [x] Command-layer fuzz tests added (3 proptest cases in `crates/lintel-core/tests/properties.rs`)
 - [x] CI green (PR #16 audit fixes merged, PR #17 v0.10.1 bump)
 - [x] v0.10.1 tag and GitHub Release published — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.1 (release run `42372245530`; all seven assets present, `SHA256SUMS.txt` verified)
-- [x] Token ledger `docs/tokens.json` updated by CI; cumulative 10,000 tokens (ledger accumulation bug fixed)
+- [x] Token ledger `docs/tokens.md` updated by CI; cumulative 10,000 tokens (ledger accumulation bug fixed)
 
 Readiness % (v0.10.1): **100% — shipped.**
 
 ## v0.10.0 Status — RELEASED
 
-- [x] Suite-standard conformance: `docs/tokens.json` CI-managed ledger, release signing step added to `release.yml`, `docs/development.md` added
+- [x] Suite-standard conformance: `docs/tokens.md` CI-managed ledger, release signing step added to `release.yml`, `docs/development.md` added
 - [x] Property-based geometry and command-layer fuzz tests added (`crates/lintel-core/tests/properties.rs`)
 - [x] Version UI moved to bottom-right; Release Notes popup gains Update button
 - [x] Window icon embedded via `include_bytes!` + `image` crate

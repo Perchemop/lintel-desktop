@@ -80,7 +80,7 @@ each green CI run; percentages move only from evidence.
 
 | ID | Evidence | CI run | Status |
 |---|---|---|---|
-| CAP-075 | `docs/tokens.json` CI-managed ledger | release run `42365552699` | verified |
+| CAP-075 | `docs/tokens.md` CI-managed ledger | release run `42365552699` | verified |
 | CAP-076 | Release signing step in `release.yml` | release run `42365552699` | verified |
 | CAP-077 | `docs/development.md` added | release run `42365552699` | verified |
 | CAP-078 | Property-based geometry + command-layer fuzz tests | release run `42365552699` | verified |

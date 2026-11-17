@@ -23,7 +23,7 @@ this checklist covers what the pipeline cannot see.
       ```
 
 - [ ] `RELEASE_NOTES.md` has a section for the release version, quoting the
-      `docs/tokens.json` ledger values (this release + cumulative).
+      `docs/tokens.md` ledger values (this release + cumulative).
 - [ ] `CHANGELOG.md` entry dated for the release.
 
 ## 2. Signed artefacts (automated by `release.yml`, verify after publish)
@@ -69,13 +69,13 @@ this checklist covers what the pipeline cannot see.
 
 ## 5. Ledger and notes consistency
 
-- [ ] After the tag push, `docs/tokens.json` on `main` shows the new
-      `release_version` and incremented cumulative figure (CI-owned; do not
+- [ ] After the tag push, `docs/tokens.md` on `main` ends with the new
+      release's row and an incremented cumulative figure (CI-owned; do not
       hand-edit):
 
       ```bash
-      gh api repos/Perchemop/lintel-desktop/contents/docs/tokens.json \
-        --jq .content | base64 -d
+      gh api repos/Perchemop/lintel-desktop/contents/docs/tokens.md \
+        --jq .content | base64 -d | grep -E '^\| v' | tail -1
       ```
 
 - [ ] The published release body's "Token metrics" section matches the
