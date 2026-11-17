@@ -28,11 +28,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             None => "Snap: free".to_string(),
         };
         ui.separator();
-        ui.label(
-            egui::RichText::new(snap_text)
-                .small()
-                .color(theme::HINT),
-        );
+        ui.label(egui::RichText::new(snap_text).small().color(theme::HINT));
         ui.separator();
 
         // Active tool name.
@@ -131,11 +127,10 @@ fn chip(
     hint: &str,
     toggle: impl FnOnce(),
 ) {
-    let text = egui::RichText::new(label).small().color(if active {
-        active_colour
-    } else {
-        theme::HINT
-    });
+    let text =
+        egui::RichText::new(label)
+            .small()
+            .color(if active { active_colour } else { theme::HINT });
     let response = ui.selectable_label(active, text).on_hover_text(hint);
     if response.clicked() {
         toggle();

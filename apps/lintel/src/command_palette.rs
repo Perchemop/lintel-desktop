@@ -16,8 +16,8 @@ use lintel_core::{
 
 use crate::LintelApp;
 use crate::Tool;
-use crate::theme;
 use crate::canvas::{Draft, Selection, SnapModeKind};
+use crate::theme;
 
 /// How many recent commands the palette remembers.
 const MAX_RECENT: usize = 8;
@@ -1089,11 +1089,7 @@ fn layer_form(ui: &mut egui::Ui, form: &mut LayerForm) {
         if !form.colour.trim().is_empty() {
             let ok = Rgb::from_hex(form.colour.trim()).is_some();
             let text = if ok { "ok" } else { "bad hex" };
-            let colour = if ok {
-                theme::STATUS_OK
-            } else {
-                theme::ERROR
-            };
+            let colour = if ok { theme::STATUS_OK } else { theme::ERROR };
             ui.label(egui::RichText::new(text).small().color(colour));
         }
     });
