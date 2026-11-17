@@ -6,3 +6,6 @@
 .opencode/
 opencode.json
 opencode.jsonc
+
+# Local-only session continuity (guide §11)
+docs/devlog.md
