@@ -146,7 +146,7 @@ pub enum PaletteAction {
 
 impl PaletteAction {
     /// Every action, in category order.
-    pub const ALL: [PaletteAction; 49] = [
+    pub const ALL: [PaletteAction; 48] = [
         PaletteAction::SelectTool,
         PaletteAction::WallTool,
         PaletteAction::DoorTool,
