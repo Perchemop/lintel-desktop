@@ -337,8 +337,9 @@ impl PaletteAction {
             | PaletteAction::DeleteLayer
             | PaletteAction::ConstructionVisible
             | PaletteAction::DeleteConstruction => "Layers",
-            PaletteAction::AddPerpendicularConstraint
-            | PaletteAction::RemoveConstraint => "Constraints",
+            PaletteAction::AddPerpendicularConstraint | PaletteAction::RemoveConstraint => {
+                "Constraints"
+            }
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
