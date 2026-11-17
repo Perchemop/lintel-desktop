@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.17.0 — 2026-11-17
+
+### Added
+
+- Per-dimension label precision: `Dimension.label_precision` (0–4 decimal
+  places, serde default 0 so old files load unchanged), the Inspector
+  "Precision:" control and `Command::SetDimensionPrecision` with domain
+  validation; the drawn label honours the setting (CAP-126)
+- Delete a single block instance: `Command::DeleteBlockInstance {
+  block_instance_id }` removes the selected canvas instance, with a
+  `BlockInstanceNotFound` refusal and an honest status message (CAP-127)
+
+### Changed
+
+- Keyboard shortcuts wired and truthful: plain Z/Y undo-redo alongside
+  Ctrl+Z/Ctrl+Y, R for release notes, Ctrl+U for update checks; command-palette
+  hints are wired or honestly blank, the dead "View Constraints" entry was
+  removed, and the footer shows matched of total
+- Palette and status-bar colours corrected to meet WCAG AA (guide II.30.7.1):
+  a `theme_colours_meet_wcag_aa` merge-gate test, darkened muted/hint/status
+  and palette-grey roles, and raw `Color32` values moved into named theme roles
+- Token ledger migrated from `docs/tokens.json` to the CI-managed
+  `docs/tokens.md` (guide §24.1); `pr-author-is-dev` added as a required check
+  (guide II.26.7)
+
 ## v0.16.0 — 2026-11-16
 
 ### Added
