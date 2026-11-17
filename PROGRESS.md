@@ -206,7 +206,8 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
 ## v0.17.0 Status — IN PROGRESS
 
-**Dimension Label Precision** (CAP-126). One capability, landed on `main`.
+**Dimension Label Precision, Keyboard Truth & the Contrast Gate** (CAP-126–
+CAP-128). All scope merged to `main`; the tag is this change.
 
 - [x] CAP-126 — Per-dimension label precision: `Dimension.label_precision`
       (0–4 decimal places, serde default 0 so old files load unchanged),
@@ -214,8 +215,36 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
       leave the dimension untouched), Inspector "Precision:" control and a
       canvas/PDF label honouring the setting — PR #48 merged, CI green
       (run `43847513509`)
+- [x] CAP-127 — Delete a single block instance: `Command::DeleteBlockInstance
+      { block_instance_id }` with a `BlockInstanceNotFound` refusal,
+      `delete_selection` deletes the selected canvas instance and the refusal
+      is reported in the status bar; three domain tests — PR #50 merged,
+      CI green
+- [x] Keyboard truth — plain Z/Y undo-redo (plus Ctrl+Z/Ctrl+Y), R opens release
+      notes, Ctrl+U checks for updates; palette shortcut hints wired or
+      honestly blank (`palette_shortcuts_are_unique`), dead "View Constraints"
+      entry removed, footer shows matched of total — PR #50 merged
+- [x] Accessibility statement corrections — undo/redo keys, softened focus
+      claim, block-instance delete, pointer-only instance selection limitation
+      and Inspector section list in `ACCESSIBILITY.md`; `docs/qc/shortcuts.md`
+      created (guide II.30.7.3) — PR #50 merged
+- [x] WCAG AA contrast gate (guide II.30.7.1) — `relative_luminance` /
+      `contrast_ratio` and the `theme_colours_meet_wcag_aa` merge-gate test;
+      the darkened palette roles (TEXT_MUTED, HINT, STATUS_OK,
+      PALETTE_DISABLED, PALETTE_RECENT, PALETTE_CATEGORY) and raw `Color32`
+      values moved into named theme roles — PR #53 merged, CI green
+- [x] Ledger migration — `docs/tokens.md` replaces `docs/tokens.json`
+      (19-row reconstructed table), release workflow appends the new row after
+      publishing; `pr-author-is-dev` required check and Dev account recorded
+      as D-031 — PR #52 merged, CI green
+- [ ] Tag `v0.17.0` after this change merges, then confirm the release run,
+      signed artefacts and the appended ledger row
 
-**Landed:** CAP-126 (PR #48, run `43847513509`, merge commit `e5b808d`).
+**Landed:** CAP-126 (PR #48, run `43847513509`, merge commit `e5b808d`);
+CAP-127, keyboard truth and accessibility corrections (PR #50); ledger
+migration and authorship enforcement (PR #52); WCAG AA contrast gate (PR #53).
+
+Readiness % (v0.17.0): **100% of the v0.17.0 scope — merged; tag pending.**
 
 ## v0.16.0 Status — RELEASE PREP
 

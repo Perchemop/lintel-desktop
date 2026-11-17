@@ -1,3 +1,31 @@
+## Lintel 0.17.0 — Dimension Precision, Keyboard Truth & the Contrast Gate
+
+**Summary.** Dimensions carry their own label precision, so one drawing can show whole millimetres in one place and decimals in another without changing project-wide units. A selected block instance can now be deleted, and the keyboard shortcuts and palette hints say what they actually do. The palette and status bar also pass a WCAG AA contrast gate.
+
+### Added
+- Per-dimension label precision (CAP-126): `Dimension.label_precision` holds 0–4 decimal places (serde default 0, so older project files load unchanged); the Inspector "Precision:" control applies `Command::SetDimensionPrecision` and the drawn label honours the setting
+- Delete a single block instance (CAP-127): `Command::DeleteBlockInstance { block_instance_id }` removes the selected canvas instance; an already-gone instance is refused with `BlockInstanceNotFound` and the refusal is reported plainly in the status bar
+
+### Changed
+- Keyboard shortcuts wired: plain Z/Y undo-redo alongside Ctrl+Z/Ctrl+Y, R opens the release notes, Ctrl+U checks for updates
+- Command palette shortcut hints are now truthful — each is wired or honestly blank (`palette_shortcuts_are_unique`); the dead "View Constraints" entry was removed, since constraints are read in the Inspector solver section
+- Palette and status-bar colours pass a WCAG AA contrast gate: the muted, hint, valid-input and palette-grey roles were darkened and raw colours moved into named theme roles. Muted and hint text appears slightly darker than before
+- The footer shows matched of total results; token metrics now come from the CI-managed `docs/tokens.md` ledger (guide §24.1)
+
+### Known limitations
+- Block instances are still selected by pointer only — there is no keyboard-only instance selection yet; once an instance is selected, its Inspector fields are Tab-reachable (recorded in `ACCESSIBILITY.md`)
+- Block instance bounds remain bounding-box approximations, so clicking inside the bounding rectangle of a thin rotated wall still selects it
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.md` (CI-managed ledger, guide §24.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 70,000 tokens (65,000 + 5,000)
+
+---
 ## Lintel 0.16.0 — Block Instance Editing & Canvas Selection
 
 **Summary.** Block instances become editable objects rather than fixed placements: click one on the canvas to select it, then move, rotate and flip it from the Inspector. This resolves both limitations published in 0.15.0 — the instance fields are now live, and instances are hit-tested by clicking.
