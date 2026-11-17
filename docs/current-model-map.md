@@ -61,6 +61,24 @@ Available skill directories under `~/.config/opencode/skills/` include: `rust-en
 
 ## Guide synchronization record (§12.3)
 
+- **2026-11-17 — guide.md dated 2026-11-17 (1,677 lines) read in full** and
+  diffed against the agent ruleset. Ruleset now carries: §5.2 three-tier
+  free-model rotation (opencode → nvidia → openrouter `:free`, owner-directed
+  tier 3; Groq never rotated; failover.json is the only control surface),
+  §5.5 fourteen house rules (Dev-identity authorship per II.26.7), §6.1
+  versioning policy, §6.5 security releases, §7.1 mandatory crash scrub +
+  II.29 fifth scan surface (crash payload), §7.2 signing-key compromise
+  procedure, §9.1–9.4 QC restructure (feature gates, GitHub hygiene, branch
+  protection checklist, release/in-app gates), §11 tracking files incl.
+  `docs/tokens.md` (supersedes `docs/tokens.json`), `docs/dev.md`,
+  `docs/update-signing.md`, `docs/resource-catalog.md`,
+  `contributors/people.toml`, §19 token-efficiency skills (measured-only
+  rule), §20 product-facing-copy scope note, §23 config appendices, §24
+  token/contributor schemas, §25 six external catalogs with binding use
+  rules, §22 pstack posture.
+- **Repo consequence queued:** the release workflow still writes
+  `docs/tokens.json`; migrating the ledger to `docs/tokens.md` (§24.1) is a
+  release-infra slice for the next release cycle.
 - **2026-11-16 — guide.md dated 2026-11-16 (1,557 lines) read in full** (§0–18,
   II.18–II.30, §12, §19–22) and diffed against the agent ruleset
   (`~/.config/opencode/AGENTS.md`). Ruleset updated with: §6.1 Versioning
