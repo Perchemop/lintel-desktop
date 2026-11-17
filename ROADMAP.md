@@ -172,7 +172,7 @@ CI evidence: release workflow run `42365552699`.
 
 | ID | Capability | Done |
 |---|-----------|------|
-| CAP-075 | `docs/tokens.json` CI-managed ledger | ✓ |
+| CAP-075 | `docs/tokens.md` CI-managed ledger | ✓ |
 | CAP-076 | Release signing step in `release.yml` | ✓ |
 | CAP-077 | `docs/development.md` added | ✓ |
 | CAP-078 | Property-based geometry and command-layer fuzz tests | ✓ |
@@ -211,7 +211,7 @@ project totals. Wall lengths, opening widths, room counts, areas and perimeters
 are shown in the project's Metric or Imperial units, and `format_area` now
 formats square millimetres consistently as m², ft² or in². The release follows
 guide §12.1: signed artefacts with `SHA256SUMS.txt`, and the CI-managed
-`docs/tokens.json` ledger updated for 0.11.0 and quoted in the published notes.
+`docs/tokens.md` ledger updated for 0.11.0 and quoted in the published notes.
 
 **Readiness:** 100% — released as v0.11.1 (tag `v0.11.1` pending). All measurements slice capabilities delivered.
 
@@ -241,7 +241,7 @@ indicators; selection gains window, crossing and fence modes owned by the core
 and filtered by entity type and layer; and a searchable command palette
 (Ctrl+K) exposes every action with fuzzy matching and a recent-commands list.
 Earlier project files load unchanged. Release gate follows guide §12.1 (signed
-artefacts, `SHA256SUMS.txt.asc`, `docs/tokens.json` ledger).
+artefacts, `SHA256SUMS.txt.asc`, `docs/tokens.md` ledger).
 
 **Readiness:** 0% — starting the Phase A continued work (CAP-094–CAP-098).
 
@@ -267,7 +267,7 @@ intersection and perpendicular candidates; selection gains window and crossing
 modes owned by the core; a searchable command palette exposes every action; and
 dimensions become anchored to the geometry they measure instead of detached
 points. Earlier files load through `DimensionAnchor::Free`. Release gate follows
-guide §12.1 (signed artefacts, `SHA256SUMS.txt`, `docs/tokens.json` ledger).
+guide §12.1 (signed artefacts, `SHA256SUMS.txt`, `docs/tokens.md` ledger).
 
 **Readiness:** 0% — planned; depends on v0.11.1 layers, construction geometry and
 the snapping foundation.
@@ -303,7 +303,7 @@ source that feeds GitHub releases, ending version drift. Releases are signed
 and version-guarded by CI. Earlier project files load unchanged.
 
 **Release gate (guide §12.1):** signed artefacts (`SHA256SUMS.txt.asc`),
-`docs/tokens.json` ledger updated by CI and quoted in the release notes,
+`docs/tokens.md` ledger updated by CI and quoted in the release notes,
 version bump landed before the tag, `RELEASE_TOKENS` set for a credible ledger
 figure.
 
@@ -338,7 +338,7 @@ managed from the Inspector. Sheets gain proper title blocks and multiple
 level-bound viewports, so a drawing set reads like a issued document rather
 than a collection of pages. Earlier project files load unchanged.
 
-**Release gate (guide §12.1):** signed artefacts, `docs/tokens.json` ledger
+**Release gate (guide §12.1):** signed artefacts, `docs/tokens.md` ledger
 updated by CI and quoted in the release notes, version bump before the tag,
 `RELEASE_TOKENS` set for the release.
 
@@ -365,7 +365,7 @@ viewports), and constraints live in the command palette with a solver
 readout — pinned geometry is visible, not invisible. Earlier project files
 load unchanged.
 
-**Release gate (guide §12.1):** signed artefacts, `docs/tokens.json` ledger
+**Release gate (guide §12.1):** signed artefacts, `docs/tokens.md` ledger
 updated by CI and quoted in the release notes, version bump before the tag,
 `RELEASE_TOKENS` set for the release, QC checklist executed and filed.
 
@@ -381,7 +381,7 @@ CI evidence: PR #42 green (check + build-matrix).
 installer alongside the `.zip` archive, completing the installable-artefacts
 requirement for every platform. No feature changes from 0.15.0.
 
-**Release gate:** signed artefacts, `docs/tokens.json` ledger updated by CI
+**Release gate:** signed artefacts, `docs/tokens.md` ledger updated by CI
 and quoted in the release notes, version bump before the tag.
 
 **Readiness:** 100% — shipped.

@@ -71,7 +71,7 @@ Each release is a vertical slice:
 **Tests**
 - Dimension anchor round-trip serialization.
 - Constraint solver: perpendicular distance holds under wall moves.
-- [ ] `docs/tokens.json` updated by CI and quoted in the release notes
+- [ ] `docs/tokens.md` updated by CI and quoted in the release notes
 
 ## Released — v0.11.0 “Measurements” (tag `v0.11.0`, commit `803b590`)
 
@@ -100,7 +100,7 @@ Each release is a vertical slice:
 - [x] Bump `apps/lintel/Cargo.toml` 0.10.1 → 0.11.0 (commit `803b590`)
 - [x] CI green and PR merged
 - [x] Release artefacts + `SHA256SUMS.txt`
-- [x] `docs/tokens.json` updated by CI
+- [x] `docs/tokens.md` updated by CI
 - [x] GitHub Release published for v0.11.0
 
 ## Completed Slices
@@ -115,7 +115,7 @@ Each release is a vertical slice:
 
 ### v0.10.0 Suite Standards Conformance
 **Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/0.10.0
-- `docs/tokens.json` CI-managed ledger
+- `docs/tokens.md` CI-managed ledger
 - Release signing step added to `release.yml`
 - `docs/development.md` added
 - Property-based geometry and command-layer fuzz tests
@@ -161,7 +161,7 @@ constraint-dimension foundation here.
 - Anchored dimension placement and witness-line rendering.
 
 **Gate:** anchor-migration and selection property tests; CI green; signed
-release with `SHA256SUMS.txt` and `docs/tokens.json` updated.
+release with `SHA256SUMS.txt` and `docs/tokens.md` updated.
 
 ### v1.0.0 “Pavement”
 - Polish, README screenshots, accessibility spot-checks, per-release legal

@@ -8,6 +8,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  pr-author-is-dev:
+    name: pr-author-is-dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # guide II.26.7: every GitHub action comes from the Dev account. This
+    # required check fails any pull request opened from another account.
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Verify the pull-request author is the Dev account
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          EXPECTED: Perchemop
+        run: |
+          if [ "$AUTHOR" != "$EXPECTED" ]; then
+            echo "::error::PR author '$AUTHOR' is not the Dev account '$EXPECTED' (guide II.26.7)"
+            exit 1
+          fi
+          echo "PR author $AUTHOR is the Dev account"
+
   check:
     name: check
     runs-on: ubuntu-latest

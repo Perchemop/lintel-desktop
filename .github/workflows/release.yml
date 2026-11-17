@@ -353,7 +353,7 @@ jobs:
         fi
         gh release edit "$ref" --draft=false
 
-    - name: Update docs/tokens.json ledger (guide §12.1)
+    - name: Update docs/tokens.md ledger (guide §24.1)
       if: ${{ github.ref_type == 'tag' }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -368,17 +368,61 @@ jobs:
           echo "::warning::RELEASE_TOKENS not set; recording the 5000 default"
         fi
         release_tokens="${RELEASE_TOKENS:-5000}"
+        if ! [[ "$release_tokens" =~ ^[0-9]+$ ]]; then
+          echo "::warning::RELEASE_TOKENS is not a plain number; recording the 5000 default"
+          release_tokens=5000
+        fi
+        # Optional one-line summary for the Notes column (defaults to "—";
+        # may be wired to a repository variable or dispatch input later).
+        notes="${RELEASE_NOTES_SUMMARY:-—}"
+        notes="${notes//|/\/}"
         git config user.name "Lintel Dev"
         git config user.email "dev@example.com"
         git fetch origin main
         git checkout main
-        # Read current ledger. The pattern tolerates the space after the
-        # colon that serde-style pretty JSON writes ("field": 5000).
-        current=$(cat docs/tokens.json)
-        total_before=$(echo "$current" | grep -oE '"total_tokens_since_start":[[:space:]]*[0-9]+' | grep -oE '[0-9]+')
+        # Read the cumulative total from the LAST table row of
+        # docs/tokens.md (guide §24.1, column 4). The parse tolerates the
+        # number styles present in the file (comma/underscore grouping, ~
+        # approximations) and a missing table (falls back to 0). A "—"
+        # cell means no figure was recorded and also yields 0.
+        ledger="docs/tokens.md"
+        last_row=""
+        if [ -f "$ledger" ]; then
+          last_row=$(grep -E '^\| v' "$ledger" | tail -1 || true)
+        fi
+        if [ -n "$last_row" ]; then
+          raw_total=$(printf '%s' "$last_row" | cut -d'|' -f5)
+          digits=$(printf '%s' "$raw_total" | tr -cd '0-9')
+          if [ -n "$digits" ]; then total_before="$digits"; else total_before=0; fi
+        else
+          total_before=0
+        fi
         total_after=$((total_before + release_tokens))
-        # Write updated ledger.
-        printf '{"total_tokens_since_start": %d, "release_tokens": %d, "release_version": "%s", "_notes": "CI-managed ledger. Updated on each semver tag by the release workflow. Release notes must reference the values for the released version. See guide \\u00a712.1."}\n' "$total_after" "$release_tokens" "$tag" > docs/tokens.json
-        git add docs/tokens.json
-        git commit -m "ci: update tokens.json ledger for v$tag" || true
+        # Group digits with underscores (guide §24.1 example): 1234567 ->
+        # 1_234_567.
+        group() {
+          local n="$1" out=""
+          while [ "${#n}" -gt 3 ]; do
+            out="_${n: -3}${out}"
+            n="${n:0:${#n}-3}"
+          done
+          printf '%s%s' "$n" "$out"
+        }
+        if [ ! -s "$ledger" ]; then
+          # Missing or empty ledger: recreate the header and table before
+          # appending. A file with existing content (header or not) is never
+          # overwritten, so recorded history cannot be lost.
+          mkdir -p "$(dirname "$ledger")"
+          {
+            printf '# Token-usage ledger (CI-managed, guide §24.1)\n\n'
+            printf 'One row per release, appended by `release.yml` on each semver tag.\n\n'
+            printf '| Version | Date | Tokens this release | Tokens cumulative | Notes |\n'
+            printf '|---------|------|---------------------|-------------------|-------|\n'
+          } > "$ledger"
+        fi
+        printf '| v%s | %s | %s | %s | %s |\n' \
+          "$tag" "$(date -u +%Y-%m-%d)" \
+          "$(group "$release_tokens")" "$(group "$total_after")" "$notes" >> "$ledger"
+        git add "$ledger"
+        git commit -m "ci: update tokens.md ledger for v$tag" || true
         git push origin main || true
