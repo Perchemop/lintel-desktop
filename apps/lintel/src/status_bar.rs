@@ -94,7 +94,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             UnitSystem::Imperial => UnitSystem::Metric,
         };
         if ui
-            .button(units.label())
+            .add(egui::Button::new(units.label()).fill(crate::theme::BUTTON_PRIMARY_S.fill).min_size(crate::theme::BUTTON_PRIMARY_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
             .on_hover_text("Click to switch the unit system.")
             .clicked()
         {

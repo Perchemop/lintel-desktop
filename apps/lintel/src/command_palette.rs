@@ -658,7 +658,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
             PaletteAction::ALL.len()
         ))
         .small()
-        .color(theme::HINT),
+        .color(theme::TEXT_MUTED),
     );
 }
 
@@ -1038,7 +1038,7 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
     let mut done = false;
     ui.horizontal(|ui| {
         if ui
-            .add_enabled(valid, egui::Button::new("Apply"))
+            .add_enabled(valid, egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_S.fill).min_size(crate::theme::BUTTON_PRIMARY_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
             .on_hover_text(if valid {
                 "Run the command"
             } else {
@@ -1050,7 +1050,7 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
             done = true;
         }
         if ui
-            .button("Cancel")
+            .add(egui::Button::new("Cancel").fill(crate::theme::BUTTON_GHOST_S.fill).min_size(crate::theme::BUTTON_GHOST_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
             .on_hover_text("Go back to the command list (Esc)")
             .clicked()
         {

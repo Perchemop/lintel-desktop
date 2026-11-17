@@ -27,6 +27,53 @@ jobs:
           fi
           echo "PR author $AUTHOR is the Dev account"
 
+  kittest:
+    name: kittest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0  # needed for whole-history scans
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev xvfb
+
+      - name: Install swiftshader Vulkan
+        run: |
+          sudo apt-get install -y libvulkan1 libvulkan1-icd
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
+      - name: Cache Cargo git checkouts
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: cargo-index-${{ runner.os }}-
+          restore-keys: |
+            cargo-index-${{ runner.os }}-
+
+      - name: Run kittest (AccessKit / egui_kittest harness)
+        run: cargo test -p lintel --test kittest
+        env:
+          CI: "true"
+          DISPLAY: ":99"
+          VK_ICD_FILENAMES: "/etc/vulkan/icd.d/swiftshader_icd.json"
+
   check:
     name: check
     runs-on: ubuntu-latest

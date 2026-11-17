@@ -1636,7 +1636,7 @@ impl LintelApp {
 
 /// One-line description of the active level. Used both as the canvas's
 /// screen-reader label (guide II.21.2) and as a visible toolbar summary.
-fn plan_summary(project: &lintel_core::project::Project) -> String {
+pub(crate) fn plan_summary(project: &lintel_core::project::Project) -> String {
     use lintel_core::opening::OpeningKind;
 
     let Some(level) = project.active_level() else {
@@ -1671,6 +1671,12 @@ fn plan_summary(project: &lintel_core::project::Project) -> String {
     } else {
         base
     }
+}
+
+/// Return the LintelApp instance wrapped for egui_kittest::harness
+/// accessibility testing (guide II.27.12 / K.7).
+pub fn app() -> LintelApp {
+    LintelApp::new()
 }
 
 fn now_epoch_s() -> i64 {
