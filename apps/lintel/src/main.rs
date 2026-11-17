@@ -768,7 +768,7 @@ impl eframe::App for LintelApp {
                 ui.label(
                     egui::RichText::new("Shortcuts: W/S/D/N/M/L tools | E/V/I/P/T snap modes | Ctrl+K palette | Ctrl+A select all | Shift-click and drag-box multi-select | Ctrl+N/O/S/Shift+S/E file | Ctrl+D duplicate | Z/Y undo-redo | F fit | Esc cancel | Del delete")
                         .small()
-                        .color(egui::Color32::GRAY),
+                        .color(crate::theme::HINT),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if let Some(status) = self.status.clone()
@@ -777,7 +777,7 @@ impl eframe::App for LintelApp {
                         ui.label(
                             egui::RichText::new(status)
                                 .small()
-                                .color(egui::Color32::DARK_RED),
+                                .color(crate::theme::ERROR),
                         );
                     }
                 });

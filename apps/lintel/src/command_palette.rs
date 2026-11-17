@@ -16,6 +16,7 @@ use lintel_core::{
 
 use crate::LintelApp;
 use crate::Tool;
+use crate::theme;
 use crate::canvas::{Draft, Selection, SnapModeKind};
 
 /// How many recent commands the palette remembers.
@@ -596,7 +597,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
     ui.label(
         egui::RichText::new("Type to filter · ↑↓ to move · Enter to run · Esc to close")
             .small()
-            .color(egui::Color32::GRAY),
+            .color(theme::HINT),
     );
     ui.add_space(4.0);
     let search = ui.add(
@@ -657,7 +658,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
             PaletteAction::ALL.len()
         ))
         .small()
-        .color(egui::Color32::GRAY),
+        .color(theme::HINT),
     );
 }
 
@@ -665,14 +666,14 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
 fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
     let frame = egui::Frame::new()
         .fill(if selected {
-            egui::Color32::from_black_alpha(18)
+            theme::PALETTE_SELECTED_FILL
         } else {
-            egui::Color32::TRANSPARENT
+            theme::TRANSPARENT
         })
         .corner_radius(4.0)
         .inner_margin(egui::Margin::symmetric(6, 3))
         .stroke(if selected {
-            egui::Stroke::new(1.0, egui::Color32::from_black_alpha(40))
+            egui::Stroke::new(1.0, theme::PALETTE_SELECTED_STROKE)
         } else {
             egui::Stroke::NONE
         });
@@ -681,11 +682,11 @@ fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
             ui.spacing_mut().item_spacing.x = 4.0;
             for (text, hit) in highlight_chunks(row.action.label(), &row.hits) {
                 let colour = if hit {
-                    egui::Color32::from_rgb(20, 90, 160)
+                    theme::PALETTE_HIT
                 } else if row.enabled {
-                    egui::Color32::BLACK
+                    theme::PALETTE_LABEL
                 } else {
-                    egui::Color32::from_rgb(130, 130, 130)
+                    theme::PALETTE_DISABLED
                 };
                 let text = egui::RichText::new(text).color(colour);
                 ui.label(if hit { text.strong() } else { text });
@@ -695,20 +696,20 @@ fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
                     ui.label(
                         egui::RichText::new("recent")
                             .small()
-                            .color(egui::Color32::from_rgb(140, 140, 140)),
+                            .color(theme::PALETTE_RECENT),
                     );
                 }
                 if !row.action.shortcut().is_empty() {
                     ui.label(
                         egui::RichText::new(row.action.shortcut())
                             .small()
-                            .color(egui::Color32::from_rgb(110, 110, 110)),
+                            .color(theme::PALETTE_SHORTCUT),
                     );
                 }
                 ui.label(
                     egui::RichText::new(row.action.category())
                         .small()
-                        .color(egui::Color32::from_rgb(150, 150, 150)),
+                        .color(theme::PALETTE_CATEGORY),
                 );
             });
         });
@@ -1089,9 +1090,9 @@ fn layer_form(ui: &mut egui::Ui, form: &mut LayerForm) {
             let ok = Rgb::from_hex(form.colour.trim()).is_some();
             let text = if ok { "ok" } else { "bad hex" };
             let colour = if ok {
-                egui::Color32::from_rgb(30, 130, 70)
+                theme::STATUS_OK
             } else {
-                egui::Color32::DARK_RED
+                theme::ERROR
             };
             ui.label(egui::RichText::new(text).small().color(colour));
         }
@@ -1196,7 +1197,7 @@ fn layer_pick_form(
             ui.label(
                 egui::RichText::new(format!("{} selected", app.selection.len()))
                     .small()
-                    .color(egui::Color32::GRAY),
+                    .color(theme::HINT),
             );
         }
         LayerPickAction::Delete => {
@@ -1207,7 +1208,7 @@ fn layer_pick_form(
                 ui.label(
                     egui::RichText::new("The default layer cannot be deleted.")
                         .small()
-                        .color(egui::Color32::DARK_RED),
+                        .color(theme::ERROR),
                 );
             }
         }
