@@ -229,7 +229,7 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
-pub fn button_style(role: ButtonRole, size: ButtonSize, active: bool) -> eframe::egui::Button {
+pub fn button_style(role: ButtonRole, size: ButtonSize, active: bool) -> eframe::egui::Button<'static> {
     let spec = match (role, size) {
         (ButtonRole::Primary, ButtonSize::Small) => BUTTON_PRIMARY_S,
         (ButtonRole::Primary, ButtonSize::Medium) => BUTTON_PRIMARY_M,
