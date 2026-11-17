@@ -9,15 +9,15 @@ recorded here honestly rather than glossed over (guide II.21.1).
 
 - **Keyboard tool switching:** W = Wall, S = Select, D = Door, N = Window,
   M = Dimension — from anywhere a control is not focused.
-- **Undo/redo:** Z / Y (Ctrl+Z / Ctrl+Y on the Edit menu too).
-- **Delete:** Delete or Backspace removes the selected wall, opening or
-  dimension.
+- **Undo/redo:** Z / Y or Ctrl+Z / Ctrl+Y.
+- **Delete:** Delete or Backspace removes the selected wall, opening,
+  dimension, or a selected block instance.
 - **Zoom:** F = zoom to fit; scroll-wheel zooms; middle-drag pans.
 - **Inspector via Tab:** the Inspector panel (wall thickness/height, opening
   kind/width/height/sill/position, dimension kind/offset/extension lines,
-  project name and units, storey list with add and delete) is reachable with
-  Tab, and each field carries its name as a label plus a hover text explaining
-  units and ranges.
+  project name and units, storey list with add and delete, layers, constraints,
+  blocks and block instance) is reachable with Tab, and each field carries its
+  name as a label plus a hover text explaining units and ranges.
 - **Escape dismissal:** the About, Release notes, Export sheet and Update
   windows all close on Escape (egui `Window` with `.open()` handles Escape by
   default; none override it).
@@ -54,8 +54,11 @@ Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
   which meets WCAG AA contrast on both the canvas and panel backgrounds.
 - **Focus is never trapped.** Tab moves out of dialogs and back into the main
   window; Escape closes any open dialog.
-- **Nothing steals focus.** The app never moves focus on its own; the update
-  prompt appears as a window and can be dismissed with Escape or "Later".
+- **Focus moves only when a dialog the user opened needs typing.** The command
+  palette and parameter forms (layer, project, storey) take focus so the user
+  can type immediately; otherwise the app never moves focus on its own. The
+  update prompt appears as a window and can be dismissed with Escape or
+  "Later".
 
 ## Limitations (WCAG 2.2 AA, "where feasible")
 
@@ -72,6 +75,9 @@ Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
 - **Screen-reader verification is manual only.** There is no automated CI
   check for Narrator/NVDA/VoiceOver output; spot checks are recorded in the
   QC run log (docs/qc/checklist.md).
+- **Block instances are selected by pointer.** There is no keyboard-only
+  instance selection yet; once an instance is selected (canvas click), its
+  Inspector fields are Tab-reachable.
 
 ## Keyboard shortcut table
 
