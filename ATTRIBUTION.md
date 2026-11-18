@@ -32,3 +32,11 @@ No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
 |-------|------|---------|-------|
 | Lintel icon (PNG/ICO) | `resources/linux/lintel.png`, `resources/windows/lintel.png`, `resources/windows/lintel.ico` | Original (MIT OR Apache-2.0) | Designed for Lintel; 256×256 PNG source |
 | Lintel icon (SVG) | `resources/icons/lintel.svg` | Original (MIT OR Apache-2.0) | Scalable source for all platform icons |
+## Agent-skill patterns (development-time only; no code shipped in the app)
+
+- **scope-creep-detector, dependency-doctor, first-reader, commit-archaeologist** —
+  patterns adapted from shubhamsaboo/awesome-llm-apps (agent_skills), Apache-2.0.
+  Original wording; no upstream code copied. Used at development workflow gates.
+- **pstack playbooks** (verify-and-stop, surgical-patch, safe-refactor,
+  investigate-first, lean-build, migration) — concepts from
+  cursor/plugins/pstack (Apache-2.0), consumed as native OpenCode skills.
