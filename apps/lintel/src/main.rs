@@ -768,7 +768,7 @@ impl eframe::App for LintelApp {
                 ui.label(
                     egui::RichText::new("Shortcuts: W/S/D/N/M/L tools | E/V/I/P/T snap modes | Ctrl+K palette | Ctrl+A select all | Shift-click and drag-box multi-select | Ctrl+N/O/S/Shift+S/E file | Ctrl+D duplicate | Z/Y undo-redo | F fit | Esc cancel | Del delete")
                         .small()
-                        .color(crate::theme::HINT),
+                        .color(crate::theme::TEXT_HINT),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if let Some(status) = self.status.clone()
@@ -777,7 +777,7 @@ impl eframe::App for LintelApp {
                         ui.label(
                             egui::RichText::new(status)
                                 .small()
-                                .color(crate::theme::ERROR),
+                                .color(crate::theme::TEXT_DANGER),
                         );
                     }
                 });
@@ -814,14 +814,14 @@ impl eframe::App for LintelApp {
                     egui::Align2::CENTER_CENTER,
                     msg1,
                     egui::FontId::proportional(16.0),
-                    crate::theme::INK,
+                    crate::theme::TEXT_PRIMARY,
                 );
                 dimension_painter.text(
                     center + egui::Vec2::new(0.0, 22.0),
                     egui::Align2::CENTER_CENTER,
                     msg2,
                     egui::FontId::proportional(16.0),
-                    crate::theme::INK,
+                    crate::theme::TEXT_PRIMARY,
                 );
             }
             self.pointer_world = response.pointer_world;

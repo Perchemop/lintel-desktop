@@ -28,7 +28,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             None => "Snap: free".to_string(),
         };
         ui.separator();
-        ui.label(egui::RichText::new(snap_text).small().color(theme::HINT));
+        ui.label(egui::RichText::new(snap_text).small().color(theme::TEXT_HINT));
         ui.separator();
 
         // Active tool name.
@@ -43,7 +43,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             ui,
             "Grid",
             grid_on,
-            theme::HINT,
+            theme::TEXT_HINT,
             "Toggle the drawing grid (G).",
             || {
                 app.snap.grid_enabled = !grid_on;
@@ -54,7 +54,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             ui,
             "Ortho",
             ortho_on,
-            theme::HINT,
+            theme::TEXT_HINT,
             "Toggle orthogonal drawing (O).",
             || {
                 app.snap.ortho = !ortho_on;
@@ -98,7 +98,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
                 egui::Button::new(units.label())
                     .fill(crate::theme::BUTTON_PRIMARY_S.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Click to switch the unit system.")
             .clicked()
@@ -111,7 +111,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             let version = ui.link(
                 egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
                     .small()
-                    .color(theme::HINT),
+                    .color(theme::TEXT_HINT),
             );
             if version
                 .on_hover_text("Release notes and update status")
@@ -135,7 +135,7 @@ fn chip(
     let text =
         egui::RichText::new(label)
             .small()
-            .color(if active { active_colour } else { theme::HINT });
+            .color(if active { active_colour } else { theme::TEXT_HINT });
     let response = ui.selectable_label(active, text).on_hover_text(hint);
     if response.clicked() {
         toggle();

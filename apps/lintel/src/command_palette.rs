@@ -597,7 +597,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
     ui.label(
         egui::RichText::new("Type to filter · ↑↓ to move · Enter to run · Esc to close")
             .small()
-            .color(theme::HINT),
+            .color(theme::TEXT_HINT),
     );
     ui.add_space(4.0);
     let search = ui.add(
@@ -668,7 +668,7 @@ fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
         .fill(if selected {
             theme::PALETTE_SELECTED_FILL
         } else {
-            theme::TRANSPARENT
+            theme::SURFACE_TRANSPARENT
         })
         .corner_radius(4.0)
         .inner_margin(egui::Margin::symmetric(6, 3))
@@ -1043,7 +1043,7 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_S.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text(if valid {
                 "Run the command"
@@ -1060,7 +1060,7 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
                 egui::Button::new("Cancel")
                     .fill(crate::theme::BUTTON_GHOST_S.fill)
                     .min_size(crate::theme::BUTTON_GHOST_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Go back to the command list (Esc)")
             .clicked()
@@ -1100,7 +1100,7 @@ fn layer_form(ui: &mut egui::Ui, form: &mut LayerForm) {
         if !form.colour.trim().is_empty() {
             let ok = Rgb::from_hex(form.colour.trim()).is_some();
             let text = if ok { "ok" } else { "bad hex" };
-            let colour = if ok { theme::STATUS_OK } else { theme::ERROR };
+            let colour = if ok { theme::TEXT_SUCCESS } else { theme::TEXT_DANGER };
             ui.label(egui::RichText::new(text).small().color(colour));
         }
     });
@@ -1204,7 +1204,7 @@ fn layer_pick_form(
             ui.label(
                 egui::RichText::new(format!("{} selected", app.selection.len()))
                     .small()
-                    .color(theme::HINT),
+                    .color(theme::TEXT_HINT),
             );
         }
         LayerPickAction::Delete => {
@@ -1215,7 +1215,7 @@ fn layer_pick_form(
                 ui.label(
                     egui::RichText::new("The default layer cannot be deleted.")
                         .small()
-                        .color(theme::ERROR),
+                        .color(theme::TEXT_DANGER),
                 );
             }
         }
