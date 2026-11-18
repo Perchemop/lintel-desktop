@@ -204,6 +204,50 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
+## v0.18.0 Status — RELEASE PREP
+
+**The Design System.** Post-v0.17.0 a11y/design audit fixes, all merged to
+`main` with CI green. Version bumps are staged in the working tree; the tag
+and release are the remaining gate.
+
+- [x] WCAG AA contrast gate (guide II.30.7.1) — `relative_luminance` /
+      `contrast_ratio` and the `theme_colours_meet_wcag_aa` merge-gate test;
+      darkened palette roles, raw `Color32` in status_bar/command_palette/
+      main.rs toolbar moved into named theme roles — PR #53 merged, CI green
+- [x] CAP-127 — delete a single block instance: `Command::DeleteBlockInstance
+      { block_instance_id }`, `BlockInstanceNotFound` refusal, status-bar
+      report and three domain tests; keyboard truth (plain Z/Y, R, Ctrl+U,
+      truthful palette hints, `palette_shortcuts_are_unique`, dead "View
+      Constraints" entry removed, matched-of-total footer) — PR #50 merged,
+      CI green
+- [x] `egui_kittest` CI job — AccessKit + snapshot tests
+      (`palette_has_named_actions`, `inspector_sections_labelled`,
+      `canvas_summary_accessible`), `kittest` added to `.ci-required.txt`;
+      egui-elegance button patterns (`ButtonRole`/`ButtonSize`/
+      `ButtonRoleStyle`, 12 constants, 24/32/40 pt floors, 2 px COBALT
+      focus ring) applied to inspector, command palette and status bar — PR
+      #55 merged, CI green (runs `44255343149`, `44263943707`)
+- [x] ThemeSpec three-tier composition — 24 `BASE_*` → 31 semantic roles →
+      component tokens (`WALL_*`, `PALETTE_*`, `BUTTON_*`), every raw literal
+      in tier 1, three new tests, byte-identical values — PR #57 merged,
+      CI green (commit `db0f3733`)
+- [x] Ledger migration — `docs/tokens.md` replaces `docs/tokens.json`,
+      release workflow appends the new row after publishing;
+      `pr-author-is-dev` required check, Dev identity asserted by `ci.sh`,
+      Dev account recorded as D-031 — PR #52 merged, CI green; D-032
+      (unbound commands are core-only) — PR #56 merged, CI green
+- [ ] Tag `v0.18.0` after this change merges, then confirm the release run
+      and the signed artefacts
+
+**Landed:** WCAG AA contrast gate (PR #53); CAP-127, keyboard truth and
+accessibility corrections (PR #50); `egui_kittest` gate and button patterns
+(PR #55, runs `44255343149` / `44263943707`); ThemeSpec three-tier tokens
+(PR #57, `db0f3733`); token-ledger migration and authorship enforcement
+(PR #52); D-032 (PR #56).
+
+Readiness % (v0.18.0): **100% of the design-system scope — merged with CI
+green; release tag pending after this change.**
+
 ## v0.17.0 Status — RELEASED
 
 **Dimension Label Precision, Keyboard Truth & the Contrast Gate** (CAP-126–

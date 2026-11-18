@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.18.0 — 2026-11-18
+
+### Added
+
+- WCAG AA contrast gate (guide II.30.7.1): `relative_luminance` /
+  `contrast_ratio`, the `theme_colours_meet_wcag_aa` merge-gate test,
+  darkened palette roles and named theme roles replacing raw `Color32`
+  values (PR #53)
+- Delete a single block instance: `Command::DeleteBlockInstance {
+  block_instance_id }` with a `BlockInstanceNotFound` refusal and an honest
+  status message, plus three domain tests (CAP-127, PR #50)
+- `egui_kittest` CI job with AccessKit/snapshot tests
+  (`palette_has_named_actions`, `inspector_sections_labelled`,
+  `canvas_summary_accessible`); `kittest` is a required check (PR #55)
+- Button role/size system: `ButtonRole`/`ButtonSize`/`ButtonRoleStyle`,
+  12 role-and-size constants with 24/32/40 pt floors and a 2 px COBALT
+  focus ring via `button_style()` (PR #55)
+- ThemeSpec three-tier composition: base swatches → semantic roles →
+  component tokens, with three new tests and byte-identical values (PR #57)
+
+### Changed
+
+- Keyboard shortcuts are wired and truthful: plain Z/Y alongside
+  Ctrl+Z/Ctrl+Y, R for release notes, Ctrl+U for update checks; palette
+  hints are wired or honestly blank and the footer shows matched of total
+  (PR #50)
+- Muted and hint text darkened slightly to meet AA (PR #53)
+- Token ledger migrated from `docs/tokens.json` to `docs/tokens.md`
+  (guide §24.1); `pr-author-is-dev` added as a required check with the
+  Dev account recorded as D-031 (PR #52)
+- D-032 documents unbound commands as core-only (PR #56)
+
 ## v0.17.0 — 2026-11-17
 
 ### Added

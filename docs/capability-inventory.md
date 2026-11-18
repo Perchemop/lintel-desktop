@@ -166,6 +166,8 @@ run, recorded in `docs/parity.md`).
 | CAP-127 | Delete a single block instance | Delete removes the selected canvas instance; an already-gone instance is refused with `BlockInstanceNotFound` and the refusal is reported in the status bar | `command::tests::a_block_instance_can_be_deleted_by_id`, `deleting_a_missing_block_instance_reports_it_gone`; `delete_selection` in `apps/lintel/src/main.rs` | — | implemented |
 | CAP-128 | WCAG AA theme contrast gate | Muted, hint, valid-input and palette-grey text meets 4.5:1 on every surface it sits on; muted/hint text is slightly darker than before | `theme::tests::theme_colours_meet_wcag_aa` (`relative_luminance`, `contrast_ratio`) | guide II.30.7.1 | implemented |
 
+Note (2026-11-18): CAP-126/CAP-127/CAP-128 rows are present and implemented. CAP-128's WCAG AA gate (PR #53) is part of the v0.18.0 design-system release; the v0.18.0 ThemeSpec, button-pattern and `egui_kittest` work is traced as R-18.1–R-18.7 in `REQUIREMENTS_TRACEABILITY.md`, with evidence in `docs/parity.md`. The section heading above is a historical grouping, not a release claim.
+
 ## Explicitly out of scope for v0.1.0
 
 | ID | Capability | Reason |
@@ -199,3 +201,4 @@ Readiness % (v0.15.0): **100% — shipped** (CAP-116–CAP-119; release `v0.15.0
 Readiness % (v0.15.1): **100% — shipped** (macOS `.dmg` installer; release `v0.15.1`).
 Readiness % (v0.16.0): **100% of CAP-120–CAP-125 — merged; release tag pending.**
 Readiness % (v0.17.0): **100% of CAP-126–CAP-128 — merged; release tag pending.**
+Readiness % (v0.18.0): **100% of the design-system scope — merged with CI green; release tag pending.**

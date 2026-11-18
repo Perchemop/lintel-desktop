@@ -1,3 +1,35 @@
+## Lintel 0.18.0 — The Design System
+
+**Summary.** This release turns the interface's visual language into an explicit design system: contrast is a merge gate, colours resolve through three token tiers, and buttons follow one documented role-and-size system. Accessibility evidence moves into CI with `egui_kittest`, and a single selected block instance can now be deleted with an honest refusal.
+
+### Added
+- Delete a single block instance (CAP-127): `Command::DeleteBlockInstance { block_instance_id }` removes the selected canvas instance; an already-gone instance is refused with `BlockInstanceNotFound` and the refusal is reported in the status bar, with three domain tests (PR #50)
+- WCAG AA contrast gate (guide II.30.7.1): `relative_luminance` / `contrast_ratio` in `theme.rs` and the `theme_colours_meet_wcag_aa` merge-gate test; darkened palette roles and raw `Color32` values in the status bar, command palette and main toolbar moved into named theme roles (PR #53)
+- `egui_kittest` CI job (guide II.30.8): AccessKit and snapshot testing with `palette_has_named_actions`, `inspector_sections_labelled` and `canvas_summary_accessible`; `kittest` is now a required check in `.ci-required.txt` (PR #55)
+- Button patterns: `ButtonRole`/`ButtonSize`/`ButtonRoleStyle` with 12 role-and-size constants (Primary/Secondary/Ghost/Danger × S/M/L, 24/32/40 pt minimums) and `button_style()` with a 2 px COBALT focus ring, applied to the Inspector, command palette and status bar (PR #55)
+- ThemeSpec three-tier composition: 24 `BASE_*` swatches → 31 semantic roles → component tokens (`WALL_*`, `PALETTE_*`, `BUTTON_*`), with every raw literal isolated in tier 1 and three new tests; values are byte-identical, so there is no visual change (PR #57)
+
+### Changed
+- Keyboard shortcuts are wired and truthful: plain Z/Y undo-redo alongside Ctrl+Z/Ctrl+Y, R opens the release notes, Ctrl+U checks for updates (PR #50)
+- Command palette shortcut hints are wired or honestly blank, the dead "View Constraints" entry is gone and the footer shows matched of total (PR #50)
+- Palette roles were darkened to meet AA; muted and hint text appears slightly darker than before (PR #53)
+- Token metrics now come from the CI-managed `docs/tokens.md` ledger instead of `docs/tokens.json` (PR #52)
+- D-032 records unbound commands as core-only (PR #56)
+
+### Known limitations
+- Block instances are still selected by pointer only — there is no keyboard-only instance selection yet; once an instance is selected, its Inspector fields are Tab-reachable
+- Block instance bounds remain bounding-box approximations, so clicking inside the bounding rectangle of a thin rotated wall still selects it
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.md` (CI-managed ledger, guide §24.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 75,000 tokens (70,000 + 5,000)
+
+---
 ## Lintel 0.17.0 — Dimension Precision, Keyboard Truth & the Contrast Gate
 
 **Summary.** Dimensions carry their own label precision, so one drawing can show whole millimetres in one place and decimals in another without changing project-wide units. A selected block instance can now be deleted, and the keyboard shortcuts and palette hints say what they actually do. The palette and status bar also pass a WCAG AA contrast gate.

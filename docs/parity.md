@@ -172,6 +172,18 @@ each green CI run; percentages move only from evidence.
 | CAP-127 | `command::tests::a_block_instance_can_be_deleted_by_id`, `deleting_a_missing_block_instance_reports_it_gone` (`BlockInstanceNotFound` refusal); `delete_selection` path + honest status message in `apps/lintel/src/main.rs` | PR #50 | verified |
 | CAP-128 | `theme::tests::theme_colours_meet_wcag_aa` over `relative_luminance` / `contrast_ratio`; muted/hint/status and palette-grey colours darkened and raw `Color32` moved into named theme roles (guide II.30.7.1) | PR #53 | verified |
 
+## v0.18.0 — The Design System
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-128 / R-18.1 | `theme::tests::theme_colours_meet_wcag_aa` over `relative_luminance` / `contrast_ratio`; darkened palette roles and raw `Color32` replaced by named theme roles in `status_bar.rs`, `command_palette.rs` and `main.rs` | PR #53 | verified |
+| CAP-127 / R-18.2 | `command::tests::a_block_instance_can_be_deleted_by_id`, `deleting_a_missing_block_instance_reports_it_gone`; `delete_selection` + status-bar refusal; `palette_shortcuts_are_unique` | PR #50 | verified |
+| R-18.3 | `apps/lintel/src/main.rs` inline `kittest` module: `palette_has_named_actions`, `inspector_sections_labelled`, `canvas_summary_accessible`; `kittest` required in `.ci-required.txt` | `44255343149`, `44263943707` (PR #55) | verified |
+| R-18.4 | `ButtonRole` / `ButtonSize` / `ButtonRoleStyle`, 12 role-and-size constants (24/32/40 pt minimums), `button_style()` with a 2 px COBALT focus ring; applied to inspector, command palette and status bar | PR #55 | verified |
+| R-18.5 | `theme::tests::tier_two_roles_resolve_to_base_swatches`, `tier_three_components_resolve_to_roles`, `contrast_maths_matches_wcag_reference_points`; 24 `BASE_*` → 31 semantic roles → component tokens, byte-identical values | PR #57 (commit `db0f3733`) | verified |
+| R-18.6 | `docs/tokens.md` replaces `docs/tokens.json`; release workflow appends the ledger row; `pr-author-is-dev` required check and `ci.sh` `gh api user` assertion (D-031) | PR #52 | verified |
+| R-18.7 | D-032: unbound commands recorded as core-only | PR #56 | verified |
+
 ## v0.8.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0 —

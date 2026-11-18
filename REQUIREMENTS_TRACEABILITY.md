@@ -118,6 +118,17 @@ Maps user-facing capabilities to source, tests, and releases. Follows guide §11
 | R-17.2 | Delete a single selected block instance, with an honest refusal when it is already gone | CAP-127 | `command::tests::a_block_instance_can_be_deleted_by_id`, `deleting_a_missing_block_instance_reports_it_gone`; UI `delete_selection` in `apps/lintel/src/main.rs` | v0.17.0 |
 | R-17.3 | WCAG AA contrast for theme text and meaningful UI | CAP-128 | `theme::tests::theme_colours_meet_wcag_aa` (`relative_luminance`, `contrast_ratio`) | v0.17.0 |
 
+### v0.18.0 The Design System
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-18.1 | WCAG AA contrast gate: merge-gate test, darkened palette roles and raw colours moved into named theme roles | CAP-128 | `theme::tests::theme_colours_meet_wcag_aa` (`relative_luminance`, `contrast_ratio`) | v0.18.0 |
+| R-18.2 | Delete a single selected block instance with an honest refusal; keyboard shortcuts and palette hints are truthful | CAP-127 | `command::tests::a_block_instance_can_be_deleted_by_id`, `deleting_a_missing_block_instance_reports_it_gone`, `palette_shortcuts_are_unique`; UI `delete_selection` | v0.18.0 |
+| R-18.3 | `egui_kittest` AccessKit/snapshot gate in CI | — | `main.rs` inline tests: `palette_has_named_actions`, `inspector_sections_labelled`, `canvas_summary_accessible`; `.ci-required.txt` | v0.18.0 |
+| R-18.4 | Button role/size patterns with a 24 pt minimum target and visible focus ring | — | `theme.rs` `ButtonRole`/`ButtonSize`/`ButtonRoleStyle`, `button_style()`; inspector/command palette/status bar | v0.18.0 |
+| R-18.5 | ThemeSpec three-tier tokens with byte-identical values | — | `theme::tests::tier_two_roles_resolve_to_base_swatches`, `tier_three_components_resolve_to_roles`, `contrast_maths_matches_wcag_reference_points` | v0.18.0 |
+| R-18.6 | Token ledger migration and Dev-authorship enforcement | CAP-075 | `docs/tokens.md`, `release.yml`, `pr-author-is-dev`, `ci.sh` | v0.18.0 |
+| R-18.7 | Unbound commands documented as core-only (D-032) | — | `DECISIONS.md` D-032 | v0.18.0 |
+
 ## Suite Standards Compliance
 Guide §12.1 — Suite-wide standards:
 - Token ledger `docs/tokens.md` — **implemented** (CI-managed; updated on each tag).
@@ -132,3 +143,4 @@ Guide §12.1 — Suite-wide standards:
 - 2026-11-16: Extended traceability through v0.16.0; added the missing v0.14.0 (CAP-111–CAP-115) and v0.15.0 (CAP-116–CAP-119) rows and recorded CAP-120–CAP-125 merged.
 - 2026-11-16: CAP-126 (dimension label precision) merged via PR #48.
 - 2026-11-17: Added R-17.2 (CAP-127, delete a single block instance) and R-17.3 (CAP-128, WCAG AA contrast gate) for v0.17.0.
+- 2026-11-18: Added R-18.1–R-18.7 for the v0.18.0 design-system release (WCAG AA contrast gate, CAP-127/keyboard truth, `egui_kittest`, button patterns, ThemeSpec three-tier tokens, ledger/authorship migration, D-032).
