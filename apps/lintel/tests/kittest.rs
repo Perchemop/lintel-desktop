@@ -48,7 +48,7 @@ fn canvas_summary_accessible() {
         let canvas = tree.canvas();
         assert!(canvas.role().is_some(), "canvas missing AccessKit role");
         let name = canvas.name();
-        let summary = plan_summary(&Project::default());
+        let summary = plan_summary(&Project::new("Test".into(), 0));
         assert!(
             name.contains(&summary) || summary.contains(name),
             "canvas name '{}' does not contain summary '{}'",
