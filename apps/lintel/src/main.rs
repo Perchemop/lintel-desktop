@@ -1843,7 +1843,7 @@ mod kittest {
     #[test]
     fn plan_summary_returns_non_empty() {
         use lintel_core::project::Project;
-        let summary = crate::plan_summary(&Project::new("Test".into(), 0));
+        let summary = crate::plan_summary(&Project::new("Test".to_string(), 0));
         assert!(!summary.is_empty());
         assert!(summary.contains("Test"));
     }
