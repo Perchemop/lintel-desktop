@@ -59,4 +59,4 @@ fn canvas_summary_accessible() {
 }
 
 // Re-export the app function for use in test convenience.
-pub use lintel::app;
+pub use lintel::{app, plan_summary};
