@@ -112,6 +112,7 @@ pub enum ButtonRole {
     Danger,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ButtonSize {
     Small,
@@ -119,6 +120,7 @@ pub enum ButtonSize {
     Large,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub struct ButtonRoleStyle {
     pub fill: Color32,
