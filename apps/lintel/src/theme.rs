@@ -105,6 +105,7 @@ pub fn selection_stroke() -> egui::Stroke {
 // Four roles x three sizes. Every size honours the 24pt floor
 // (guide II.30.7.5); focus rings are 2px COBALT (guide II.30.7.4).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum ButtonRole {
     Primary,
     Secondary,
