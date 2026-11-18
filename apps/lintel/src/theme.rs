@@ -665,7 +665,11 @@ mod tests {
             ("SNAP_TANGENT", SNAP_TANGENT, BASE_SNAP_TANGENT),
             ("SNAP_ORTHO", SNAP_ORTHO, BASE_SNAP_ORTHO),
             ("SNAP_GRID", SNAP_GRID, BASE_SNAP_GRID),
-            ("CONSTRUCTION_STROKE", CONSTRUCTION_STROKE, BASE_CONSTRUCTION),
+            (
+                "CONSTRUCTION_STROKE",
+                CONSTRUCTION_STROKE,
+                BASE_CONSTRUCTION,
+            ),
             (
                 "selection_stroke colour",
                 selection_stroke().color,
