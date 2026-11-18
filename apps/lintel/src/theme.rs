@@ -101,6 +101,166 @@ pub fn selection_stroke() -> egui::Stroke {
     egui::Stroke::new(2.0, COBALT)
 }
 
+// ---- Button role styles (egui-elegance pattern copy, guide II.30.10) ----
+// Four roles x three sizes. Every size honours the 24pt floor
+// (guide II.30.7.5); focus rings are 2px COBALT (guide II.30.7.4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum ButtonRole {
+    Primary,
+    Secondary,
+    Ghost,
+    Danger,
+}
+
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ButtonSize {
+    Small,
+    Medium,
+    Large,
+}
+
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+pub struct ButtonRoleStyle {
+    pub fill: Color32,
+    pub hover: Color32,
+    pub active: Color32,
+    pub focus: Color32,
+    pub disabled: Color32,
+    pub min_size: eframe::egui::Vec2,
+}
+
+pub const BUTTON_PRIMARY_S: ButtonRoleStyle = ButtonRoleStyle {
+    fill: COBALT,
+    hover: COBALT,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(24.0, 24.0),
+};
+pub const BUTTON_PRIMARY_M: ButtonRoleStyle = ButtonRoleStyle {
+    fill: COBALT,
+    hover: COBALT,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(32.0, 32.0),
+};
+pub const BUTTON_PRIMARY_L: ButtonRoleStyle = ButtonRoleStyle {
+    fill: COBALT,
+    hover: COBALT,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(40.0, 40.0),
+};
+
+pub const BUTTON_SECONDARY_S: ButtonRoleStyle = ButtonRoleStyle {
+    fill: PANEL_BG,
+    hover: PAPER,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(24.0, 24.0),
+};
+pub const BUTTON_SECONDARY_M: ButtonRoleStyle = ButtonRoleStyle {
+    fill: PANEL_BG,
+    hover: PAPER,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(32.0, 32.0),
+};
+pub const BUTTON_SECONDARY_L: ButtonRoleStyle = ButtonRoleStyle {
+    fill: PANEL_BG,
+    hover: PAPER,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(40.0, 40.0),
+};
+
+pub const BUTTON_GHOST_S: ButtonRoleStyle = ButtonRoleStyle {
+    fill: TRANSPARENT,
+    hover: PANEL_BG,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(24.0, 24.0),
+};
+pub const BUTTON_GHOST_M: ButtonRoleStyle = ButtonRoleStyle {
+    fill: TRANSPARENT,
+    hover: PANEL_BG,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(32.0, 32.0),
+};
+pub const BUTTON_GHOST_L: ButtonRoleStyle = ButtonRoleStyle {
+    fill: TRANSPARENT,
+    hover: PANEL_BG,
+    active: COBALT,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(40.0, 40.0),
+};
+
+pub const BUTTON_DANGER_S: ButtonRoleStyle = ButtonRoleStyle {
+    fill: ERROR,
+    hover: ERROR,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(24.0, 24.0),
+};
+#[allow(dead_code)]
+pub const BUTTON_DANGER_M: ButtonRoleStyle = ButtonRoleStyle {
+    fill: ERROR,
+    hover: ERROR,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(32.0, 32.0),
+};
+#[allow(dead_code)]
+pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
+    fill: ERROR,
+    hover: ERROR,
+    active: INK,
+    focus: COBALT,
+    disabled: TEXT_MUTED,
+    min_size: eframe::egui::vec2(40.0, 40.0),
+};
+
+#[allow(dead_code)]
+pub fn button_style(
+    role: ButtonRole,
+    size: ButtonSize,
+    active: bool,
+) -> eframe::egui::Button<'static> {
+    let spec = match (role, size) {
+        (ButtonRole::Primary, ButtonSize::Small) => BUTTON_PRIMARY_S,
+        (ButtonRole::Primary, ButtonSize::Medium) => BUTTON_PRIMARY_M,
+        (ButtonRole::Primary, ButtonSize::Large) => BUTTON_PRIMARY_L,
+        (ButtonRole::Secondary, ButtonSize::Small) => BUTTON_SECONDARY_S,
+        (ButtonRole::Secondary, ButtonSize::Medium) => BUTTON_SECONDARY_M,
+        (ButtonRole::Secondary, ButtonSize::Large) => BUTTON_SECONDARY_L,
+        (ButtonRole::Ghost, ButtonSize::Small) => BUTTON_GHOST_S,
+        (ButtonRole::Ghost, ButtonSize::Medium) => BUTTON_GHOST_M,
+        (ButtonRole::Ghost, ButtonSize::Large) => BUTTON_GHOST_L,
+        (ButtonRole::Danger, ButtonSize::Small) => BUTTON_DANGER_S,
+        (ButtonRole::Danger, ButtonSize::Medium) => BUTTON_DANGER_M,
+        (ButtonRole::Danger, ButtonSize::Large) => BUTTON_DANGER_L,
+    };
+    let fill = if active { spec.active } else { spec.fill };
+    eframe::egui::Button::new("")
+        .fill(fill)
+        .stroke(eframe::egui::Stroke::new(2.0, spec.focus))
+        .min_size(spec.min_size)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

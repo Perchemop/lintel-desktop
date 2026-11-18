@@ -19,5 +19,7 @@ egui = { version = "=0.36" }
 image = "0.25"
 
 [dev-dependencies]
+# AccessKit / snapshot testing harness (guide II.27.12 / K.7)
+egui_kittest = "0.36"
 # Unit test helpers if needed
 serde = { version = "1", features = ["derive"] }

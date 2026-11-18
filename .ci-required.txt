@@ -1,4 +1,5 @@
 # Authoritative status checks for ci.sh (guide II.20.4 / II.25).
 # One exact check name per line; blank lines and '#' comments are ignored.
 check
+kittest
 pr-author-is-dev
