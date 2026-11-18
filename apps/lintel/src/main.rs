@@ -249,6 +249,15 @@ impl LintelApp {
         self.selection.pick_all(&geometry);
     }
 
+    /// Select a block instance by id (keyboard palette entry point).
+    ///
+    /// Clears the ordinary entity selection first, matching canvas click
+    /// behaviour: an instance is a distinct selection kind.
+    pub fn select_block_instance(&mut self, id: Option<lintel_core::block::BlockId>) {
+        self.selection.clear();
+        self.selected_block_instance = id;
+    }
+
     /// Delete every selected entity, reporting the first refusal.
     ///
     /// Construction guides own their own delete command, so a selection that
@@ -1245,6 +1254,13 @@ impl LintelApp {
                 self.snap.grid_enabled = !self.snap.grid_enabled;
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::O)) {
+                self.snap.ortho = !self.snap.ortho;
+            }
+            // Function-key aliases (QCAD/AutoCAD convention): F7 grid, F8 ortho.
+            if ui.input(|i| i.key_pressed(egui::Key::F7)) {
+                self.snap.grid_enabled = !self.snap.grid_enabled;
+            }
+            if ui.input(|i| i.key_pressed(egui::Key::F8)) {
                 self.snap.ortho = !self.snap.ortho;
             }
             if plain_keys && ui.input(|i| i.key_pressed(egui::Key::F)) {

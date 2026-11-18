@@ -75,9 +75,10 @@ Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
 - **Screen-reader verification is manual only.** There is no automated CI
   check for Narrator/NVDA/VoiceOver output; spot checks are recorded in the
   QC run log (docs/qc/checklist.md).
-- **Block instances are selected by pointer.** There is no keyboard-only
-  instance selection yet; once an instance is selected (canvas click), its
-  Inspector fields are Tab-reachable.
+- **Block instances can be selected keyboard-only.** Open the command palette
+  (Ctrl+K), choose "Select block instance", and pick an instance from the list;
+  its Inspector fields are then Tab-reachable. The pointer path remains
+  available.
 
 ## Keyboard shortcut table
 
