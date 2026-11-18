@@ -6,7 +6,7 @@
 //! roles, names, and action patterns. No display, GPU, or window server is
 //! required.
 
-use egui_kittest::{run, Tree};
+use egui_kittest::{Tree, run};
 use lintel::app;
 use lintel_core::project::Project;
 
