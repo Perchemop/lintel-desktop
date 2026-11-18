@@ -29,7 +29,9 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         };
         ui.separator();
         ui.label(
-            egui::RichText::new(snap_text).small().color(theme::TEXT_HINT),
+            egui::RichText::new(snap_text)
+                .small()
+                .color(theme::TEXT_HINT),
         );
         ui.separator();
 
@@ -134,14 +136,11 @@ fn chip(
     hint: &str,
     toggle: impl FnOnce(),
 ) {
-    let text =
-        egui::RichText::new(label)
-            .small()
-            .color(if active {
-                active_colour
-            } else {
-                theme::TEXT_HINT
-            });
+    let text = egui::RichText::new(label).small().color(if active {
+        active_colour
+    } else {
+        theme::TEXT_HINT
+    });
     let response = ui.selectable_label(active, text).on_hover_text(hint);
     if response.clicked() {
         toggle();

@@ -595,23 +595,11 @@ mod tests {
                 BUTTON_GHOST_S.fill,
                 SURFACE_TRANSPARENT,
             ),
-            (
-                "BUTTON_GHOST_L.hover",
-                BUTTON_GHOST_L.hover,
-                SURFACE_PANEL,
-            ),
+            ("BUTTON_GHOST_L.hover", BUTTON_GHOST_L.hover, SURFACE_PANEL),
             ("BUTTON_DANGER_S.fill", BUTTON_DANGER_S.fill, DANGER_DEFAULT),
             ("BUTTON_DANGER_L.fill", BUTTON_DANGER_L.fill, DANGER_DEFAULT),
-            (
-                "BUTTON_PRIMARY_S.focus",
-                BUTTON_PRIMARY_S.focus,
-                FOCUS_RING,
-            ),
-            (
-                "BUTTON_DANGER_L.focus",
-                BUTTON_DANGER_L.focus,
-                FOCUS_RING,
-            ),
+            ("BUTTON_PRIMARY_S.focus", BUTTON_PRIMARY_S.focus, FOCUS_RING),
+            ("BUTTON_DANGER_L.focus", BUTTON_DANGER_L.focus, FOCUS_RING),
             (
                 "BUTTON_PRIMARY_S.disabled",
                 BUTTON_PRIMARY_S.disabled,
