@@ -212,6 +212,7 @@ pub const BUTTON_DANGER_S: ButtonRoleStyle = ButtonRoleStyle {
     disabled: TEXT_MUTED,
     min_size: eframe::egui::vec2(24.0, 24.0),
 };
+#[allow(dead_code)]
 pub const BUTTON_DANGER_M: ButtonRoleStyle = ButtonRoleStyle {
     fill: ERROR,
     hover: ERROR,
@@ -220,6 +221,7 @@ pub const BUTTON_DANGER_M: ButtonRoleStyle = ButtonRoleStyle {
     disabled: TEXT_MUTED,
     min_size: eframe::egui::vec2(32.0, 32.0),
 };
+#[allow(dead_code)]
 pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
     fill: ERROR,
     hover: ERROR,
@@ -229,6 +231,7 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
+#[allow(dead_code)]
 pub fn button_style(
     role: ButtonRole,
     size: ButtonSize,
