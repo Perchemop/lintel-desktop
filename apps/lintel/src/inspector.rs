@@ -919,9 +919,7 @@ pub fn inspector(
                     ui.horizontal(|ui| {
                         ui.label(format!(
                             "{} at 1:{} — {}",
-                            viewport.level.0,
-                            viewport.scale_denominator,
-                            viewport.caption
+                            viewport.level.0, viewport.scale_denominator, viewport.caption
                         ));
                         if ui
                             .button("Remove")
