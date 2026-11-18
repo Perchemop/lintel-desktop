@@ -762,13 +762,7 @@ pub fn inspector(
                 {
                     // Ids are assigned here (not in the core): take one past
                     // the highest existing definition id.
-                    let next = level
-                        .block_defs
-                        .iter()
-                        .map(|d| d.id.0)
-                        .max()
-                        .unwrap_or(0)
-                        + 1;
+                    let next = level.block_defs.iter().map(|d| d.id.0).max().unwrap_or(0) + 1;
                     command = Some(Command::AddBlockDef {
                         block: lintel_core::block::BlockDef::new(
                             lintel_core::block::BlockId(next),
