@@ -253,8 +253,8 @@ impl SelectionModeKind {
     /// AutoCAD's convention: a window box is blue, a crossing box green.
     pub fn colour(self) -> egui::Color32 {
         match self {
-            SelectionModeKind::Window => theme::COBALT,
-            SelectionModeKind::Crossing => theme::GREEN,
+            SelectionModeKind::Window => theme::ACCENT_DEFAULT,
+            SelectionModeKind::Crossing => theme::SUCCESS_DEFAULT,
         }
     }
 
@@ -349,14 +349,14 @@ impl SnapModeKind {
     /// signal.
     pub fn colour(self) -> egui::Color32 {
         match self {
-            SnapModeKind::Endpoint => theme::GREEN,
-            SnapModeKind::Intersection => theme::COBALT,
+            SnapModeKind::Endpoint => theme::SUCCESS_DEFAULT,
+            SnapModeKind::Intersection => theme::ACCENT_DEFAULT,
             SnapModeKind::Midpoint => egui::Color32::from_rgb(176, 106, 22),
             SnapModeKind::Perpendicular => egui::Color32::from_rgb(120, 74, 160),
             SnapModeKind::Tangent => egui::Color32::from_rgb(24, 128, 140),
             SnapModeKind::Ortho => egui::Color32::from_rgb(90, 82, 74),
             SnapModeKind::Grid => egui::Color32::from_rgb(130, 130, 130),
-            SnapModeKind::Free => theme::INK,
+            SnapModeKind::Free => theme::STROKE_STRONG,
         }
     }
 }
@@ -716,7 +716,7 @@ impl Canvas {
         response.press = egui_response.interact_pointer_pos();
         response.drag_started = egui_response.drag_started_by(egui::PointerButton::Primary);
         response.drag_stopped = egui_response.drag_stopped_by(egui::PointerButton::Primary);
-        painter.rect_filled(rect, 0.0, theme::PAPER);
+        painter.rect_filled(rect, 0.0, theme::SURFACE_BASE);
 
         let hover = egui_response.hover_pos();
         response.pointer_world = hover.map(|p| screen_to_world(view, rect, p));
@@ -759,7 +759,7 @@ impl Canvas {
                 egui::Align2::CENTER_CENTER,
                 room.area_label(),
                 egui::FontId::proportional(11.0),
-                theme::INK.linear_multiply(0.55),
+                theme::TEXT_PRIMARY.linear_multiply(0.55),
             );
         }
 
@@ -767,9 +767,9 @@ impl Canvas {
         for label in geometry.labels() {
             let pos = world_to_screen(view, rect, label.anchor);
             let colour = if selection.contains(EntityId::Label(label.id)) {
-                theme::COBALT
+                theme::ACCENT_DEFAULT
             } else {
-                theme::INK
+                theme::TEXT_PRIMARY
             };
             painter.text(
                 pos,
@@ -838,7 +838,7 @@ impl Canvas {
                 egui::Align2::LEFT_TOP,
                 format!("{length:.0} mm  {angle:.0}°"),
                 egui::FontId::proportional(11.0),
-                theme::INK,
+                theme::TEXT_PRIMARY,
             );
         }
 
@@ -1007,7 +1007,7 @@ fn paint_wall(
         .map(|p| world_to_screen(view, rect, *p))
         .collect();
     let fill = if selected {
-        theme::COBALT.linear_multiply(0.12)
+        theme::ACCENT_DEFAULT.linear_multiply(0.12)
     } else {
         theme::WALL_FILL
     };

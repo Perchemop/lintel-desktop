@@ -175,7 +175,7 @@ pub fn inspector(
                         egui::Button::new("Apply")
                             .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                             .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                     )
                     .on_hover_text("Apply the new project name.")
                     .clicked()
@@ -292,7 +292,7 @@ pub fn inspector(
                         egui::Button::new("Add")
                             .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                             .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                     )
                     .on_hover_text("Add the new storey and make it active.")
                     .clicked()
@@ -551,7 +551,7 @@ pub fn inspector(
                                 egui::Button::new("Remove")
                                     .fill(crate::theme::BUTTON_DANGER_S.fill)
                                     .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                             )
                             .on_hover_text("Remove this constraint.")
                             .clicked()
@@ -719,7 +719,7 @@ pub fn inspector(
                                 egui::Button::new("Remove")
                                     .fill(crate::theme::BUTTON_DANGER_S.fill)
                                     .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                             )
                             .on_hover_text("Remove this block definition (only when unused).")
                             .clicked()
@@ -761,7 +761,7 @@ pub fn inspector(
                             egui::Button::new("Remove all of this def")
                                 .fill(crate::theme::BUTTON_DANGER_S.fill)
                                 .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                                .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                         )
                         .on_hover_text("Remove every instance of the block definition.")
                         .clicked()
@@ -837,7 +837,7 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Apply the new wall thickness.")
             .clicked()
@@ -860,7 +860,7 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Apply the new wall height.")
             .clicked()
@@ -1036,7 +1036,7 @@ fn dimension_fields(
                         egui::Button::new("Apply")
                             .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                             .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
                     )
             .on_hover_text("Apply the new dimension offset.")
             .clicked()
@@ -1077,7 +1077,7 @@ fn dimension_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Apply the new witness gap.")
             .clicked()
@@ -1102,7 +1102,7 @@ fn dimension_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .on_hover_text("Apply the new witness overrun.")
             .clicked()
@@ -1261,7 +1261,7 @@ fn label_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .clicked()
             && !text.trim().is_empty()
@@ -1286,7 +1286,7 @@ fn label_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .clicked()
             && ((x - label.anchor.x).abs() > f64::EPSILON
@@ -1325,7 +1325,7 @@ fn block_instance_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .clicked()
             && ((x - instance.param.x).abs() > f64::EPSILON
@@ -1347,7 +1347,7 @@ fn block_instance_fields(
                 egui::Button::new("Apply")
                     .fill(crate::theme::BUTTON_PRIMARY_M.fill)
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
             )
             .clicked()
             && (degrees - instance.rotation.to_degrees()).abs() > f64::EPSILON
