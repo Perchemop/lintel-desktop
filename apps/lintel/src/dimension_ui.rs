@@ -29,7 +29,11 @@ pub fn render_dimensions(
         let ss = world_to_screen(view, rect, dim.effective_start(Some(level)));
         let se = world_to_screen(view, rect, dim.effective_end(Some(level)));
 
-        let stroke_color = if selected { theme::ACCENT_DEFAULT } else { theme::STROKE_STRONG };
+        let stroke_color = if selected {
+            theme::ACCENT_DEFAULT
+        } else {
+            theme::STROKE_STRONG
+        };
         let line_stroke = egui::Stroke::new(1.0, stroke_color);
 
         // Witness lines (extension lines) from measured points to the

@@ -1100,7 +1100,11 @@ fn layer_form(ui: &mut egui::Ui, form: &mut LayerForm) {
         if !form.colour.trim().is_empty() {
             let ok = Rgb::from_hex(form.colour.trim()).is_some();
             let text = if ok { "ok" } else { "bad hex" };
-            let colour = if ok { theme::TEXT_SUCCESS } else { theme::TEXT_DANGER };
+            let colour = if ok {
+                theme::TEXT_SUCCESS
+            } else {
+                theme::TEXT_DANGER
+            };
             ui.label(egui::RichText::new(text).small().color(colour));
         }
     });
