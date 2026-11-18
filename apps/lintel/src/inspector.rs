@@ -910,10 +910,7 @@ pub fn inspector(
             let project = doc.project();
             ui.label("A viewport places a level on a sheet at a set scale.");
             if project.viewports.is_empty() {
-                ui.label(
-                    egui::RichText::new("No viewports yet.")
-                        .color(crate::theme::TEXT_MUTED),
-                );
+                ui.label(egui::RichText::new("No viewports yet.").color(crate::theme::TEXT_MUTED));
             } else {
                 for (index, viewport) in project.viewports.iter().enumerate() {
                     ui.horizontal(|ui| {
