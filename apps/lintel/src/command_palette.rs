@@ -10,7 +10,7 @@ use eframe::egui;
 use lintel_core::{
     command::Command,
     document::Document,
-    ids::{EntityId, LayerId},
+    ids::{BlockId, EntityId, LayerId},
     layer::{EntitySelector, LayerProperty, Linetype, Rgb},
 };
 
@@ -135,6 +135,8 @@ pub enum PaletteAction {
     // Constraints.
     AddPerpendicularConstraint,
     RemoveConstraint,
+    // Blocks.
+    SelectBlockInstance,
     // Project.
     RenameProject,
     AddStorey,
@@ -147,7 +149,7 @@ pub enum PaletteAction {
 
 impl PaletteAction {
     /// Every action, in category order.
-    pub const ALL: [PaletteAction; 48] = [
+    pub const ALL: [PaletteAction; 49] = [
         PaletteAction::SelectTool,
         PaletteAction::WallTool,
         PaletteAction::DoorTool,
@@ -190,6 +192,7 @@ impl PaletteAction {
         PaletteAction::DeleteConstruction,
         PaletteAction::AddPerpendicularConstraint,
         PaletteAction::RemoveConstraint,
+        PaletteAction::SelectBlockInstance,
         PaletteAction::RenameProject,
         PaletteAction::AddStorey,
         PaletteAction::DeleteStorey,
@@ -242,6 +245,7 @@ impl PaletteAction {
             PaletteAction::DeleteConstruction => "Delete construction",
             PaletteAction::AddPerpendicularConstraint => "Add Perpendicular Distance Constraint",
             PaletteAction::RemoveConstraint => "Remove Constraint",
+            PaletteAction::SelectBlockInstance => "Select block instance",
             PaletteAction::RenameProject => "Rename project",
             PaletteAction::AddStorey => "Add storey",
             PaletteAction::DeleteStorey => "Delete storey",
@@ -341,6 +345,7 @@ impl PaletteAction {
             PaletteAction::AddPerpendicularConstraint | PaletteAction::RemoveConstraint => {
                 "Constraints"
             }
+            PaletteAction::SelectBlockInstance => "Blocks",
             PaletteAction::RenameProject
             | PaletteAction::AddStorey
             | PaletteAction::DeleteStorey => "Project",
@@ -364,6 +369,7 @@ impl PaletteAction {
                 | PaletteAction::RenameProject
                 | PaletteAction::AddStorey
                 | PaletteAction::DeleteStorey
+                | PaletteAction::SelectBlockInstance
         )
     }
 
@@ -399,6 +405,10 @@ impl PaletteAction {
                 .project()
                 .active_level()
                 .is_some_and(|level| !level.constraints.is_empty()),
+            PaletteAction::SelectBlockInstance => doc
+                .project()
+                .active_level()
+                .is_some_and(|level| !level.block_instances.is_empty()),
             PaletteAction::ConstructionVisible | PaletteAction::DeleteConstruction => selection
                 .primary()
                 .is_some_and(|id| matches!(id, EntityId::Construction(_))),
@@ -889,6 +899,8 @@ enum PendingForm {
     Project(String),
     /// A new storey.
     Storey { name: String, elevation: f64 },
+    /// Pick a block instance on the active level.
+    BlockInstancePick,
 }
 
 #[derive(Debug, Clone)]
@@ -970,6 +982,7 @@ impl PendingForm {
                 value: false,
             },
             PaletteAction::RenameProject => PendingForm::Project(app.doc.project().name.clone()),
+            PaletteAction::SelectBlockInstance => PendingForm::BlockInstancePick,
             _ => PendingForm::Storey {
                 name: String::new(),
                 elevation: 3000.0,
@@ -983,6 +996,7 @@ impl PendingForm {
             PendingForm::LayerPick { action, .. } => action.label(),
             PendingForm::Project(_) => "Rename project",
             PendingForm::Storey { .. } => "Add storey",
+            PendingForm::BlockInstancePick => "Select block instance",
         }
     }
 }
@@ -991,6 +1005,64 @@ impl PendingForm {
 /// Cancel steps back without changing anything. The typed values are stored
 /// back each frame, so the form survives as the user types.
 fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i64) {
+    if matches!(form, PendingForm::BlockInstancePick) {
+        ui.heading("Select block instance");
+        ui.add_space(4.0);
+        ui.label(
+            egui::RichText::new("Choose a block instance on the active level.")
+                .small()
+                .color(theme::TEXT_HINT),
+        );
+        ui.add_space(4.0);
+        let instances: Vec<(BlockId, String, f64, f64)> = app
+            .doc
+            .project()
+            .active_level()
+            .map(|level| {
+                level
+                    .block_instances
+                    .iter()
+                    .map(|inst| {
+                        let name = level
+                            .block_def(inst.block_id)
+                            .map(|d| d.name.clone())
+                            .unwrap_or_else(|| format!("block #{}", inst.block_id.0));
+                        (inst.id, name, inst.param.x, inst.param.y)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        if instances.is_empty() {
+            ui.label("This level has no block instances to select.");
+        }
+        for (id, name, x, y) in &instances {
+            ui.horizontal(|ui| {
+                ui.label(format!("{} — {} @ ({}, {})", id, name, *x as i64, *y as i64));
+                if ui
+                    .button("Select")
+                    .on_hover_text("Select this block instance for editing in the Inspector.")
+                    .clicked()
+                {
+                    app.select_block_instance(Some(*id));
+                    app.palette.pending = None;
+                    app.palette.query.clear();
+                    app.palette.selected = 0;
+                }
+            });
+        }
+        ui.add_space(6.0);
+        if ui
+            .button("Cancel")
+            .on_hover_text("Go back to the command list (Esc)")
+            .clicked()
+        {
+            app.palette.pending = None;
+            app.palette.query.clear();
+            app.palette.selected = 0;
+        }
+        return;
+    }
+
     ui.heading(form.title());
     ui.add_space(4.0);
 
@@ -1315,6 +1387,7 @@ fn form_commands(form: &PendingForm, app: &LintelApp) -> Vec<Command> {
                 }
             }
         }
+        PendingForm::BlockInstancePick => Vec::new(),
         PendingForm::Project(name) => {
             let name = name.trim();
             if name.is_empty() {

@@ -32,6 +32,8 @@ Generated from code on 2026-11-16 (`apps/lintel/src/main.rs` keyboard block and
 | X | Construction arc tool | main.rs keyboard block |
 | Shift+V | Toggle construction visibility | main.rs keyboard block |
 | F | Zoom to fit | main.rs keyboard block |
+| F7 | Toggle grid | main.rs keyboard block |
+| F8 | Toggle ortho | main.rs keyboard block |
 | R | Release notes | main.rs keyboard block |
 | Ctrl+U | Check for updates | main.rs keyboard block |
 | Ctrl+K | Command palette | main.rs ui() (global) |
@@ -74,7 +76,9 @@ Generated from code on 2026-11-16 (`apps/lintel/src/main.rs` keyboard block and
 | P | Snap: perpendicular |
 | T | Snap: tangent |
 | G | Toggle grid |
+| F7 | Toggle grid |
 | O | Toggle orthogonal drawing |
+| F8 | Toggle ortho |
 | U | Switch Metric / Imperial |
 | C | Construction line tool |
 | Shift+C | Construction ray tool |
