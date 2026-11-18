@@ -834,11 +834,11 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         .on_hover_text("Wall thickness in mm (20–2000). Press Apply to commit.");
         if ui
             .add(
-                        egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
-                    )
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
             .on_hover_text("Apply the new wall thickness.")
             .clicked()
             && (thickness - wall.thickness).abs() > f64::EPSILON
@@ -857,11 +857,11 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         .on_hover_text("Wall height in mm (300–20000). Press Apply to commit.");
         if ui
             .add(
-                        egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
-                    )
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
             .on_hover_text("Apply the new wall height.")
             .clicked()
             && (height - wall.height).abs() > f64::EPSILON
@@ -1074,11 +1074,11 @@ fn dimension_fields(
         );
         if ui
             .add(
-                        egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
-                    )
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
             .on_hover_text("Apply the new witness gap.")
             .clicked()
             && (gap - dimension.witness_gap).abs() > f64::EPSILON
@@ -1099,11 +1099,11 @@ fn dimension_fields(
         .on_hover_text("How far a witness line runs past the dimension line in mm (min 0).");
         if ui
             .add(
-                        egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
-                    )
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
             .on_hover_text("Apply the new witness overrun.")
             .clicked()
             && (overrun - dimension.witness_overrun).abs() > f64::EPSILON
@@ -1263,7 +1263,10 @@ fn label_fields(
                     .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
                     .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
             )
-            .clicked() && !text.trim().is_empty() && text.trim() != label.text {
+            .clicked()
+            && !text.trim().is_empty()
+            && text.trim() != label.text
+        {
             command = Some(Command::SetLabelText {
                 id,
                 text: text.trim().to_string(),
