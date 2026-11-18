@@ -55,6 +55,14 @@ pub const BASE_SELECTION_WASH: Color32 = Color32::from_black_alpha(18);
 pub const BASE_SELECTION_EDGE: Color32 = Color32::from_black_alpha(40);
 pub const BASE_TRANSPARENT: Color32 = Color32::TRANSPARENT;
 
+pub const BASE_SNAP_MIDPOINT: Color32 = Color32::from_rgb(176, 106, 22);
+pub const BASE_SNAP_PERPENDICULAR: Color32 = Color32::from_rgb(120, 74, 160);
+pub const BASE_SNAP_TANGENT: Color32 = Color32::from_rgb(24, 128, 140);
+pub const BASE_SNAP_ORTHO: Color32 = Color32::from_rgb(90, 82, 74);
+pub const BASE_SNAP_GRID: Color32 = Color32::from_rgb(130, 130, 130);
+/// Construction-geometry stroke. Darkened from (168,148,116) — 2.77:1 on
+/// PAPER, below the 3:1 UI-graphics floor — to 4.0:1 (guide II.30.7.1).
+pub const BASE_CONSTRUCTION: Color32 = Color32::from_rgb(140, 120, 90);
 // ---------------------------------------------------------------------------
 // Tier 2 — semantic roles (what a colour means)
 // ---------------------------------------------------------------------------
@@ -118,6 +126,14 @@ pub const DANGER_DEFAULT: Color32 = BASE_ERROR;
 /// Dark stroke for dimension lines, drag rectangles and the free-snap marker.
 pub const STROKE_STRONG: Color32 = BASE_INK;
 
+// Snap markers: one colour per kind so the label is never the only signal.
+pub const SNAP_MIDPOINT: Color32 = BASE_SNAP_MIDPOINT;
+pub const SNAP_PERPENDICULAR: Color32 = BASE_SNAP_PERPENDICULAR;
+pub const SNAP_TANGENT: Color32 = BASE_SNAP_TANGENT;
+pub const SNAP_ORTHO: Color32 = BASE_SNAP_ORTHO;
+pub const SNAP_GRID: Color32 = BASE_SNAP_GRID;
+/// Warm-grey construction guide stroke.
+pub const CONSTRUCTION_STROKE: Color32 = BASE_CONSTRUCTION;
 // Drafting surface: the plan itself.
 pub const DRAFT_FILL: Color32 = BASE_WALL_FILL;
 pub const DRAFT_STROKE: Color32 = BASE_WALL_STROKE;
@@ -170,6 +186,19 @@ pub fn selection_stroke() -> egui::Stroke {
     egui::Stroke::new(2.0, ACCENT_DEFAULT)
 }
 
+/// The snap-marker colour for `kind` (tier 3 component token).
+pub fn snap_marker_colour(kind: &crate::canvas::SnapModeKind) -> Color32 {
+    match kind {
+        crate::canvas::SnapModeKind::Midpoint => SNAP_MIDPOINT,
+        crate::canvas::SnapModeKind::Perpendicular => SNAP_PERPENDICULAR,
+        crate::canvas::SnapModeKind::Tangent => SNAP_TANGENT,
+        crate::canvas::SnapModeKind::Ortho => SNAP_ORTHO,
+        crate::canvas::SnapModeKind::Grid => SNAP_GRID,
+        crate::canvas::SnapModeKind::Endpoint => SUCCESS_DEFAULT,
+        crate::canvas::SnapModeKind::Intersection => ACCENT_DEFAULT,
+        crate::canvas::SnapModeKind::Free => STROKE_STRONG,
+    }
+}
 /// Convert an egui colour to a plain RGB tuple (alpha dropped). Useful for the
 /// WCAG contrast helpers below, which operate on `(u8, u8, u8)` so they have
 /// no egui dependency in the maths.
@@ -482,6 +511,23 @@ mod tests {
             "SUCCESS_DEFAULT on SURFACE_PANEL is {:.2}:1",
             contrast_ratio(success, panel)
         );
+
+        // Snap markers are UI graphics on the sheet (guide II.30.7.1, 3:1 floor).
+        let paper = rgb_of(SURFACE_BASE);
+        for (name, col) in [
+            ("SNAP_MIDPOINT", rgb_of(SNAP_MIDPOINT)),
+            ("SNAP_PERPENDICULAR", rgb_of(SNAP_PERPENDICULAR)),
+            ("SNAP_TANGENT", rgb_of(SNAP_TANGENT)),
+            ("SNAP_ORTHO", rgb_of(SNAP_ORTHO)),
+            ("SNAP_GRID", rgb_of(SNAP_GRID)),
+            ("CONSTRUCTION_STROKE", rgb_of(CONSTRUCTION_STROKE)),
+        ] {
+            assert!(
+                contrast_ratio(col, paper) >= 3.0,
+                "{name} on SURFACE_BASE is {:.2}:1",
+                contrast_ratio(col, paper)
+            );
+        }
     }
 
     #[test]
@@ -520,6 +566,20 @@ mod tests {
             ("OPENING_CUT", OPENING_CUT, SURFACE_BASE),
             ("OPENING_LEAF", OPENING_LEAF, TEXT_PRIMARY),
             ("OPENING_GLAZING", OPENING_GLAZING, BASE_WINDOW_LINE),
+            ("SNAP_MIDPOINT", SNAP_MIDPOINT, BASE_SNAP_MIDPOINT),
+            (
+                "SNAP_PERPENDICULAR",
+                SNAP_PERPENDICULAR,
+                BASE_SNAP_PERPENDICULAR,
+            ),
+            ("SNAP_TANGENT", SNAP_TANGENT, BASE_SNAP_TANGENT),
+            ("SNAP_ORTHO", SNAP_ORTHO, BASE_SNAP_ORTHO),
+            ("SNAP_GRID", SNAP_GRID, BASE_SNAP_GRID),
+            (
+                "CONSTRUCTION_STROKE",
+                CONSTRUCTION_STROKE,
+                BASE_CONSTRUCTION,
+            ),
         ];
         for (name, role, expected) in pairs {
             assert_eq!(role, expected, "{name} must resolve to its base swatch");
@@ -604,6 +664,20 @@ mod tests {
                 "BUTTON_PRIMARY_S.disabled",
                 BUTTON_PRIMARY_S.disabled,
                 TEXT_MUTED,
+            ),
+            ("SNAP_MIDPOINT", SNAP_MIDPOINT, BASE_SNAP_MIDPOINT),
+            (
+                "SNAP_PERPENDICULAR",
+                SNAP_PERPENDICULAR,
+                BASE_SNAP_PERPENDICULAR,
+            ),
+            ("SNAP_TANGENT", SNAP_TANGENT, BASE_SNAP_TANGENT),
+            ("SNAP_ORTHO", SNAP_ORTHO, BASE_SNAP_ORTHO),
+            ("SNAP_GRID", SNAP_GRID, BASE_SNAP_GRID),
+            (
+                "CONSTRUCTION_STROKE",
+                CONSTRUCTION_STROKE,
+                BASE_CONSTRUCTION,
             ),
             (
                 "selection_stroke colour",

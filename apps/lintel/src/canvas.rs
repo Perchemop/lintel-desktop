@@ -32,10 +32,7 @@ const SNAP_HINT_PX: f32 = 2.5;
 const GUIDE_EXTENT_MM: f64 = 1.0e7;
 
 /// Construction guides are drawn thin and warm-grey so they read as a guide,
-/// never as the building. They never reach the sheet whatever the canvas shows.
-const CONSTRUCTION_STROKE: egui::Color32 = egui::Color32::from_rgb(168, 148, 116);
-
-/// What the canvas wants the app to do after one frame.
+/// never as the building. They never reach the sheet whatever the canvas shows./// What the canvas wants the app to do after one frame.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CanvasResponse {
     pub pointer_world: Option<Point2>,
@@ -348,16 +345,7 @@ impl SnapModeKind {
     /// used, and each other kind gets its own so the label is never the only
     /// signal.
     pub fn colour(self) -> egui::Color32 {
-        match self {
-            SnapModeKind::Endpoint => theme::SUCCESS_DEFAULT,
-            SnapModeKind::Intersection => theme::ACCENT_DEFAULT,
-            SnapModeKind::Midpoint => egui::Color32::from_rgb(176, 106, 22),
-            SnapModeKind::Perpendicular => egui::Color32::from_rgb(120, 74, 160),
-            SnapModeKind::Tangent => egui::Color32::from_rgb(24, 128, 140),
-            SnapModeKind::Ortho => egui::Color32::from_rgb(90, 82, 74),
-            SnapModeKind::Grid => egui::Color32::from_rgb(130, 130, 130),
-            SnapModeKind::Free => theme::STROKE_STRONG,
-        }
+        theme::snap_marker_colour(&self)
     }
 }
 
@@ -907,7 +895,7 @@ fn paint_construction(
     view: &View,
     guide: &ConstructionEntity,
 ) {
-    let stroke = egui::Stroke::new(1.0, CONSTRUCTION_STROKE);
+    let stroke = egui::Stroke::new(1.0, theme::CONSTRUCTION_STROKE);
     let kind = guide.kind.clone();
     match kind {
         ConstructionKind::Line { start, end } => {
@@ -1016,7 +1004,7 @@ fn paint_wall(
         fill,
         egui::Stroke {
             width: 0.0,
-            color: egui::Color32::TRANSPARENT,
+            color: theme::SURFACE_TRANSPARENT,
         },
     ));
     let stroke = if selected {
@@ -1058,7 +1046,7 @@ fn paint_opening(
         theme::OPENING_GAP,
         egui::Stroke {
             width: 0.0,
-            color: egui::Color32::TRANSPARENT,
+            color: theme::SURFACE_TRANSPARENT,
         },
     ));
 
