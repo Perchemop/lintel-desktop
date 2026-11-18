@@ -1075,6 +1075,9 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
 
     match &mut form {
         PendingForm::Layer(layer) => layer_form(ui, layer),
+        // BlockInstancePick renders and returns above; this arm is required
+        // for exhaustiveness but is never reached.
+        PendingForm::BlockInstancePick => {}
         PendingForm::LayerPick {
             action,
             layer,
