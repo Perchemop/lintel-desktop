@@ -8,9 +8,10 @@
 
 use eframe::egui;
 use lintel_core::{
+    block::BlockId,
     command::Command,
     document::Document,
-    ids::{BlockId, EntityId, LayerId},
+    ids::{EntityId, LayerId},
     layer::{EntitySelector, LayerProperty, Linetype, Rgb},
 };
 
