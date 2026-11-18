@@ -1636,7 +1636,7 @@ impl LintelApp {
 
 /// One-line description of the active level. Used both as the canvas's
 /// screen-reader label (guide II.21.2) and as a visible toolbar summary.
-pub(crate) fn plan_summary(project: &lintel_core::project::Project) -> String {
+pub fn plan_summary(project: &lintel_core::project::Project) -> String {
     use lintel_core::opening::OpeningKind;
 
     let Some(level) = project.active_level() else {
