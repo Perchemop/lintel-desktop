@@ -771,7 +771,7 @@ pub fn inspector(
                         + 1;
                     command = Some(Command::AddBlockDef {
                         block: lintel_core::block::BlockDef::new(
-                            lintel_core::ids::BlockId(next),
+                            lintel_core::block::BlockId(next),
                             draft.new_block_def_name.trim().to_string(),
                         ),
                     });
