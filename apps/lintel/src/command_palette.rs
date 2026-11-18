@@ -1040,7 +1040,10 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
         }
         for (id, name, x, y) in &instances {
             ui.horizontal(|ui| {
-                ui.label(format!("{} — {} @ ({}, {})", id, name, *x as i64, *y as i64));
+                ui.label(format!(
+                    "{} — {} @ ({}, {})",
+                    id, name, *x as i64, *y as i64
+                ));
                 if ui
                     .button("Select")
                     .on_hover_text("Select this block instance for editing in the Inspector.")
