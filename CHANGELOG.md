@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.19.0 — 2026-11-19
+
+### Added
+
+- D-032 command bindings in the Inspector: a Title block section editing
+  company, sheet title, revision, date and drawn-by (`SetTitleBlock`), a
+  Viewports section with Remove (`RemoveViewport`) and an Add form with level
+  id, scale denominator and caption (`AddViewport`, default A4 landscape
+  region), and a Blocks "Add definition" name form (`AddBlockDef`, ids
+  assigned UI-side as max+1). Only `MoveDimension` remains core-only by
+  design (D-026), so D-027 reachability is fully satisfied (PR #60)
+- F7/F8 snap aliases: F7 toggles grid and F8 toggles ortho alongside G/O,
+  following the approved QCAD/AutoCAD convention;
+  `docs/qc/shortcuts.md` updated (PR #61)
+- Keyboard block-instance selection: a "Select block instance" palette action
+  (Ctrl+K) with a pick form listing every active-level instance (raw id,
+  definition name, position); Select sets the instance and clears entity
+  selection, removing the last pointer-only accessibility flow (PR #61)
+
+### Changed
+
+- Snap-marker colours moved from raw `Color32` in `canvas.rs` into tier-1
+  `BASE_SNAP_*` and tier-2 `SNAP_*` roles; the tier-3
+  `snap_marker_colour(kind)` helper covers all eight snap kinds, and
+  `CONSTRUCTION_STROKE` became a token (PR #59)
+- `CONSTRUCTION_STROKE` darkened from (168,148,116) to (140,120,90): 2.77:1 →
+  4.0:1 on PAPER, clearing the 3:1 UI-graphics floor, with a 3:1 assertion
+  added to the contrast gate (guide II.30.7.1, PR #59)
+
 ## v0.18.0 — 2026-11-18
 
 ### Added

@@ -1,6 +1,6 @@
 # Lintel keyboard shortcuts
 
-Generated from code on 2026-11-16 (`apps/lintel/src/main.rs` keyboard block and
+Generated from code on 2026-11-19 (`apps/lintel/src/main.rs` keyboard block and
 `apps/lintel/src/command_palette.rs` `PaletteAction::ALL`).
 
 ## Wired in main.rs (keyboard block)

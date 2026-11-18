@@ -184,6 +184,18 @@ each green CI run; percentages move only from evidence.
 | R-18.6 | `docs/tokens.md` replaces `docs/tokens.json`; release workflow appends the ledger row; `pr-author-is-dev` required check and `ci.sh` `gh api user` assertion (D-031) | PR #52 | verified |
 | R-18.7 | D-032: unbound commands recorded as core-only | PR #56 | verified |
 
+## v0.19.0 — Snaps, Sheets & Full Keyboard Reach
+
+| ID | Evidence | CI run | Status |
+|---|---|---|---|
+| CAP-129 / R-19.1 | Tier-1 `BASE_SNAP_*` → tier-2 `SNAP_*` roles in `theme.rs`, tier-3 `snap_marker_colour(kind)` covering all eight snap kinds; zero raw `Color32` in `canvas.rs` | PR #59 (merged, CI green) | verified |
+| CAP-130 / R-19.2 | `CONSTRUCTION_STROKE` darkened (168,148,116) → (140,120,90), 2.77:1 → 4.0:1 on PAPER; 3:1 UI-graphics assertion added to the contrast gate (guide II.30.7.1) | PR #59 (merged, CI green) | verified |
+| CAP-131 / R-19.3 | Inspector "Title block" section applying `SetTitleBlock` (company, sheet title, revision, date, drawn-by) | PR #60 (merged, CI green) | verified |
+| CAP-132 / R-19.4 | Inspector "Viewports" section: Remove → `RemoveViewport`; Add form (level id, scale denominator, caption, default A4 landscape region) → `AddViewport` | PR #60 (merged, CI green) | verified |
+| CAP-133 / R-19.5 | Inspector Blocks "Add definition" name form → `AddBlockDef`, ids assigned UI-side as max+1; D-032 now records only `MoveDimension` as core-only (D-026), satisfying D-027 | PR #60 (merged, CI green) | verified |
+| CAP-134 / R-19.6 | F7 (grid) and F8 (ortho) aliases alongside G/O in the `main.rs` keyboard block; `docs/qc/shortcuts.md` shortcut tables updated | PR #61 (merged, CI green) | verified |
+| CAP-135 / R-19.7 | "Select block instance" palette action (Ctrl+K) with an active-level pick form (raw id, definition name, position); Select sets the instance and clears entity selection; `ACCESSIBILITY.md` records the keyboard path | PR #61 (merged, CI green) | verified |
+
 ## v0.8.0 release
 
 Published at https://github.com/Perchemop/lintel-desktop/releases/tag/0.8.0 —

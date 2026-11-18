@@ -1,3 +1,30 @@
+## Lintel 0.19.0 — Snaps, Sheets & Full Keyboard Reach
+
+**Summary.** Snap markers now resolve through the theme instead of hard-coded colours, and construction strokes pass the UI-graphics contrast floor. The Inspector gains the remaining D-032 bindings — title block, viewports and block definitions — so every documented command is reachable. F7/F8 join the snap shortcuts, and a keyboard-only pick flow removes the last pointer-only accessibility path.
+
+### Added
+- D-032 command bindings (PR #60): Inspector "Title block" section edits company, sheet title, revision, date and drawn-by (`SetTitleBlock`); "Viewports" section lists viewports with Remove (`RemoveViewport`) and adds them with a level id, scale denominator and caption (`AddViewport`), defaulting to an A4 landscape region; Blocks gains an "Add definition" name form (`AddBlockDef`, ids assigned UI-side as max+1). D-032 now records only `MoveDimension` as core-only, by design (D-026), so D-027 reachability is fully satisfied
+- F7/F8 snap aliases (PR #61): F7 toggles the grid and F8 toggles ortho, alongside the existing G/O keys, following the approved QCAD/AutoCAD convention; `docs/qc/shortcuts.md` updated
+- Keyboard block-instance selection (PR #61): a "Select block instance" palette action (Ctrl+K) offers a pick form listing every active-level instance with its raw id, definition name and position. Selecting sets the instance and clears entity selection, matching canvas-click behaviour; the pointer-only accessibility limitation is replaced with this keyboard path
+
+### Changed
+- CONSTRUCTION_STROKE darkened (168,148,116) → (140,120,90), taking contrast on PAPER from 2.77:1 to 4.0:1 — above the 3:1 UI-graphics floor; a 3:1 assertion was added to the contrast gate (guide II.30.7.1, PR #59)
+- Snap markers are theme tokens (PR #59): five colours (Midpoint/Perpendicular/Tangent/Ortho/Grid) moved from raw `Color32` in `canvas.rs` into tier-1 `BASE_SNAP_*` and tier-2 `SNAP_*` roles; the tier-3 `snap_marker_colour(kind)` helper covers all eight snap kinds, and no raw `Color32` remains in `canvas.rs`. `CONSTRUCTION_STROKE` is a token as well
+
+### Known limitations
+- Viewport regions use a default A4 landscape rectangle; editing their on-sheet placement is a future slice
+- `MoveDimension` remains core-only by design (D-026: moving a dimension would detach it from what it measures)
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Per `docs/tokens.md` (CI-managed ledger, guide §24.1):
+
+- This release: 5,000 tokens
+- Cumulative since development began: 80,000 tokens (75,000 + 5,000)
+
+---
 ## Lintel 0.18.0 — The Design System
 
 **Summary.** This release turns the interface's visual language into an explicit design system: contrast is a merge gate, colours resolve through three token tiers, and buttons follow one documented role-and-size system. Accessibility evidence moves into CI with `egui_kittest`, and a single selected block instance can now be deleted with an honest refusal.
