@@ -865,8 +865,9 @@ pub fn inspector(
             });
             ui.horizontal(|ui| {
                 ui.label("Sheet title:");
-                ui.text_edit_singleline(&mut tb.sheet_title)
-                    .on_hover_text("Drawing title for the sheet; blank falls back to the sheet's own title.");
+                ui.text_edit_singleline(&mut tb.sheet_title).on_hover_text(
+                    "Drawing title for the sheet; blank falls back to the sheet's own title.",
+                );
             });
             ui.horizontal(|ui| {
                 ui.label("Revision:");
