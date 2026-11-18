@@ -38,6 +38,14 @@ pub struct InspectorDraft {
     pub constraint_dim_b: u64,
     /// Block definition selected for placement (raw id, 0 = none).
     pub block_def_id: u64,
+    /// Name being typed for a new block definition.
+    pub new_block_def_name: String,
+    /// Level id (raw) for a new viewport.
+    pub new_viewport_level: u64,
+    /// Scale denominator for a new viewport (100 = 1:100).
+    pub new_viewport_scale: u32,
+    /// Caption for a new viewport.
+    pub new_viewport_caption: String,
 }
 
 impl Default for InspectorDraft {
@@ -52,6 +60,10 @@ impl Default for InspectorDraft {
             constraint_degrees: 90.0,
             constraint_dim_b: 0,
             block_def_id: 0,
+            new_block_def_name: String::new(),
+            new_viewport_level: 1,
+            new_viewport_scale: 100,
+            new_viewport_caption: String::new(),
         }
     }
 }
@@ -730,6 +742,37 @@ pub fn inspector(
                 }
             }
 
+            // Add a definition (D-032: binds Command::AddBlockDef).
+            ui.separator();
+            ui.label("Add a definition");
+            ui.horizontal(|ui| {
+                ui.label("Name:");
+                ui.text_edit_singleline(&mut draft.new_block_def_name)
+                    .on_hover_text("Name for the new block definition, e.g. Door detail.");
+                if ui
+                    .add(
+                        egui::Button::new("Add")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    )
+                    .on_hover_text("Create the definition with an empty entity list.")
+                    .clicked()
+                    && !draft.new_block_def_name.trim().is_empty()
+                {
+                    // Ids are assigned here (not in the core): take one past
+                    // the highest existing definition id.
+                    let next = level.block_defs.iter().map(|d| d.id.0).max().unwrap_or(0) + 1;
+                    command = Some(Command::AddBlockDef {
+                        block: lintel_core::block::BlockDef::new(
+                            lintel_core::block::BlockId(next),
+                            draft.new_block_def_name.trim().to_string(),
+                        ),
+                    });
+                    draft.new_block_def_name.clear();
+                }
+            });
+
             ui.separator();
             ui.label("Instances");
             if level.block_instances.is_empty() {
@@ -802,6 +845,137 @@ pub fn inspector(
         .body_returned
         .flatten();
 
+    // Title block (D-032: binds Command::SetTitleBlock).
+    let project = doc.project();
+    let title_block_cmd = egui::CollapsingHeader::new("Title block")
+        .default_open(false)
+        .show(ui, |ui| {
+            let mut tb = project.title_block.clone();
+            ui.label("Printed on every exported sheet; blank fields are omitted.");
+            ui.horizontal(|ui| {
+                ui.label("Company:");
+                ui.text_edit_singleline(&mut tb.company)
+                    .on_hover_text("Practice or client name, printed above the project name.");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Sheet title:");
+                ui.text_edit_singleline(&mut tb.sheet_title).on_hover_text(
+                    "Drawing title for the sheet; blank falls back to the sheet's own title.",
+                );
+            });
+            ui.horizontal(|ui| {
+                ui.label("Revision:");
+                ui.text_edit_singleline(&mut tb.revision)
+                    .on_hover_text("Revision mark, e.g. A. Kept short; blank = omitted.");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Date:");
+                ui.text_edit_singleline(&mut tb.date)
+                    .on_hover_text("Issue date written YYYY-MM-DD; blank uses the export date.");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Drawn by:");
+                ui.text_edit_singleline(&mut tb.drawn_by)
+                    .on_hover_text("Whoever drew the sheet, e.g. initials. Blank = omitted.");
+            });
+            if ui
+                .add(
+                    egui::Button::new("Apply")
+                        .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                        .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                        .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                )
+                .on_hover_text("Apply the title-block fields to every exported sheet.")
+                .clicked()
+                && tb != project.title_block
+            {
+                Some(Command::SetTitleBlock { title_block: tb })
+            } else {
+                None
+            }
+        })
+        .body_returned
+        .flatten();
+
+    // Viewports (D-032: binds Command::AddViewport / RemoveViewport).
+    let viewports_cmd = egui::CollapsingHeader::new("Viewports")
+        .default_open(false)
+        .show(ui, |ui| {
+            let mut command: Option<Command> = None;
+            let project = doc.project();
+            ui.label("A viewport places a level on a sheet at a set scale.");
+            if project.viewports.is_empty() {
+                ui.label(egui::RichText::new("No viewports yet.").color(crate::theme::TEXT_MUTED));
+            } else {
+                for (index, viewport) in project.viewports.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(format!(
+                            "{} at 1:{} — {}",
+                            viewport.level.0, viewport.scale_denominator, viewport.caption
+                        ));
+                        if ui
+                            .button("Remove")
+                            .on_hover_text("Remove this viewport from the sheet.")
+                            .clicked()
+                        {
+                            command = Some(Command::RemoveViewport { index });
+                        }
+                    });
+                }
+            }
+            ui.separator();
+            ui.label("Add a viewport");
+            ui.horizontal(|ui| {
+                ui.label("Level id:");
+                ui.add(
+                    egui::DragValue::new(&mut draft.new_viewport_level)
+                        .speed(1.0)
+                        .range(1.0..=64.0),
+                )
+                .on_hover_text("Id of the level this viewport shows (see the Storeys list).");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Scale 1:");
+                ui.add(
+                    egui::DragValue::new(&mut draft.new_viewport_scale)
+                        .speed(10.0)
+                        .range(1.0..=1000.0),
+                )
+                .on_hover_text("Scale denominator: 100 means 1:100.");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Caption:");
+                ui.text_edit_singleline(&mut draft.new_viewport_caption)
+                    .on_hover_text("Caption drawn under the frame; blank = omitted.");
+            });
+            if ui
+                .add(
+                    egui::Button::new("Add viewport")
+                        .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                        .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                        .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                )
+                .on_hover_text("Add the viewport with a default A4 landscape region.")
+                .clicked()
+            {
+                let level = lintel_core::ids::LevelId(draft.new_viewport_level);
+                let region = lintel_core::geom::Bounds {
+                    min: lintel_core::geom::Point2::new(20.0, 20.0),
+                    max: lintel_core::geom::Point2::new(277.0, 190.0),
+                };
+                command = Some(Command::AddViewport {
+                    level,
+                    region,
+                    scale_denominator: draft.new_viewport_scale,
+                    caption: draft.new_viewport_caption.trim().to_string(),
+                });
+                draft.new_viewport_caption.clear();
+            }
+            command
+        })
+        .body_returned
+        .flatten();
+
     element_cmd
         .or(project_cmd)
         .or(storeys_cmd)
@@ -814,6 +988,8 @@ pub fn inspector(
         .or(measurements_cmd)
         .or(blocks_cmd)
         .or(block_instance_cmd)
+        .or(title_block_cmd)
+        .or(viewports_cmd)
 }
 
 fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) -> Option<Command> {
