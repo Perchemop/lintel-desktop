@@ -38,3 +38,4 @@ cumulative total.
 | v0.15.1 | 2026-11-15 | 5,000 | 60,000 | macOS Installer Fix |
 | v0.16.0 | 2026-11-16 | 5,000 | 65,000 | Block Instance Editing & Canvas Selection |
 | v0.17.0 | 2026-11-17 | 5_000 | 70_000 | — |
+| v0.18.0 | 2026-11-18 | 5_000 | 75_000 | — |
