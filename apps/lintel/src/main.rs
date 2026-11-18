@@ -1845,6 +1845,6 @@ mod kittest {
         use lintel_core::project::Project;
         let summary = crate::plan_summary(&Project::new("Test".to_string(), 0));
         assert!(!summary.is_empty());
-        assert!(summary.contains("Test"));
+        assert!(summary.contains("Level 0"));
     }
 }
