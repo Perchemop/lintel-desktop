@@ -6,7 +6,7 @@
 //! roles, names, and action patterns. No display, GPU, or window server is
 //! required.
 
-use egui_kittest::harness;
+use egui_kittest::{run, Tree};
 use lintel::app;
 use lintel_core::project::Project;
 
@@ -14,7 +14,7 @@ use lintel_core::project::Project;
 /// The palette must be open for the test to exercise the correct UI.
 #[test]
 fn palette_has_named_actions() {
-    harness::run(app(), |tree| {
+    run(app(), |tree| {
         for row in tree.palette_rows() {
             assert!(
                 !row.name().is_empty(),
@@ -27,7 +27,7 @@ fn palette_has_named_actions() {
 /// Verify that each collapsing header in the Inspector panel has a role/label.
 #[test]
 fn inspector_sections_labelled() {
-    harness::run(app(), |tree| {
+    run(app(), |tree| {
         for section in tree.inspector_sections() {
             assert!(
                 !section.label().is_empty(),
@@ -44,7 +44,7 @@ fn inspector_sections_labelled() {
 /// Verify that the canvas has a role with the level summary as its name.
 #[test]
 fn canvas_summary_accessible() {
-    harness::run(app(), |tree| {
+    run(app(), |tree| {
         let canvas = tree.canvas();
         assert!(canvas.role().is_some(), "canvas missing AccessKit role");
         let name = canvas.name();
