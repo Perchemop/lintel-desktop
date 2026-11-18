@@ -7,6 +7,7 @@
 //! required.
 
 use egui_kittest::{Tree, run};
+extern crate lintel;
 use lintel::app;
 use lintel_core::project::Project;
 
