@@ -171,7 +171,12 @@ pub fn inspector(
                 ui.text_edit_singleline(&mut name)
                     .on_hover_text("The project name stored in the saved file.");
                 if ui
-                    .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+                    .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
                     .on_hover_text("Apply the new project name.")
                     .clicked()
                     && !name.trim().is_empty()
@@ -283,7 +288,12 @@ pub fn inspector(
                 )
                 .on_hover_text("Elevation of the new storey above the project datum.");
                 if ui
-                    .add(egui::Button::new("Add").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+                    .add(
+                        egui::Button::new("Add")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
                     .on_hover_text("Add the new storey and make it active.")
                     .clicked()
                     && !draft.new_level_name.trim().is_empty()
@@ -537,7 +547,12 @@ pub fn inspector(
                         };
                         ui.label(text);
                         if ui
-                            .add(egui::Button::new("Remove").fill(crate::theme::BUTTON_DANGER_S.fill).min_size(crate::theme::BUTTON_DANGER_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+                            .add(
+                                egui::Button::new("Remove")
+                                    .fill(crate::theme::BUTTON_DANGER_S.fill)
+                                    .min_size(crate::theme::BUTTON_DANGER_S.min_size)
+                                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                            )
                             .on_hover_text("Remove this constraint.")
                             .clicked()
                         {
@@ -700,7 +715,12 @@ pub fn inspector(
                         }
                         ui.label(format!("{} entities", def.entities.len()));
                         if ui
-                            .add(egui::Button::new("Remove").fill(crate::theme::BUTTON_DANGER_S.fill).min_size(crate::theme::BUTTON_DANGER_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+                            .add(
+                                egui::Button::new("Remove")
+                                    .fill(crate::theme::BUTTON_DANGER_S.fill)
+                                    .min_size(crate::theme::BUTTON_DANGER_S.min_size)
+                                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                            )
                             .on_hover_text("Remove this block definition (only when unused).")
                             .clicked()
                         {
@@ -737,7 +757,12 @@ pub fn inspector(
                         });
                     });
                     if ui
-                        .add(egui::Button::new("Remove all of this def").fill(crate::theme::BUTTON_DANGER_S.fill).min_size(crate::theme::BUTTON_DANGER_S.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+                        .add(
+                            egui::Button::new("Remove all of this def")
+                                .fill(crate::theme::BUTTON_DANGER_S.fill)
+                                .min_size(crate::theme::BUTTON_DANGER_S.min_size)
+                                .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                        )
                         .on_hover_text("Remove every instance of the block definition.")
                         .clicked()
                     {
@@ -808,7 +833,12 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         )
         .on_hover_text("Wall thickness in mm (20–2000). Press Apply to commit.");
         if ui
-            .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+            .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
             .on_hover_text("Apply the new wall thickness.")
             .clicked()
             && (thickness - wall.thickness).abs() > f64::EPSILON
@@ -826,7 +856,12 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         )
         .on_hover_text("Wall height in mm (300–20000). Press Apply to commit.");
         if ui
-            .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+            .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
             .on_hover_text("Apply the new wall height.")
             .clicked()
             && (height - wall.height).abs() > f64::EPSILON
@@ -997,7 +1032,12 @@ fn dimension_fields(
         )
         .on_hover_text("Extension distance from the measured points to the dimension line in mm (1–100000). Press Apply to commit.");
         if ui
-            .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+            .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
             .on_hover_text("Apply the new dimension offset.")
             .clicked()
             && (offset - dimension.offset).abs() > f64::EPSILON
@@ -1033,7 +1073,12 @@ fn dimension_fields(
             "Gap between a measured point and the start of its witness line in mm (min 0).",
         );
         if ui
-            .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+            .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
             .on_hover_text("Apply the new witness gap.")
             .clicked()
             && (gap - dimension.witness_gap).abs() > f64::EPSILON
@@ -1053,7 +1098,12 @@ fn dimension_fields(
         )
         .on_hover_text("How far a witness line runs past the dimension line in mm (min 0).");
         if ui
-            .add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT)))
+            .add(
+                        egui::Button::new("Apply")
+                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                            .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+                    )
             .on_hover_text("Apply the new witness overrun.")
             .clicked()
             && (overrun - dimension.witness_overrun).abs() > f64::EPSILON
@@ -1206,7 +1256,14 @@ fn label_fields(
     ui.horizontal(|ui| {
         ui.label("Text:");
         ui.text_edit_singleline(&mut text);
-        if ui.add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT))).clicked() && !text.trim().is_empty() && text.trim() != label.text {
+        if ui
+            .add(
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
+            .clicked() && !text.trim().is_empty() && text.trim() != label.text {
             command = Some(Command::SetLabelText {
                 id,
                 text: text.trim().to_string(),
@@ -1221,7 +1278,14 @@ fn label_fields(
         ui.add(egui::DragValue::new(&mut x).speed(10.0).suffix(" mm"));
         ui.label("Y:");
         ui.add(egui::DragValue::new(&mut y).speed(10.0).suffix(" mm"));
-        if ui.add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT))).clicked()
+        if ui
+            .add(
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
+            .clicked()
             && ((x - label.anchor.x).abs() > f64::EPSILON
                 || (y - label.anchor.y).abs() > f64::EPSILON)
         {
@@ -1253,7 +1317,14 @@ fn block_instance_fields(
         ui.add(egui::DragValue::new(&mut x).speed(10.0).suffix(" mm"));
         ui.label("Y:");
         ui.add(egui::DragValue::new(&mut y).speed(10.0).suffix(" mm"));
-        if ui.add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT))).clicked()
+        if ui
+            .add(
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
+            .clicked()
             && ((x - instance.param.x).abs() > f64::EPSILON
                 || (y - instance.param.y).abs() > f64::EPSILON)
         {
@@ -1268,7 +1339,14 @@ fn block_instance_fields(
     ui.horizontal(|ui| {
         ui.label("Rotation:");
         ui.add(egui::DragValue::new(&mut degrees).speed(1.0).suffix("°"));
-        if ui.add(egui::Button::new("Apply").fill(crate::theme::BUTTON_PRIMARY_M.fill).min_size(crate::theme::BUTTON_PRIMARY_M.min_size).stroke(egui::Stroke::new(2.0, crate::theme::COBALT))).clicked()
+        if ui
+            .add(
+                egui::Button::new("Apply")
+                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
+                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
+                    .stroke(egui::Stroke::new(2.0, crate::theme::COBALT)),
+            )
+            .clicked()
             && (degrees - instance.rotation.to_degrees()).abs() > f64::EPSILON
         {
             command = Some(Command::RotateBlockInstance {
