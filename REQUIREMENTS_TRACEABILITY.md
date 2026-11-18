@@ -129,6 +129,17 @@ Maps user-facing capabilities to source, tests, and releases. Follows guide §11
 | R-18.6 | Token ledger migration and Dev-authorship enforcement | CAP-075 | `docs/tokens.md`, `release.yml`, `pr-author-is-dev`, `ci.sh` | v0.18.0 |
 | R-18.7 | Unbound commands documented as core-only (D-032) | — | `DECISIONS.md` D-032 | v0.18.0 |
 
+### v0.19.0 Snaps, Sheets & Full Keyboard Reach
+| Req ID | Description | CAP IDs | Tests | Release |
+|--------|-------------|---------|-------|---------|
+| R-19.1 | Snap markers resolve through tier-1 `BASE_SNAP_*` / tier-2 `SNAP_*` tokens and the tier-3 `snap_marker_colour(kind)` helper for all eight snap kinds; no raw `Color32` in `canvas.rs` | CAP-129 | `theme.rs` token roles and tier-resolution tests; `canvas.rs` (PR #59) | v0.19.0 |
+| R-19.2 | `CONSTRUCTION_STROKE` reaches 4.0:1 on PAPER and the contrast gate asserts ≥ 3:1 for UI graphics | CAP-130 | `theme` contrast gate with the added 3:1 assertion (guide II.30.7.1, PR #59) | v0.19.0 |
+| R-19.3 | Title-block fields editable in the Inspector via `SetTitleBlock` | CAP-131 | `inspector.rs` Title block section (PR #60) | v0.19.0 |
+| R-19.4 | Viewports listed/removed and added from the Inspector with a default A4 landscape region | CAP-132 | `inspector.rs` Viewports section, `RemoveViewport` / `AddViewport` bindings (PR #60) | v0.19.0 |
+| R-19.5 | Block definitions creatable from the Inspector; D-032 records only `MoveDimension` as core-only (D-026), satisfying D-027 | CAP-133 | `inspector.rs` Blocks "Add definition" form, `AddBlockDef` binding; `DECISIONS.md` D-032 (PR #60) | v0.19.0 |
+| R-19.6 | F7 toggles grid and F8 toggles ortho alongside G/O | CAP-134 | `main.rs` keyboard block; `docs/qc/shortcuts.md` (PR #61) | v0.19.0 |
+| R-19.7 | Keyboard-only block-instance selection via the Ctrl+K "Select block instance" pick form, matching canvas-click behaviour | CAP-135 | `command_palette.rs` palette action; `ACCESSIBILITY.md` keyboard path (PR #61) | v0.19.0 |
+
 ## Suite Standards Compliance
 Guide §12.1 — Suite-wide standards:
 - Token ledger `docs/tokens.md` — **implemented** (CI-managed; updated on each tag).
@@ -144,3 +155,4 @@ Guide §12.1 — Suite-wide standards:
 - 2026-11-16: CAP-126 (dimension label precision) merged via PR #48.
 - 2026-11-17: Added R-17.2 (CAP-127, delete a single block instance) and R-17.3 (CAP-128, WCAG AA contrast gate) for v0.17.0.
 - 2026-11-18: Added R-18.1–R-18.7 for the v0.18.0 design-system release (WCAG AA contrast gate, CAP-127/keyboard truth, `egui_kittest`, button patterns, ThemeSpec three-tier tokens, ledger/authorship migration, D-032).
+- 2026-11-19: Added R-19.1–R-19.7 and CAP-129–CAP-135 for v0.19.0 (snap-marker tokens and construction-stroke contrast, the D-032 Inspector bindings, F7/F8 aliases and keyboard block-instance selection); evidence recorded in `docs/parity.md`.

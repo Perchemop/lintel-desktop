@@ -204,7 +204,50 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
-## v0.18.0 Status — RELEASE PREP
+## v0.19.0 Status — RELEASE PREP
+
+**Snaps, Sheets & Full Keyboard Reach.** All five items merged to `main` with
+CI green. Version bumps are staged in the working tree; the tag and release
+are the remaining gate.
+
+- [x] SNAP_* semantic tokens — five snap-marker colours (Midpoint,
+      Perpendicular, Tangent, Ortho, Grid) moved from raw `Color32` in
+      `canvas.rs` into tier-1 `BASE_SNAP_*` + tier-2 `SNAP_*` roles; tier-3
+      `snap_marker_colour(kind)` covers all eight snap kinds;
+      `CONSTRUCTION_STROKE` added as a token and no raw `Color32` remains in
+      `canvas.rs` — PR #59 merged, CI green
+- [x] CONSTRUCTION_STROKE contrast fix (guide II.30.7.1) — darkened
+      (168,148,116) → (140,120,90): 2.77:1 → 4.0:1 on PAPER (was below the
+      3:1 UI-graphics floor); 3:1 assertion added to the contrast gate —
+      PR #59 merged, CI green
+- [x] D-032 command bindings — Inspector "Title block" section (company/sheet
+      title/revision/date/drawn-by → `SetTitleBlock`), "Viewports" section
+      (list with Remove → `RemoveViewport`; Add form with level id, scale
+      denominator and caption, default A4 landscape region → `AddViewport`)
+      and "Add definition" form in Blocks (name → `AddBlockDef`, ids assigned
+      UI-side as max+1); D-032 updated: only `MoveDimension` remains core-only
+      by design (D-026), D-027 reachability fully satisfied — PR #60 merged,
+      CI green
+- [x] F7/F8 snap aliases (QCAD/AutoCAD convention from approved research) —
+      F7 toggles grid and F8 toggles ortho alongside G/O;
+      `docs/qc/shortcuts.md` updated — PR #61 merged, CI green
+- [x] Keyboard block-instance selection — new "Select block instance" palette
+      action (Ctrl+K) with a pick form listing every active-level instance
+      (raw id + definition name + position); Select sets the instance and
+      clears entity selection as canvas-click does; the last pointer-only
+      a11y flow is gone and the `ACCESSIBILITY.md` limitation was replaced
+      with the keyboard path — PR #61 merged, CI green
+- [ ] Tag `v0.19.0` after this change merges, then confirm the release run
+      and the signed artefacts
+
+**Landed:** snap-marker tokens and the construction-stroke contrast fix
+(PR #59); D-032 Inspector bindings (PR #60); F7/F8 aliases and keyboard
+block-instance selection (PR #61).
+
+Readiness % (v0.19.0): **100% of the v0.19.0 scope — merged with CI green;
+release tag pending after this change.**
+
+## v0.18.0 Status — RELEASED
 
 **The Design System.** Post-v0.17.0 a11y/design audit fixes, all merged to
 `main` with CI green. Version bumps are staged in the working tree; the tag
@@ -236,7 +279,7 @@ and release are the remaining gate.
       `pr-author-is-dev` required check, Dev identity asserted by `ci.sh`,
       Dev account recorded as D-031 — PR #52 merged, CI green; D-032
       (unbound commands are core-only) — PR #56 merged, CI green
-- [ ] Tag `v0.18.0` after this change merges, then confirm the release run
+- [x] Tag `v0.18.0` after this change merges, then confirm the release run
       and the signed artefacts
 
 **Landed:** WCAG AA contrast gate (PR #53); CAP-127, keyboard truth and

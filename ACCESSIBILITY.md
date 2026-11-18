@@ -13,6 +13,12 @@ recorded here honestly rather than glossed over (guide II.21.1).
 - **Delete:** Delete or Backspace removes the selected wall, opening,
   dimension, or a selected block instance.
 - **Zoom:** F = zoom to fit; scroll-wheel zooms; middle-drag pans.
+- **Snap aids:** G toggles grid, O toggles ortho; F7 and F8 are industry
+  standard aliases for the same toggles.
+- **Block instances are keyboard-selectable:** open the command palette
+  (Ctrl+K), choose "Select block instance", and pick an instance from the
+  list; its Inspector fields are then Tab-reachable. The pointer path remains
+  available.
 - **Inspector via Tab:** the Inspector panel (wall thickness/height, opening
   kind/width/height/sill/position, dimension kind/offset/extension lines,
   project name and units, storey list with add and delete, layers, constraints,
@@ -75,10 +81,11 @@ Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
 - **Screen-reader verification is manual only.** There is no automated CI
   check for Narrator/NVDA/VoiceOver output; spot checks are recorded in the
   QC run log (docs/qc/checklist.md).
-- **Block instances can be selected keyboard-only.** Open the command palette
-  (Ctrl+K), choose "Select block instance", and pick an instance from the list;
-  its Inspector fields are then Tab-reachable. The pointer path remains
-  available.
+- **Block-instance keyboard selection lists instances in placement order.**
+  The palette pick form (Ctrl+K → "Select block instance") shows each
+  instance's definition name and position, but not a spatial mini-map; users
+  working from a printed reference may need the coordinate readout to match
+  instances to their plan locations.
 
 ## Keyboard shortcut table
 

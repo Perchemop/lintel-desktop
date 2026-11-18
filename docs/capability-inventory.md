@@ -168,6 +168,24 @@ run, recorded in `docs/parity.md`).
 
 Note (2026-11-18): CAP-126/CAP-127/CAP-128 rows are present and implemented. CAP-128's WCAG AA gate (PR #53) is part of the v0.18.0 design-system release; the v0.18.0 ThemeSpec, button-pattern and `egui_kittest` work is traced as R-18.1–R-18.7 in `REQUIREMENTS_TRACEABILITY.md`, with evidence in `docs/parity.md`. The section heading above is a historical grouping, not a release claim.
 
+## v0.19.0 capabilities
+
+| ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
+|---|---|---|---|---|---|
+| CAP-129 | Snap-marker theme tokens | Midpoint/Perpendicular/Tangent/Ortho/Grid colours resolve through tier-1 `BASE_SNAP_*` and tier-2 `SNAP_*` roles; tier-3 `snap_marker_colour(kind)` covers all eight snap kinds | Every snap kind resolves to a token; no raw `Color32` remains in `canvas.rs` (PR #59) | guide II.30.6 | implemented |
+| CAP-130 | Construction-stroke contrast | `CONSTRUCTION_STROKE` is a theme token and gives 4.0:1 contrast on PAPER | Contrast gate asserts ≥ 3:1 for UI graphics (PR #59); previously 2.77:1 | guide II.30.7.1 | implemented |
+| CAP-131 | Title-block editing UI | Inspector "Title block" section edits company, sheet title, revision, date and drawn-by | Each field applies `SetTitleBlock` (PR #60) | D-032 / D-027 | implemented |
+| CAP-132 | Viewport management UI | Inspector "Viewports" section lists viewports with Remove and an Add form for level id, scale denominator and caption | Remove applies `RemoveViewport`; Add applies `AddViewport` with a default A4 landscape region (PR #60) | D-032 / D-027 | implemented |
+| CAP-133 | Block-definition creation UI | Inspector Blocks section has an "Add definition" name form | Name applies `AddBlockDef`; ids are assigned UI-side as max+1 (PR #60) | D-032 / D-027 | implemented |
+| CAP-134 | F7/F8 snap aliases | F7 toggles grid and F8 toggles ortho alongside the existing G/O keys | Both aliases listed in `docs/qc/shortcuts.md` (PR #61) | approved QCAD/AutoCAD research note | implemented |
+| CAP-135 | Keyboard block-instance selection | Ctrl+K "Select block instance" pick form lists every active-level instance with raw id, definition name and position; Select sets the instance and clears entity selection | Palette action reachable from the keyboard; behaviour matches canvas-click (PR #61) | guide II.21.2 | implemented |
+
+Note (2026-11-19): CAP-131–CAP-133 complete the D-032 command bindings —
+only `MoveDimension` remains core-only by design (D-026), so the D-027
+reachability audit is now fully satisfied. CAP-129/CAP-130 extend the existing
+snap-indicator (CAP-098) and contrast (CAP-128) capabilities; their evidence
+is recorded in `docs/parity.md`.
+
 ## Explicitly out of scope for v0.1.0
 
 | ID | Capability | Reason |
@@ -199,6 +217,7 @@ Readiness % (v0.13.0): **100% — shipped** (CAP-100–CAP-108; first signed rel
 Readiness % (v0.14.0): **100% — shipped** (CAP-111–CAP-115; release `v0.14.0`).
 Readiness % (v0.15.0): **100% — shipped** (CAP-116–CAP-119; release `v0.15.0`).
 Readiness % (v0.15.1): **100% — shipped** (macOS `.dmg` installer; release `v0.15.1`).
-Readiness % (v0.16.0): **100% of CAP-120–CAP-125 — merged; release tag pending.**
-Readiness % (v0.17.0): **100% of CAP-126–CAP-128 — merged; release tag pending.**
-Readiness % (v0.18.0): **100% of the design-system scope — merged with CI green; release tag pending.**
+Readiness % (v0.16.0): **100% — shipped as v0.16.0.**
+Readiness % (v0.17.0): **100% — shipped as v0.17.0.**
+Readiness % (v0.18.0): **100% — shipped as v0.18.0.**
+Readiness % (v0.19.0): **100% of the v0.19.0 scope — merged; tag pending.**
