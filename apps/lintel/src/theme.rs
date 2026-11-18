@@ -520,10 +520,7 @@ mod tests {
             ("SNAP_TANGENT", rgb_of(SNAP_TANGENT)),
             ("SNAP_ORTHO", rgb_of(SNAP_ORTHO)),
             ("SNAP_GRID", rgb_of(SNAP_GRID)),
-            (
-                "CONSTRUCTION_STROKE",
-                rgb_of(CONSTRUCTION_STROKE),
-            ),
+            ("CONSTRUCTION_STROKE", rgb_of(CONSTRUCTION_STROKE)),
         ] {
             assert!(
                 contrast_ratio(col, paper) >= 3.0,
