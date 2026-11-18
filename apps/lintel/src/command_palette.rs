@@ -850,7 +850,10 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
         | PaletteAction::DeleteLayer
         | PaletteAction::RenameProject
         | PaletteAction::AddStorey
-        | PaletteAction::DeleteStorey => {}
+        | PaletteAction::DeleteStorey
+        // SelectBlockInstance never reaches here: it opens a pick form whose
+        // Select buttons set the instance directly (see PendingForm::BlockInstancePick).
+        | PaletteAction::SelectBlockInstance => {}
     }
 }
 

@@ -253,7 +253,7 @@ impl LintelApp {
     ///
     /// Clears the ordinary entity selection first, matching canvas click
     /// behaviour: an instance is a distinct selection kind.
-    pub fn select_block_instance(&mut self, id: Option<lintel_core::ids::BlockId>) {
+    pub fn select_block_instance(&mut self, id: Option<lintel_core::block::BlockId>) {
         self.selection.clear();
         self.selected_block_instance = id;
     }
