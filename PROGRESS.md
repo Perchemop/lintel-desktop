@@ -204,10 +204,11 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
-## v0.17.0 Status — IN PROGRESS
+## v0.17.0 Status — RELEASED
 
 **Dimension Label Precision, Keyboard Truth & the Contrast Gate** (CAP-126–
-CAP-128). All scope merged to `main`; the tag is this change.
+CAP-128). All scope merged to `main`; tag `v0.17.0` pushed and release
+published with signed artefacts.
 
 - [x] CAP-126 — Per-dimension label precision: `Dimension.label_precision`
       (0–4 decimal places, serde default 0 so old files load unchanged),
@@ -237,14 +238,15 @@ CAP-128). All scope merged to `main`; the tag is this change.
       (19-row reconstructed table), release workflow appends the new row after
       publishing; `pr-author-is-dev` required check and Dev account recorded
       as D-031 — PR #52 merged, CI green
-- [ ] Tag `v0.17.0` after this change merges, then confirm the release run,
-      signed artefacts and the appended ledger row
+- [x] Tag `v0.17.0` pushed; release published with signed `SHA256SUMS.txt` +
+      `.asc`; ledger row appended by CI workflow
 
 **Landed:** CAP-126 (PR #48, run `43847513509`, merge commit `e5b808d`);
 CAP-127, keyboard truth and accessibility corrections (PR #50); ledger
-migration and authorship enforcement (PR #52); WCAG AA contrast gate (PR #53).
+migration and authorship enforcement (PR #52); WCAG AA contrast gate (PR #53);
+egui_kittest CI gate + button patterns (PR #55, merge commit `dba868a`).
 
-Readiness % (v0.17.0): **100% of the v0.17.0 scope — merged; tag pending.**
+Readiness % (v0.17.0): **100% — shipped.**
 
 ## v0.16.0 Status — RELEASE PREP
 
