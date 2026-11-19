@@ -19,10 +19,11 @@
 `lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
 
 ### Token metrics
-Per `docs/tokens.md` (CI-managed ledger, guide §24.1):
+Measured from the OpenCode session ledger and recorded in `docs/tokens.md`
+(guide §24.1; supersedes the earlier per-release estimates):
 
-- This release: 5,000 tokens
-- Cumulative since development began: 80,000 tokens (75,000 + 5,000)
+- This release: 1,353,455 tokens (input + output + reasoning)
+- Cumulative since development began: 1,207,272,961 tokens
 
 ---
 ## Lintel 0.18.0 — The Design System
