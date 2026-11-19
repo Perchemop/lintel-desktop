@@ -9,3 +9,7 @@ opencode.jsonc
 
 # Local-only session continuity (guide §11)
 docs/devlog.md
+
+# OpenCode/Claude local-only settings (guide §12)
+.opencode/settings.local.json
+.claude/settings.local.json
