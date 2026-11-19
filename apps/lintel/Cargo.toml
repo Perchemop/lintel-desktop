@@ -2,6 +2,7 @@
 name = "lintel"
 version = "0.19.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 # Core domain - pure Rust, headless tested

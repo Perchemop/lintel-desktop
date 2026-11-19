@@ -145,8 +145,17 @@ jobs:
     - name: Personal data scan (tracked files)
       run: bash scripts/scan-personal-data.sh
 
+    - name: Install cargo-deny
+      run: cargo install cargo-deny --locked
+
     - name: Cargo deny licence check
-      run: echo "cargo-deny skipped - deny.toml maintained for reference"
+      run: cargo deny check licenses
+
+    - name: Secret scan (tracked files)
+      run: bash scripts/scan-secrets.sh
+
+    - name: Personal data scan (tracked files)
+      run: bash scripts/scan-personal-data.sh
 
     - name: SBOM (dependency list)
       run: |
