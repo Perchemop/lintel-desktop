@@ -7,12 +7,12 @@ measured figures below are the authoritative record (guide §19 rule 3:
 measured, not assumed).
 
 **Counting definition.** Tokens this release = sum of `tokens_input +
-tokens_output + tokens_reasoning` across all sessions in the suite working
-directory (`/home/leonardolscinto`), assigned to the release whose tag date is
-the first tag date on/after the session day. Cache-read tokens (billions more)
-are excluded: they are repeated prefix reads, not fresh work. Windows before
-v0.2.0 include general suite/guide sessions in the same working directory —
-they cannot be separated retroactively.
+tokens_output + tokens_reasoning` across all agent sessions in the suite
+working directory, assigned to the release whose tag date is the first tag
+date on/after the session day. Cache-read tokens (billions more) are excluded:
+they are repeated prefix reads, not fresh work. Windows before v0.2.0 include
+general suite/guide sessions in the same working directory — they cannot be
+separated retroactively.
 
 | Version  | Date       | Tokens this release | Tokens cumulative | Notes                                        |
 |----------|------------|---------------------|-------------------|----------------------------------------------|
