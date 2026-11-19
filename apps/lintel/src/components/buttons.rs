@@ -12,27 +12,6 @@ use crate::theme::{ButtonRole, ButtonSize, ButtonRoleStyle,
     BUTTON_DANGER_S, BUTTON_DANGER_M, BUTTON_DANGER_L,
     TEXT_PRIMARY, TEXT_MUTED, SURFACE_TRANSPARENT};
 
-/// Semantic role of a button. Determines fill, stroke, and interaction colours.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ButtonRole {
-    /// The one action a view exists for. At most one per view.
-    Primary,
-    /// Supporting actions. Never competes with Primary.
-    Secondary,
-    /// Toolbar and inline actions. No container until hover.
-    Ghost,
-    /// Destructive, irreversible. Separated from Primary cluster.
-    Danger,
-}
-
-/// Visual size. All sizes honour the 24pt minimum target (guide II.30.7.5).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ButtonSize {
-    Small,   // 24pt minimum
-    Medium,  // 32pt
-    Large,   // 40pt
-}
-
 /// Builder for a styled button. All colours resolve through tier-2 roles.
 #[derive(Clone, Debug)]
 pub struct StyledButton {
