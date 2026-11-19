@@ -22,7 +22,8 @@
 - [ ] User-facing strings and UI are original (no copied trade dress)
 
 ## Local verification
-<!-- How a human can try this on the primary OS -->
+<!-- How a human can try this on the primary OS. CI artefact download is the
+     path (§6.2); the scope-creep-check verdict belongs in Notes/risks. -->
 
 ## Notes / risks
 ```
