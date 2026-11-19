@@ -145,6 +145,9 @@ jobs:
     - name: Personal data scan (tracked files)
       run: bash scripts/scan-personal-data.sh
 
+    - name: Install cargo-deny
+      run: cargo install cargo-deny --locked
+
     - name: Cargo deny licence check
       run: cargo deny check licenses
 
