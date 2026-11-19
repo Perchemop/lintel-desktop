@@ -24,6 +24,7 @@ use std::sync::mpsc::{self, Receiver};
 mod about;
 mod canvas;
 mod command_palette;
+mod components;
 mod dimension_ui;
 mod inspector;
 mod release_notes;
@@ -1863,4 +1864,15 @@ mod kittest {
         assert!(!summary.is_empty());
         assert!(summary.contains("Level 0"));
     }
+}
+
+// Component tests (T-001 buttons)
+#[cfg(test)]
+mod tests_buttons {
+    include!("tests/buttons.rs");
+}
+
+#[cfg(test)]
+mod kittest_buttons {
+    include!("tests/kittest_buttons.rs");
 }
