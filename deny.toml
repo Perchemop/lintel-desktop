@@ -22,6 +22,9 @@ allow = [
     # not code): OFL + Ubuntu Font License are free, redistribution-allowing
     # font licences — see ATTRIBUTION.md "Fonts and assets".
     "OFL-1.1", "Ubuntu-font-1.0",
+    # libfuzzer-sys (transitive via rav1e → ravif → image → arboard):
+    # (MIT OR Apache-2.0) AND NCSA — NCSA is OSI-approved, FSF-free.
+    "NCSA",
 ]
 
 [bans]
