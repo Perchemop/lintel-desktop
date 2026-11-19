@@ -40,3 +40,4 @@ Reviewers reject PRs that fail the checklist.
 - [ ] Tests are headless (no GUI / display)
 - [ ] No full release build was run on the client laptop
 - [ ] CI green on this branch
+<!-- retrigger 2026-11-19 -->
