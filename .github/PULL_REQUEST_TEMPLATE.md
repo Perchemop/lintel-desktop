@@ -9,6 +9,8 @@
 - [ ] Refactor
 
 ## Checklist
+- [ ] PR opened by the Dev account (II.26.7) — not the personal account
+- [ ] **Scope-creep check run** — `scope: clean` or flags resolved here
 - [ ] Acceptance criteria for the Task are met with **real** behaviour (no fake UI)
 - [ ] Tests added or updated
 - [ ] CI is green (or will be after merge of required base)
@@ -20,7 +22,8 @@
 - [ ] User-facing strings and UI are original (no copied trade dress)
 
 ## Local verification
-<!-- How a human can try this on the primary OS -->
+<!-- How a human can try this on the primary OS. CI artefact download is the
+     path (§6.2); the scope-creep-check verdict belongs in Notes/risks. -->
 
 ## Notes / risks
 ```
@@ -37,3 +40,4 @@ Reviewers reject PRs that fail the checklist.
 - [ ] Tests are headless (no GUI / display)
 - [ ] No full release build was run on the client laptop
 - [ ] CI green on this branch
+<!-- retrigger 2026-11-19 -->
