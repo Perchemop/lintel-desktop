@@ -9,6 +9,8 @@
 - [ ] Refactor
 
 ## Checklist
+- [ ] PR opened by the Dev account (II.26.7) — not the personal account
+- [ ] **Scope-creep check run** — `scope: clean` or flags resolved here
 - [ ] Acceptance criteria for the Task are met with **real** behaviour (no fake UI)
 - [ ] Tests added or updated
 - [ ] CI is green (or will be after merge of required base)
