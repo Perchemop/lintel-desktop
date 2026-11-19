@@ -254,9 +254,14 @@ mod tests {
     fn ledger_era_releases_carry_token_figures() {
         // The newest release is always ledger-era, so it must carry a figure;
         // and the first ledger release (0.10.0) pins that history deliberately.
+        // The newest figure is *measured* from the session ledger (guide §19
+        // rule 3) and varies per release — assert presence, not a value.
         let rs = releases();
         let newest = rs.first().expect("at least one release");
-        assert_eq!(newest.tokens_this_release, Some(5000));
+        assert!(
+            newest.tokens_this_release.is_some(),
+            "the newest release must carry a token figure"
+        );
         let first_ledger = rs.iter().find(|r| r.version == "0.10.0").unwrap();
         assert_eq!(first_ledger.tokens_this_release, Some(5000));
     }
