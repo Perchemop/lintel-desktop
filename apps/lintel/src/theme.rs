@@ -916,6 +916,7 @@ pub mod contrast {
         text_match: TEXT_MATCH,
         text_success: TEXT_SUCCESS,
         text_danger: TEXT_DANGER,
+        text_error: TEXT_ERROR,
         text_warning: TEXT_WARNING,
         text_on_accent: TEXT_ON_ACCENT,
         accent: ACCENT_DEFAULT,
@@ -1019,6 +1020,8 @@ pub mod contrast {
         text_match: DARK_TEXT_MATCH,
         text_success: DARK_SUCCESS,
         text_danger: DARK_DANGER,
+        // The dark reference shares one red for danger and error messages.
+        text_error: DARK_DANGER,
         text_warning: DARK_TEXT_WARNING,
         text_on_accent: BASE_INK,
         accent: DARK_COBALT,
@@ -1122,6 +1125,8 @@ pub mod contrast {
         text_match: HC_TEXT_MATCH,
         text_success: HC_SUCCESS,
         text_danger: HC_DANGER,
+        // The high-contrast reference shares one red for danger and error.
+        text_error: HC_DANGER,
         text_warning: HC_WARNING,
         text_on_accent: BASE_INK,
         accent: HC_COBALT,
@@ -1631,6 +1636,8 @@ pub struct ButtonTokens {
     pub danger_sm: ButtonRoleStyle,
     pub danger_md: ButtonRoleStyle,
     pub danger_lg: ButtonRoleStyle,
+    /// Focus ring shared by every variant (2px ACCENT_DEFAULT).
+    pub ring: Color32,
     /// Corner radius shared by every variant.
     pub corner_radius: f32,
 }
@@ -1796,6 +1803,7 @@ impl ThemeSpec {
                 danger_sm: BUTTON_DANGER_S,
                 danger_md: BUTTON_DANGER_M,
                 danger_lg: BUTTON_DANGER_L,
+                ring: FOCUS_RING,
                 corner_radius: BUTTON_CORNER_RADIUS,
             },
         },
