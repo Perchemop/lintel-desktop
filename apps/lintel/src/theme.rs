@@ -558,8 +558,8 @@ pub mod contrast {
 
     use super::*;
 
-    // Re-export the colour maths functions for the merge-gate tests.
-    pub use super::{rgb_of, contrast_ratio, composited_over, palette, contrast_test, Theme, ContrastFailure};
+    // Re-export the colour maths functions from the parent module for the merge-gate tests.
+    pub use super::{rgb_of, contrast_ratio};
 
     /// The palettes the contrast gate asserts (spec AC-08).
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
