@@ -104,12 +104,18 @@ impl<'a> Field<'a> {
         // Reserve space for the input
         let (_, input_rect) = ui.allocate_space(egui::vec2(input_width, input_height));
 
+        // Unique child-Ui id per field: `auto_id_with("input")` would hand
+        // every field in the same parent the same id (next_auto_id is a pure
+        // calculation), clashing egui state and the AccessKit tree. The
+        // label's response id is unique per field, so it salts the input.
+        let input_id = ui.id().with(("lintel-field-input", label_resp.id));
+
         // Determine border colour by state
         let border_colour = if self.disabled {
             tokens.disabled_text
         } else if self.error_text.is_some() {
             tokens.border_error
-        } else if ui.memory(|mem| mem.has_focus(ui.auto_id_with("input"))) {
+        } else if ui.memory(|mem| mem.has_focus(input_id)) {
             tokens.border_focused
         } else {
             tokens.border
@@ -134,7 +140,6 @@ impl<'a> Field<'a> {
         }
 
         // Run the input builder inside a child Ui clipped to the input rect
-        let input_id = ui.auto_id_with("input");
         let mut child_ui = ui.new_child(
             egui::UiBuilder::new()
                 .id(input_id)

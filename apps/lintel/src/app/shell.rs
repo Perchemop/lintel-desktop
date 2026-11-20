@@ -187,7 +187,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ui.ctx(), |ui| {
+            .show(ui.ctx(), |ui| -> Option<Command> {
                 let cmd = inspector(
                     ui,
                     &app.doc,
@@ -199,8 +199,10 @@ pub fn regions(
                 );
                 if let Some(c) = cmd {
                     let _ = app.doc.apply(c, now);
+                    Some(c)
+                } else {
+                    None
                 }
-                c
             });
         inspector_response = resp;
     }

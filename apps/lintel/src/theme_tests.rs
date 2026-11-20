@@ -12,7 +12,7 @@ use crate::theme::{
     ACCENT_DEFAULT, ACCENT_HOVER, BORDER_STRONG, BUTTON_DANGER_M, BUTTON_GHOST_M,
     BUTTON_PRIMARY_M, BUTTON_SECONDARY_M, ContrastFailure, SURFACE_BASE, SURFACE_PANEL,
     SURFACE_STATUS, TEXT_DANGER, TEXT_ERROR, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_WARNING, Theme,
-    contrast::composited_over, contrast_ratio, contrast_test, palette, rgb_of,
+    contrast::{composited_over, contrast_ratio, contrast_test, palette, rgb_of},
 };
 
 /// The merge gate itself: all three palettes must pass. Failure output lists
