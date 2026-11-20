@@ -36,7 +36,7 @@ pub struct Regions {
     /// Inspector window response (floating, right side).
     pub inspector: Option<egui::InnerResponse<Option<Command>>>,
     /// Command palette response (modal overlay).
-    pub palette: Option<egui::InnerResponse<()>>,
+    pub palette: Option<egui::ModalResponse<()>>,
 }
 
 /// Layout the shell and return the three regions for the caller to fill.
@@ -164,7 +164,7 @@ pub fn regions(
                     painter.rect_stroke(
                         r,
                         0.0,
-                        egui::Stroke::new(2.0, egui::Color32::from_rgb(220, 60, 60)),
+                        egui::Stroke::new(2.0, theme::BLOCK_INSTANCE_STROKE),
                         egui::StrokeKind::Outside,
                     );
                 }
@@ -184,9 +184,9 @@ pub fn regions(
 
     // Inspector window (floating on right)
     if !app.palette.is_open() {
-        let resp = egui::Window::new("Inspector")
+        let resp: Option<egui::InnerResponse<Option<Command>>> = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ctx, |ui| {
+            .show(ctx, |ui| -> Option<Command> {
                 let cmd = inspector(
                     ui,
                     &app.doc,

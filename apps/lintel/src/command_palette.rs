@@ -553,7 +553,7 @@ fn visible_rows(palette: &CommandPalette, doc: &Document, selection: &Selection)
 }
 
 /// Paint the palette modal. Nothing runs until a row is activated.
-pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::InnerResponse<()>> {
+pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::ModalResponse<()>> {
     if !app.palette.is_open() {
         return None;
     }
