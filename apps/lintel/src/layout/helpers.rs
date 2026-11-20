@@ -72,7 +72,7 @@ pub fn wrap_row(
 /// });
 /// ```
 pub fn card(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
-    let frame = egui::Frame::none()
+    let frame = egui::Frame::new()
         .fill(theme::SURFACE_PANEL)
         .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
         .corner_radius(theme::RADIUS_MD)
@@ -85,7 +85,7 @@ pub fn card(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
 
 /// Smaller card variant for inline use.
 pub fn card_compact(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui)) {
-    let frame = egui::Frame::none()
+    let frame = egui::Frame::new()
         .fill(theme::SURFACE_PANEL)
         .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
         .corner_radius(theme::RADIUS_SM)
@@ -98,7 +98,7 @@ pub fn card_compact(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui))
 
 /// Tool group card for the rail — uses vstack internally.
 pub fn tool_group(ui: &mut egui::Ui, title: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
-    let frame = egui::Frame::none()
+    let frame = egui::Frame::new()
         .fill(theme::SURFACE_PANEL)
         .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
         .corner_radius(theme::RADIUS_MD)

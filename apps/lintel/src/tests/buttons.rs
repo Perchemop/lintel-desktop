@@ -32,7 +32,7 @@ const ALL_VARIANTS: [&str; 12] = [
 /// Run one headless egui pass and hand the panel `Ui` to `f`.
 fn with_ui(f: impl FnOnce(&mut egui::Ui)) {
     let ctx = egui::Context::default();
-    ctx.run(egui::RawInput::default(), |ctx| {
+    ctx.run_ui(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| f(ui));
     });
 }
