@@ -1,0 +1,7 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): radial dimension — a radius line
+     from the centre out to the rim, with an open arrowhead. Ink = BASE_INK. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="11" cy="13" r="7"/>
+  <path d="M11 13 L16 8"/>
+  <path d="M16 8 L13.1 8.8 M16 8 L15.2 10.9"/>
+</svg>

@@ -18,6 +18,12 @@ egui = { version = "=0.36" }
 # Window icon: decode the embedded PNG for egui::IconData.
 image = "0.25"
 
+# SVG rasterization for the icon system (theme::icon_texture): original
+# CAD-workflow SVGs in assets/icons/, rendered at exact pixel size with the
+# same renderer egui_extras' SVG loader uses. Not an icon crate — no Lucide,
+# Tabler, Phosphor or any packaged icon set (spec v0.20.0 AC-05, D-034).
+resvg = "0.45"
+
 [dev-dependencies]
 # AccessKit / snapshot testing harness (guide II.27.12 / K.7)
 egui_kittest = "0.36"

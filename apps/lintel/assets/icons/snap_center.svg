@@ -1,0 +1,6 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): centre snap — a circle with the
+     drafting centre-mark cross extending past its rim. Ink matches BASE_INK. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="6"/>
+  <path d="M12 2.5 V6 M12 18 V21.5 M2.5 12 H6 M18 12 H21.5"/>
+</svg>

@@ -20,7 +20,7 @@
 //! Re-hueing the product is a tier-1 edit; re-styling one component is a tier-3
 //! edit; nothing in between needs to move.
 
-use eframe::egui::Color32;
+use eframe::egui::{Color32, ColorImage, Context, TextureHandle, TextureOptions};
 
 // ---------------------------------------------------------------------------
 // Tier 1 — base palette (raw swatches, no meaning attached)
@@ -36,9 +36,16 @@ pub const BASE_BLACK: Color32 = Color32::BLACK;
 pub const BASE_MATCH_BLUE: Color32 = Color32::from_rgb(20, 90, 160);
 
 pub const BASE_COBALT: Color32 = Color32::from_rgb(18, 78, 120); // selection / active tool
+/// Pointer hover on accent fills: one step lighter than BASE_COBALT so a
+/// filled button visibly responds to hover without relying on its border
+/// (guide II.30.10). Text contrast: 6.6:1 with paper labels.
+pub const BASE_COBALT_HOVER: Color32 = Color32::from_rgb(24, 94, 140);
 pub const BASE_GREEN: Color32 = Color32::from_rgb(34, 158, 96); // endpoint snap
 pub const BASE_VALID: Color32 = Color32::from_rgb(26, 112, 62); // valid-input message
 pub const BASE_ERROR: Color32 = Color32::DARK_RED;
+/// Pointer hover on destructive fills: one step darker than BASE_ERROR
+/// (guide II.30.10). Text contrast: 11.0:1 with paper labels.
+pub const BASE_DANGER_HOVER: Color32 = Color32::from_rgb(120, 0, 0);
 
 pub const BASE_PANEL_BG: Color32 = Color32::from_rgb(245, 240, 232);
 pub const BASE_PANEL_BORDER: Color32 = Color32::from_rgb(212, 204, 192);
@@ -111,8 +118,10 @@ pub const TEXT_DANGER: Color32 = BASE_ERROR;
 
 // Accent: selection, active tool, focus.
 pub const ACCENT_DEFAULT: Color32 = BASE_COBALT;
-/// Hover keeps the same fill; stroke weight carries the hover signal.
-pub const ACCENT_HOVER: Color32 = BASE_COBALT;
+/// Hover on accent fills (buttons): a step lighter than the rest fill, so
+/// hover is a visible state change in its own right (guide II.30.10). Canvas
+/// tool hover keeps its own stroke-weight signal and does not read this role.
+pub const ACCENT_HOVER: Color32 = BASE_COBALT_HOVER;
 /// Pressed states darken to graphite.
 pub const ACCENT_ACTIVE: Color32 = BASE_INK;
 /// Keyboard focus ring, 2 px (guide II.21.2, II.30.7.4).
@@ -121,6 +130,13 @@ pub const FOCUS_RING: Color32 = ACCENT_DEFAULT;
 pub const SUCCESS_DEFAULT: Color32 = BASE_GREEN;
 /// Destructive fill.
 pub const DANGER_DEFAULT: Color32 = BASE_ERROR;
+/// Hover on destructive fills (buttons): a step darker than DANGER_DEFAULT.
+pub const DANGER_HOVER: Color32 = BASE_DANGER_HOVER;
+/// Light label text on dark fills. Reuses the paper swatch: 8.3:1 on
+/// ACCENT_DEFAULT, 6.6:1 on ACCENT_HOVER, 16.7:1 on ACCENT_ACTIVE, 9.5:1 on
+/// DANGER_DEFAULT, 11.0:1 on DANGER_HOVER and 5.4:1 on TEXT_MUTED — every
+/// pairing clears the 4.5:1 AA floor for normal text (guide II.30.7.1).
+pub const TEXT_ON_ACCENT: Color32 = BASE_PAPER;
 
 // Structural strokes.
 /// Dark stroke for dimension lines, drag rectangles and the free-snap marker.
@@ -234,12 +250,12 @@ pub fn contrast_ratio(a: (u8, u8, u8), b: (u8, u8, u8)) -> f64 {
     (hi + 0.05) / (lo + 0.05)
 }
 
-// ---- Button role styles (egui-elegance pattern copy, guide II.30.10) ----
-// Four roles x three sizes. Every size honours the 24pt floor
+// ---- Button role styles (shadcn-egui / modern-egui pattern copy, guide II.30.10) ----
+// Four roles x three sizes, every size honouring the 24pt floor
 // (guide II.30.7.5); focus rings are 2px ACCENT_DEFAULT (guide II.30.7.4).
-// Component tokens: every field points at a tier-2 role.
+// Component tokens: every field points at a tier-2 role. The widget that
+// consumes this table is `crate::components::buttons::StyledButton`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
 pub enum ButtonRole {
     Primary,
     Secondary,
@@ -247,153 +263,180 @@ pub enum ButtonRole {
     Danger,
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ButtonSize {
-    Small,
-    Medium,
-    Large,
+    Sm,
+    Md,
+    Lg,
 }
 
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
+/// Per-variant button style: six states, every field a tier-2 role.
+///
+/// States (guide II.30.10): default (`fill` + `text`), hover (`hover`),
+/// pressed (`active` + `text_active` — pressed fills are dark, so labels flip
+/// to the light role), focus (`focus` ring, painted only while focused),
+/// disabled (`disabled` + `text_disabled`) and loading (rest fill, interaction
+/// disabled, spinner drawn in `text` — control size never changes).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ButtonRoleStyle {
+    /// Rest fill.
     pub fill: Color32,
+    /// Label colour on `fill` (also the loading spinner colour).
+    pub text: Color32,
+    /// Pointer-hover fill.
     pub hover: Color32,
+    /// Pressed fill.
     pub active: Color32,
+    /// Label colour on `active`.
+    pub text_active: Color32,
+    /// Focus-ring stroke colour, 2px, painted only while focused.
     pub focus: Color32,
+    /// Disabled fill.
     pub disabled: Color32,
+    /// Label colour on `disabled`.
+    pub text_disabled: Color32,
+    /// Minimum control size — the 24pt floor per size (guide II.30.7.5).
     pub min_size: eframe::egui::Vec2,
 }
 
 pub const BUTTON_PRIMARY_S: ButtonRoleStyle = ButtonRoleStyle {
     fill: ACCENT_DEFAULT,
+    text: TEXT_ON_ACCENT,
     hover: ACCENT_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(24.0, 24.0),
 };
 pub const BUTTON_PRIMARY_M: ButtonRoleStyle = ButtonRoleStyle {
     fill: ACCENT_DEFAULT,
+    text: TEXT_ON_ACCENT,
     hover: ACCENT_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(32.0, 32.0),
 };
 pub const BUTTON_PRIMARY_L: ButtonRoleStyle = ButtonRoleStyle {
     fill: ACCENT_DEFAULT,
+    text: TEXT_ON_ACCENT,
     hover: ACCENT_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
 pub const BUTTON_SECONDARY_S: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_PANEL,
+    text: TEXT_PRIMARY,
     hover: SURFACE_BASE,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(24.0, 24.0),
 };
 pub const BUTTON_SECONDARY_M: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_PANEL,
+    text: TEXT_PRIMARY,
     hover: SURFACE_BASE,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(32.0, 32.0),
 };
 pub const BUTTON_SECONDARY_L: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_PANEL,
+    text: TEXT_PRIMARY,
     hover: SURFACE_BASE,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
 pub const BUTTON_GHOST_S: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_TRANSPARENT,
+    text: TEXT_PRIMARY,
     hover: SURFACE_PANEL,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(24.0, 24.0),
 };
 pub const BUTTON_GHOST_M: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_TRANSPARENT,
+    text: TEXT_PRIMARY,
     hover: SURFACE_PANEL,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(32.0, 32.0),
 };
 pub const BUTTON_GHOST_L: ButtonRoleStyle = ButtonRoleStyle {
     fill: SURFACE_TRANSPARENT,
+    text: TEXT_PRIMARY,
     hover: SURFACE_PANEL,
     active: ACCENT_DEFAULT,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
 pub const BUTTON_DANGER_S: ButtonRoleStyle = ButtonRoleStyle {
     fill: DANGER_DEFAULT,
-    hover: DANGER_DEFAULT,
+    text: TEXT_ON_ACCENT,
+    hover: DANGER_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(24.0, 24.0),
 };
-#[allow(dead_code)]
 pub const BUTTON_DANGER_M: ButtonRoleStyle = ButtonRoleStyle {
     fill: DANGER_DEFAULT,
-    hover: DANGER_DEFAULT,
+    text: TEXT_ON_ACCENT,
+    hover: DANGER_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(32.0, 32.0),
 };
-#[allow(dead_code)]
 pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
     fill: DANGER_DEFAULT,
-    hover: DANGER_DEFAULT,
+    text: TEXT_ON_ACCENT,
+    hover: DANGER_HOVER,
     active: ACCENT_ACTIVE,
+    text_active: TEXT_ON_ACCENT,
     focus: FOCUS_RING,
     disabled: TEXT_MUTED,
+    text_disabled: TEXT_ON_ACCENT,
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
-#[allow(dead_code)]
-pub fn button_style(
-    role: ButtonRole,
-    size: ButtonSize,
-    active: bool,
-) -> eframe::egui::Button<'static> {
-    let spec = match (role, size) {
-        (ButtonRole::Primary, ButtonSize::Small) => BUTTON_PRIMARY_S,
-        (ButtonRole::Primary, ButtonSize::Medium) => BUTTON_PRIMARY_M,
-        (ButtonRole::Primary, ButtonSize::Large) => BUTTON_PRIMARY_L,
-        (ButtonRole::Secondary, ButtonSize::Small) => BUTTON_SECONDARY_S,
-        (ButtonRole::Secondary, ButtonSize::Medium) => BUTTON_SECONDARY_M,
-        (ButtonRole::Secondary, ButtonSize::Large) => BUTTON_SECONDARY_L,
-        (ButtonRole::Ghost, ButtonSize::Small) => BUTTON_GHOST_S,
-        (ButtonRole::Ghost, ButtonSize::Medium) => BUTTON_GHOST_M,
-        (ButtonRole::Ghost, ButtonSize::Large) => BUTTON_GHOST_L,
-        (ButtonRole::Danger, ButtonSize::Small) => BUTTON_DANGER_S,
-        (ButtonRole::Danger, ButtonSize::Medium) => BUTTON_DANGER_M,
-        (ButtonRole::Danger, ButtonSize::Large) => BUTTON_DANGER_L,
-    };
-    let fill = if active { spec.active } else { spec.fill };
-    eframe::egui::Button::new("")
-        .fill(fill)
-        .stroke(eframe::egui::Stroke::new(2.0, spec.focus))
-        .min_size(spec.min_size)
-}
+/// Button corner radius (design-token radii 2/4/8/12 — guide II.30.6).
+pub const BUTTON_CORNER_RADIUS: f32 = 4.0;
 
 #[cfg(test)]
 mod tests {
@@ -552,11 +595,13 @@ mod tests {
             ("TEXT_SUCCESS", TEXT_SUCCESS, BASE_VALID),
             ("TEXT_DANGER", TEXT_DANGER, BASE_ERROR),
             ("ACCENT_DEFAULT", ACCENT_DEFAULT, BASE_COBALT),
-            ("ACCENT_HOVER", ACCENT_HOVER, BASE_COBALT),
+            ("ACCENT_HOVER", ACCENT_HOVER, BASE_COBALT_HOVER),
             ("ACCENT_ACTIVE", ACCENT_ACTIVE, BASE_INK),
             ("FOCUS_RING", FOCUS_RING, ACCENT_DEFAULT),
             ("SUCCESS_DEFAULT", SUCCESS_DEFAULT, BASE_GREEN),
             ("DANGER_DEFAULT", DANGER_DEFAULT, BASE_ERROR),
+            ("DANGER_HOVER", DANGER_HOVER, BASE_DANGER_HOVER),
+            ("TEXT_ON_ACCENT", TEXT_ON_ACCENT, BASE_PAPER),
             ("STROKE_STRONG", STROKE_STRONG, BASE_INK),
             ("DRAFT_FILL", DRAFT_FILL, BASE_WALL_FILL),
             ("DRAFT_STROKE", DRAFT_STROKE, BASE_WALL_STROKE),
@@ -660,6 +705,40 @@ mod tests {
             ("BUTTON_DANGER_L.fill", BUTTON_DANGER_L.fill, DANGER_DEFAULT),
             ("BUTTON_PRIMARY_S.focus", BUTTON_PRIMARY_S.focus, FOCUS_RING),
             ("BUTTON_DANGER_L.focus", BUTTON_DANGER_L.focus, FOCUS_RING),
+            ("BUTTON_PRIMARY_S.text", BUTTON_PRIMARY_S.text, TEXT_ON_ACCENT),
+            ("BUTTON_PRIMARY_L.text", BUTTON_PRIMARY_L.text, TEXT_ON_ACCENT),
+            (
+                "BUTTON_SECONDARY_M.text",
+                BUTTON_SECONDARY_M.text,
+                TEXT_PRIMARY,
+            ),
+            ("BUTTON_GHOST_S.text", BUTTON_GHOST_S.text, TEXT_PRIMARY),
+            ("BUTTON_DANGER_M.text", BUTTON_DANGER_M.text, TEXT_ON_ACCENT),
+            (
+                "BUTTON_DANGER_M.hover",
+                BUTTON_DANGER_M.hover,
+                DANGER_HOVER,
+            ),
+            (
+                "BUTTON_PRIMARY_L.text_active",
+                BUTTON_PRIMARY_L.text_active,
+                TEXT_ON_ACCENT,
+            ),
+            (
+                "BUTTON_SECONDARY_S.text_disabled",
+                BUTTON_SECONDARY_S.text_disabled,
+                TEXT_ON_ACCENT,
+            ),
+            (
+                "BUTTON_GHOST_M.text_disabled",
+                BUTTON_GHOST_M.text_disabled,
+                TEXT_ON_ACCENT,
+            ),
+            (
+                "BUTTON_DANGER_L.text_disabled",
+                BUTTON_DANGER_L.text_disabled,
+                TEXT_ON_ACCENT,
+            ),
             (
                 "BUTTON_PRIMARY_S.disabled",
                 BUTTON_PRIMARY_S.disabled,

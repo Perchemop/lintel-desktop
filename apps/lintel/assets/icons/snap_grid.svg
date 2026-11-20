@@ -1,0 +1,6 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): grid snap — a 3x3 lattice, the
+     drafting sheet's reference grid. Ink matches theme::BASE_INK. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="4" width="16" height="16" rx="1"/>
+  <path d="M9.33 4 V20 M14.67 4 V20 M4 9.33 H20 M4 14.67 H20"/>
+</svg>
