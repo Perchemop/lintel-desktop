@@ -39,7 +39,7 @@ fn field_renders_label_input_and_help() {
         *sink.borrow_mut() = Some(response.rect.height());
     });
     let height = input_height.borrow().expect("the pass ran");
-    assert!(*height > 0.0, "the input must be visible, got {height:?}");
+    assert!(height > 0.0, "the input must be visible, got {height:?}");
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn field_set_frames_its_legend_and_fields() {
 fn field_group_lays_out_horizontally_and_vertically() {
     let mut first = String::new();
     let mut second = String::from("2");
-    let shapes = slot::<(f32, f32)>();
+    let shapes = slot::<(f32, f32, f32)>();
     let sink = shapes.clone();
     run(move |ui| {
         FieldGroup::new()

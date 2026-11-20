@@ -66,13 +66,10 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
             1,
             "exactly one text input must hold focus after Tab"
         );
-        let value = focused[0]
-            .accesskit_node()
-            .value()
-            .unwrap_or_default();
+        let value = focused[0].accesskit_node().value();
         assert_eq!(
-            value.as_str(),
-            expected_value,
+            value.as_deref(),
+            Some(expected_value),
             "Tab must land on the next field in visual order"
         );
     }
