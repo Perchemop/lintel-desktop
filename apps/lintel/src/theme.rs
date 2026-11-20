@@ -46,6 +46,11 @@ pub const BASE_ERROR: Color32 = Color32::DARK_RED;
 /// Pointer hover on destructive fills: one step darker than BASE_ERROR
 /// (guide II.30.10). Text contrast: 11.0:1 with paper labels.
 pub const BASE_DANGER_HOVER: Color32 = Color32::from_rgb(120, 0, 0);
+/// Tier-1 swatch for warning text. Darkened from the snap amber
+/// (176,106,22) — 4.0:1 on PAPER, under the 4.5:1 text floor — so a warning
+/// reads as text, not only as a snap marker (guide II.30.7.1).
+#[allow(dead_code)] // consumed by TEXT_WARNING and the contrast merge-gate tests
+pub const BASE_WARNING: Color32 = Color32::from_rgb(140, 84, 14);
 
 pub const BASE_PANEL_BG: Color32 = Color32::from_rgb(245, 240, 232);
 pub const BASE_PANEL_BORDER: Color32 = Color32::from_rgb(212, 204, 192);
@@ -59,7 +64,11 @@ pub const BASE_GRID_MAJOR: Color32 = Color32::from_rgb(200, 190, 176);
 pub const BASE_WINDOW_LINE: Color32 = Color32::from_rgb(90, 82, 74);
 
 pub const BASE_SELECTION_WASH: Color32 = Color32::from_black_alpha(18);
-pub const BASE_SELECTION_EDGE: Color32 = Color32::from_black_alpha(40);
+/// Selection-state edge (command-palette rows). Raised from alpha 40 — a
+/// 1.2:1 whisper that failed the WCAG 2.2 §1.4.11 state-indicator floor — to
+/// alpha 140: 4.7:1 composited on PAPER and 4.6:1 on the panel
+/// (guide II.30.7.1, ticket T-007, D-035).
+pub const BASE_SELECTION_EDGE: Color32 = Color32::from_black_alpha(140);
 pub const BASE_TRANSPARENT: Color32 = Color32::TRANSPARENT;
 
 pub const BASE_SNAP_MIDPOINT: Color32 = Color32::from_rgb(176, 106, 22);
@@ -94,6 +103,12 @@ pub const SURFACE_SELECTION: Color32 = BASE_SELECTION_WASH;
 pub const BORDER_DEFAULT: Color32 = BASE_PANEL_BORDER;
 /// Outline of a selected row.
 pub const BORDER_SELECTION: Color32 = BASE_SELECTION_EDGE;
+/// Strong outline: input-field borders and any boundary that must identify a
+/// component on its own (WCAG 2.2 §1.4.11): 7.8:1 on the sheet, 7.2:1 on the
+/// panel and 6.8:1 on the status strip. `BORDER_DEFAULT` stays the decorative
+/// divider, which §1.4.11 exempts.
+#[allow(dead_code)] // consumed by the contrast merge-gate tests; input fields land with T-002
+pub const BORDER_STRONG: Color32 = BASE_WALL_STROKE;
 
 // Text.
 /// Body text on every light surface.
@@ -115,6 +130,10 @@ pub const TEXT_MATCH: Color32 = BASE_MATCH_BLUE;
 pub const TEXT_SUCCESS: Color32 = BASE_VALID;
 /// Error / destructive message.
 pub const TEXT_DANGER: Color32 = BASE_ERROR;
+/// Warning message text (deep amber): 5.9:1 on the sheet, 5.5:1 on the panel
+/// and 5.1:1 on the status strip (guide II.30.7.1).
+#[allow(dead_code)] // consumed by the contrast merge-gate tests; first UI use lands with the status work
+pub const TEXT_WARNING: Color32 = BASE_WARNING;
 
 // Accent: selection, active tool, focus.
 pub const ACCENT_DEFAULT: Color32 = BASE_COBALT;
