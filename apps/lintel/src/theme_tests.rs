@@ -142,9 +142,10 @@ fn contrast_test_button_states_all_roles_all_themes() {
                 if bg.a() == 0 {
                     // Ghost: no fill of its own; the label reads against the
                     // light surfaces the button is drawn over.
-                    for (surface, wash) in
-                        [("surface.base", SURFACE_BASE), ("surface.panel", SURFACE_PANEL)]
-                    {
+                    for (surface, wash) in [
+                        ("surface.base", SURFACE_BASE),
+                        ("surface.panel", SURFACE_PANEL),
+                    ] {
                         let r = contrast_ratio(rgb_of(fg), rgb_of(wash));
                         assert!(
                             r >= state_floor,
@@ -264,7 +265,8 @@ fn contrast_test_selection_indicators_all_themes() {
         );
         let fill = composited_over(p.surface_base, p.selection_fill);
         assert_ne!(
-            fill, p.surface_base,
+            fill,
+            p.surface_base,
             "{} selection wash must change the row it covers",
             theme.name()
         );
@@ -337,8 +339,14 @@ fn contrast_test_failure_display_names_role_ratio_required() {
         shown.contains("dark: text.muted on surface.panel"),
         "message names the role: {shown}"
     );
-    assert!(shown.contains("4.20"), "message names the measured ratio: {shown}");
-    assert!(shown.contains("4.5"), "message names the required ratio: {shown}");
+    assert!(
+        shown.contains("4.20"),
+        "message names the measured ratio: {shown}"
+    );
+    assert!(
+        shown.contains("4.5"),
+        "message names the required ratio: {shown}"
+    );
 
     let u = ContrastFailure::Ui {
         role: "light: border.strong on surface.base".to_string(),
@@ -346,6 +354,12 @@ fn contrast_test_failure_display_names_role_ratio_required() {
         required: 3.0,
     };
     let shown = u.to_string();
-    assert!(shown.contains("ui contrast failure"), "message states the kind: {shown}");
-    assert!(shown.contains("2.80:1"), "message states the measured ratio: {shown}");
+    assert!(
+        shown.contains("ui contrast failure"),
+        "message states the kind: {shown}"
+    );
+    assert!(
+        shown.contains("2.80:1"),
+        "message states the measured ratio: {shown}"
+    );
 }
