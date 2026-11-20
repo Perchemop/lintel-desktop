@@ -6,10 +6,12 @@
 
 use crate::components::buttons::StyledButton;
 use crate::theme::{
-    contrast_ratio, rgb_of, ButtonRole, ButtonSize, BUTTON_DANGER_L, BUTTON_DANGER_M,
-    BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L,
-    BUTTON_PRIMARY_M, BUTTON_PRIMARY_S, BUTTON_SECONDARY_L, BUTTON_SECONDARY_M,
-    BUTTON_SECONDARY_S, SURFACE_BASE,
+    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
+    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S,
+    BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
+    BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
+    SURFACE_BASE,
+    ButtonRole, ButtonSize, contrast_ratio, rgb_of,
 };
 use eframe::egui;
 
@@ -150,3 +152,4 @@ fn button_tokens_meet_wcag_aa_in_every_state() {
         assert!(spec.min_size.x >= 24.0 && spec.min_size.y >= 24.0);
     }
 }
+
