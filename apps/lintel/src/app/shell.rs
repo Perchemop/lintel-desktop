@@ -336,7 +336,11 @@ fn tool_button(
         .role(role)
         .size(ButtonSize::Md)
         .selected(selected);
-    if ui.add(btn).on_hover_text(format!("{} ({})", label, shortcut)).clicked() {
+    if ui
+        .add(btn)
+        .on_hover_text(format!("{} ({})", label, shortcut))
+        .clicked()
+    {
         app.tool = tool;
     }
 }
