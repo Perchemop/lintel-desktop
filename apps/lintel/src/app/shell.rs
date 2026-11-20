@@ -264,50 +264,6 @@ fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::R
     });
     resp.response
 }
-        ui.spacing_mut().item_spacing.x = theme::SPACING_MD;
-
-        // App name
-        ui.label(
-            egui::RichText::new("Lintel")
-                .heading()
-                .color(theme::TEXT_PRIMARY),
-        );
-
-        ui.separator();
-
-        // Breadcrumb: active level name
-        if let Some(level) = app.doc.project().active_level() {
-            ui.label(
-                egui::RichText::new(&level.name)
-                    .small()
-                    .color(theme::TEXT_MUTED),
-            );
-        }
-
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            // Window controls (cross-platform, not OS native)
-            if ui
-                .add(StyledButton::new("✕").role(ButtonRole::Ghost).size(ButtonSize::Sm))
-                .on_hover_text("Close Lintel")
-                .clicked()
-            {
-                ui.send_viewport_cmd(egui::ViewportCommand::Close);
-            }
-
-            // Update status indicator
-            if let Some(status) = app.status.clone()
-                && now_epoch_s().saturating_sub(app.status_at) < 8
-            {
-                ui.label(
-                    egui::RichText::new(status)
-                        .small()
-                        .color(theme::TEXT_DANGER),
-                );
-            }
-        });
-    });
-    resp
-}
 
 /// Rail region: tool palette with groups (draw, modify, snap, layers).
 fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
