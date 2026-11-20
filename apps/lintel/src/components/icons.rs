@@ -141,13 +141,15 @@ pub fn icon_button(
     let img_size = egui::Vec2::splat(size_pt);
     let img = egui::Image::new((handle.id(), img_size)).fit_to_exact_size(img_size);
 
-    let resp = ui.add(egui::Button::new("").icon(img).min_size(img_size));
+    let resp = ui.add(egui::Button::image(img).min_size(img_size));
 
     // Set accessible name on the widget info so AccessKit reads it.
-    resp.widget_info(|info| {
-        info.label = accessible_name.into();
-        info.role = egui::WidgetInfo::role_from_label(&info.label, &resp);
-    });
+    // In egui 0.36, widget_info closure takes 0 args; use WidgetInfo::labeled.
+    resp.widget_info(|| egui::WidgetInfo::labeled(
+        egui::WidgetType::Button,
+        true,
+        accessible_name.to_owned(),
+    ));
 
     resp.on_hover_text(accessible_name)
 }

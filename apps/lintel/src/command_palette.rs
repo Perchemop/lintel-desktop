@@ -553,7 +553,7 @@ fn visible_rows(palette: &CommandPalette, doc: &Document, selection: &Selection)
 }
 
 /// Paint the palette modal. Nothing runs until a row is activated.
-pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::InnerResponse<Option<Command>>> {
+pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::InnerResponse<()>> {
     if !app.palette.is_open() {
         return None;
     }
@@ -580,7 +580,7 @@ pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::
     if modal.should_close() {
         app.palette.close();
     }
-    Some(modal)
+    modal
 }
 
 /// The results stage: search field, recent commands and the filtered list.

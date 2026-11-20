@@ -36,7 +36,7 @@ pub struct Regions {
     /// Inspector window response (floating, right side).
     pub inspector: Option<egui::InnerResponse<Option<Command>>>,
     /// Command palette response (modal overlay).
-    pub palette: Option<egui::InnerResponse<Option<Command>>>,
+    pub palette: Option<egui::InnerResponse<()>>,
 }
 
 /// Layout the shell and return the three regions for the caller to fill.
