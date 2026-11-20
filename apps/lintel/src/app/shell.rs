@@ -344,7 +344,6 @@ fn tool_button(
 /// A snap mode chip in the rail.
 fn snap_chip(ui: &mut egui::Ui, app: &mut crate::LintelApp, kind: SnapModeKind, key: &str) {
     let active = app.snap_modes.enabled(kind);
-    let colour = kind.colour();
     let label = format!("{} ({})", kind.label(), key);
     let resp = ui
         .add(

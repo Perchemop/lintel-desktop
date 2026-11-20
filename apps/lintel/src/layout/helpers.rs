@@ -15,12 +15,10 @@ use eframe::egui;
 /// });
 /// ```
 pub fn vstack(ui: &mut egui::Ui, spacing: f32, add_contents: impl FnOnce(&mut egui::Ui)) {
-    let mut inner = ui.vertical(|ui| {
+    ui.vertical(|ui| {
         ui.spacing_mut().item_spacing.y = spacing;
         add_contents(ui);
     });
-    // The vertical layout already handles spacing via item_spacing
-    let _ = inner;
 }
 
 /// Horizontal stack with equal spacing between children.
@@ -32,11 +30,10 @@ pub fn vstack(ui: &mut egui::Ui, spacing: f32, add_contents: impl FnOnce(&mut eg
 /// });
 /// ```
 pub fn hstack(ui: &mut egui::Ui, spacing: f32, add_contents: impl FnOnce(&mut egui::Ui)) {
-    let mut inner = ui.horizontal(|ui| {
+    ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = spacing;
         add_contents(ui);
     });
-    let _ = inner;
 }
 
 /// Wrapping row: lays out children horizontally, wrapping to the next row
@@ -58,13 +55,12 @@ pub fn wrap_row(
     // Store the available width for wrapping logic
     let available_width = ui.available_width();
     
-    let mut row_ui = ui.horizontal_wrapped(|ui| {
+    ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing = egui::vec2(horizontal_spacing, vertical_spacing);
         // Limit each row to available width minus a small margin
         ui.set_max_width(available_width);
         add_contents(ui);
     });
-    let _ = row_ui;
 }
 
 /// Elevated card surface with padding, border, and corner radius.
