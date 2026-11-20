@@ -16,7 +16,6 @@ use eframe::egui;
 ///     .help_text("Exterior walls typically ≥ 200 mm")
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
 pub struct Field {
     label: String,
     required: bool,
@@ -50,7 +49,7 @@ impl Field {
     /// Set the input widget. The closure receives a `Ui`, adds the input
     /// widget, and returns its `Response`. The field wires `labelled_by`
     /// and focus handling automatically.
-    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response + 'static) -> Self {
+    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response) -> Self {
         self.input_fn = Some(Box::new(f));
         self
     }
@@ -225,7 +224,6 @@ impl Field {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
 pub struct FieldSet {
     legend: String,
     fields: Vec<Field>,
@@ -345,7 +343,6 @@ impl FieldSet {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
 pub struct FieldGroup {
     fields: Vec<Field>,
     direction: egui::Direction,
