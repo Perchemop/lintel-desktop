@@ -113,8 +113,8 @@ pub const BORDER_SELECTION: Color32 = BASE_SELECTION_EDGE;
 /// Strong outline: input-field borders and any boundary that must identify a
 /// component on its own (WCAG 2.2 §1.4.11): 7.8:1 on the sheet, 7.2:1 on the
 /// panel and 6.8:1 on the status strip. `BORDER_DEFAULT` stays the decorative
-/// divider, which §1.4.11 exempts.
-#[allow(dead_code)] // consumed by the contrast merge-gate tests; input fields land with T-002
+/// divider, which §1.4.11 exempts. Consumed by the `FIELD_*` registry and the
+/// contrast merge-gate tests.
 pub const BORDER_STRONG: Color32 = BASE_WALL_STROKE;
 
 // Text.
@@ -257,6 +257,42 @@ pub const HINT_TEXT: Color32 = TEXT_HINT;
 pub const MUTED_TEXT: Color32 = TEXT_MUTED;
 pub const SUCCESS_TEXT: Color32 = TEXT_SUCCESS;
 pub const ERROR_TEXT: Color32 = TEXT_ERROR;
+pub const DANGER_TEXT: Color32 = TEXT_DANGER;
+
+// Form fields (shadcn-egui Field pattern copy, spec v0.20.0 AC-03): every
+// colour is one hop from a tier-2 role; the widget reads them through
+// `SPEC.component.field`. Consumed by `crate::components::forms`.
+/// Field label text.
+pub const FIELD_LABEL: Color32 = TEXT_PRIMARY;
+/// FieldSet legend text.
+pub const FIELD_LEGEND: Color32 = TEXT_STRONG;
+/// Helper text under an input: 5.1:1 on the sheet and on the panel.
+pub const FIELD_HELP: Color32 = TEXT_MUTED;
+/// Error message text: 9.5:1 on the sheet, 8.8:1 on the panel (guide II.30.7.1).
+pub const FIELD_ERROR_TEXT: Color32 = TEXT_ERROR;
+/// Error icon fill — the same danger swatch as the error border. Colour is
+/// never the only signal: the message text beside it and the light
+/// exclamation mark (`TEXT_ON_ACCENT`, 9.5:1 on this fill) carry the state
+/// too (guide II.30.7.2).
+pub const FIELD_ERROR_ICON: Color32 = DANGER_DEFAULT;
+/// Input background fill (a subtle well on the sheet).
+pub const FIELD_INPUT_FILL: Color32 = SURFACE_BASE;
+/// Input text colour.
+pub const FIELD_INPUT_TEXT: Color32 = TEXT_PRIMARY;
+/// Rest-state input border — `BORDER_STRONG`, so the input identifies itself
+/// on its own (WCAG 2.2 §1.4.11): 7.8:1 on the sheet, 7.2:1 on the panel.
+pub const FIELD_BORDER: Color32 = BORDER_STRONG;
+/// Error-state border: 9.5:1 on the sheet, 8.8:1 on the panel (≥ 3:1 UI floor).
+pub const FIELD_BORDER_ERROR: Color32 = DANGER_DEFAULT;
+/// Focus-state border: 8.3:1 on the sheet, 7.8:1 on the panel (guide II.30.7.4).
+pub const FIELD_BORDER_FOCUSED: Color32 = FOCUS_RING;
+/// Disabled input text: 5.2:1 on the sheet, 4.8:1 on the panel.
+pub const FIELD_DISABLED_TEXT: Color32 = TEXT_DISABLED;
+/// FieldSet group fill — the raised surface (guide II.30.6 `surface.raised`).
+pub const FIELD_GROUP_FILL: Color32 = SURFACE_PANEL;
+/// FieldSet group border — the group boundary identifies itself: 7.8:1 on the
+/// sheet, 7.2:1 on the panel.
+pub const FIELD_GROUP_BORDER: Color32 = BORDER_STRONG;
 
 /// The 2 px accent stroke drawn around selected entities.
 pub fn selection_stroke() -> egui::Stroke {
@@ -1453,6 +1489,7 @@ pub struct BasePalette {
     pub green: Color32,
     pub valid: Color32,
     pub error: Color32,
+    pub danger: Color32,
     pub danger_hover: Color32,
     pub warning: Color32,
     pub panel_bg: Color32,
@@ -1499,6 +1536,7 @@ pub struct SemanticRoles {
     pub text_success: Color32,
     pub text_warning: Color32,
     pub text_error: Color32,
+    pub text_danger: Color32,
     pub text_on_accent: Color32,
     // Accent, focus and status fills.
     pub accent_default: Color32,
@@ -1595,6 +1633,8 @@ pub struct ComponentTextTokens {
     pub success: Color32,
     /// Error and destructive message text.
     pub error: Color32,
+    /// Destructive accent text (form errors, T-002).
+    pub danger: Color32,
 }
 
 /// Tier 3 — command-palette row tokens.
@@ -1682,6 +1722,7 @@ impl ThemeSpec {
             green: BASE_GREEN,
             valid: BASE_VALID,
             error: BASE_ERROR,
+            danger: BASE_DANGER,
             danger_hover: BASE_DANGER_HOVER,
             warning: BASE_WARNING,
             panel_bg: BASE_PANEL_BG,
@@ -1722,6 +1763,7 @@ impl ThemeSpec {
             text_success: TEXT_SUCCESS,
             text_warning: TEXT_WARNING,
             text_error: TEXT_ERROR,
+            text_danger: TEXT_DANGER,
             text_on_accent: TEXT_ON_ACCENT,
             accent_default: ACCENT_DEFAULT,
             accent_hover: ACCENT_HOVER,
@@ -1778,6 +1820,7 @@ impl ThemeSpec {
                 muted: MUTED_TEXT,
                 success: SUCCESS_TEXT,
                 error: ERROR_TEXT,
+                danger: DANGER_TEXT,
             },
             palette: PaletteTokens {
                 selected_fill: PALETTE_SELECTED_FILL,

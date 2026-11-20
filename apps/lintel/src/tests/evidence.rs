@@ -84,7 +84,9 @@ fn buttons_sheet_ui(ui: &mut egui::Ui) {
 
 /// Disabled, loading, selected and loading-everything states, one per cell.
 fn button_states_sheet_ui(ui: &mut egui::Ui) {
-    let cells: [(&str, &str, Box<dyn Fn(&mut egui::Ui)>); 6] = [
+    type Paint = Box<dyn Fn(&mut egui::Ui)>;
+    type Cell = (&'static str, &'static str, Paint);
+    let cells: Vec<Cell> = vec![
         (
             "Disabled",
             "hover explains why (II.30.11)",
@@ -358,16 +360,18 @@ fn kittest_layout_resizes_without_overlap_or_clipping() {
             rects.len() >= 10,
             "the wrapping row and tool group must expose their buttons at {width}px"
         );
-        for (index, rect) in rects.iter().enumerate() {
+        for index in 0..rects.len() {
+            let rect = rects[index];
             assert!(
                 rect.width() >= 24.0 && rect.height() >= 24.0,
                 "button {index} at {width}px is below the 24pt floor: {rect:?}"
             );
-            for other in &rects[index + 1..] {
+            for other in (index + 1)..rects.len() {
                 assert!(
-                    !rect.intersects(*other),
-                    "buttons {index} and {} overlap at {width}px: {rect:?} vs {other:?}",
-                    index + 1 + rects[index + 1..].iter().position(|r| r == other).unwrap_or(0)
+                    !rect.intersects(rects[other]),
+                    "buttons {index} and {other} overlap at {width}px: {:?} vs {:?}",
+                    rects[index],
+                    rects[other]
                 );
             }
         }

@@ -9,6 +9,7 @@
 //! (guide II.30.6).
 
 use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 
 /// Vertical stack with equal spacing between children.
@@ -91,8 +92,8 @@ pub fn card<R>(
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<R> {
     egui::Frame::new()
-        .fill(theme::SURFACE_PANEL)
-        .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
+        .fill(SPEC.component.panel.surface)
+        .stroke(egui::Stroke::new(1.0, SPEC.component.panel.border))
         .corner_radius(theme::RADIUS_MD)
         .inner_margin(theme::SPACING_MD)
         .shadow(theme::SHADOW_LEVEL_1)
@@ -105,8 +106,8 @@ pub fn card_compact<R>(
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<R> {
     egui::Frame::new()
-        .fill(theme::SURFACE_PANEL)
-        .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
+        .fill(SPEC.component.panel.surface)
+        .stroke(egui::Stroke::new(1.0, SPEC.component.panel.border))
         .corner_radius(theme::RADIUS_SM)
         .inner_margin(theme::SPACING_SM)
         .show(ui, |ui| add_contents(ui))
@@ -119,8 +120,8 @@ pub fn tool_group<R>(
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<R> {
     egui::Frame::new()
-        .fill(theme::SURFACE_PANEL)
-        .stroke(egui::Stroke::new(1.0, theme::BORDER_DEFAULT))
+        .fill(SPEC.component.panel.surface)
+        .stroke(egui::Stroke::new(1.0, SPEC.component.panel.border))
         .corner_radius(theme::RADIUS_MD)
         .inner_margin(theme::SPACING_MD)
         .show(ui, |ui| {
@@ -130,7 +131,7 @@ pub fn tool_group<R>(
                 ui.label(
                     egui::RichText::new(title)
                         .small()
-                        .color(theme::TEXT_HINT)
+                        .color(SPEC.component.text.hint)
                         .strong(),
                 );
                 ui.separator();

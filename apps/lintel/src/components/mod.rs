@@ -4,4 +4,5 @@
 //! outside the theme module (guide II.30.6).
 
 pub mod buttons;
+pub mod forms;
 pub mod icons;
