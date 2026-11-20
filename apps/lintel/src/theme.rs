@@ -1709,7 +1709,7 @@ pub struct ButtonTokens {
 
 /// Tier 3 — form field tokens (shadcn-egui Field pattern copy, spec v0.20.0
 /// AC-03): colours and sizes for Field, FieldSet, FieldGroup.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FieldTokens {
     /// Field label text.
     pub label: Color32,
