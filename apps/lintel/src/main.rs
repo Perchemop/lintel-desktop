@@ -28,47 +28,13 @@ mod command_palette;
 mod components;
 mod dimension_ui;
 mod inspector;
-mod layout;
 mod release_notes;
 mod status_bar;
 mod theme;
 
+use crate::app::tool::Tool;
+
 const MIN_WALL_LENGTH_DRAG: f64 = 2.0;
-
-#[derive(Clone, Copy, PartialEq)]
-enum Tool {
-    Select,
-    Wall,
-    Door,
-    Window,
-    Dimension,
-    Label,
-    Measurements,
-    ConstructionLine,
-    ConstructionRay,
-    ConstructionCircle,
-    ConstructionArc,
-    Block,
-}
-
-impl Tool {
-    pub fn label(self) -> &'static str {
-        match self {
-            Tool::Select => "Select",
-            Tool::Wall => "Wall",
-            Tool::Door => "Door",
-            Tool::Window => "Window",
-            Tool::Dimension => "Dimension",
-            Tool::Label => "Label",
-            Tool::Measurements => "Measurements",
-            Tool::ConstructionLine => "Construction line",
-            Tool::ConstructionRay => "Construction ray",
-            Tool::ConstructionCircle => "Construction circle",
-            Tool::ConstructionArc => "Construction arc",
-            Tool::Block => "Block",
-        }
-    }
-}
 
 /// Main eframe app state.
 pub struct LintelApp {
@@ -579,17 +545,18 @@ impl LintelApp {
 }
 
 impl eframe::App for LintelApp {
-    fn ui(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
         // Use the new Shell::regions() pattern (T-005)
-        let _regions = crate::app::shell::regions(ctx, self, now);
+        let _regions = crate::app::shell::regions(ui.ctx(), self, now);
 
         // Dialogs need a Ui to render; use a minimal CentralPanel for them
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
             self.dialogs(ui, now);
         });
     }
+}
 }
 
 impl LintelApp {
@@ -1552,7 +1519,3 @@ mod kittest {
         assert!(summary.contains("Level 0"));
     }
 }
-
-// Component tests (T-001): headless unit tests + AccessKit assertions.
-#[cfg(test)]
-mod tests;

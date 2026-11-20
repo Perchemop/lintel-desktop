@@ -553,12 +553,12 @@ fn visible_rows(palette: &CommandPalette, doc: &Document, selection: &Selection)
 }
 
 /// Paint the palette modal. Nothing runs until a row is activated.
-pub fn show(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
+pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::InnerResponse<Option<Command>>> {
     if !app.palette.is_open() {
-        return;
+        return None;
     }
 
-    let modal = egui::Modal::new(egui::Id::new("lintel_command_palette")).show(ui.ctx(), |ui| {
+    let modal = egui::Modal::new(egui::Id::new("lintel_command_palette")).show(ctx, |ui| {
         ui.set_width(PALLETTE_WIDTH);
         // Escape steps out of a form before it closes the palette.
         let escape = ui
@@ -580,6 +580,7 @@ pub fn show(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
     if modal.should_close() {
         app.palette.close();
     }
+    Some(modal)
 }
 
 /// The results stage: search field, recent commands and the filtered list.

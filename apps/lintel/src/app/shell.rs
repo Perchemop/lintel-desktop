@@ -3,7 +3,8 @@
 //! Pattern copied from `spaceui` `Theme::install()` returning `Regions`
 //! (spec v0.20.0 AC-06, T-005). All colours/spacing from theme tokens.
 
-use crate::canvas::{Canvas, CanvasResponse, Selection, SnapModeKind, SnapModes, View, Draft};
+use crate::canvas::{Canvas, CanvasResponse, Selection, SelectionBand, SnapModeKind, SnapModes, View, Draft, world_to_screen, screen_to_world};
+use crate::app::tool::Tool;
 use crate::components::buttons::{ButtonRole, ButtonSize, StyledButton};
 use crate::inspector::{InspectorDraft, inspector};
 use crate::layout::helpers::{card, tool_group, vstack};
@@ -23,7 +24,7 @@ use lintel_core::{
 /// - `title_bar`: Top strip with app name, window controls, breadcrumb
 /// - `rail`: Left sidebar with tool palette (draw, modify, snap, layers)
 /// - `canvas`: Center drawing area + rulers + status
-pub struct Regions<'a> {
+pub struct Regions {
     /// Top title bar response.
     pub title_bar: egui::Response,
     /// Left rail (tool palette) response.
@@ -46,7 +47,7 @@ pub fn regions(
     ctx: &egui::Context,
     app: &mut crate::LintelApp,
     now: i64,
-) -> Regions<'_> {
+) -> Regions {
     // Poll update check
     app.poll_update();
     if app.update_rx.is_some() {
@@ -156,8 +157,8 @@ pub fn regions(
                         max_x = instance.param.x + HALF;
                         max_y = instance.param.y + HALF;
                     }
-                    let a = crate::canvas::world_to_screen(&app.view, rect, Point2::new(min_x, min_y));
-                    let b = crate::canvas::world_to_screen(&app.view, rect, Point2::new(max_x, max_y));
+                    let a = world_to_screen(&app.view, rect, Point2::new(min_x, min_y));
+                    let b = world_to_screen(&app.view, rect, Point2::new(max_x, max_y));
                     let r = egui::Rect::from_two_pos(a, b);
                     let painter = ui.painter_at(rect);
                     painter.rect_stroke(
@@ -192,7 +193,7 @@ pub fn regions(
                     &app.selection,
                     &mut app.snap,
                     &mut app.inspector_draft,
-                    app.tool == crate::Tool::Measurements,
+                    app.tool == Tool::Measurements,
                     app.selected_block_instance,
                 ) {
                     let _ = app.doc.apply(cmd, now);
@@ -274,22 +275,22 @@ fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
             // Draw tools
             tool_group(ui, "Draw", |ui| {
                 vstack(ui, theme::SPACING_SM, |ui| {
-                    tool_button(ui, app, "Wall", crate::Tool::Wall, "W", ButtonRole::Primary);
-                    tool_button(ui, app, "Door", crate::Tool::Door, "D", ButtonRole::Secondary);
-                    tool_button(ui, app, "Window", crate::Tool::Window, "N", ButtonRole::Secondary);
-                    tool_button(ui, app, "Dimension", crate::Tool::Dimension, "M", ButtonRole::Secondary);
-                    tool_button(ui, app, "Label", crate::Tool::Label, "L", ButtonRole::Secondary);
-                    tool_button(ui, app, "Block", crate::Tool::Block, "B", ButtonRole::Secondary);
+                    tool_button(ui, app, "Wall", Tool::Wall, "W", ButtonRole::Primary);
+                    tool_button(ui, app, "Door", Tool::Door, "D", ButtonRole::Secondary);
+                    tool_button(ui, app, "Window", Tool::Window, "N", ButtonRole::Secondary);
+                    tool_button(ui, app, "Dimension", Tool::Dimension, "M", ButtonRole::Secondary);
+                    tool_button(ui, app, "Label", Tool::Label, "L", ButtonRole::Secondary);
+                    tool_button(ui, app, "Block", Tool::Block, "B", ButtonRole::Secondary);
                 });
             });
 
             // Construction tools
             tool_group(ui, "Construction", |ui| {
                 vstack(ui, theme::SPACING_SM, |ui| {
-                    tool_button(ui, app, "Line", crate::Tool::ConstructionLine, "C", ButtonRole::Ghost);
-                    tool_button(ui, app, "Ray", crate::Tool::ConstructionRay, "Shift+C", ButtonRole::Ghost);
-                    tool_button(ui, app, "Circle", crate::Tool::ConstructionCircle, "Q", ButtonRole::Ghost);
-                    tool_button(ui, app, "Arc", crate::Tool::ConstructionArc, "X", ButtonRole::Ghost);
+                    tool_button(ui, app, "Line", Tool::ConstructionLine, "C", ButtonRole::Ghost);
+                    tool_button(ui, app, "Ray", Tool::ConstructionRay, "Shift+C", ButtonRole::Ghost);
+                    tool_button(ui, app, "Circle", Tool::ConstructionCircle, "Q", ButtonRole::Ghost);
+                    tool_button(ui, app, "Arc", Tool::ConstructionArc, "X", ButtonRole::Ghost);
                 });
             });
 
@@ -326,7 +327,7 @@ fn tool_button(
     ui: &mut egui::Ui,
     app: &mut crate::LintelApp,
     label: &str,
-    tool: crate::Tool,
+    tool: Tool,
     shortcut: &str,
     role: ButtonRole,
 ) {

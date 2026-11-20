@@ -36,6 +36,7 @@ No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
 |-------|------|---------|-------|
 | Lintel icon (PNG/ICO) | `resources/linux/lintel.png`, `resources/windows/lintel.png`, `resources/windows/lintel.ico` | Original (MIT OR Apache-2.0) | Designed for Lintel; 256×256 PNG source |
 | Lintel icon (SVG) | `resources/icons/lintel.svg` | Original (MIT OR Apache-2.0) | Scalable source for all platform icons |
+| Tool & UI icons (SVG) | `apps/lintel/assets/icons/*.svg` | Original (MIT OR Apache-2.0) | 24×24 viewBox, stroke=#1A1816 (BASE_INK), 2px; 12 tool icons + 12 snap/layer/dim/block icons |
 | CAD workflow icons (12) | `apps/lintel/assets/icons/*.svg` | Original (MIT OR Apache-2.0) | `snap_endpoint`, `snap_midpoint`, `snap_center`, `snap_intersection`, `snap_grid`, `snap_ortho`, `layer_visible`, `layer_lock`, `layer_print`, `dimension_aligned`, `dimension_radial`, `block_insert` |
 ## Agent-skill patterns (development-time only; no code shipped in the app)
 

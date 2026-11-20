@@ -438,6 +438,9 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
 /// Button corner radius (design-token radii 2/4/8/12 — guide II.30.6).
 pub const BUTTON_CORNER_RADIUS: f32 = 4.0;
 
+/// Minimum target size for icon-only buttons (24pt floor per guide II.30.7.5).
+pub const ICON_BUTTON_MIN_TARGET: f32 = 24.0;
+
 // ---------------------------------------------------------------------------
 // Spacing, radius, and elevation tokens (component tier, spec v0.20.0 AC-04)
 // ---------------------------------------------------------------------------
