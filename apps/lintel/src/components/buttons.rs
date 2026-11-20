@@ -30,6 +30,7 @@ pub struct StyledButton {
     loading: bool,
     enabled: bool,
     disabled_reason: Option<String>,
+    selected: bool,
 }
 
 impl StyledButton {
@@ -42,6 +43,7 @@ impl StyledButton {
             loading: false,
             enabled: true,
             disabled_reason: None,
+            selected: false,
         }
     }
 
@@ -67,6 +69,12 @@ impl StyledButton {
     /// Enable or disable the button (default: enabled).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
+        self
+    }
+
+    /// Mark as selected/active (for toggle buttons).
+    pub fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
         self
     }
 
@@ -122,10 +130,13 @@ impl egui::Widget for StyledButton {
 
         // State → token fields (guide II.30.10). Loading keeps the rest fill
         // and swaps the label for a spinner; the size never changes.
+        // Selected state shows active fill (guide II.30.10).
         let fill = if self.loading {
             spec.fill
         } else if !enabled {
             spec.disabled
+        } else if self.selected {
+            spec.active
         } else if pressed {
             spec.active
         } else if hovered {

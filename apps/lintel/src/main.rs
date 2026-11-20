@@ -34,6 +34,8 @@ mod status_bar;
 #[cfg(test)]
 mod tests;
 mod theme;
+#[cfg(test)]
+mod theme_tests;
 
 use crate::app::tool::Tool;
 

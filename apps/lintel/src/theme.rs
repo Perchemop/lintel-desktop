@@ -83,10 +83,6 @@ pub const BASE_SNAP_GRID: Color32 = Color32::from_rgb(130, 130, 130);
 /// Construction-geometry stroke. Darkened from (168,148,116) — 2.77:1 on
 /// PAPER, below the 3:1 UI-graphics floor — to 4.0:1 (guide II.30.7.1).
 pub const BASE_CONSTRUCTION: Color32 = Color32::from_rgb(140, 120, 90);
-/// Warning-text amber. Darkened from the midpoint-snap amber so it clears
-/// 4.5:1 on every light surface: 6.5:1 on PAPER, 6.0:1 on PANEL_BG, 5.6:1 on
-/// STATUS_BG (guide II.30.7.1).
-pub const BASE_WARNING: Color32 = Color32::from_rgb(120, 84, 16);
 /// Outline drawn around the selected block instance (main shell). Pinned at
 /// its pre-token value: 4.2:1 on PAPER, above the 3:1 UI-graphics floor.
 pub const BASE_BLOCK_HIGHLIGHT: Color32 = Color32::from_rgb(220, 60, 60);
@@ -142,10 +138,8 @@ pub const TEXT_ERROR: Color32 = BASE_ERROR;
 /// Warning message: 6.5:1 on the sheet, 6.0:1 on the panel, 5.6:1 on the
 /// status strip (guide II.30.7.1).
 pub const TEXT_WARNING: Color32 = BASE_WARNING;
-/// Warning message text (deep amber): 5.9:1 on the sheet, 5.5:1 on the panel
-/// and 5.1:1 on the status strip (guide II.30.7.1).
-#[allow(dead_code)] // consumed by the contrast merge-gate tests; first UI use lands with the status work
-pub const TEXT_WARNING: Color32 = BASE_WARNING;
+/// Destructive/danger message text: 6.5:1 on the sheet, 6.0:1 on the panel.
+pub const TEXT_DANGER: Color32 = BASE_DANGER;
 
 // Accent: selection, active tool, focus.
 pub const ACCENT_DEFAULT: Color32 = BASE_COBALT;
@@ -1028,8 +1022,8 @@ pub mod contrast {
         danger: DARK_DANGER,
         danger_hover: DARK_DANGER_HOVER,
         border_strong: DARK_BORDER_STRONG,
-        border_selection: Color32::from_white_alpha(140),
-        selection_fill: Color32::from_white_alpha(30),
+        border_selection: Color32::from_rgba_unmultiplied(255, 255, 255, 140),
+        selection_fill: Color32::from_rgba_unmultiplied(255, 255, 255, 30),
         focus_ring: DARK_COBALT,
         buttons: [
             (
@@ -1132,7 +1126,7 @@ pub mod contrast {
         danger_hover: HC_DANGER_HOVER,
         border_strong: HC_BORDER_STRONG,
         border_selection: Color32::WHITE,
-        selection_fill: Color32::from_white_alpha(60),
+        selection_fill: Color32::from_rgba_unmultiplied(255, 255, 255, 60),
         focus_ring: HC_COBALT,
         buttons: [
             (
@@ -1418,6 +1412,387 @@ pub fn icon_texture(ctx: &Context, name: &str, size_pt: f32) -> TextureHandle {
     handle
 }
 
+// ===========================================================================
+// ThemeSpec — the three-tier grouping (egui-pop `ThemeSpec` pattern, copied)
+//
+// The flat constants above are the named token registry; [`ThemeSpec`] groups
+// them into the three tiers of the guide's token discipline (II.30.6), and
+// [`SPEC`] is the one handle widget code reads:
+//
+//   * [`BasePalette`] — tier 1: raw swatches, the only `Color32` constructors.
+//   * [`SemanticRoles`] — tier 2: what a colour means; every field is a
+//     `BASE_*` swatch (or a sibling role), never a new value.
+//   * [`ComponentTokens`] — tier 3: where a role is used; widget code reads
+//     this layer only (`SPEC.component.…`), never tiers 1–2.
+// ===========================================================================
+
+/// Tier 1 — the raw colour palette (what the swatches look like).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BasePalette {
+    pub paper: Color32,
+    pub ink: Color32,
+    pub black: Color32,
+    pub graphite_muted: Color32,
+    pub graphite_hint: Color32,
+    pub graphite_disabled: Color32,
+    pub graphite_secondary: Color32,
+    pub match_blue: Color32,
+    pub cobalt: Color32,
+    pub cobalt_hover: Color32,
+    pub green: Color32,
+    pub valid: Color32,
+    pub error: Color32,
+    pub danger_hover: Color32,
+    pub warning: Color32,
+    pub panel_bg: Color32,
+    pub panel_border: Color32,
+    pub status_bg: Color32,
+    pub wall_fill: Color32,
+    pub wall_stroke: Color32,
+    pub wall_pending: Color32,
+    pub grid_minor: Color32,
+    pub grid_major: Color32,
+    pub window_line: Color32,
+    pub selection_wash: Color32,
+    pub selection_edge: Color32,
+    pub transparent: Color32,
+    pub snap_midpoint: Color32,
+    pub snap_perpendicular: Color32,
+    pub snap_tangent: Color32,
+    pub snap_ortho: Color32,
+    pub snap_grid: Color32,
+    pub construction: Color32,
+    pub block_highlight: Color32,
+}
+
+/// Tier 2 — meaning-based roles (what each colour is for).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SemanticRoles {
+    // Surfaces.
+    pub surface_base: Color32,
+    pub surface_panel: Color32,
+    pub surface_status: Color32,
+    pub surface_selection: Color32,
+    pub surface_transparent: Color32,
+    // Borders.
+    pub border_default: Color32,
+    pub border_selection: Color32,
+    // Text.
+    pub text_primary: Color32,
+    pub text_secondary: Color32,
+    pub text_muted: Color32,
+    pub text_hint: Color32,
+    pub text_strong: Color32,
+    pub text_disabled: Color32,
+    pub text_match: Color32,
+    pub text_success: Color32,
+    pub text_warning: Color32,
+    pub text_error: Color32,
+    pub text_on_accent: Color32,
+    // Accent, focus and status fills.
+    pub accent_default: Color32,
+    pub accent_hover: Color32,
+    pub accent_active: Color32,
+    pub focus_ring: Color32,
+    pub success_default: Color32,
+    pub danger_default: Color32,
+    pub danger_hover: Color32,
+    // Structural strokes.
+    pub stroke_strong: Color32,
+    pub block_highlight: Color32,
+    // Snap markers.
+    pub snap_midpoint: Color32,
+    pub snap_perpendicular: Color32,
+    pub snap_tangent: Color32,
+    pub snap_ortho: Color32,
+    pub snap_grid: Color32,
+    // Construction guides.
+    pub construction_stroke: Color32,
+    // Drafting surface.
+    pub draft_fill: Color32,
+    pub draft_stroke: Color32,
+    pub draft_pending: Color32,
+    pub grid_line_minor: Color32,
+    pub grid_line_major: Color32,
+    // Openings.
+    pub opening_cut: Color32,
+    pub opening_leaf: Color32,
+    pub opening_glazing: Color32,
+}
+
+/// Tier 3 — canvas tokens: sheet, grid, walls, openings, selection,
+/// dimensions and construction guides.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CanvasTokens {
+    /// The sheet painted before anything is drawn on it.
+    pub sheet: Color32,
+    /// Entity labels, the empty-canvas hint and the draft readout.
+    pub text: Color32,
+    /// Committed wall fill.
+    pub wall_fill: Color32,
+    /// Committed wall outline.
+    pub wall_stroke: Color32,
+    /// Wall-tool preview that is not committed yet.
+    pub wall_pending: Color32,
+    /// Minor grid lines.
+    pub grid_minor: Color32,
+    /// Major grid lines.
+    pub grid_major: Color32,
+    /// The gap an opening cuts through its host wall.
+    pub opening_gap: Color32,
+    /// Door leaf and swing arc.
+    pub door_leaf: Color32,
+    /// Window glazing line.
+    pub window_line: Color32,
+    /// Construction-guide stroke.
+    pub construction_stroke: Color32,
+    /// A zero-width stroke ("paint nothing").
+    pub stroke_none: Color32,
+    /// The accent anything selected turns.
+    pub selection: Color32,
+    /// Rubber-band window selection.
+    pub selection_window: Color32,
+    /// Rubber-band crossing selection.
+    pub selection_crossing: Color32,
+    /// Committed dimension lines, witness lines and ticks.
+    pub dimension_stroke: Color32,
+    /// Outline around the selected block instance.
+    pub block_instance_stroke: Color32,
+}
+
+/// Tier 3 — shell panel tokens: inspector surface, status strip, dividers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PanelTokens {
+    /// Inspector / toolbar panel fill.
+    pub surface: Color32,
+    /// Status-bar strip fill.
+    pub status: Color32,
+    /// Panel divider.
+    pub border: Color32,
+}
+
+/// Tier 3 — widget text tokens: the tier-2 text roles widgets actually use.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ComponentTextTokens {
+    /// Small hint text (status bar, palette footer).
+    pub hint: Color32,
+    /// Secondary / muted body text.
+    pub muted: Color32,
+    /// Error and destructive message text.
+    pub error: Color32,
+}
+
+/// Tier 3 — command-palette row tokens.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PaletteTokens {
+    /// Highlighted row wash.
+    pub selected_fill: Color32,
+    /// Non-highlighted rows paint nothing.
+    pub unselected_fill: Color32,
+    /// Highlighted row outline.
+    pub selected_stroke: Color32,
+    /// Matched search text.
+    pub hit: Color32,
+    /// Enabled command label.
+    pub label: Color32,
+    /// Disabled command label.
+    pub disabled: Color32,
+    /// Recent-command label.
+    pub recent: Color32,
+    /// Keyboard shortcut text.
+    pub shortcut: Color32,
+    /// Category caption.
+    pub category: Color32,
+}
+
+/// Tier 3 — button tokens: the twelve role × size styles plus the shared
+/// 2 px accent ring and the corner radius.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ButtonTokens {
+    pub primary_sm: ButtonRoleStyle,
+    pub primary_md: ButtonRoleStyle,
+    pub primary_lg: ButtonRoleStyle,
+    pub secondary_sm: ButtonRoleStyle,
+    pub secondary_md: ButtonRoleStyle,
+    pub secondary_lg: ButtonRoleStyle,
+    pub ghost_sm: ButtonRoleStyle,
+    pub ghost_md: ButtonRoleStyle,
+    pub ghost_lg: ButtonRoleStyle,
+    pub danger_sm: ButtonRoleStyle,
+    pub danger_md: ButtonRoleStyle,
+    pub danger_lg: ButtonRoleStyle,
+    /// Corner radius shared by every variant.
+    pub corner_radius: f32,
+}
+
+/// Tier 3 — widget-specific tokens (where each role is used).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ComponentTokens {
+    pub canvas: CanvasTokens,
+    pub panel: PanelTokens,
+    pub text: ComponentTextTokens,
+    pub palette: PaletteTokens,
+    pub button: ButtonTokens,
+}
+
+/// The whole token system grouped by tier (egui-pop `ThemeSpec` pattern).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ThemeSpec {
+    /// Tier 1 — raw colour palette.
+    pub base: BasePalette,
+    /// Tier 2 — meaning-based roles.
+    pub semantic: SemanticRoles,
+    /// Tier 3 — widget-specific tokens.
+    pub component: ComponentTokens,
+}
+
+impl ThemeSpec {
+    /// The light drafting-room spec — the only palette Lintel ships today.
+    /// Every field initialises from the flat registry above; nothing here
+    /// constructs a colour (tier 1 stays the only constructor site).
+    pub const LIGHT: ThemeSpec = ThemeSpec {
+        base: BasePalette {
+            paper: BASE_PAPER,
+            ink: BASE_INK,
+            black: BASE_BLACK,
+            graphite_muted: BASE_GRAPHITE_MUTED,
+            graphite_hint: BASE_GRAPHITE_HINT,
+            graphite_disabled: BASE_GRAPHITE_DISABLED,
+            graphite_secondary: BASE_GRAPHITE_SECONDARY,
+            match_blue: BASE_MATCH_BLUE,
+            cobalt: BASE_COBALT,
+            cobalt_hover: BASE_COBALT_HOVER,
+            green: BASE_GREEN,
+            valid: BASE_VALID,
+            error: BASE_ERROR,
+            danger_hover: BASE_DANGER_HOVER,
+            warning: BASE_WARNING,
+            panel_bg: BASE_PANEL_BG,
+            panel_border: BASE_PANEL_BORDER,
+            status_bg: BASE_STATUS_BG,
+            wall_fill: BASE_WALL_FILL,
+            wall_stroke: BASE_WALL_STROKE,
+            wall_pending: BASE_WALL_PENDING,
+            grid_minor: BASE_GRID_MINOR,
+            grid_major: BASE_GRID_MAJOR,
+            window_line: BASE_WINDOW_LINE,
+            selection_wash: BASE_SELECTION_WASH,
+            selection_edge: BASE_SELECTION_EDGE,
+            transparent: BASE_TRANSPARENT,
+            snap_midpoint: BASE_SNAP_MIDPOINT,
+            snap_perpendicular: BASE_SNAP_PERPENDICULAR,
+            snap_tangent: BASE_SNAP_TANGENT,
+            snap_ortho: BASE_SNAP_ORTHO,
+            snap_grid: BASE_SNAP_GRID,
+            construction: BASE_CONSTRUCTION,
+            block_highlight: BASE_BLOCK_HIGHLIGHT,
+        },
+        semantic: SemanticRoles {
+            surface_base: SURFACE_BASE,
+            surface_panel: SURFACE_PANEL,
+            surface_status: SURFACE_STATUS,
+            surface_selection: SURFACE_SELECTION,
+            surface_transparent: SURFACE_TRANSPARENT,
+            border_default: BORDER_DEFAULT,
+            border_selection: BORDER_SELECTION,
+            text_primary: TEXT_PRIMARY,
+            text_secondary: TEXT_SECONDARY,
+            text_muted: TEXT_MUTED,
+            text_hint: TEXT_HINT,
+            text_strong: TEXT_STRONG,
+            text_disabled: TEXT_DISABLED,
+            text_match: TEXT_MATCH,
+            text_success: TEXT_SUCCESS,
+            text_warning: TEXT_WARNING,
+            text_error: TEXT_ERROR,
+            text_on_accent: TEXT_ON_ACCENT,
+            accent_default: ACCENT_DEFAULT,
+            accent_hover: ACCENT_HOVER,
+            accent_active: ACCENT_ACTIVE,
+            focus_ring: FOCUS_RING,
+            success_default: SUCCESS_DEFAULT,
+            danger_default: DANGER_DEFAULT,
+            danger_hover: DANGER_HOVER,
+            stroke_strong: STROKE_STRONG,
+            block_highlight: BLOCK_HIGHLIGHT,
+            snap_midpoint: SNAP_MIDPOINT,
+            snap_perpendicular: SNAP_PERPENDICULAR,
+            snap_tangent: SNAP_TANGENT,
+            snap_ortho: SNAP_ORTHO,
+            snap_grid: SNAP_GRID,
+            construction_stroke: CONSTRUCTION_STROKE,
+            draft_fill: DRAFT_FILL,
+            draft_stroke: DRAFT_STROKE,
+            draft_pending: DRAFT_PENDING,
+            grid_line_minor: GRID_LINE_MINOR,
+            grid_line_major: GRID_LINE_MAJOR,
+            opening_cut: OPENING_CUT,
+            opening_leaf: OPENING_LEAF,
+            opening_glazing: OPENING_GLAZING,
+        },
+        component: ComponentTokens {
+            canvas: CanvasTokens {
+                sheet: CANVAS_SHEET,
+                text: CANVAS_TEXT,
+                wall_fill: WALL_FILL,
+                wall_stroke: WALL_STROKE,
+                wall_pending: WALL_PENDING,
+                grid_minor: GRID_MINOR,
+                grid_major: GRID_MAJOR,
+                opening_gap: OPENING_GAP,
+                door_leaf: DOOR_LEAF,
+                window_line: WINDOW_LINE,
+                construction_stroke: CANVAS_CONSTRUCTION,
+                stroke_none: STROKE_NONE,
+                selection: SELECTION_HIGHLIGHT,
+                selection_window: SELECTION_WINDOW,
+                selection_crossing: SELECTION_CROSSING,
+                dimension_stroke: DIMENSION_STROKE,
+                block_instance_stroke: BLOCK_INSTANCE_STROKE,
+            },
+            panel: PanelTokens {
+                surface: PANEL_SURFACE,
+                status: STATUS_SURFACE,
+                border: PANEL_BORDER,
+            },
+            text: ComponentTextTokens {
+                hint: HINT_TEXT,
+                muted: MUTED_TEXT,
+                error: ERROR_TEXT,
+            },
+            palette: PaletteTokens {
+                selected_fill: PALETTE_SELECTED_FILL,
+                unselected_fill: PALETTE_UNSELECTED_FILL,
+                selected_stroke: PALETTE_SELECTED_STROKE,
+                hit: PALETTE_HIT,
+                label: PALETTE_LABEL,
+                disabled: PALETTE_DISABLED,
+                recent: PALETTE_RECENT,
+                shortcut: PALETTE_SHORTCUT,
+                category: PALETTE_CATEGORY,
+            },
+            button: ButtonTokens {
+                primary_sm: BUTTON_PRIMARY_S,
+                primary_md: BUTTON_PRIMARY_M,
+                primary_lg: BUTTON_PRIMARY_L,
+                secondary_sm: BUTTON_SECONDARY_S,
+                secondary_md: BUTTON_SECONDARY_M,
+                secondary_lg: BUTTON_SECONDARY_L,
+                ghost_sm: BUTTON_GHOST_S,
+                ghost_md: BUTTON_GHOST_M,
+                ghost_lg: BUTTON_GHOST_L,
+                danger_sm: BUTTON_DANGER_S,
+                danger_md: BUTTON_DANGER_M,
+                danger_lg: BUTTON_DANGER_L,
+                corner_radius: BUTTON_CORNER_RADIUS,
+            },
+        },
+    };
+}
+
+/// The spec every widget reads: `SPEC.component.<group>.<token>`.
+pub const SPEC: ThemeSpec = ThemeSpec::LIGHT;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1475,8 +1850,9 @@ mod tests {
 
         // Status message colours on the palette/panel surfaces.
         let ok = rgb_of(TEXT_SUCCESS);
-        let err = rgb_of(TEXT_DANGER);
-        for (name, col) in [("TEXT_SUCCESS", ok), ("TEXT_DANGER", err)] {
+        let err = rgb_of(TEXT_ERROR);
+        let warn = rgb_of(TEXT_WARNING);
+        for (name, col) in [("TEXT_SUCCESS", ok), ("TEXT_ERROR", err), ("TEXT_WARNING", warn)] {
             assert!(
                 contrast_ratio(col, sheet) >= 4.5,
                 "{name} on SURFACE_BASE is {:.2}:1",
@@ -1535,6 +1911,15 @@ mod tests {
             contrast_ratio(success, panel)
         );
 
+        // The selected-block-instance outline is a meaningful UI boundary on
+        // the sheet (guide II.30.7.1, 3:1 floor).
+        let block = rgb_of(BLOCK_INSTANCE_STROKE);
+        assert!(
+            contrast_ratio(block, sheet) >= 3.0,
+            "BLOCK_INSTANCE_STROKE on SURFACE_BASE is {:.2}:1",
+            contrast_ratio(block, sheet)
+        );
+
         // Snap markers are UI graphics on the sheet (guide II.30.7.1, 3:1 floor).
         let paper = rgb_of(SURFACE_BASE);
         for (name, col) in [
@@ -1574,7 +1959,8 @@ mod tests {
             ("TEXT_SECONDARY", TEXT_SECONDARY, BASE_GRAPHITE_SECONDARY),
             ("TEXT_MATCH", TEXT_MATCH, BASE_MATCH_BLUE),
             ("TEXT_SUCCESS", TEXT_SUCCESS, BASE_VALID),
-            ("TEXT_DANGER", TEXT_DANGER, BASE_ERROR),
+            ("TEXT_ERROR", TEXT_ERROR, BASE_ERROR),
+            ("TEXT_WARNING", TEXT_WARNING, BASE_WARNING),
             ("TEXT_WARNING", TEXT_WARNING, BASE_WARNING),
             ("ACCENT_DEFAULT", ACCENT_DEFAULT, BASE_COBALT),
             ("ACCENT_HOVER", ACCENT_HOVER, BASE_COBALT_HOVER),
@@ -1620,7 +2006,7 @@ mod tests {
         let pairs = [
             ("WALL_FILL", WALL_FILL, DRAFT_FILL),
             ("WALL_STROKE", WALL_STROKE, DRAFT_STROKE),
-            ("WALL_DRAFT", WALL_DRAFT, DRAFT_PENDING),
+            ("WALL_PENDING", WALL_PENDING, DRAFT_PENDING),
             ("GRID_MINOR", GRID_MINOR, GRID_LINE_MINOR),
             ("GRID_MAJOR", GRID_MAJOR, GRID_LINE_MAJOR),
             ("OPENING_GAP", OPENING_GAP, OPENING_CUT),
@@ -1753,6 +2139,20 @@ mod tests {
         for (name, component, expected) in pairs {
             assert_eq!(component, expected, "{name} must resolve to its role");
         }
+    }
+
+    #[test]
+    fn spec_groups_the_three_tiers() {
+        // The ThemeSpec is the grouped view of the same registry (T-006):
+        // every tier subgroup must carry the flat constants, never a second
+        // copy of a value. The deep field-by-field completeness check lives
+        // in `tests/theme_tiers.rs`; this pins the grouping itself.
+        assert_eq!(SPEC, ThemeSpec::LIGHT);
+        assert_eq!(SPEC.base.paper, BASE_PAPER);
+        assert_eq!(SPEC.semantic.surface_base, SURFACE_BASE);
+        assert_eq!(SPEC.component.canvas.wall_fill, WALL_FILL);
+        assert_eq!(SPEC.component.button.primary_sm, BUTTON_PRIMARY_S);
+        assert_eq!(SPEC.component.button.corner_radius, BUTTON_CORNER_RADIUS);
     }
 
     #[test]

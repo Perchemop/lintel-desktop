@@ -75,6 +75,32 @@ jobs:
           DISPLAY: ":99"
           VK_ICD_FILENAMES: "/etc/vulkan/icd.d/swiftshader_icd.json"
 
+  contrast-test:
+    name: contrast-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
+      - name: WCAG contrast gate (light/dark/high-contrast, headless — spec AC-08)
+        run: cargo test -p lintel --bin lintel contrast_test
+
   check:
     name: check
     runs-on: ubuntu-latest

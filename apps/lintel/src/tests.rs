@@ -6,4 +6,5 @@ mod icons;
 mod kittest_buttons;
 mod layout;
 mod shell;
+mod theme_tiers;
 mod workflows;

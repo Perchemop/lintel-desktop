@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Contrast methodology (T-007, spec v0.20.0 AC-08): `theme::contrast_test()`
+  walks every text/UI pairing of the light palette plus new dark and
+  high-contrast reference palettes — 4.5:1 body text, 3:1 UI boundaries,
+  7:1 high-contrast text — failing with role, measured ratio and required
+  ratio; new required CI check `contrast-test` runs `cargo test
+  contrast_test` (D-035)
+- Tokens: `BASE_WARNING` / `TEXT_WARNING` (deep-amber warning text, 5.9:1 on
+  the sheet) and `BORDER_STRONG` (7.8:1 outline role for fields and
+  WCAG 2.2 §1.4.11 component boundaries)
+
+### Changed
+
+- `BASE_SELECTION_EDGE` raised from alpha 40 to 140: the command-palette
+  selection outline was 1.2:1 on the sheet, under the WCAG 2.2 §1.4.11
+  3:1 state-indicator floor; it now composites to 4.7:1 (4.6:1 on panels)
+
 ## v0.19.0 — 2026-11-19
 
 ### Added
