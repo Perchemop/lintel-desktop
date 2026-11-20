@@ -4,6 +4,7 @@
 //! spec v0.20.0 AC-03). All colours/spacing/radii from `SPEC.component.field`.
 //! No raw `Color32` outside `theme.rs`.
 
+use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;
 
@@ -16,9 +17,9 @@ use eframe::egui;
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct Field<'a, F>
+pub struct Field<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     label: String,
     required: bool,
@@ -29,9 +30,9 @@ where
     disabled_reason: Option<String>,
 }
 
-impl<'a, F> Field<'a, F>
+impl<F> Field<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     /// Create a new field with the given label.
     pub fn new(label: impl Into<String>) -> Self {
@@ -234,20 +235,20 @@ where
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct FieldSet<'a, F>
+pub struct FieldSet<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     legend: String,
-    fields: Vec<Field<'a, F>>,
+    fields: Vec<Field<F>>,
     collapsible: bool,
     default_open: bool,
     enabled: bool,
 }
 
-impl<'a, F> FieldSet<'a, F>
+impl<F> FieldSet<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     /// Create a new field set with the given legend.
     pub fn new(legend: impl Into<String>) -> Self {
@@ -361,19 +362,19 @@ where
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct FieldGroup<'a, F>
+pub struct FieldGroup<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
-    fields: Vec<Field<'a, F>>,
+    fields: Vec<Field<F>>,
     direction: egui::Direction,
     spacing: f32,
     enabled: bool,
 }
 
-impl<'a, F> FieldGroup<'a, F>
+impl<F> FieldGroup<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     /// Create a new field group.
     pub fn new() -> Self {
@@ -453,9 +454,9 @@ where
     }
 }
 
-impl<'a, F> Default for FieldGroup<'a, F>
+impl<F> Default for FieldGroup<F>
 where
-    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    F: FnOnce(&mut egui::Ui) -> egui::Response,
 {
     fn default() -> Self {
         Self::new()
