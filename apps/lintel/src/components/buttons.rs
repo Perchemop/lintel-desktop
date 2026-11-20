@@ -5,11 +5,9 @@
 //! No crate adoption — egui 0.36.2 incompatible with all three.
 
 use crate::theme::{
-    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
-    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S,
-    BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
-    BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
-    ButtonRole, ButtonRoleStyle, ButtonSize,
+    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M,
+    BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S, BUTTON_SECONDARY_L,
+    BUTTON_SECONDARY_M, BUTTON_SECONDARY_S, ButtonRole, ButtonRoleStyle, ButtonSize,
 };
 use eframe::egui;
 
@@ -111,30 +109,22 @@ impl StyledButton {
 
 /// Convenience: primary action button (most common case).
 pub fn primary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label)
-        .role(ButtonRole::Primary)
-        .show(ui)
+    StyledButton::new(label).role(ButtonRole::Primary).show(ui)
 }
 
 /// Convenience: secondary action button.
 pub fn secondary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label)
-        .role(ButtonRole::Secondary)
-        .show(ui)
+    StyledButton::new(label).role(ButtonRole::Secondary).show(ui)
 }
 
 /// Convenience: ghost toolbar button.
 pub fn ghost_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label)
-        .role(ButtonRole::Ghost)
-        .show(ui)
+    StyledButton::new(label).role(ButtonRole::Ghost).show(ui)
 }
 
 /// Convenience: danger/destructive button.
 pub fn danger_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label)
-        .role(ButtonRole::Danger)
-        .show(ui)
+    StyledButton::new(label).role(ButtonRole::Danger).show(ui)
 }
 
 #[cfg(test)]
