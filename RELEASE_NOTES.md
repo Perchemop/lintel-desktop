@@ -1,3 +1,45 @@
+## Lintel 0.20.0 — Design System Extensions (draft)
+
+**Summary.** This release finishes the v0.20.0 design-system slice: the
+button, form and layout component layer is complete, every colour resolves
+through the three token tiers, contrast is enforced per palette by a
+dedicated CI check, and the interface is now proven with rendered evidence
+and AccessKit assertions instead of claims.
+
+> **Draft** — finalised at release time; per-release token metrics are
+> appended by the release workflow from the `docs/tokens.md` ledger.
+
+### Added
+- Form components (T-002): `Field` (label + input + error/help, screen-reader
+  label association, disabled-reason tooltip, painted error icon — never
+  colour alone), `FieldSet` (framed legend, collapsible) and `FieldGroup`
+- Layout helpers (T-003): `vstack`, `hstack`, `wrap_row` (narrow-window
+  reflow) and `card` (padding, border, radius, elevation shadow)
+- Rendered design evidence (T-008, guide II.30.8): light/dark/state/focus
+  screenshots of the buttons, forms and layout helpers generated headlessly
+  in CI and attached to the release PR; PNGs are artefacts, never committed
+- AccessKit assertions for forms and layout: inputs are announced with their
+  labels, errors are announced as text, Tab follows visual order, and a
+  400 → 1200 px resize is proven overlap-free
+- `docs/design/gui-stack.md` records the stack (egui/eframe 0.36.2), the
+  three-tier token system and the component architecture
+- Contrast methodology (T-007) with a required `contrast-test` CI check
+  across light, dark and high-contrast reference palettes
+
+### Changed
+- Widget code reads `SPEC.component.*` component tokens; no raw `Color32`
+  outside `theme.rs` (CI grep gate)
+- egui_kittest gains the `wgpu` test-renderer feature for evidence rendering
+- Both crates bumped 0.19.0 → 0.20.0
+
+### Known limitations
+- Lintel ships the light drafting palette only; the dark and high-contrast
+  palettes are asserted reference palettes until the runtime theme switch
+  ships (dark evidence screenshots show egui's dark chrome)
+- Shell workbench (activity bar, status bar, editor tabs) and docking remain
+  separate milestones per the v0.20.0 spec
+
+---
 ## Lintel 0.19.0 — Snaps, Sheets & Full Keyboard Reach
 
 **Summary.** Snap markers now resolve through the theme instead of hard-coded colours, and construction strokes pass the UI-graphics contrast floor. The Inspector gains the remaining D-032 bindings — title block, viewports and block definitions — so every documented command is reachable. F7/F8 join the snap shortcuts, and a keyboard-only pick flow removes the last pointer-only accessibility path.

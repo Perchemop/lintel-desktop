@@ -3,6 +3,7 @@
 //! returned here and applied by the shell.
 
 use crate::canvas::Selection;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::{
     BlockId,
@@ -185,9 +186,9 @@ pub fn inspector(
                 if ui
                     .add(
                         egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                            .fill(SPEC.component.button.primary_md.fill)
+                            .min_size(SPEC.component.button.primary_md.min_size)
+                            .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                     )
                     .on_hover_text("Apply the new project name.")
                     .clicked()
@@ -302,9 +303,9 @@ pub fn inspector(
                 if ui
                     .add(
                         egui::Button::new("Add")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                            .fill(SPEC.component.button.primary_md.fill)
+                            .min_size(SPEC.component.button.primary_md.min_size)
+                            .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                     )
                     .on_hover_text("Add the new storey and make it active.")
                     .clicked()
@@ -532,7 +533,7 @@ pub fn inspector(
                     egui::RichText::new(
                         "No constraints yet — add one to pin a dimension to the geometry.",
                     )
-                    .color(crate::theme::TEXT_MUTED),
+                    .color(SPEC.component.text.muted),
                 );
             } else {
                 for (index, c) in constraints.iter().enumerate() {
@@ -561,9 +562,9 @@ pub fn inspector(
                         if ui
                             .add(
                                 egui::Button::new("Remove")
-                                    .fill(crate::theme::BUTTON_DANGER_S.fill)
-                                    .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                                    .fill(SPEC.component.button.danger_sm.fill)
+                                    .min_size(SPEC.component.button.danger_sm.min_size)
+                                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                             )
                             .on_hover_text("Remove this constraint.")
                             .clicked()
@@ -712,7 +713,7 @@ pub fn inspector(
             if level.block_defs.is_empty() {
                 ui.label(
                     egui::RichText::new("No block definitions yet.")
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
             } else {
                 for def in &level.block_defs {
@@ -729,9 +730,9 @@ pub fn inspector(
                         if ui
                             .add(
                                 egui::Button::new("Remove")
-                                    .fill(crate::theme::BUTTON_DANGER_S.fill)
-                                    .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                                    .fill(SPEC.component.button.danger_sm.fill)
+                                    .min_size(SPEC.component.button.danger_sm.min_size)
+                                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                             )
                             .on_hover_text("Remove this block definition (only when unused).")
                             .clicked()
@@ -752,9 +753,9 @@ pub fn inspector(
                 if ui
                     .add(
                         egui::Button::new("Add")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                            .fill(SPEC.component.button.primary_md.fill)
+                            .min_size(SPEC.component.button.primary_md.min_size)
+                            .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                     )
                     .on_hover_text("Create the definition with an empty entity list.")
                     .clicked()
@@ -778,7 +779,7 @@ pub fn inspector(
             if level.block_instances.is_empty() {
                 ui.label(
                     egui::RichText::new("No block instances placed yet.")
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
             } else {
                 for inst in &level.block_instances {
@@ -802,9 +803,9 @@ pub fn inspector(
                     if ui
                         .add(
                             egui::Button::new("Remove all of this def")
-                                .fill(crate::theme::BUTTON_DANGER_S.fill)
-                                .min_size(crate::theme::BUTTON_DANGER_S.min_size)
-                                .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                                .fill(SPEC.component.button.danger_sm.fill)
+                                .min_size(SPEC.component.button.danger_sm.min_size)
+                                .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                         )
                         .on_hover_text("Remove every instance of the block definition.")
                         .clicked()
@@ -881,9 +882,9 @@ pub fn inspector(
             if ui
                 .add(
                     egui::Button::new("Apply")
-                        .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                        .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                        .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                        .fill(SPEC.component.button.primary_md.fill)
+                        .min_size(SPEC.component.button.primary_md.min_size)
+                        .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                 )
                 .on_hover_text("Apply the title-block fields to every exported sheet.")
                 .clicked()
@@ -905,7 +906,7 @@ pub fn inspector(
             let project = doc.project();
             ui.label("A viewport places a level on a sheet at a set scale.");
             if project.viewports.is_empty() {
-                ui.label(egui::RichText::new("No viewports yet.").color(crate::theme::TEXT_MUTED));
+                ui.label(egui::RichText::new("No viewports yet.").color(SPEC.component.text.muted));
             } else {
                 for (index, viewport) in project.viewports.iter().enumerate() {
                     ui.horizontal(|ui| {
@@ -951,9 +952,9 @@ pub fn inspector(
             if ui
                 .add(
                     egui::Button::new("Add viewport")
-                        .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                        .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                        .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                        .fill(SPEC.component.button.primary_md.fill)
+                        .min_size(SPEC.component.button.primary_md.min_size)
+                        .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                 )
                 .on_hover_text("Add the viewport with a default A4 landscape region.")
                 .clicked()
@@ -1011,9 +1012,9 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Apply the new wall thickness.")
             .clicked()
@@ -1034,9 +1035,9 @@ fn wall_fields(ui: &mut egui::Ui, id: WallId, wall: &lintel_core::wall::Wall) ->
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Apply the new wall height.")
             .clicked()
@@ -1210,9 +1211,9 @@ fn dimension_fields(
         if ui
             .add(
                         egui::Button::new("Apply")
-                            .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                            .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                            .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                            .fill(SPEC.component.button.primary_md.fill)
+                            .min_size(SPEC.component.button.primary_md.min_size)
+                            .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
                     )
             .on_hover_text("Apply the new dimension offset.")
             .clicked()
@@ -1251,9 +1252,9 @@ fn dimension_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Apply the new witness gap.")
             .clicked()
@@ -1276,9 +1277,9 @@ fn dimension_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Apply the new witness overrun.")
             .clicked()
@@ -1296,7 +1297,7 @@ fn dimension_fields(
             if level.wall(anchor.wall_id).is_none() {
                 ui.label(
                     egui::RichText::new("wall missing — using stored point")
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
                 format!(
                     "anchored to Wall {} at {:.0}%",
@@ -1364,7 +1365,7 @@ fn dimension_fields(
             if level.wall(anchor.wall_id).is_none() {
                 ui.label(
                     egui::RichText::new("wall missing — using stored point")
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
             }
             format!(
@@ -1435,9 +1436,9 @@ fn label_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .clicked()
             && !text.trim().is_empty()
@@ -1460,9 +1461,9 @@ fn label_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .clicked()
             && ((x - label.anchor.x).abs() > f64::EPSILON
@@ -1499,9 +1500,9 @@ fn block_instance_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .clicked()
             && ((x - instance.param.x).abs() > f64::EPSILON
@@ -1521,9 +1522,9 @@ fn block_instance_fields(
         if ui
             .add(
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_M.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_M.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_md.fill)
+                    .min_size(SPEC.component.button.primary_md.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .clicked()
             && (degrees - instance.rotation.to_degrees()).abs() > f64::EPSILON

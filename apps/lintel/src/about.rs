@@ -5,6 +5,7 @@
 //! only renders the result and opens links.
 
 use crate::release_notes;
+use crate::theme::SPEC;
 use eframe::egui;
 use std::path::PathBuf;
 use update_check::UpdateStatus;
@@ -77,7 +78,7 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
                                 ui.label(
                                     egui::RichText::new("predates the token ledger")
                                         .small()
-                                        .color(crate::theme::TEXT_MUTED),
+                                        .color(SPEC.component.text.muted),
                                 );
                             }
                         }
@@ -93,7 +94,7 @@ pub fn release_notes_window(ui: &mut egui::Ui, open: &mut bool) {
                 ui.label(
                     egui::RichText::new(release_notes::TOKEN_METRIC_NOTE)
                         .small()
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
                 ui.separator();
                 ui.hyperlink_to(
@@ -157,7 +158,7 @@ pub fn update_window(ui: &mut egui::Ui, open: &mut bool, status: Option<&UpdateS
                 ui.label(
                     egui::RichText::new(line)
                         .small()
-                        .color(crate::theme::TEXT_MUTED),
+                        .color(SPEC.component.text.muted),
                 );
             }
             ui.hyperlink_to(

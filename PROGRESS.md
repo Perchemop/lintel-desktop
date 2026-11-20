@@ -204,6 +204,75 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
+## v0.20.0 Status — IN PROGRESS
+
+**Design-system extensions (spec `docs/specs/v0.20.0-design-system-extensions.spec.md`).**
+
+- [x] T-006 — ThemeSpec three-tier restructure (domain-dev session, 2026-11-21):
+      `theme.rs` carries explicit tier banners (`=== TIER 1: BASE PALETTE ===`,
+      `=== TIER 2: SEMANTIC ROLES ===`, `=== TIER 3: COMPONENT TOKENS ===`) and
+      a `ThemeSpec { base, semantic, component }` grouping (`ThemeSpec::LIGHT`,
+      plus `SPEC` as the one handle widget code reads). Component tokens added:
+      `WALL_PENDING` (replaces the dead `WALL_DRAFT`), `CANVAS_SHEET`,
+      `CANVAS_TEXT`, `CANVAS_CONSTRUCTION`, `STROKE_NONE`,
+      `SELECTION_HIGHLIGHT/WINDOW/CROSSING`, `DIMENSION_STROKE`,
+      `BLOCK_INSTANCE_STROKE`, `PANEL_SURFACE`, `STATUS_SURFACE`,
+      `PANEL_BORDER`, `BODY_TEXT`, `HINT_TEXT`, `MUTED_TEXT`, `SUCCESS_TEXT`,
+      `ERROR_TEXT`, `DANGER_TEXT`, `PALETTE_UNSELECTED_FILL`, `BUTTON_RING`;
+      semantic roles `TEXT_ERROR` (split from the old destructive-text role)
+      and `TEXT_WARNING` (on T-007's `BASE_WARNING` swatch). Widget code
+      (canvas, dimension_ui, status_bar, inspector, command_palette, about,
+      app/shell, layout/helpers, components/forms) now reads
+      `SPEC.component.<group>.<token>` — no direct tier-1/2 colour reads and
+      no raw `Color32` outside `theme.rs` (grep gate clean).
+- [x] T-006 — structural tests `apps/lintel/src/tests/theme_tiers.rs`:
+      `ThemeSpec::LIGHT` mirrors the flat registry field-by-field, tier-1
+      swatches pinned byte-identical (incl. alpha channels), every semantic
+      role resolves to a base swatch, every component token (and every button
+      state field) resolves to a semantic role, and the button group covers
+      all 12 role × size variants with the 24pt floors.
+- [x] T-002 — form components `apps/lintel/src/components/forms.rs`
+      (T-008 session filled the gap after the component landed with its
+      in-module tests): `Field` (label + input + error/help, `labelled_by`
+      association, disabled-reason tooltip, painted error icon + 2px danger
+      stroke), `FieldSet` (framed legend, collapsible) and `FieldGroup`;
+      all colours/spacing from `SPEC.component.field` (D-035 pairing:
+      `BORDER_STRONG` boundary, `TEXT_ERROR` messages). Fixed against egui
+      0.36.2: `Response` has no `Default` (zero-size hover allocation
+      instead) and the in-module harness uses `Context::run_ui` (0.36
+      removed `Context::run`/`begin_frame`).
+- [x] T-003 — layout helpers rewritten in
+      `apps/lintel/src/layout/helpers.rs`: every helper (`vstack`, `hstack`,
+      `wrap_row`, `card`, `card_compact`, `tool_group`) returns its
+      `InnerResponse<R>` so callers can compose responses; `Frame::none()`
+      (nonexistent in 0.36.2) → `Frame::new()`; `card` gained the
+      `SHADOW_LEVEL_1` elevation the ticket required; `wrap_row` clamps to
+      the available width (checked, never trusted).
+- [x] T-008 — rendered evidence: env-gated `evidence_*` tests in
+      `apps/lintel/src/tests/evidence.rs` render
+      `docs/qc/buttons-evidence/{buttons-light,dark,states,focus}.png`,
+      `docs/qc/form-evidence/{form-light,dark,error}.png` and
+      `docs/qc/layout-evidence/{layout-narrow-400,wide-1200,cards}.png`
+      headlessly through the egui_kittest wgpu renderer; the `kittest` CI
+      job runs them (`LINTEL_GENERATE_EVIDENCE=1 cargo test -p lintel --bin
+      lintel evidence_`) and uploads the folders as the `design-evidence`
+      artefact. PNGs are never committed (`.gitignore` + II.30.8, no pixel
+      baselines); each folder's README documents provenance and contents.
+- [x] T-008 — always-on egui_kittest assertions:
+      `tests/kittest_forms.rs` (inputs carry labelled-by relations, error
+      and help texts are announced as label nodes, Tab order field → field
+      → submit by value identity) and
+      `tests/evidence.rs::kittest_layout_resizes_without_overlap_or_clipping`
+      (400 → 1200 px: every exposed button ≥ 24 pt, no two button rects
+      intersect).
+- [x] T-008 — docs: `docs/design/gui-stack.md` (II.30.2 stack record:
+      egui/eframe 0.36.2 resolved, three-tier tokens, component
+      architecture, evidence pipeline, 0.36 API breaks), evidence-folder
+      READMEs, version bumps 0.19.0 → 0.20.0 (both crates + Cargo.lock
+      entries), DECISIONS D-036.
+- [ ] Verification: CI run for the combined v0.20.0 branch (orchestrator
+      `ci.sh` run to follow; red-run/green-run IDs recorded here when done).
+
 ## v0.19.0 Status — RELEASE PREP
 
 **Snaps, Sheets & Full Keyboard Reach.** All five items merged to `main` with

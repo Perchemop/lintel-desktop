@@ -386,6 +386,37 @@ and quoted in the release notes, version bump before the tag.
 
 **Readiness:** 100% — shipped.
 
-**Unscheduled / future:** Web/WASM port, plugin architecture, collaborative
-editing, custom paper sizes, on-canvas hints, 3D/structural/IFC
-track (separate roadmap).
+## v0.20.0 — Design System Extensions
+
+**Status:** In progress — implementation complete, CI verification pending
+(spec `docs/specs/v0.20.0-design-system-extensions.spec.md`; human gate
+passed 2026-11-19).
+
+Scope: copy-pattern component layer on the token system (no crate adoption —
+egui 0.36.2 is incompatible with every design-system crate).
+
+- **T-001** Button tokens + `StyledButton` (12 role×size variants, 24 pt
+  floor) — implemented
+- **T-002** Field/FieldSet/FieldGroup form components — implemented
+- **T-003** Flexbox layout helpers (`vstack`/`hstack`/`wrap_row`/`card`) —
+  implemented
+- **T-004** SVG icon system + `icon_texture()` (D-034, resvg) — implemented
+- **T-005** Shell regions (`app/shell.rs`, spaceui pattern) — implemented
+- **T-006** ThemeSpec three-tier restructure (`BASE_*` → semantic roles →
+  `SPEC.component.*`) — implemented
+- **T-007** Contrast methodology (light/dark/high-contrast, `contrast-test`
+  required check, D-035) — implemented
+- **T-008** Rendered evidence + egui_kittest assertions + docs — implemented:
+  `docs/qc/{buttons,form,layout}-evidence/` (CI-generated PNG artefacts,
+  never committed), AccessKit assertions (button roles/names/sizes, form
+  label association, error announcement, Tab order, 400→1200 px reflow
+  proof), `docs/design/gui-stack.md`, version 0.20.0
+
+**Release gate:** CI green on all required checks (including `contrast-test`
+and `kittest`), ledger row appended by CI, tag `v0.20.0` only after merge.
+
+**Unscheduled / future:** Workbench shell (activity bar, status bar, editor
+tabs) and docking framework are separate milestones; runtime theme switch
+(dark/high-contrast reference palettes are asserted but not user-selectable
+yet); web/WASM port, plugin architecture, collaborative editing, custom
+paper sizes, on-canvas hints, 3D/structural/IFC track (separate roadmap).

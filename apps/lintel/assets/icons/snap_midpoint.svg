@@ -1,0 +1,6 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): midpoint snap — a line with a
+     solid diamond planted at its exact middle. Ink matches theme::BASE_INK. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 19 L20 5"/>
+  <path d="M12 8.5 L15.5 12 L12 15.5 L8.5 12 Z" fill="#1A1816" stroke="none"/>
+</svg>

@@ -75,7 +75,11 @@ Reviewed as part of the accessibility work (guide II.21.2 / II.21.4):
   object's details are conveyed through the Inspector instead, and the level
   summary gives an overall count.
 - **No high-contrast theme toggle.** There is one warm "paper and ink" theme;
-  system high-contrast colours are not independently honoured.
+  system high-contrast colours are not independently honoured. The v0.20.0
+  design work now defines dark and high-contrast reference palettes and
+  CI-tests them (WCAG AA body text, AAA 7:1 for the high-contrast variant —
+  `theme::contrast_test`), so the later theme-switch slice inherits verified
+  colours; the in-app toggle itself is still to come.
 - **Reduced motion is not applicable.** Lintel has no animations, so there is
   nothing to disable for the reduced-motion preference.
 - **Screen-reader verification is manual only.** There is no automated CI
