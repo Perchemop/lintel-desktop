@@ -307,8 +307,8 @@ impl<'a> FieldSet<'a> {
 
             state.show_body_indented(&header_response.header_response.response, ui, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
-                for f in self.fields {
-                    f(ui);
+                for field in self.fields {
+                    field.show(ui);
                 }
             });
         } else {
@@ -321,8 +321,8 @@ impl<'a> FieldSet<'a> {
                         .strong(),
                 );
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
-                for f in self.fields {
-                    f(ui);
+                for field in self.fields {
+                    field.show(ui);
                 }
             });
         }

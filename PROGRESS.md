@@ -204,6 +204,36 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
+## v0.20.0 Status — IN PROGRESS
+
+**Design-system extensions (spec `docs/specs/v0.20.0-design-system-extensions.spec.md`).**
+
+- [x] T-006 — ThemeSpec three-tier restructure (domain-dev session, 2026-11-21):
+      `theme.rs` carries explicit tier banners (`=== TIER 1: BASE PALETTE ===`,
+      `=== TIER 2: SEMANTIC ROLES ===`, `=== TIER 3: COMPONENT TOKENS ===`) and
+      a `ThemeSpec { base, semantic, component }` grouping (`ThemeSpec::LIGHT`,
+      plus `SPEC` as the one handle widget code reads). Component tokens added:
+      `WALL_PENDING` (replaces the dead `WALL_DRAFT`), `CANVAS_SHEET`,
+      `CANVAS_TEXT`, `CANVAS_CONSTRUCTION`, `STROKE_NONE`,
+      `SELECTION_HIGHLIGHT/WINDOW/CROSSING`, `DIMENSION_STROKE`,
+      `BLOCK_INSTANCE_STROKE`, `PANEL_SURFACE`, `STATUS_SURFACE`,
+      `PANEL_BORDER`, `BODY_TEXT`, `HINT_TEXT`, `MUTED_TEXT`, `SUCCESS_TEXT`,
+      `ERROR_TEXT`, `DANGER_TEXT`, `PALETTE_UNSELECTED_FILL`, `BUTTON_RING`;
+      semantic roles `TEXT_ERROR` (split from the old destructive-text role)
+      and `TEXT_WARNING` (on T-007's `BASE_WARNING` swatch). Widget code
+      (canvas, dimension_ui, status_bar, inspector, command_palette, about,
+      app/shell, layout/helpers, components/forms) now reads
+      `SPEC.component.<group>.<token>` — no direct tier-1/2 colour reads and
+      no raw `Color32` outside `theme.rs` (grep gate clean).
+- [x] T-006 — structural tests `apps/lintel/src/tests/theme_tiers.rs`:
+      `ThemeSpec::LIGHT` mirrors the flat registry field-by-field, tier-1
+      swatches pinned byte-identical (incl. alpha channels), every semantic
+      role resolves to a base swatch, every component token (and every button
+      state field) resolves to a semantic role, and the button group covers
+      all 12 role × size variants with the 24pt floors.
+- [ ] Verification: CI run for the combined v0.20.0 branch (orchestrator
+      `ci.sh` run to follow; red-run/green-run IDs recorded here when done).
+
 ## v0.19.0 Status — RELEASE PREP
 
 **Snaps, Sheets & Full Keyboard Reach.** All five items merged to `main` with
