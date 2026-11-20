@@ -50,6 +50,8 @@ pub const BASE_ERROR: Color32 = Color32::DARK_RED;
 /// Pointer hover on destructive fills: one step darker than BASE_ERROR
 /// (guide II.30.10). Text contrast: 11.0:1 with paper labels.
 pub const BASE_DANGER_HOVER: Color32 = Color32::from_rgb(120, 0, 0);
+/// Base danger red for error states and destructive actions.
+pub const BASE_DANGER: Color32 = Color32::from_rgb(180, 0, 0);
 /// Tier-1 swatch for warning text. Darkened from the snap amber
 /// (176,106,22) — 4.0:1 on PAPER, under the 4.5:1 text floor — so a warning
 /// reads as text, not only as a snap marker (guide II.30.7.1).
@@ -1022,8 +1024,8 @@ pub mod contrast {
         danger: DARK_DANGER,
         danger_hover: DARK_DANGER_HOVER,
         border_strong: DARK_BORDER_STRONG,
-        border_selection: Color32::from_rgba_unmultiplied(255, 255, 255, 140),
-        selection_fill: Color32::from_rgba_unmultiplied(255, 255, 255, 30),
+        border_selection: Color32::from_rgba_premultiplied(255, 255, 255, 140),
+        selection_fill: Color32::from_rgba_premultiplied(255, 255, 255, 30),
         focus_ring: DARK_COBALT,
         buttons: [
             (
@@ -1126,7 +1128,7 @@ pub mod contrast {
         danger_hover: HC_DANGER_HOVER,
         border_strong: HC_BORDER_STRONG,
         border_selection: Color32::WHITE,
-        selection_fill: Color32::from_rgba_unmultiplied(255, 255, 255, 60),
+        selection_fill: Color32::from_rgba_premultiplied(255, 255, 255, 60),
         focus_ring: HC_COBALT,
         buttons: [
             (
