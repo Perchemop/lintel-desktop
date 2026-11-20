@@ -1,5 +1,5 @@
-// Unit tests for the SVG icon system (ticket T-004, spec v0.20.0 AC-05).
-// Included from main.rs as `mod tests_icons`. Headless: textures are
+// Unit tests for the SVG icon system (ticket T-004, spec v0.20.0 AC-05),
+// wired as `crate::tests::icons` from src/tests.rs. Headless: textures are
 // CPU-side epaint images, no display or GPU needed (addendum K.13).
 
 use crate::components::icons::{Icon, label_of};

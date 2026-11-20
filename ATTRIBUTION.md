@@ -14,6 +14,10 @@ Third-party licences used in this project:
 | `tempfile` | 3.x | MIT OR Apache-2.0 |
 | `ureq` | 3.x | MIT OR Apache-2.0 |
 | `uuid` | 1.x | Apache-2.0 OR MIT |
+| `resvg` | 0.45 | MIT OR Apache-2.0 |
+| `usvg` | 0.45 | MIT OR Apache-2.0 |
+| `tiny-skia` | 0.11 | MIT OR Apache-2.0 |
+| `tiny-skia-path` | 0.11 | MIT OR Apache-2.0 |
 
 The first-party shared crates `update-check` and `crash-report` are part of this
 repository and carry the same dual licence as the rest of Lintel.
@@ -32,6 +36,7 @@ No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
 |-------|------|---------|-------|
 | Lintel icon (PNG/ICO) | `resources/linux/lintel.png`, `resources/windows/lintel.png`, `resources/windows/lintel.ico` | Original (MIT OR Apache-2.0) | Designed for Lintel; 256×256 PNG source |
 | Lintel icon (SVG) | `resources/icons/lintel.svg` | Original (MIT OR Apache-2.0) | Scalable source for all platform icons |
+| CAD workflow icons (12) | `apps/lintel/assets/icons/*.svg` | Original (MIT OR Apache-2.0) | `snap_endpoint`, `snap_midpoint`, `snap_center`, `snap_intersection`, `snap_grid`, `snap_ortho`, `layer_visible`, `layer_lock`, `layer_print`, `dimension_aligned`, `dimension_radial`, `block_insert` |
 ## Agent-skill patterns (development-time only; no code shipped in the app)
 
 - **scope-creep-detector, dependency-doctor, first-reader, commit-archaeologist** —

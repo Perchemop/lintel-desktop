@@ -6,19 +6,27 @@
 
 use crate::components::buttons::StyledButton;
 use crate::theme::{
-    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
-    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S,
-    BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
+    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M,
+    BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
     BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
-    SURFACE_BASE,
-    ButtonRole, ButtonSize, contrast_ratio, rgb_of,
+    ButtonRole, ButtonSize, SURFACE_BASE, contrast_ratio, rgb_of,
 };
 use eframe::egui;
 
 /// All twelve role × size component tokens.
 const ALL_VARIANTS: [&str; 12] = [
-    "primary-sm", "primary-md", "primary-lg", "secondary-sm", "secondary-md", "secondary-lg",
-    "ghost-sm", "ghost-md", "ghost-lg", "danger-sm", "danger-md", "danger-lg",
+    "primary-sm",
+    "primary-md",
+    "primary-lg",
+    "secondary-sm",
+    "secondary-md",
+    "secondary-lg",
+    "ghost-sm",
+    "ghost-md",
+    "ghost-lg",
+    "danger-sm",
+    "danger-md",
+    "danger-lg",
 ];
 
 /// Run one headless egui pass and hand the panel `Ui` to `f`.

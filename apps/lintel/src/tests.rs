@@ -2,4 +2,5 @@
 //! no GPU — egui's immediate-mode passes run fully in software here).
 
 mod buttons;
+mod icons;
 mod kittest_buttons;

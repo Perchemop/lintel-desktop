@@ -194,3 +194,4 @@ mod tests {
         assert_eq!(normal.rect.size(), loading.rect.size());
     }
 }
+
