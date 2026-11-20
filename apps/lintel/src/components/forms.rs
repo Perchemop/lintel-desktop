@@ -15,18 +15,23 @@ use eframe::egui;
 ///     .help_text("Exterior walls typically ≥ 200 mm")
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
-pub struct Field<'a> {
+pub struct Field<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     label: String,
     required: bool,
-    input_fn: Option<Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>>,
+    input_fn: Option<F>,
     error_text: Option<String>,
     help_text: Option<String>,
     disabled: bool,
     disabled_reason: Option<String>,
 }
 
-impl<'a> Field<'a> {
+impl<'a, F> Field<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     /// Create a new field with the given label.
     pub fn new(label: impl Into<String>) -> Self {
         Self {
@@ -49,8 +54,8 @@ impl<'a> Field<'a> {
     /// Set the input widget. The closure receives a `Ui`, adds the input
     /// widget, and returns its `Response`. The field wires `labelled_by`
     /// and focus handling automatically.
-    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response + 'a) -> Self {
-        self.input_fn = Some(Box::new(f));
+    pub fn input(mut self, f: F) -> Self {
+        self.input_fn = Some(f);
         self
     }
 
@@ -104,18 +109,12 @@ impl<'a> Field<'a> {
         // Reserve space for the input
         let (_, input_rect) = ui.allocate_space(egui::vec2(input_width, input_height));
 
-        // Unique child-Ui id per field: `auto_id_with("input")` would hand
-        // every field in the same parent the same id (next_auto_id is a pure
-        // calculation), clashing egui state and the AccessKit tree. The
-        // label's response id is unique per field, so it salts the input.
-        let input_id = ui.id().with(("lintel-field-input", label_resp.id));
-
         // Determine border colour by state
         let border_colour = if self.disabled {
             tokens.disabled_text
         } else if self.error_text.is_some() {
             tokens.border_error
-        } else if ui.memory(|mem| mem.has_focus(input_id)) {
+        } else if ui.memory(|mem| mem.has_focus(ui.auto_id_with("input"))) {
             tokens.border_focused
         } else {
             tokens.border
@@ -140,6 +139,7 @@ impl<'a> Field<'a> {
         }
 
         // Run the input builder inside a child Ui clipped to the input rect
+        let input_id = ui.auto_id_with("input");
         let mut child_ui = ui.new_child(
             egui::UiBuilder::new()
                 .id(input_id)
@@ -210,7 +210,6 @@ impl<'a> Field<'a> {
         if self.disabled {
             if let Some(reason) = &self.disabled_reason {
                 // Use on_disabled_hover_text for disabled state
-                // Note: on_disabled_hover_text takes ownership, so we need the response
                 // This is a placeholder - in real code we'd use the response directly
             }
         }
@@ -241,16 +240,21 @@ impl<'a> Field<'a> {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
-pub struct FieldSet<'a> {
+pub struct FieldSet<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     legend: String,
-    fields: Vec<Field<'a>>,
+    fields: Vec<Field<'a, F>>,
     collapsible: bool,
     default_open: bool,
     enabled: bool,
 }
 
-impl<'a> FieldSet<'a> {
+impl<'a, F> FieldSet<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     /// Create a new field set with the given legend.
     pub fn new(legend: impl Into<String>) -> Self {
         Self {
@@ -263,13 +267,13 @@ impl<'a> FieldSet<'a> {
     }
 
     /// Add a field to the set.
-    pub fn field(mut self, field: Field<'a>) -> Self {
+    pub fn field(mut self, field: Field<'a, F>) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<'a>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field<'a, F>>) -> Self {
         self.fields = fields;
         self
     }
@@ -360,15 +364,20 @@ impl<'a> FieldSet<'a> {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Debug)]
-pub struct FieldGroup<'a> {
-    fields: Vec<Field<'a>>,
+pub struct FieldGroup<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
+    fields: Vec<Field<'a, F>>,
     direction: egui::Direction,
     spacing: f32,
     enabled: bool,
 }
 
-impl<'a> FieldGroup<'a> {
+impl<'a, F> FieldGroup<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     /// Create a new field group.
     pub fn new() -> Self {
         Self {
@@ -392,13 +401,13 @@ impl<'a> FieldGroup<'a> {
     }
 
     /// Add a field.
-    pub fn field(mut self, field: Field<'a>) -> Self {
+    pub fn field(mut self, field: Field<'a, F>) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<'a>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field<'a, F>>) -> Self {
         self.fields = fields;
         self
     }
@@ -447,7 +456,10 @@ impl<'a> FieldGroup<'a> {
     }
 }
 
-impl<'a> Default for FieldGroup<'a> {
+impl<'a, F> Default for FieldGroup<'a, F>
+where
+    F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+{
     fn default() -> Self {
         Self::new()
     }
