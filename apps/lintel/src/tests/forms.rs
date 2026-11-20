@@ -71,6 +71,7 @@ fn disabled_field_reports_disabled_and_keeps_its_reason() {
         ui.add_enabled_ui(false, |ui| {
             let response = Field::new("Revision")
                 .input(|ui| ui.text_edit_singleline(&mut buffer))
+                .disabled(true)
                 .disabled_reason("The plan is read-only while a review is open")
                 .show(ui);
             *sink.borrow_mut() = Some(response.enabled());

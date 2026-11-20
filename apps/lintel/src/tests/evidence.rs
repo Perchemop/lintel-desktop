@@ -254,7 +254,7 @@ fn evidence_buttons_dark() {
     }
     let mut harness = Harness::new_ui(buttons_sheet_ui);
     harness.set_size(egui::vec2(540.0, 440.0));
-    harness.ctx.set_visuals(egui::Visuals::dark());
+    harness.ctx.set_theme(egui::Theme::Dark);
     harness.run();
     render_to(&mut harness, "buttons-evidence", "buttons-dark");
 }
@@ -303,7 +303,7 @@ fn evidence_form_dark() {
     }
     let mut harness = Harness::new_ui(form_sheet_ui);
     harness.set_size(egui::vec2(420.0, 460.0));
-    harness.ctx.set_visuals(egui::Visuals::dark());
+    harness.ctx.set_theme(egui::Theme::Dark);
     harness.run();
     render_to(&mut harness, "form-evidence", "form-dark");
 }
