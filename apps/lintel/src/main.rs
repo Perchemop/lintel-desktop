@@ -1865,3 +1865,7 @@ mod kittest {
         assert!(summary.contains("Level 0"));
     }
 }
+
+// Component tests (T-001): headless unit tests + AccessKit assertions.
+#[cfg(test)]
+mod tests;
