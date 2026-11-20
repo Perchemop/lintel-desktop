@@ -165,7 +165,7 @@ pub fn regions(
                     painter.rect_stroke(
                         r,
                         0.0,
-                        egui::Stroke::new(2.0, theme::BLOCK_INSTANCE_STROKE),
+                        egui::Stroke::new(2.0, SPEC.component.canvas.block_instance_stroke),
                         egui::StrokeKind::Outside,
                     );
                 }
@@ -187,7 +187,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ui.ctx(), |ui| {
+            .show(ui.ctx(), |ui| -> Option<Command> {
                 let cmd = inspector(
                     ui,
                     &app.doc,

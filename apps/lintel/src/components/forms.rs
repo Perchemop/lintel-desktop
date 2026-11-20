@@ -24,6 +24,7 @@
 #![allow(dead_code)]
 
 use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 
 /// One labelled input with optional error and help slots.
@@ -94,9 +95,9 @@ impl<'a> Field<'a> {
         // The label gets its own AccessKit node; the input points at it via
         // `labelled_by` so screen readers announce "label: value".
         let label_colour = if has_error {
-            theme::TEXT_DANGER
+            SPEC.component.text.danger
         } else {
-            theme::TEXT_PRIMARY
+            SPEC.component.text.primary
         };
         let label_response = ui.add(
             egui::Label::new(egui::RichText::new(&label).color(label_colour)),
@@ -134,13 +135,13 @@ impl<'a> Field<'a> {
             }
             let row = ui.horizontal(|ui| {
                 paint_error_icon(ui);
-                ui.label(egui::RichText::new(error).color(theme::TEXT_DANGER));
+                ui.label(egui::RichText::new(error).color(SPEC.component.text.danger));
             });
             response = response.union(row.response);
         }
 
         if let Some(help) = help_text {
-            let row = ui.label(egui::RichText::new(help).small().color(theme::TEXT_HINT));
+            let row = ui.label(egui::RichText::new(help).small().color(SPEC.component.text.hint));
             response = response.union(row);
         }
 
@@ -152,8 +153,8 @@ impl<'a> Field<'a> {
 /// on-accent roles. Drawn with painter primitives (no emoji, no icon crate),
 /// and always paired with the error text so colour is never the only signal.
 fn paint_error_icon(ui: &mut egui::Ui) {
-    let (_, rect) = ui.allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
-    let center = rect.center();
+    let (_, response) = ui.allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
+    let center = response.rect.center();
     ui.painter()
         .circle_filled(center, 6.0, theme::DANGER_DEFAULT);
     ui.painter().text(
