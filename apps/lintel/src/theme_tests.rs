@@ -11,7 +11,7 @@
 use crate::theme::{
     ACCENT_DEFAULT, ACCENT_HOVER, BORDER_STRONG, BUTTON_DANGER_M, BUTTON_GHOST_M,
     BUTTON_PRIMARY_M, BUTTON_SECONDARY_M, ContrastFailure, SURFACE_BASE, SURFACE_PANEL,
-    SURFACE_STATUS, TEXT_DANGER, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_WARNING, Theme,
+    SURFACE_STATUS, TEXT_DANGER, TEXT_ERROR, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_WARNING, Theme,
     contrast::composited_over, contrast_ratio, contrast_test, palette, rgb_of,
 };
 
@@ -196,14 +196,18 @@ fn contrast_test_input_fields_all_themes() {
     }
 }
 
-/// Warning and error message text clears its palette's floor on every
-/// surface messages are drawn on.
+/// Warning, error and danger message text clears its palette's floor on
+/// every surface messages are drawn on.
 #[test]
 fn contrast_test_warning_and_error_text_all_themes() {
     for theme in Theme::ALL {
         let p = palette(theme);
         let floor = theme.text_floor();
-        for (role, fg) in [("text.warning", p.text_warning), ("text.danger", p.text_danger)] {
+        for (role, fg) in [
+            ("text.warning", p.text_warning),
+            ("text.danger", p.text_danger),
+            ("text.error", p.text_error),
+        ] {
             for (surface, bg) in [
                 ("surface.base", p.surface_base),
                 ("surface.panel", p.surface_panel),
@@ -219,7 +223,11 @@ fn contrast_test_warning_and_error_text_all_themes() {
         }
     }
     // The shipped light tokens, by name.
-    for (role, fg) in [("TEXT_WARNING", TEXT_WARNING), ("TEXT_DANGER", TEXT_DANGER)] {
+    for (role, fg) in [
+        ("TEXT_WARNING", TEXT_WARNING),
+        ("TEXT_DANGER", TEXT_DANGER),
+        ("TEXT_ERROR", TEXT_ERROR),
+    ] {
         for (surface, bg) in [
             ("SURFACE_BASE", SURFACE_BASE),
             ("SURFACE_PANEL", SURFACE_PANEL),

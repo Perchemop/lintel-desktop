@@ -19,6 +19,7 @@ use crate::LintelApp;
 use crate::Tool;
 use crate::canvas::{Draft, Selection, SnapModeKind};
 use crate::theme;
+use crate::theme::SPEC;
 
 /// How many recent commands the palette remembers.
 const MAX_RECENT: usize = 8;
@@ -609,7 +610,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
     ui.label(
         egui::RichText::new("Type to filter · ↑↓ to move · Enter to run · Esc to close")
             .small()
-            .color(theme::TEXT_HINT),
+            .color(SPEC.component.text.hint),
     );
     ui.add_space(4.0);
     let search = ui.add(
@@ -670,7 +671,7 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
             PaletteAction::ALL.len()
         ))
         .small()
-        .color(theme::TEXT_MUTED),
+        .color(SPEC.component.text.muted),
     );
 }
 
@@ -678,14 +679,14 @@ fn search_ui(ui: &mut egui::Ui, app: &mut LintelApp, now: i64) {
 fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
     let frame = egui::Frame::new()
         .fill(if selected {
-            theme::PALETTE_SELECTED_FILL
+            SPEC.component.palette.selected_fill
         } else {
-            theme::SURFACE_TRANSPARENT
+            SPEC.component.palette.unselected_fill
         })
         .corner_radius(4.0)
         .inner_margin(egui::Margin::symmetric(6, 3))
         .stroke(if selected {
-            egui::Stroke::new(1.0, theme::PALETTE_SELECTED_STROKE)
+            egui::Stroke::new(1.0, SPEC.component.palette.selected_stroke)
         } else {
             egui::Stroke::NONE
         });
@@ -694,11 +695,11 @@ fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
             ui.spacing_mut().item_spacing.x = 4.0;
             for (text, hit) in highlight_chunks(row.action.label(), &row.hits) {
                 let colour = if hit {
-                    theme::PALETTE_HIT
+                    SPEC.component.palette.hit
                 } else if row.enabled {
-                    theme::PALETTE_LABEL
+                    SPEC.component.palette.label
                 } else {
-                    theme::PALETTE_DISABLED
+                    SPEC.component.palette.disabled
                 };
                 let text = egui::RichText::new(text).color(colour);
                 ui.label(if hit { text.strong() } else { text });
@@ -708,20 +709,20 @@ fn row_ui(ui: &mut egui::Ui, row: &Row, selected: bool) -> egui::Response {
                     ui.label(
                         egui::RichText::new("recent")
                             .small()
-                            .color(theme::PALETTE_RECENT),
+                            .color(SPEC.component.palette.recent),
                     );
                 }
                 if !row.action.shortcut().is_empty() {
                     ui.label(
                         egui::RichText::new(row.action.shortcut())
                             .small()
-                            .color(theme::PALETTE_SHORTCUT),
+                            .color(SPEC.component.palette.shortcut),
                     );
                 }
                 ui.label(
                     egui::RichText::new(row.action.category())
                         .small()
-                        .color(theme::PALETTE_CATEGORY),
+                        .color(SPEC.component.palette.category),
                 );
             });
         });
@@ -1016,7 +1017,7 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
         ui.label(
             egui::RichText::new("Choose a block instance on the active level.")
                 .small()
-                .color(theme::TEXT_HINT),
+                .color(SPEC.component.text.hint),
         );
         ui.add_space(4.0);
         let instances: Vec<(BlockId, String, f64, f64)> = app
@@ -1124,9 +1125,9 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
             .add_enabled(
                 valid,
                 egui::Button::new("Apply")
-                    .fill(crate::theme::BUTTON_PRIMARY_S.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_sm.fill)
+                    .min_size(SPEC.component.button.primary_sm.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text(if valid {
                 "Run the command"
@@ -1141,9 +1142,9 @@ fn form_ui(ui: &mut egui::Ui, app: &mut LintelApp, mut form: PendingForm, now: i
         if ui
             .add(
                 egui::Button::new("Cancel")
-                    .fill(crate::theme::BUTTON_GHOST_S.fill)
-                    .min_size(crate::theme::BUTTON_GHOST_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.ghost_sm.fill)
+                    .min_size(SPEC.component.button.ghost_sm.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Go back to the command list (Esc)")
             .clicked()
@@ -1184,9 +1185,9 @@ fn layer_form(ui: &mut egui::Ui, form: &mut LayerForm) {
             let ok = Rgb::from_hex(form.colour.trim()).is_some();
             let text = if ok { "ok" } else { "bad hex" };
             let colour = if ok {
-                theme::TEXT_SUCCESS
+                SPEC.component.text.success
             } else {
-                theme::TEXT_DANGER
+                SPEC.component.text.error
             };
             ui.label(egui::RichText::new(text).small().color(colour));
         }
@@ -1291,7 +1292,7 @@ fn layer_pick_form(
             ui.label(
                 egui::RichText::new(format!("{} selected", app.selection.len()))
                     .small()
-                    .color(theme::TEXT_HINT),
+                    .color(SPEC.component.text.hint),
             );
         }
         LayerPickAction::Delete => {
@@ -1302,7 +1303,7 @@ fn layer_pick_form(
                 ui.label(
                     egui::RichText::new("The default layer cannot be deleted.")
                         .small()
-                        .color(theme::TEXT_DANGER),
+                        .color(SPEC.component.text.error),
                 );
             }
         }

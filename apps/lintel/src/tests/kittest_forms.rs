@@ -51,9 +51,10 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
         );
     }
 
-    // Tab order follows visual order: Name, Elevation, then the submit.
-    let text_inputs: Vec<String> = vec!["Name".into(), "Elevation".into()];
-    for expected in text_inputs {
+    // Tab order follows visual order: Name ("Ground floor"), Elevation
+    // ("0"), then the submit. The input's value identifies which field is
+    // focused without relying on paint order.
+    for expected_value in ["Ground floor", "0"] {
         harness.key_press(egui::Key::Tab);
         harness.run();
         let focused: Vec<_> = harness
@@ -69,10 +70,10 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
             .accesskit_node()
             .value()
             .unwrap_or_default();
-        let _ = expected; // focus identity is proven by position below
-        assert!(
-            !value.is_empty() || value.is_empty(),
-            "the focused input must expose its value"
+        assert_eq!(
+            value.as_str(),
+            expected_value,
+            "Tab must land on the next field in visual order"
         );
     }
     harness.key_press(egui::Key::Tab);
@@ -99,12 +100,13 @@ fn the_error_state_is_announced_as_text() {
     harness.run();
 
     // Colour alone is never the signal (II.30.7.2): the message itself must
-    // be a labelled AccessKit node.
+    // be a labelled AccessKit node. egui exposes labels either as Label or
+    // StaticText depending on context — both are announced.
     let error = harness.get_by_label("Length must be positive");
-    assert_eq!(
-        error.accesskit_node().role(),
-        Role::Label,
-        "the error message must be announced as a label"
+    let role = error.accesskit_node().role();
+    assert!(
+        matches!(role, Role::Label | Role::StaticText),
+        "the error message must be announced as a label, got {role:?}"
     );
 }
 

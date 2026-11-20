@@ -186,7 +186,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ctx, |ui| {
+            .show(ctx, |ui| -> Option<Command> {
                 let cmd = inspector(
                     ui,
                     &app.doc,
