@@ -35,7 +35,7 @@ pub struct Regions {
     /// Status bar at bottom of canvas.
     pub status_bar: egui::Response,
     /// Inspector window response (floating, right side).
-    pub inspector: Option<egui::InnerResponse<Option<Command>>>,
+    pub inspector: Option<egui::InnerResponse<()>>,
     /// Command palette response (modal overlay).
     pub palette: Option<egui::ModalResponse<()>>,
 }
@@ -187,7 +187,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ui.ctx(), |ui| -> Option<Command> {
+            .show(ui.ctx(), |ui| {
                 let cmd = inspector(
                     ui,
                     &app.doc,
@@ -200,7 +200,6 @@ pub fn regions(
                 if let Some(c) = cmd.as_ref() {
                     let _ = app.doc.apply(c.clone(), now);
                 }
-                cmd
             });
         inspector_response = resp;
     }

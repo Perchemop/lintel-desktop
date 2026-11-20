@@ -322,8 +322,10 @@ where
                 );
             });
 
-            // Use the response from the header
-            let _ = state.show_body_indented(&header_response, ui, |ui| {
+            // Use the response from the header — manually indent since HeaderResponse
+            // doesn't expose the inner Response in egui 0.36.
+            let header_id = ui.make_persistent_id(&self.legend);
+            ui.indent(header_id, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
                 for field in self.fields {
                     field.show(ui);
