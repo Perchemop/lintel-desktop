@@ -554,7 +554,7 @@ impl eframe::App for LintelApp {
         let now = now_epoch_s();
 
         // Use the new Shell::regions() pattern (T-005)
-        let _regions = crate::app::shell::regions(ui.ctx(), self, now);
+        let _regions = crate::app::shell::regions(ui, self, now);
 
         // Dialogs need a Ui to render; use a minimal CentralPanel for them
         egui::CentralPanel::default().show(ui, |ui| {

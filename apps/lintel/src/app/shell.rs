@@ -9,6 +9,7 @@ use crate::components::buttons::{ButtonRole, ButtonSize, StyledButton};
 use crate::inspector::{InspectorDraft, inspector};
 use crate::layout::helpers::{card, tool_group, vstack};
 use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::{
     BlockId,
@@ -41,21 +42,21 @@ pub struct Regions {
 
 /// Layout the shell and return the three regions for the caller to fill.
 ///
-/// This follows the `spaceui` pattern: `Theme::install(ctx) -> Regions`
+/// This follows the `spaceui` pattern: `Theme::install(ui) -> Regions`
 /// where the caller fills each region with content.
 pub fn regions(
-    ctx: &egui::Context,
+    ui: &mut egui::Ui,
     app: &mut crate::LintelApp,
     now: i64,
 ) -> Regions {
     // Poll update check
     app.poll_update();
     if app.update_rx.is_some() {
-        ctx.request_repaint_after(std::time::Duration::from_millis(500));
+        ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
     }
 
     // Handle global shortcuts
-    if ctx.input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
+    if ui.ctx().input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
         app.toggle_palette();
     }
 
@@ -67,7 +68,7 @@ pub fn regions(
     let mut inspector_response = None;
     let mut palette_response = None;
 
-    egui::CentralPanel::default().show(ctx, |ui| {
+    egui::CentralPanel::default().show(ui, |ui| {
         // Top: Title bar
         title_bar_response = Some(title_bar(ui, app, now));
 
@@ -118,14 +119,14 @@ pub fn regions(
                     egui::Align2::CENTER_CENTER,
                     msg1,
                     egui::FontId::proportional(16.0),
-                    theme::TEXT_PRIMARY,
+                    SPEC.component.text.primary,
                 );
                 dimension_painter.text(
                     center + egui::Vec2::new(0.0, 22.0),
                     egui::Align2::CENTER_CENTER,
                     msg2,
                     egui::FontId::proportional(16.0),
-                    theme::TEXT_PRIMARY,
+                    SPEC.component.text.primary,
                 );
             }
 
@@ -186,7 +187,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ctx, |ui| -> Option<Command> {
+            .show(ui.ctx(), |ui| {
                 let cmd = inspector(
                     ui,
                     &app.doc,
@@ -196,8 +197,8 @@ pub fn regions(
                     app.tool == Tool::Measurements,
                     app.selected_block_instance,
                 );
-                if let Some(cmd) = cmd {
-                    let _ = app.doc.apply(cmd, now);
+                if let Some(c) = cmd {
+                    let _ = app.doc.apply(c, now);
                 }
                 cmd
             });
@@ -205,7 +206,7 @@ pub fn regions(
     }
 
     // Command palette
-    palette_response = crate::command_palette::show(ctx, app, now);
+    palette_response = crate::command_palette::show(ui.ctx(), app, now);
 
     Regions {
         title_bar: title_bar_response.unwrap(),
@@ -226,7 +227,7 @@ fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::R
         ui.label(
             egui::RichText::new("Lintel")
                 .heading()
-                .color(theme::TEXT_PRIMARY),
+                .color(SPEC.component.text.primary),
         );
 
         ui.separator();
@@ -236,7 +237,7 @@ fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::R
             ui.label(
                 egui::RichText::new(&level.name)
                     .small()
-                    .color(theme::TEXT_MUTED),
+                    .color(SPEC.component.text.muted),
             );
         }
 
@@ -257,7 +258,7 @@ fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::R
                 ui.label(
                     egui::RichText::new(status)
                         .small()
-                        .color(theme::TEXT_DANGER),
+                        .color(SPEC.component.text.error),
                 );
             }
         });
@@ -315,7 +316,7 @@ fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
                     ui.label(
                         egui::RichText::new("Layer management")
                             .small()
-                            .color(theme::TEXT_HINT),
+                            .color(SPEC.component.text.hint),
                     );
                 });
             });
