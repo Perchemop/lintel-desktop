@@ -471,23 +471,23 @@ pub const RADIUS_LG: f32 = 12.0;
 /// Level 1: subtle lift (cards, panels).
 pub const SHADOW_LEVEL_1: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(20),
-    offset: egui::Vec2::new(0.0, 2.0),
-    blur: 4.0,
-    spread: 0.0,
+    offset: [0, 2],
+    blur: 4,
+    spread: 0,
 };
 /// Level 2: medium lift (dropdowns, tooltips).
 pub const SHADOW_LEVEL_2: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(35),
-    offset: egui::Vec2::new(0.0, 6.0),
-    blur: 12.0,
-    spread: 0.0,
+    offset: [0, 6],
+    blur: 12,
+    spread: 0,
 };
 /// Level 3: high lift (modals, overlays).
 pub const SHADOW_LEVEL_3: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(50),
-    offset: egui::Vec2::new(0.0, 16.0),
-    blur: 24.0,
-    spread: 0.0,
+    offset: [0, 16],
+    blur: 24,
+    spread: 0,
 };
 
 // ---------------------------------------------------------------------------
