@@ -503,6 +503,20 @@ pub const SHADOW_LEVEL_3: egui::Shadow = egui::Shadow {
 // the build instead of this list.
 #[allow(dead_code)]
 pub const ICON_NAMES: &[&str] = &[
+    // Tools (T-004)
+    "wall",
+    "door",
+    "window",
+    "dimension",
+    "label",
+    "measurements",
+    "select",
+    "construction_line",
+    "construction_ray",
+    "construction_circle",
+    "construction_arc",
+    "block",
+    // Snap / Layer / UI (pre-existing)
     "snap_endpoint",
     "snap_midpoint",
     "snap_center",
@@ -523,6 +537,56 @@ pub const ICON_NAMES: &[&str] = &[
 /// never read assets from disk, and so a missing or renamed file breaks the
 /// build instead of shipping a blank icon.
 const ICON_SVGS: &[(&str, &[u8])] = &[
+    // Tools (T-004)
+    (
+        "wall",
+        include_bytes!("../assets/icons/wall.svg"),
+    ),
+    (
+        "door",
+        include_bytes!("../assets/icons/door.svg"),
+    ),
+    (
+        "window",
+        include_bytes!("../assets/icons/window.svg"),
+    ),
+    (
+        "dimension",
+        include_bytes!("../assets/icons/dimension.svg"),
+    ),
+    (
+        "label",
+        include_bytes!("../assets/icons/label.svg"),
+    ),
+    (
+        "measurements",
+        include_bytes!("../assets/icons/measurements.svg"),
+    ),
+    (
+        "select",
+        include_bytes!("../assets/icons/select.svg"),
+    ),
+    (
+        "construction_line",
+        include_bytes!("../assets/icons/construction_line.svg"),
+    ),
+    (
+        "construction_ray",
+        include_bytes!("../assets/icons/construction_ray.svg"),
+    ),
+    (
+        "construction_circle",
+        include_bytes!("../assets/icons/construction_circle.svg"),
+    ),
+    (
+        "construction_arc",
+        include_bytes!("../assets/icons/construction_arc.svg"),
+    ),
+    (
+        "block",
+        include_bytes!("../assets/icons/block.svg"),
+    ),
+    // Snap / Layer / UI (pre-existing)
     (
         "snap_endpoint",
         include_bytes!("../assets/icons/snap_endpoint.svg"),

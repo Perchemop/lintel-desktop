@@ -28,8 +28,10 @@ mod command_palette;
 mod components;
 mod dimension_ui;
 mod inspector;
+mod layout;
 mod release_notes;
 mod status_bar;
+mod tests;
 mod theme;
 
 use crate::app::tool::Tool;
@@ -556,7 +558,6 @@ impl eframe::App for LintelApp {
             self.dialogs(ui, now);
         });
     }
-}
 }
 
 impl LintelApp {

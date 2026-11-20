@@ -28,16 +28,15 @@ fn tool_icons_load_at_all_standard_sizes() {
         IconName::ConstructionArc,
         IconName::Block,
     ];
-    let sizes = [16, 20, 24, 32];
+    let sizes = [16.0, 20.0, 24.0, 32.0];
 
     for icon in tool_icons {
         for &sz in &sizes {
             let handle = icon_texture(harness.ctx(), icon, sz);
-            assert!(handle.is_ok(), "{:?} at {}pt must load", icon, sz);
-            let h = handle.unwrap();
+            let expected = egui::Vec2::splat(sz);
             assert_eq!(
-                h.size_vec2(),
-                egui::Vec2::splat(sz as f32),
+                handle.size_vec2(),
+                expected,
                 "{:?} at {}pt texture size must match requested size",
                 icon,
                 sz
@@ -70,16 +69,15 @@ fn legacy_icons_load_at_all_standard_sizes() {
         IconName::DimensionRadial,
         IconName::BlockInsert,
     ];
-    let sizes = [16, 20, 24, 32];
+    let sizes = [16.0, 20.0, 24.0, 32.0];
 
     for icon in legacy_icons {
         for &sz in &sizes {
             let handle = icon_texture(harness.ctx(), icon, sz);
-            assert!(handle.is_ok(), "{:?} at {}pt must load", icon, sz);
-            let h = handle.unwrap();
+            let expected = egui::Vec2::splat(sz);
             assert_eq!(
-                h.size_vec2(),
-                egui::Vec2::splat(sz as f32),
+                handle.size_vec2(),
+                expected,
                 "{:?} at {}pt texture size must match requested size",
                 icon,
                 sz
@@ -95,7 +93,7 @@ fn icon_button_has_accessible_name_and_role() {
         crate::components::icons::icon_button(
             ui,
             IconName::Wall,
-            24,
+            24.0,
             "Wall tool",
         );
     });
@@ -112,7 +110,7 @@ fn icon_button_has_accessible_name_and_role() {
 #[test]
 fn show_icon_renders_without_panic() {
     let mut harness = Harness::new_ui(|ui| {
-        crate::components::icons::show_icon(ui, IconName::Door, 20);
+        crate::components::icons::show_icon(ui, IconName::Door, 20.0);
     });
     harness.run();
 
@@ -127,8 +125,8 @@ fn icon_texture_caching_returns_same_handle() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h1 = icon_texture(harness.ctx(), IconName::Window, 24).unwrap();
-    let h2 = icon_texture(harness.ctx(), IconName::Window, 24).unwrap();
+    let h1 = icon_texture(harness.ctx(), IconName::Window, 24.0);
+    let h2 = icon_texture(harness.ctx(), IconName::Window, 24.0);
 
     assert_eq!(
         h1.id(), h2.id(),
@@ -142,8 +140,8 @@ fn icon_texture_different_sizes_produce_different_handles() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h24 = icon_texture(harness.ctx(), IconName::Select, 24).unwrap();
-    let h32 = icon_texture(harness.ctx(), IconName::Select, 32).unwrap();
+    let h24 = icon_texture(harness.ctx(), IconName::Select, 24.0);
+    let h32 = icon_texture(harness.ctx(), IconName::Select, 32.0);
 
     assert_ne!(
         h24.id(), h32.id(),
