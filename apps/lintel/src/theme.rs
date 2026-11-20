@@ -565,23 +565,10 @@ const ICON_SVGS: &[(&str, &[u8])] = &[
     ("snap_ortho", include_bytes!("../assets/icons/snap_ortho.svg")),
     ("layer_visible", include_bytes!("../assets/icons/layer_visible.svg")),
     ("layer_lock", include_bytes!("../assets/icons/layer_lock.svg")),
-    ),
-    (
-        "layer_print",
-        include_bytes!("../assets/icons/layer_print.svg"),
-    ),
-    (
-        "dimension_aligned",
-        include_bytes!("../assets/icons/dimension_aligned.svg"),
-    ),
-    (
-        "dimension_radial",
-        include_bytes!("../assets/icons/dimension_radial.svg"),
-    ),
-    (
-        "block_insert",
-        include_bytes!("../assets/icons/block_insert.svg"),
-    ),
+    ("layer_print", include_bytes!("../assets/icons/layer_print.svg")),
+    ("dimension_aligned", include_bytes!("../assets/icons/dimension_aligned.svg")),
+    ("dimension_radial", include_bytes!("../assets/icons/dimension_radial.svg")),
+    ("block_insert", include_bytes!("../assets/icons/block_insert.svg")),
 ];
 
 /// Painted when a caller asks for a name that is not in the registry: a
