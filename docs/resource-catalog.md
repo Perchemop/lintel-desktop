@@ -46,3 +46,19 @@ Licence Apache-2.0, recorded in `ATTRIBUTION.md`.
 
 No third-party free-tier service is currently load-bearing for Lintel's
 pipeline; the update-check and crash-report paths read only GitHub APIs.
+
+## Runtime crates (adopted for the v0.20.0 design-system extensions)
+
+| Crate | Version | Licence | Source | Purpose | Decision |
+|-------|---------|---------|--------|---------|----------|
+| `resvg` | 0.45 | MIT OR Apache-2.0 | crates.io | SVG rasterization at exact pixel size (icon system) | D-034 |
+| `usvg` | 0.45 | MIT OR Apache-2.0 | crates.io | SVG parsing tree (re-exported by resvg) | D-034 |
+| `tiny-skia` | 0.11 | MIT OR Apache-2.0 | crates.io | GPU-independent pixmap rendering backend (re-exported by resvg) | D-034 |
+| `tiny-skia-path` | 0.11 | MIT OR Apache-2.0 | crates.io | Path geometry for tiny-skia | D-034 |
+| `roxmltree` | 0.20 | MIT | crates.io | XML parsing for SVG (transitive via usvg) | D-034 |
+| `fontdb` | 0.23 | Apache-2.0 | crates.io | Font database for SVG text (transitive via usvg, unused by Lintel's icons) | D-034 |
+
+All six are permissive (MIT OR Apache-2.0 / MIT / Apache-2.0) and allowed by
+`deny.toml`. The `fontdb`/`roxmltree`/`tiny-skia-path` entries are transitive
+and listed for SBOM completeness; Lintel's icons contain no text, so
+`fontdb` is never exercised.

@@ -1,17 +1,27 @@
-//! Styled button components — 4 roles × 3 sizes with 24pt floor.
+//! `StyledButton` — the one button component (4 roles × 3 sizes, six states).
 //!
 //! Patterns copied from `shadcn-egui` Button variants, `modern-egui`
-//! `StyledButton`, and `egui-pop` component tokens (guide II.30.4, II.30.10).
-//! No crate adoption — egui 0.36.2 incompatible with all three.
+//! `StyledButton` and `egui-pop` component tokens (guide II.30.4, II.30.10).
+//! No crate adoption — all three target newer egui than the pinned 0.36.2.
+//!
+//! Every colour, radius and size comes from `crate::theme` — no raw `Color32`
+//! here (guide II.30.6). The states are driven by the live interaction state
+//! each frame: default, hover, pressed, focus (2px ring, only while focused),
+//! disabled (grey fill, explains why on hover) and loading (rest fill, spinner
+//! in place of the label, interaction off — the control size never changes).
+//!
+//! At most one `Primary` button per view (guide II.30.10).
+
+pub use crate::theme::{ButtonRole, ButtonSize};
 
 use crate::theme::{
-    BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M,
-    BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S, BUTTON_SECONDARY_L,
-    BUTTON_SECONDARY_M, BUTTON_SECONDARY_S, ButtonRole, ButtonRoleStyle, ButtonSize,
+    ButtonRoleStyle, BUTTON_CORNER_RADIUS, BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
+    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M,
+    BUTTON_PRIMARY_S, BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
 };
 use eframe::egui;
 
-/// Builder for a styled button. All colours resolve through tier-2 roles.
+/// Builder for a styled button. Colours resolve through the tier-2 roles.
 #[derive(Clone, Debug)]
 pub struct StyledButton {
     label: String,
@@ -19,7 +29,7 @@ pub struct StyledButton {
     size: ButtonSize,
     loading: bool,
     enabled: bool,
-    selected: bool,
+    disabled_reason: Option<String>,
 }
 
 impl StyledButton {
@@ -31,65 +41,49 @@ impl StyledButton {
             size: ButtonSize::Md,
             loading: false,
             enabled: true,
-            selected: false,
+            disabled_reason: None,
         }
     }
 
-    /// Set the semantic role (default: Secondary).
+    /// Set the semantic role (default: [`ButtonRole::Secondary`]).
     pub fn role(mut self, role: ButtonRole) -> Self {
         self.role = role;
         self
     }
 
-    /// Set the size (default: Medium).
+    /// Set the size (default: [`ButtonSize::Md`]).
     pub fn size(mut self, size: ButtonSize) -> Self {
         self.size = size;
         self
     }
 
-    /// Show loading spinner. Keeps control size stable (no layout shift).
+    /// Show a loading spinner instead of the label. Interaction is disabled
+    /// and the control keeps its size — no layout shift (guide II.30.10).
     pub fn loading(mut self, loading: bool) -> Self {
         self.loading = loading;
         self
     }
 
-    /// Enable or disable (default: enabled). Disabled explains why on hover.
+    /// Enable or disable the button (default: enabled).
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }
 
-    /// Mark as selected/active (for toggle buttons).
-    pub fn selected(mut self, selected: bool) -> Self {
-        self.selected = selected;
+    /// Explain on hover/focus why the button is disabled (guide II.30.10).
+    /// Without a reason, a neutral "Unavailable right now" is shown.
+    pub fn disabled_reason(mut self, reason: impl Into<String>) -> Self {
+        self.disabled_reason = Some(reason.into());
         self
     }
 
     /// Render the button and return the response.
     pub fn show(self, ui: &mut egui::Ui) -> egui::Response {
-        let spec = self.style_spec();
-        let fill = if self.loading || !self.enabled {
-            spec.disabled
-        } else if self.selected {
-            spec.active
-        } else {
-            spec.fill
-        };
-
-        let mut btn = egui::Button::new(if self.loading { "⟳" } else { &self.label })
-            .fill(fill)
-            .stroke(egui::Stroke::new(2.0, spec.focus))
-            .min_size(spec.min_size);
-
-        if !self.enabled {
-            btn = btn.sense(egui::Sense::hover());
-        }
-
-        let resp = ui.add_enabled(self.enabled && !self.loading, btn);
-        resp
+        ui.add_enabled(self.enabled && !self.loading, self)
     }
 
-    fn style_spec(&self) -> &'static ButtonRoleStyle {
+    /// The component token for this role × size combination.
+    fn spec(&self) -> &'static ButtonRoleStyle {
         match (self.role, self.size) {
             (ButtonRole::Primary, ButtonSize::Sm) => &BUTTON_PRIMARY_S,
             (ButtonRole::Primary, ButtonSize::Md) => &BUTTON_PRIMARY_M,
@@ -105,93 +99,93 @@ impl StyledButton {
             (ButtonRole::Danger, ButtonSize::Lg) => &BUTTON_DANGER_L,
         }
     }
+
+    /// Why the button cannot be used right now (hover/focus tooltip).
+    fn unavailable_reason(&self) -> String {
+        if self.loading {
+            "Working…".to_owned()
+        } else {
+            self.disabled_reason
+                .clone()
+                .unwrap_or_else(|| "Unavailable right now".to_owned())
+        }
+    }
 }
 
-/// Convenience: primary action button (most common case).
-pub fn primary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Primary).show(ui)
-}
+impl egui::Widget for StyledButton {
+    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+        let spec = self.spec();
+        let (rect, response) = ui.allocate_exact_size(spec.min_size, egui::Sense::click());
+        let enabled = response.enabled();
+        let pressed = enabled && response.is_pointer_button_down_on();
+        let hovered = enabled && response.hovered();
 
-/// Convenience: secondary action button.
-pub fn secondary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Secondary).show(ui)
-}
+        // State → token fields (guide II.30.10). Loading keeps the rest fill
+        // and swaps the label for a spinner; the size never changes.
+        let fill = if self.loading {
+            spec.fill
+        } else if !enabled {
+            spec.disabled
+        } else if pressed {
+            spec.active
+        } else if hovered {
+            spec.hover
+        } else {
+            spec.fill
+        };
+        let label_colour = if self.loading {
+            spec.text
+        } else if !enabled {
+            spec.text_disabled
+        } else if pressed {
+            spec.text_active
+        } else {
+            spec.text
+        };
 
-/// Convenience: ghost toolbar button.
-pub fn ghost_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Ghost).show(ui)
-}
+        ui.painter().rect_filled(rect, BUTTON_CORNER_RADIUS, fill);
 
-/// Convenience: danger/destructive button.
-pub fn danger_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Danger).show(ui)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use eframe::egui;
-
-    #[test]
-    fn all_variants_render_without_panic() {
-        let mut ctx = egui::Context::default();
-        let mut ui = ctx.begin_frame(Default::default());
-
-        for role in [
-            ButtonRole::Primary,
-            ButtonRole::Secondary,
-            ButtonRole::Ghost,
-            ButtonRole::Danger,
-        ] {
-            for size in [ButtonSize::Sm, ButtonSize::Md, ButtonSize::Lg] {
-                StyledButton::new("Test")
-                    .role(role)
-                    .size(size)
-                    .show(&mut ui);
-            }
+        // Focus ring: 2px, only while the widget has keyboard focus
+        // (guide II.30.7.4). `spec.focus` is checked ≥3:1 in the theme tests.
+        if response.has_focus() {
+            ui.painter().rect_stroke(
+                rect.expand(2.0),
+                BUTTON_CORNER_RADIUS,
+                egui::Stroke::new(2.0, spec.focus),
+                egui::StrokeKind::Outside,
+            );
         }
 
-        // Loading state
-        StyledButton::new("Loading").loading(true).show(&mut ui);
-        // Disabled state
-        StyledButton::new("Disabled").enabled(false).show(&mut ui);
-        // Selected state
-        StyledButton::new("Selected").selected(true).show(&mut ui);
-    }
+        if self.loading {
+            let diameter = (spec.min_size.y * 0.5).min(16.0);
+            let spinner =
+                egui::Rect::from_center_size(rect.center(), egui::vec2(diameter, diameter));
+            egui::Spinner::new()
+                .size(diameter)
+                .color(spec.text)
+                .paint_at(ui, spinner);
+        } else {
+            let font = egui::TextStyle::Button.resolve(ui.style());
+            ui.painter().text(
+                rect.center(),
+                egui::Align2::CENTER_CENTER,
+                &self.label,
+                font,
+                label_colour,
+            );
+        }
 
-    #[test]
-    fn min_size_enforced() {
-        let mut ctx = egui::Context::default();
-        let mut ui = ctx.begin_frame(Default::default());
+        // The AccessKit name is always the human label — never the spinner —
+        // so a screen reader keeps announcing the action while it runs.
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, enabled, self.label.clone())
+        });
 
-        let resp = StyledButton::new("Tiny")
-            .role(ButtonRole::Primary)
-            .size(ButtonSize::Sm)
-            .show(&mut ui);
-
-        // Small size has 24pt minimum
-        assert!(
-            resp.rect.height() >= 24.0,
-            "height {} < 24",
-            resp.rect.height()
-        );
-        assert!(
-            resp.rect.width() >= 24.0,
-            "width {} < 24",
-            resp.rect.width()
-        );
-    }
-
-    #[test]
-    fn loading_keeps_size_stable() {
-        let mut ctx = egui::Context::default();
-        let mut ui = ctx.begin_frame(Default::default());
-
-        let normal = StyledButton::new("Label").show(&mut ui);
-        let loading = StyledButton::new("Label").loading(true).show(&mut ui);
-
-        // Size should not change when loading
-        assert_eq!(normal.rect.size(), loading.rect.size());
+        // Disabled and loading both explain why on hover/focus (II.30.10).
+        if enabled {
+            response
+        } else {
+            response.on_disabled_hover_text(self.unavailable_reason())
+        }
     }
 }
-

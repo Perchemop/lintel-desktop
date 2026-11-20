@@ -438,6 +438,219 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
 /// Button corner radius (design-token radii 2/4/8/12 — guide II.30.6).
 pub const BUTTON_CORNER_RADIUS: f32 = 4.0;
 
+// ---------------------------------------------------------------------------
+// Spacing, radius, and elevation tokens (component tier, spec v0.20.0 AC-04)
+// ---------------------------------------------------------------------------
+
+/// Base spacing unit: 4pt (guide II.30.6 — 4-point base scale: 2-4-8-12-16-24-32-48).
+pub const SPACING_BASE: f32 = 4.0;
+
+/// Extra-small spacing: 2pt (half base).
+pub const SPACING_XS: f32 = SPACING_BASE / 2.0;
+/// Small spacing: 4pt (base).
+pub const SPACING_SM: f32 = SPACING_BASE;
+/// Medium spacing: 8pt (2× base).
+pub const SPACING_MD: f32 = SPACING_BASE * 2.0;
+/// Large spacing: 12pt (3× base).
+pub const SPACING_LG: f32 = SPACING_BASE * 3.0;
+/// Extra-large spacing: 16pt (4× base).
+pub const SPACING_XL: f32 = SPACING_BASE * 4.0;
+/// 2XL spacing: 24pt (6× base).
+pub const SPACING_2XL: f32 = SPACING_BASE * 6.0;
+
+/// Corner radius scale (guide II.30.6): 2 / 4 / 8 / 12.
+pub const RADIUS_XS: f32 = 2.0;
+pub const RADIUS_SM: f32 = 4.0;
+pub const RADIUS_MD: f32 = 8.0;
+pub const RADIUS_LG: f32 = 12.0;
+
+/// Elevation shadows for raised surfaces (guide II.30.6).
+/// Level 1: subtle lift (cards, panels).
+pub const SHADOW_LEVEL_1: egui::Shadow = egui::Shadow {
+    color: Color32::from_black_alpha(20),
+    extrusion: 2.0,
+};
+/// Level 2: medium lift (dropdowns, tooltips).
+pub const SHADOW_LEVEL_2: egui::Shadow = egui::Shadow {
+    color: Color32::from_black_alpha(35),
+    extrusion: 6.0,
+};
+/// Level 3: high lift (modals, overlays).
+pub const SHADOW_LEVEL_3: egui::Shadow = egui::Shadow {
+    color: Color32::from_black_alpha(50),
+    extrusion: 16.0,
+};
+
+// ---------------------------------------------------------------------------
+// Icon system (spaceui pattern copy, spec v0.20.0 AC-05)
+//
+// Original SVGs in `apps/lintel/assets/icons/` are rasterized at the exact
+// physical pixel size the UI paints them at — never scaled afterwards — so a
+// 16 pt icon is 16·ppi texels and stays crisp on every display (guide
+// II.30.8). No icon crate is involved: the assets are Lintel's own
+// (clean-room, guide II.27.2), listed in ATTRIBUTION.md.
+// ---------------------------------------------------------------------------
+
+/// Semantic names of every icon in `apps/lintel/assets/icons/`.
+///
+/// Each name is also the SVG file stem; `components::icons` maps names to the
+/// human-readable AccessKit labels.
+// Consumed by the icon unit tests until the shell slice (T-005) wires the
+// toolbar; the asset registry itself is compile-time, so a missing SVG fails
+// the build instead of this list.
+#[allow(dead_code)]
+pub const ICON_NAMES: &[&str] = &[
+    "snap_endpoint",
+    "snap_midpoint",
+    "snap_center",
+    "snap_intersection",
+    "snap_grid",
+    "snap_ortho",
+    "layer_visible",
+    "layer_lock",
+    "layer_print",
+    "dimension_aligned",
+    "dimension_radial",
+    "block_insert",
+];
+
+/// Embedded icon sources, `(name, SVG bytes)`.
+///
+/// Compiled in with `include_bytes!` so release binaries (AppImage, MSI, dmg)
+/// never read assets from disk, and so a missing or renamed file breaks the
+/// build instead of shipping a blank icon.
+const ICON_SVGS: &[(&str, &[u8])] = &[
+    (
+        "snap_endpoint",
+        include_bytes!("../assets/icons/snap_endpoint.svg"),
+    ),
+    (
+        "snap_midpoint",
+        include_bytes!("../assets/icons/snap_midpoint.svg"),
+    ),
+    (
+        "snap_center",
+        include_bytes!("../assets/icons/snap_center.svg"),
+    ),
+    (
+        "snap_intersection",
+        include_bytes!("../assets/icons/snap_intersection.svg"),
+    ),
+    ("snap_grid", include_bytes!("../assets/icons/snap_grid.svg")),
+    ("snap_ortho", include_bytes!("../assets/icons/snap_ortho.svg")),
+    (
+        "layer_visible",
+        include_bytes!("../assets/icons/layer_visible.svg"),
+    ),
+    (
+        "layer_lock",
+        include_bytes!("../assets/icons/layer_lock.svg"),
+    ),
+    (
+        "layer_print",
+        include_bytes!("../assets/icons/layer_print.svg"),
+    ),
+    (
+        "dimension_aligned",
+        include_bytes!("../assets/icons/dimension_aligned.svg"),
+    ),
+    (
+        "dimension_radial",
+        include_bytes!("../assets/icons/dimension_radial.svg"),
+    ),
+    (
+        "block_insert",
+        include_bytes!("../assets/icons/block_insert.svg"),
+    ),
+];
+
+/// Painted when a caller asks for a name that is not in the registry: a
+/// dashed square with a slash, so a wiring mistake is visible on screen
+/// (guide II.30.11 — an error state, never a silent blank).
+const PLACEHOLDER_SVG: &str = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1A1816\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"1\" stroke-dasharray=\"3 3\"/><path d=\"M9 15 L15 9\"/></svg>";
+
+/// The embedded SVG for a semantic icon name, if one is registered.
+fn icon_svg(name: &str) -> Option<&'static [u8]> {
+    ICON_SVGS
+        .iter()
+        .find(|(registered, _)| *registered == name)
+        .map(|(_, bytes)| *bytes)
+}
+
+/// Physical pixel edge for a square icon shown at `size_pt`.
+///
+/// Hostile input is clamped: a zero or negative size still yields one pixel
+/// (guide §2.6 — input-derived numbers are checked, never trusted).
+fn icon_pixel_size(ctx: &Context, size_pt: f32) -> usize {
+    (size_pt.max(1.0) * ctx.pixels_per_point()).round().max(1.0) as usize
+}
+
+/// Rasterize an icon's SVG at exactly `px` physical pixels (square).
+///
+/// Renders with resvg — the same renderer egui_extras' SVG loader wraps —
+/// into a transparent tiny-skia pixmap and hands the premultiplied RGBA
+/// straight to epaint. Parse or allocation failures degrade to a transparent
+/// image with a log line rather than panicking (guide §2.6).
+pub(crate) fn rasterize_icon(name: &str, px: usize) -> ColorImage {
+    let source = match icon_svg(name) {
+        Some(bytes) => bytes,
+        None => {
+            eprintln!("lintel: unknown icon name {name:?}, painting the placeholder glyph");
+            PLACEHOLDER_SVG.as_bytes()
+        }
+    };
+    let px = px.max(1) as u32;
+    let blank = || ColorImage::filled([px as usize, px as usize], Color32::TRANSPARENT);
+
+    let options = resvg::usvg::Options::default();
+    let tree = match resvg::usvg::Tree::from_data(source, &options) {
+        Ok(tree) => tree,
+        Err(error) => {
+            eprintln!("lintel: icon {name:?} failed to parse: {error}");
+            return blank();
+        }
+    };
+    let Some(mut pixmap) = resvg::tiny_skia::Pixmap::new(px, px) else {
+        eprintln!("lintel: icon {name:?} could not allocate a {px}x{px} pixmap");
+        return blank();
+    };
+    // Every icon is authored on a square 24x24 viewBox, so one uniform scale
+    // maps SVG units onto the exact requested pixel edge.
+    let scale = px as f32 / tree.size().width().max(1.0);
+    resvg::render(
+        &tree,
+        resvg::tiny_skia::Transform::from_scale(scale, scale),
+        &mut pixmap.as_mut(),
+    );
+    ColorImage::from_rgba_premultiplied([px as usize, px as usize], pixmap.data())
+}
+
+/// The texture for icon `name`, rasterized at exactly `size_pt` points.
+///
+/// The requested size is converted to physical pixels with the context's
+/// `pixels_per_point`, so the texture is painted 1:1 — one texel per screen
+/// pixel, which is what keeps icons crisp (spec AC-05). Results are cached
+/// per (name, physical pixel size): the ticket's "(name, size_pt) HashMap in
+/// Theme" lives in egui's per-context scratch map (`Context::data_mut`),
+/// keyed by the physical size so a display-scale change rasterizes afresh at
+/// the new resolution. Per-context storage also keeps a kittest harness's
+/// texture ids separate from the app's.
+pub fn icon_texture(ctx: &Context, name: &str, size_pt: f32) -> TextureHandle {
+    let px = icon_pixel_size(ctx, size_pt);
+    let cache_key = egui::Id::new(("lintel_icon_texture", name, px));
+    if let Some(handle) = ctx.data(|data| data.get_temp::<TextureHandle>(cache_key)) {
+        return handle;
+    }
+    let image = rasterize_icon(name, px);
+    let handle = ctx.load_texture(
+        format!("lintel-icon-{name}@{px}px"),
+        image,
+        TextureOptions::LINEAR,
+    );
+    ctx.data_mut(|data| data.insert_temp(cache_key, handle.clone()));
+    handle
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -705,15 +918,31 @@ mod tests {
             ("BUTTON_DANGER_L.fill", BUTTON_DANGER_L.fill, DANGER_DEFAULT),
             ("BUTTON_PRIMARY_S.focus", BUTTON_PRIMARY_S.focus, FOCUS_RING),
             ("BUTTON_DANGER_L.focus", BUTTON_DANGER_L.focus, FOCUS_RING),
-            ("BUTTON_PRIMARY_S.text", BUTTON_PRIMARY_S.text, TEXT_ON_ACCENT),
-            ("BUTTON_PRIMARY_L.text", BUTTON_PRIMARY_L.text, TEXT_ON_ACCENT),
+            (
+                "BUTTON_PRIMARY_S.text",
+                BUTTON_PRIMARY_S.text,
+                TEXT_ON_ACCENT,
+            ),
+            (
+                "BUTTON_PRIMARY_L.text",
+                BUTTON_PRIMARY_L.text,
+                TEXT_ON_ACCENT,
+            ),
             (
                 "BUTTON_SECONDARY_M.text",
                 BUTTON_SECONDARY_M.text,
                 TEXT_PRIMARY,
             ),
-            ("BUTTON_GHOST_S.text", BUTTON_GHOST_S.text, TEXT_PRIMARY),
-            ("BUTTON_DANGER_M.text", BUTTON_DANGER_M.text, TEXT_ON_ACCENT),
+            (
+                "BUTTON_GHOST_S.text",
+                BUTTON_GHOST_S.text,
+                TEXT_PRIMARY,
+            ),
+            (
+                "BUTTON_DANGER_M.text",
+                BUTTON_DANGER_M.text,
+                TEXT_ON_ACCENT,
+            ),
             (
                 "BUTTON_DANGER_M.hover",
                 BUTTON_DANGER_M.hover,

@@ -81,7 +81,11 @@ fn degenerate_sizes_clamp_to_one_pixel() {
     let zero = theme::icon_texture(&ctx, "snap_grid", 0.0);
     assert_eq!(zero.size(), [1, 1], "a zero size still yields one pixel");
     let negative = theme::icon_texture(&ctx, "snap_grid", -5.0);
-    assert_eq!(negative.size(), [1, 1], "a negative size still yields one pixel");
+    assert_eq!(
+        negative.size(),
+        [1, 1],
+        "a negative size still yields one pixel"
+    );
 }
 
 #[test]
@@ -132,7 +136,10 @@ fn the_registry_holds_the_full_cad_set() {
 fn every_icon_has_a_human_readable_accesskit_label() {
     for &name in theme::ICON_NAMES {
         let label = label_of(name);
-        assert!(!label.is_empty(), "icon {name} must carry an AccessKit label");
+        assert!(
+            !label.is_empty(),
+            "icon {name} must carry an AccessKit label"
+        );
         assert_ne!(
             label, "Unknown icon",
             "icon {name} must map to a real label, not the fallback"
