@@ -56,8 +56,8 @@ where
     /// Set the input widget. The closure receives a `Ui`, adds the input
     /// widget, and returns its `Response`. The field wires `labelled_by`
     /// and focus handling automatically.
-    pub fn input(mut self, f: F) -> Self {
-        self.input_fn = Some(f);
+    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response) -> Self {
+        self.input_fn = Some(Box::new(f));
         self
     }
 
@@ -181,14 +181,11 @@ where
                     // Filled danger circle
                     ui.painter().circle_filled(icon_rect.center(), icon_size * 0.5, tokens.error_icon);
                     // White exclamation mark
-                    let exclamation = egui::RichText::new("!")
-                        .size(icon_size * 0.7)
-                        .color(theme::TEXT_ON_ACCENT)
-                        .strong();
+                    let exclamation = "!";
                     ui.painter().text(
                         icon_rect.center(),
                         egui::Align2::CENTER_CENTER,
-                        exclamation.to_string(),
+                        exclamation,
                         egui::FontId::proportional(icon_size * 0.7),
                         theme::TEXT_ON_ACCENT,
                     );
@@ -262,13 +259,13 @@ where
     }
 
     /// Add a field to the set.
-    pub fn field(mut self, field: Field<'a, F>) -> Self {
+    pub fn field(mut self, field: Field<F>) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<'a, F>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field<F>>) -> Self {
         self.fields = fields;
         self
     }
@@ -325,13 +322,12 @@ where
             });
 
             // Use the response from the header
-            let body_response = state.show_body_indented(&header_response.response, ui, |ui| {
+            let _ = state.show_body_indented(&header_response, ui, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
                 for field in self.fields {
                     field.show(ui);
                 }
             });
-            let _ = body_response;
         } else {
             frame.show(ui, |ui| {
                 // Legend row
@@ -399,13 +395,13 @@ where
     }
 
     /// Add a field.
-    pub fn field(mut self, field: Field<'a, F>) -> Self {
+    pub fn field(mut self, field: Field<F>) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<'a, F>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field<F>>) -> Self {
         self.fields = fields;
         self
     }
