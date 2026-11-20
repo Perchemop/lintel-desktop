@@ -1,6 +1,9 @@
 //! Unit tests for button components — headless, no display.
 
-use crate::components::buttons::{StyledButton, ButtonRole, ButtonSize, primary_button, secondary_button, ghost_button, danger_button};
+use lintel::components::buttons::{
+    danger_button, ghost_button, primary_button, secondary_button, ButtonRole, ButtonSize,
+    StyledButton,
+};
 
 #[test]
 fn all_variants_render_without_panic() {
@@ -46,8 +49,16 @@ fn min_size_enforced() {
         .show(&mut ui);
 
     // Small size has 24pt minimum (guide II.30.7.5)
-    assert!(resp.rect.height() >= 24.0, "height {} < 24", resp.rect.height());
-    assert!(resp.rect.width() >= 24.0, "width {} < 24", resp.rect.width());
+    assert!(
+        resp.rect.height() >= 24.0,
+        "height {} < 24",
+        resp.rect.height()
+    );
+    assert!(
+        resp.rect.width() >= 24.0,
+        "width {} < 24",
+        resp.rect.width()
+    );
 }
 
 #[test]

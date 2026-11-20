@@ -4,13 +4,13 @@
 //! `StyledButton`, and `egui-pop` component tokens (guide II.30.4, II.30.10).
 //! No crate adoption — egui 0.36.2 incompatible with all three.
 
+use crate::theme::{
+    ButtonRole, ButtonRoleStyle, ButtonSize, BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
+    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M,
+    BUTTON_PRIMARY_S, BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
+    SURFACE_TRANSPARENT, TEXT_MUTED, TEXT_PRIMARY,
+};
 use eframe::egui;
-use crate::theme::{ButtonRole, ButtonSize, ButtonRoleStyle,
-    BUTTON_PRIMARY_S, BUTTON_PRIMARY_M, BUTTON_PRIMARY_L,
-    BUTTON_SECONDARY_S, BUTTON_SECONDARY_M, BUTTON_SECONDARY_L,
-    BUTTON_GHOST_S, BUTTON_GHOST_M, BUTTON_GHOST_L,
-    BUTTON_DANGER_S, BUTTON_DANGER_M, BUTTON_DANGER_L,
-    TEXT_PRIMARY, TEXT_MUTED, SURFACE_TRANSPARENT};
 
 /// Builder for a styled button. All colours resolve through tier-2 roles.
 #[derive(Clone, Debug)]
@@ -121,7 +121,9 @@ pub fn primary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
 
 /// Convenience: secondary action button.
 pub fn secondary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Secondary).show(ui)
+    StyledButton::new(label)
+        .role(ButtonRole::Secondary)
+        .show(ui)
 }
 
 /// Convenience: ghost toolbar button.
@@ -177,8 +179,16 @@ mod tests {
             .show(&mut ui);
 
         // Small size has 24pt minimum
-        assert!(resp.rect.height() >= 24.0, "height {} < 24", resp.rect.height());
-        assert!(resp.rect.width() >= 24.0, "width {} < 24", resp.rect.width());
+        assert!(
+            resp.rect.height() >= 24.0,
+            "height {} < 24",
+            resp.rect.height()
+        );
+        assert!(
+            resp.rect.width() >= 24.0,
+            "width {} < 24",
+            resp.rect.width()
+        );
     }
 
     #[test]

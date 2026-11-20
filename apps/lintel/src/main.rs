@@ -1865,14 +1865,3 @@ mod kittest {
         assert!(summary.contains("Level 0"));
     }
 }
-
-// Component tests (T-001 buttons)
-#[cfg(test)]
-mod tests_buttons {
-    include!("tests/buttons.rs");
-}
-
-#[cfg(test)]
-mod kittest_buttons {
-    include!("tests/kittest_buttons.rs");
-}
