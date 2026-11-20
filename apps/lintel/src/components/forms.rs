@@ -15,6 +15,7 @@ use eframe::egui;
 ///     .help_text("Exterior walls typically ≥ 200 mm")
 ///     .show(ui);
 /// ```
+#[derive(Debug)]
 pub struct Field<'a, F>
 where
     F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
@@ -125,7 +126,7 @@ where
             .fill(tokens.input_fill)
             .stroke(egui::Stroke::new(1.0, border_colour))
             .corner_radius(tokens.corner_radius)
-            .inner_margin(egui::Margin::symmetric(tokens.border_pad, tokens.border_pad));
+            .inner_margin(egui::Margin::symmetric(tokens.border_pad as i8, tokens.border_pad as i8));
 
         // Paint the frame background + border
         if ui.is_rect_visible(input_rect) {
@@ -186,7 +187,7 @@ where
                     ui.painter().text(
                         icon_rect.center(),
                         egui::Align2::CENTER_CENTER,
-                        exclamation,
+                        exclamation.to_string(),
                         egui::FontId::proportional(icon_size * 0.7),
                         theme::TEXT_ON_ACCENT,
                     );
@@ -204,14 +205,6 @@ where
                     .size(tokens.text_size)
                     .color(tokens.help),
             );
-        }
-
-        // Disabled tooltip
-        if self.disabled {
-            if let Some(reason) = &self.disabled_reason {
-                // Use on_disabled_hover_text for disabled state
-                // This is a placeholder - in real code we'd use the response directly
-            }
         }
 
         // Restore default spacing
@@ -240,6 +233,7 @@ where
 ///     ])
 ///     .show(ui);
 /// ```
+#[derive(Debug)]
 pub struct FieldSet<'a, F>
 where
     F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
@@ -329,12 +323,14 @@ where
                 );
             });
 
-            state.show_body_indented(&header_response.header_response.response, ui, |ui| {
+            // Use the response from the header
+            let body_response = state.show_body_indented(&header_response.response, ui, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
                 for field in self.fields {
                     field.show(ui);
                 }
             });
+            let _ = body_response;
         } else {
             frame.show(ui, |ui| {
                 // Legend row
@@ -364,6 +360,7 @@ where
 ///     ])
 ///     .show(ui);
 /// ```
+#[derive(Debug)]
 pub struct FieldGroup<'a, F>
 where
     F: FnOnce(&mut egui::Ui) -> egui::Response + 'a,
