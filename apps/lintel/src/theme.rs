@@ -137,7 +137,7 @@ pub const TEXT_MATCH: Color32 = BASE_MATCH_BLUE;
 pub const TEXT_SUCCESS: Color32 = BASE_VALID;
 /// Error / destructive message.
 pub const TEXT_ERROR: Color32 = BASE_ERROR;
-/// Warning message: 6.5:1 on the sheet, 6.0:1 on the panel, 5.6:1 on the
+/// Warning message: 5.9:1 on the sheet, 5.5:1 on the panel, 5.1:1 on the
 /// status strip (guide II.30.7.1).
 pub const TEXT_WARNING: Color32 = BASE_WARNING;
 /// Destructive/danger message text: 6.5:1 on the sheet, 6.0:1 on the panel.
@@ -252,8 +252,10 @@ pub const PANEL_BORDER: Color32 = BORDER_DEFAULT;
 pub const STATUS_SURFACE: Color32 = SURFACE_STATUS;
 
 // Widget text roles: tier-3 handles over the tier-2 text roles widgets use.
+pub const BODY_TEXT: Color32 = TEXT_PRIMARY;
 pub const HINT_TEXT: Color32 = TEXT_HINT;
 pub const MUTED_TEXT: Color32 = TEXT_MUTED;
+pub const SUCCESS_TEXT: Color32 = TEXT_SUCCESS;
 pub const ERROR_TEXT: Color32 = TEXT_ERROR;
 
 /// The 2 px accent stroke drawn around selected entities.
@@ -1576,10 +1578,14 @@ pub struct PanelTokens {
 /// Tier 3 — widget text tokens: the tier-2 text roles widgets actually use.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ComponentTextTokens {
+    /// Primary body text (shell, panels).
+    pub primary: Color32,
     /// Small hint text (status bar, palette footer).
     pub hint: Color32,
     /// Secondary / muted body text.
     pub muted: Color32,
+    /// Valid-input / success message text.
+    pub success: Color32,
     /// Error and destructive message text.
     pub error: Color32,
 }
@@ -1758,8 +1764,10 @@ impl ThemeSpec {
                 border: PANEL_BORDER,
             },
             text: ComponentTextTokens {
+                primary: BODY_TEXT,
                 hint: HINT_TEXT,
                 muted: MUTED_TEXT,
+                success: SUCCESS_TEXT,
                 error: ERROR_TEXT,
             },
             palette: PaletteTokens {

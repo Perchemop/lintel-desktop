@@ -33,25 +33,32 @@ use eframe::egui;
 /// any widget without a trait hierarchy.
 pub struct Field<'a> {
     label: String,
-    input: Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>,
+    input: Option<Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>>,
     error_text: Option<String>,
     help_text: Option<String>,
     disabled_reason: Option<String>,
 }
 
 impl<'a> Field<'a> {
-    /// Create a field with a label and an input painter.
-    pub fn new(
-        label: impl Into<String>,
-        input: impl FnOnce(&mut egui::Ui) -> egui::Response + 'a,
-    ) -> Self {
+    /// Create a field with a label; attach the editor with [`Field::input`].
+    pub fn new(label: impl Into<String>) -> Self {
         Self {
             label: label.into(),
-            input: Box::new(input),
+            input: None,
             error_text: None,
             help_text: None,
             disabled_reason: None,
         }
+    }
+
+    /// Attach the input painter — any widget-returning closure (a
+    /// [`egui::TextEdit`], a [`egui::DragValue`], …).
+    pub fn input(
+        mut self,
+        input: impl FnOnce(&mut egui::Ui) -> egui::Response + 'a,
+    ) -> Self {
+        self.input = Some(Box::new(input));
+        self
     }
 
     /// Attach an error message: danger stroke on the input, painted icon and
@@ -95,7 +102,12 @@ impl<'a> Field<'a> {
             egui::Label::new(egui::RichText::new(&label).color(label_colour)),
         );
 
-        let response = input(ui).labelled_by(label_response.id);
+        // A field without an input is a display-only row; it still shows its
+        // error/help slots so callers never need a second widget type.
+        let response = match input {
+            Some(input) => input(ui).labelled_by(label_response.id),
+            None => label_response,
+        };
 
         let mut response = if let Some(reason) = disabled_reason {
             response.on_disabled_hover_text(reason)
@@ -104,14 +116,17 @@ impl<'a> Field<'a> {
         };
 
         if let Some(error) = error_text {
-            // A 2px danger stroke marks the input itself; the stroke alone is
-            // not the signal — the icon and the text repeat it (II.30.7.2).
-            ui.painter().rect_stroke(
-                response.rect,
-                theme::RADIUS_XS,
-                egui::Stroke::new(2.0, theme::DANGER_DEFAULT),
-                egui::StrokeKind::Inside,
-            );
+            if let Some(input_rect) = input_rect {
+                // A 2px danger stroke marks the input itself; the stroke
+                // alone is not the signal — the icon and the text repeat it
+                // (II.30.7.2).
+                ui.painter().rect_stroke(
+                    input_rect,
+                    theme::RADIUS_XS,
+                    egui::Stroke::new(2.0, theme::DANGER_DEFAULT),
+                    egui::StrokeKind::Inside,
+                );
+            }
             let row = ui.horizontal(|ui| {
                 paint_error_icon(ui);
                 ui.label(egui::RichText::new(error).color(theme::TEXT_DANGER));

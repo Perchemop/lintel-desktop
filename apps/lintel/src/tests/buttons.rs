@@ -1,10 +1,11 @@
 //! Headless unit tests for [`StyledButton`] (ticket T-001, AC-01/AC-02).
 //!
 //! Rendering runs through `Context::run_ui` — no window, no GPU, no display
-//! (guide K.13). Contrast and size rules come from the token table itself so
-//! the merge gate fails if a variant ever drops below WCAG AA.
+//! (guide K.13). The six-state state machine is pure and tested directly;
+//! contrast and size rules come from the token table itself so the merge gate
+//! fails if a variant ever drops below WCAG AA.
 
-use crate::components::buttons::StyledButton;
+use crate::components::buttons::{ButtonVisualState, StyledButton};
 use crate::theme::{
     BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M,
     BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
@@ -29,23 +30,51 @@ const ALL_VARIANTS: [&str; 12] = [
     "danger-lg",
 ];
 
+/// All four roles, in token order.
+const ALL_ROLES: [ButtonRole; 4] = [
+    ButtonRole::Primary,
+    ButtonRole::Secondary,
+    ButtonRole::Ghost,
+    ButtonRole::Danger,
+];
+
 /// Run one headless egui pass and hand the panel `Ui` to `f`.
-fn with_ui(f: impl FnOnce(&mut egui::Ui)) {
+// `Context::run_ui` re-runs its closure, so the body must be `FnMut`; the
+// test bodies are pure draws and satisfy that trivially.
+fn with_ui(f: impl FnMut(&mut egui::Ui)) {
     let ctx = egui::Context::default();
-    ctx.run_ui(egui::RawInput::default(), |ctx| {
-        egui::CentralPanel::default().show(ctx, |ui| f(ui));
+    let _ = ctx.run_ui(egui::RawInput::default(), |root| {
+        egui::CentralPanel::default().show(root, |ui| f(ui));
     });
+}
+
+/// Run one pass on `ctx` and return the rect of the widget `f` adds.
+fn button_rect_with_input(
+    ctx: &egui::Context,
+    input: egui::RawInput,
+    f: impl FnMut(&mut egui::Ui) -> egui::Response,
+) -> egui::Rect {
+    let slot = std::cell::RefCell::new(None);
+    let _ = ctx.run_ui(input, |root| {
+        egui::CentralPanel::default().show(root, |ui| {
+            *slot.borrow_mut() = Some(f(ui).rect);
+        });
+    });
+    slot.into_inner().expect("ui body ran")
+}
+
+/// Run one pass on `ctx` with default input and return the widget's rect.
+fn button_rect(
+    ctx: &egui::Context,
+    f: impl FnMut(&mut egui::Ui) -> egui::Response,
+) -> egui::Rect {
+    button_rect_with_input(ctx, egui::RawInput::default(), f)
 }
 
 #[test]
 fn all_twelve_variants_render_without_panic() {
     with_ui(|ui| {
-        for role in [
-            ButtonRole::Primary,
-            ButtonRole::Secondary,
-            ButtonRole::Ghost,
-            ButtonRole::Danger,
-        ] {
+        for role in ALL_ROLES {
             for size in [ButtonSize::Sm, ButtonSize::Md, ButtonSize::Lg] {
                 StyledButton::new("Label").role(role).size(size).show(ui);
             }
@@ -65,10 +94,19 @@ fn state_variants_render_without_panic() {
             .enabled(false)
             .disabled_reason("No plan is open")
             .show(ui);
+        StyledButton::new("Selected").selected(true).show(ui);
         StyledButton::new("Everything at once")
             .role(ButtonRole::Danger)
             .size(ButtonSize::Lg)
             .loading(true)
+            .show(ui);
+        StyledButton::new("Selected and loading")
+            .selected(true)
+            .loading(true)
+            .show(ui);
+        StyledButton::new("Selected and disabled")
+            .selected(true)
+            .enabled(false)
             .show(ui);
     });
 }
@@ -76,7 +114,11 @@ fn state_variants_render_without_panic() {
 #[test]
 fn every_size_honours_the_24pt_floor() {
     with_ui(|ui| {
-        for (size, minimum) in [(ButtonSize::Sm, 24.0), (ButtonSize::Md, 32.0), (ButtonSize::Lg, 40.0)] {
+        for (size, minimum) in [
+            (ButtonSize::Sm, 24.0),
+            (ButtonSize::Md, 32.0),
+            (ButtonSize::Lg, 40.0),
+        ] {
             let response = StyledButton::new("Label").size(size).show(ui);
             assert!(
                 response.rect.width() >= minimum,
@@ -93,16 +135,193 @@ fn every_size_honours_the_24pt_floor() {
 }
 
 #[test]
+fn narrow_label_pins_the_24pt_floor_for_every_role() {
+    // A one-glyph label is narrower than the floor, so the token minimum —
+    // not the text — decides the size (guide II.30.7.5).
+    with_ui(|ui| {
+        for role in ALL_ROLES {
+            let response = StyledButton::new("·").role(role).size(ButtonSize::Sm).show(ui);
+            assert!(
+                response.rect.width() >= 24.0,
+                "{role:?}: width {} is below the 24pt floor",
+                response.rect.width()
+            );
+            assert!(
+                response.rect.height() >= 24.0,
+                "{role:?}: height {} is below the 24pt floor",
+                response.rect.height()
+            );
+        }
+    });
+}
+
+#[test]
+fn long_labels_grow_the_button_beyond_the_floor() {
+    // `min_size` is a floor, never a cap: a long label must widen the button
+    // instead of clipping (guide II.30.7.6).
+    with_ui(|ui| {
+        let narrow = StyledButton::new("·").size(ButtonSize::Sm).show(ui).rect.width();
+        let wide = StyledButton::new("Construction circle")
+            .size(ButtonSize::Sm)
+            .show(ui)
+            .rect.width();
+        assert!(
+            wide > narrow,
+            "a long label must grow the button (narrow {narrow}, wide {wide}), not clip"
+        );
+        assert!(wide >= 24.0);
+    });
+}
+
+#[test]
 fn loading_keeps_size_stable() {
     with_ui(|ui| {
-        let normal = StyledButton::new("Label").show(ui);
-        let loading = StyledButton::new("Label").loading(true).show(ui);
-        assert_eq!(
-            normal.rect.size(),
-            loading.rect.size(),
-            "the loading spinner must not shift layout"
+        for role in ALL_ROLES {
+            for size in [ButtonSize::Sm, ButtonSize::Md, ButtonSize::Lg] {
+                let normal = StyledButton::new("Label")
+                    .role(role)
+                    .size(size)
+                    .show(ui)
+                    .rect
+                    .size();
+                let loading = StyledButton::new("Label")
+                    .role(role)
+                    .size(size)
+                    .loading(true)
+                    .show(ui)
+                    .rect
+                    .size();
+                assert_eq!(
+                    normal, loading,
+                    "{role:?}/{size:?}: the loading spinner must not shift layout"
+                );
+            }
+        }
+        // A label wider than the token floor: the label's reserved width must
+        // survive loading, because the spinner is drawn inside that space.
+        let normal = StyledButton::new("Construction circle").show(ui).rect.size();
+        let loading = StyledButton::new("Construction circle")
+            .loading(true)
+            .show(ui)
+            .rect
+            .size();
+        assert_eq!(normal, loading, "a wide label's size must survive loading");
+        assert!(
+            normal.x > 40.0,
+            "the label must exceed the largest floor for this check to bind (got {normal:?})"
         );
     });
+}
+
+#[test]
+fn selected_state_renders_and_keeps_size() {
+    with_ui(|ui| {
+        let normal = StyledButton::new("Wall").show(ui).rect.size();
+        let selected = StyledButton::new("Wall").selected(true).show(ui).rect.size();
+        assert_eq!(normal, selected, "selection must not shift layout");
+    });
+}
+
+#[test]
+fn hover_does_not_move_or_resize_a_button() {
+    // Two passes on one context: the second moves the pointer onto the
+    // button, exercising the hover fill path (guide II.30.10).
+    let ctx = egui::Context::default();
+    let at_rest = button_rect(&ctx, |ui| StyledButton::new("Hover me").show(ui));
+
+    let mut hovered_input = egui::RawInput::default();
+    hovered_input.events.push(egui::Event::PointerMoved(at_rest.center()));
+    let hovered = button_rect_with_input(&ctx, hovered_input, |ui| {
+        StyledButton::new("Hover me").show(ui)
+    });
+
+    assert_eq!(at_rest, hovered, "hover must not move or resize the button");
+}
+
+#[test]
+fn hovering_a_disabled_button_is_stable_and_panic_free() {
+    // The second pass hovers a disabled button, running the
+    // "explain why" tooltip path end to end (guide II.30.10).
+    let ctx = egui::Context::default();
+    let at_rest = button_rect(&ctx, |ui| StyledButton::new("Delete").enabled(false).show(ui));
+
+    let mut hovered_input = egui::RawInput::default();
+    hovered_input.events.push(egui::Event::PointerMoved(at_rest.center()));
+    let hovered = button_rect_with_input(&ctx, hovered_input, |ui| {
+        StyledButton::new("Delete").enabled(false).show(ui)
+    });
+
+    assert_eq!(
+        at_rest, hovered,
+        "hover on a disabled button must not move or resize it"
+    );
+}
+
+#[test]
+fn visual_state_precedence() {
+    // Disabled > Loading > Selected > Active > Hover > Default.
+    assert_eq!(
+        ButtonVisualState::resolve(false, true, true, true, true),
+        ButtonVisualState::Disabled,
+        "disabled beats every other flag"
+    );
+    assert_eq!(
+        ButtonVisualState::resolve(true, true, true, true, true),
+        ButtonVisualState::Loading,
+        "loading beats selected/pressed/hover"
+    );
+    assert_eq!(
+        ButtonVisualState::resolve(true, false, true, true, true),
+        ButtonVisualState::Selected,
+        "selected beats pressed/hover"
+    );
+    assert_eq!(
+        ButtonVisualState::resolve(true, false, false, true, true),
+        ButtonVisualState::Active,
+        "pressed beats hover"
+    );
+    assert_eq!(
+        ButtonVisualState::resolve(true, false, false, true, false),
+        ButtonVisualState::Hover
+    );
+    assert_eq!(
+        ButtonVisualState::resolve(true, false, false, false, false),
+        ButtonVisualState::Default
+    );
+}
+
+#[test]
+fn visual_state_colours_resolve_through_the_role_tokens() {
+    let spec = BUTTON_PRIMARY_M;
+    // Loading keeps the rest fill and the normal label colour — the theme
+    // contract in `theme.rs` (spinner in the label colour, no size change).
+    assert_eq!(ButtonVisualState::Loading.fill(&spec), spec.fill);
+    assert_eq!(ButtonVisualState::Loading.text(&spec), spec.text);
+    assert_eq!(ButtonVisualState::Default.fill(&spec), spec.fill);
+    assert_eq!(ButtonVisualState::Default.text(&spec), spec.text);
+    assert_eq!(ButtonVisualState::Hover.fill(&spec), spec.hover);
+    assert_eq!(ButtonVisualState::Hover.text(&spec), spec.text);
+    assert_eq!(ButtonVisualState::Active.fill(&spec), spec.active);
+    assert_eq!(ButtonVisualState::Active.text(&spec), spec.text_active);
+    assert_eq!(ButtonVisualState::Selected.fill(&spec), spec.active);
+    assert_eq!(ButtonVisualState::Selected.text(&spec), spec.text_active);
+    assert_eq!(ButtonVisualState::Disabled.fill(&spec), spec.disabled);
+    assert_eq!(ButtonVisualState::Disabled.text(&spec), spec.text_disabled);
+}
+
+#[test]
+fn non_interactive_states_refuse_interaction() {
+    for state in [
+        ButtonVisualState::Default,
+        ButtonVisualState::Hover,
+        ButtonVisualState::Active,
+        ButtonVisualState::Selected,
+    ] {
+        assert!(state.interactive(), "{state:?} must accept interaction");
+    }
+    for state in [ButtonVisualState::Disabled, ButtonVisualState::Loading] {
+        assert!(!state.interactive(), "{state:?} must not accept interaction");
+    }
 }
 
 #[test]
@@ -160,4 +379,3 @@ fn button_tokens_meet_wcag_aa_in_every_state() {
         assert!(spec.min_size.x >= 24.0 && spec.min_size.y >= 24.0);
     }
 }
-
