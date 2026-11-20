@@ -323,7 +323,7 @@ where
             });
 
             // Use the response from the header
-            let _ = state.show_body_indented(&header_response.response, ui, |ui| {
+            let _ = state.show_body_indented(&header_response, ui, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
                 for field in self.fields {
                     field.show(ui);

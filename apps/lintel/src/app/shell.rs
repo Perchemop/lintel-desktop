@@ -197,8 +197,8 @@ pub fn regions(
                     app.tool == Tool::Measurements,
                     app.selected_block_instance,
                 );
-                if let Some(c) = cmd {
-                    let _ = app.doc.apply(c, now);
+                if let Some(c) = cmd.as_ref() {
+                    let _ = app.doc.apply(c.clone(), now);
                 }
                 cmd
             });
