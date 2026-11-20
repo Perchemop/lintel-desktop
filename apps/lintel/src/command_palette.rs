@@ -580,7 +580,7 @@ pub fn show(ctx: &egui::Context, app: &mut LintelApp, now: i64) -> Option<egui::
     if modal.should_close() {
         app.palette.close();
     }
-    modal
+    Some(modal)
 }
 
 /// The results stage: search field, recent commands and the filtered list.

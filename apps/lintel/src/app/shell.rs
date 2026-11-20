@@ -184,9 +184,9 @@ pub fn regions(
 
     // Inspector window (floating on right)
     if !app.palette.is_open() {
-        let resp: Option<egui::InnerResponse<Option<Command>>> = egui::Window::new("Inspector")
+        let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ctx, |ui| -> Option<Command> {
+            .show(ctx, |ui| {
                 let cmd = inspector(
                     ui,
                     &app.doc,

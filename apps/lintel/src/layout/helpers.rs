@@ -137,4 +137,5 @@ pub fn tool_group<R>(
                 add_contents(ui)
             })
         })
+        .inner
 }
