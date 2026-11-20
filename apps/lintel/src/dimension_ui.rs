@@ -4,7 +4,6 @@
 //! never mutates the model itself.
 
 use crate::canvas::{Selection, View, world_to_screen};
-use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::ids::EntityId;

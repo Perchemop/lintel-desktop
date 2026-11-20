@@ -18,7 +18,6 @@ use lintel_core::{
 use crate::LintelApp;
 use crate::Tool;
 use crate::canvas::{Draft, Selection, SnapModeKind};
-use crate::theme;
 use crate::theme::SPEC;
 
 /// How many recent commands the palette remembers.

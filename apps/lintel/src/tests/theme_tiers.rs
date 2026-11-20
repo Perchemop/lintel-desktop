@@ -25,7 +25,7 @@ use eframe::egui::Color32;
 #[test]
 fn themespec_mirrors_the_flat_registry_field_by_field() {
     // Tier 1 — grouped spec fields must equal the flat BASE_* constants.
-    let base: [(&str, Color32, Color32); 34] = [
+    let base: [(&str, Color32, Color32); 35] = [
         ("base.paper", SPEC.base.paper, theme::BASE_PAPER),
         ("base.ink", SPEC.base.ink, theme::BASE_INK),
         ("base.black", SPEC.base.black, theme::BASE_BLACK),
@@ -59,6 +59,7 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
         ("base.green", SPEC.base.green, theme::BASE_GREEN),
         ("base.valid", SPEC.base.valid, theme::BASE_VALID),
         ("base.error", SPEC.base.error, theme::BASE_ERROR),
+        ("base.danger", SPEC.base.danger, theme::BASE_DANGER),
         (
             "base.danger_hover",
             SPEC.base.danger_hover,
@@ -138,7 +139,7 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
     }
 
     // Tier 2 — grouped spec fields must equal the flat semantic constants.
-    let semantic: [(&str, Color32, Color32); 41] = [
+    let semantic: [(&str, Color32, Color32); 42] = [
         (
             "semantic.surface_base",
             SPEC.semantic.surface_base,
@@ -219,6 +220,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             "semantic.text_error",
             SPEC.semantic.text_error,
             theme::TEXT_ERROR,
+        ),
+        (
+            "semantic.text_danger",
+            SPEC.semantic.text_danger,
+            theme::TEXT_DANGER,
         ),
         (
             "semantic.text_on_accent",
@@ -446,12 +452,13 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
         assert_eq!(grouped, flat, "{name} must mirror the flat registry");
     }
 
-    let text: [(&str, Color32, Color32); 5] = [
+    let text: [(&str, Color32, Color32); 6] = [
         ("text.primary", SPEC.component.text.primary, theme::BODY_TEXT),
         ("text.hint", SPEC.component.text.hint, theme::HINT_TEXT),
         ("text.muted", SPEC.component.text.muted, theme::MUTED_TEXT),
         ("text.success", SPEC.component.text.success, theme::SUCCESS_TEXT),
         ("text.error", SPEC.component.text.error, theme::ERROR_TEXT),
+        ("text.danger", SPEC.component.text.danger, theme::DANGER_TEXT),
     ];
     for (name, grouped, flat) in text {
         assert_eq!(grouped, flat, "{name} must mirror the flat registry");
@@ -584,7 +591,7 @@ fn tier_one_swatches_are_pinned() {
     // Behaviour-preservation pin (T-006): the three-tier restructure must not
     // move a single base value. If a swatch changes deliberately, change it
     // here AND in the release notes.
-    let pins: [(&str, [u8; 3], [u8; 3]); 31] = [
+    let pins: [(&str, [u8; 3], [u8; 3]); 32] = [
         ("BASE_PAPER", theme::rgb_of(theme::BASE_PAPER), [252, 248, 242]),
         ("BASE_INK", theme::rgb_of(theme::BASE_INK), [26, 24, 22]),
         (
@@ -622,6 +629,7 @@ fn tier_one_swatches_are_pinned() {
         ("BASE_GREEN", theme::rgb_of(theme::BASE_GREEN), [34, 158, 96]),
         ("BASE_VALID", theme::rgb_of(theme::BASE_VALID), [26, 112, 62]),
         ("BASE_ERROR", theme::rgb_of(theme::BASE_ERROR), [139, 0, 0]),
+        ("BASE_DANGER", theme::rgb_of(theme::BASE_DANGER), [180, 0, 0]),
         (
             "BASE_DANGER_HOVER",
             theme::rgb_of(theme::BASE_DANGER_HOVER),
@@ -755,6 +763,7 @@ fn base_rgbs() -> Vec<[u8; 3]> {
         theme::rgb_of(theme::BASE_GREEN),
         theme::rgb_of(theme::BASE_VALID),
         theme::rgb_of(theme::BASE_ERROR),
+        theme::rgb_of(theme::BASE_DANGER),
         theme::rgb_of(theme::BASE_DANGER_HOVER),
         theme::rgb_of(theme::BASE_WARNING),
         theme::rgb_of(theme::BASE_PANEL_BG),
@@ -800,6 +809,7 @@ fn semantic_rgbs() -> Vec<[u8; 3]> {
         theme::rgb_of(s.text_success),
         theme::rgb_of(s.text_warning),
         theme::rgb_of(s.text_error),
+        theme::rgb_of(s.text_danger),
         theme::rgb_of(s.text_on_accent),
         theme::rgb_of(s.accent_default),
         theme::rgb_of(s.accent_hover),
@@ -833,7 +843,7 @@ fn every_semantic_role_resolves_to_a_base_swatch() {
     // its 41 fields must equal some BASE_* swatch. A new role that does not
     // resolve fails here even though no per-token pair covers it yet.
     let base = base_rgbs();
-    let roles: [(&str, Color32); 41] = [
+    let roles: [(&str, Color32); 42] = [
         ("surface_base", SPEC.semantic.surface_base),
         ("surface_panel", SPEC.semantic.surface_panel),
         ("surface_status", SPEC.semantic.surface_status),
@@ -851,6 +861,7 @@ fn every_semantic_role_resolves_to_a_base_swatch() {
         ("text_success", SPEC.semantic.text_success),
         ("text_warning", SPEC.semantic.text_warning),
         ("text_error", SPEC.semantic.text_error),
+        ("text_danger", SPEC.semantic.text_danger),
         ("text_on_accent", SPEC.semantic.text_on_accent),
         ("accent_default", SPEC.semantic.accent_default),
         ("accent_hover", SPEC.semantic.accent_hover),
@@ -895,7 +906,7 @@ fn every_component_token_resolves_to_a_semantic_role() {
     // One-hop rule for tier 3: widget-facing tokens compose the semantic
     // roles above them, never a raw swatch.
     let semantic = semantic_rgbs();
-    let tokens: [(&str, Color32); 34] = [
+    let tokens: [(&str, Color32); 35] = [
         ("canvas.sheet", SPEC.component.canvas.sheet),
         ("canvas.text", SPEC.component.canvas.text),
         ("canvas.wall_fill", SPEC.component.canvas.wall_fill),
@@ -933,6 +944,7 @@ fn every_component_token_resolves_to_a_semantic_role() {
         ("text.muted", SPEC.component.text.muted),
         ("text.success", SPEC.component.text.success),
         ("text.error", SPEC.component.text.error),
+        ("text.danger", SPEC.component.text.danger),
         ("palette.selected_fill", SPEC.component.palette.selected_fill),
         (
             "palette.unselected_fill",

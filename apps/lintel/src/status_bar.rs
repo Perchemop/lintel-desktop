@@ -5,7 +5,6 @@
 //! core `Command`s for unit changes; it never owns geometry or history.
 
 use crate::canvas::{SnapModeKind, SnapModes};
-use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::command::Command;

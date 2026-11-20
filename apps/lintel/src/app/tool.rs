@@ -1,6 +1,5 @@
 //! Tool palette: all drawing and construction tools available in Lintel.
 
-use crate::theme;
 use eframe::egui;
 
 /// Active drawing/editing tool.

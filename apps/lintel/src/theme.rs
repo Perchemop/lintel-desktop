@@ -1292,6 +1292,31 @@ pub const SHADOW_LEVEL_3: egui::Shadow = egui::Shadow {
 };
 
 // ---------------------------------------------------------------------------
+// Form field size tokens (shadcn-egui Field pattern copy, spec v0.20.0 AC-03)
+// — derived from the 4-point spacing scale and 2/4/8/12 radii above
+// (guide II.30.6).
+// ---------------------------------------------------------------------------
+
+/// Vertical gap between a field's label, input and message rows.
+pub const FIELD_ROW_SPACING: f32 = SPACING_SM;
+/// Horizontal gap between an error icon and its text.
+pub const FIELD_MESSAGE_GAP: f32 = SPACING_XS;
+/// Vertical gap between fields inside a FieldSet.
+pub const FIELD_SET_SPACING: f32 = SPACING_MD;
+/// Gap between fields in a FieldGroup.
+pub const FIELD_GROUP_SPACING: f32 = SPACING_MD;
+/// Corner radius of inputs and field-set frames.
+pub const FIELD_CORNER_RADIUS: f32 = RADIUS_SM;
+/// Gap between the input rect and the painted state stroke.
+pub const FIELD_BORDER_PAD: f32 = 2.0;
+/// Minimum interactive height of an input — the 24pt floor (guide II.30.7.5).
+pub const FIELD_MIN_HEIGHT: f32 = 24.0;
+/// Side length of the painted error icon.
+pub const FIELD_ERROR_ICON_SIZE: f32 = 12.0;
+/// Body text size for painter-drawn field text (legend row).
+pub const FIELD_TEXT_SIZE: f32 = 14.0;
+
+// ---------------------------------------------------------------------------
 // Icon system (spaceui pattern copy, spec v0.20.0 AC-05)
 //
 // Original SVGs in `apps/lintel/assets/icons/` are rasterized at the exact
@@ -1682,6 +1707,56 @@ pub struct ButtonTokens {
     pub corner_radius: f32,
 }
 
+/// Tier 3 — form field tokens (shadcn-egui Field pattern copy, spec v0.20.0
+/// AC-03): colours and sizes for Field, FieldSet, FieldGroup.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FieldTokens {
+    /// Field label text.
+    pub label: Color32,
+    /// FieldSet legend text.
+    pub legend: Color32,
+    /// Helper text under an input.
+    pub help: Color32,
+    /// Error message text.
+    pub error_text: Color32,
+    /// Error icon fill.
+    pub error_icon: Color32,
+    /// Input background fill.
+    pub input_fill: Color32,
+    /// Input text colour.
+    pub input_text: Color32,
+    /// Rest-state input border.
+    pub border: Color32,
+    /// Error-state input border.
+    pub border_error: Color32,
+    /// Focus-state input border.
+    pub border_focused: Color32,
+    /// Disabled input text.
+    pub disabled_text: Color32,
+    /// FieldSet group fill.
+    pub group_fill: Color32,
+    /// FieldSet group border.
+    pub group_border: Color32,
+    /// Vertical gap between label, input, message rows.
+    pub row_spacing: f32,
+    /// Horizontal gap between error icon and text.
+    pub message_gap: f32,
+    /// Vertical gap between fields in a FieldSet.
+    pub set_spacing: f32,
+    /// Gap between fields in a FieldGroup.
+    pub group_spacing: f32,
+    /// Corner radius of inputs and field-set frames.
+    pub corner_radius: f32,
+    /// Gap between input rect and painted state stroke.
+    pub border_pad: f32,
+    /// Minimum interactive height of an input.
+    pub min_height: f32,
+    /// Side length of the painted error icon.
+    pub error_icon_size: f32,
+    /// Body text size for painter-drawn text.
+    pub text_size: f32,
+}
+
 /// Tier 3 — widget-specific tokens (where each role is used).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ComponentTokens {
@@ -1690,6 +1765,7 @@ pub struct ComponentTokens {
     pub text: ComponentTextTokens,
     pub palette: PaletteTokens,
     pub button: ButtonTokens,
+    pub field: FieldTokens,
 }
 
 /// The whole token system grouped by tier (egui-pop `ThemeSpec` pattern).
@@ -1848,6 +1924,30 @@ impl ThemeSpec {
                 danger_lg: BUTTON_DANGER_L,
                 ring: FOCUS_RING,
                 corner_radius: BUTTON_CORNER_RADIUS,
+            },
+            field: FieldTokens {
+                label: FIELD_LABEL,
+                legend: FIELD_LEGEND,
+                help: FIELD_HELP,
+                error_text: FIELD_ERROR_TEXT,
+                error_icon: FIELD_ERROR_ICON,
+                input_fill: FIELD_INPUT_FILL,
+                input_text: FIELD_INPUT_TEXT,
+                border: FIELD_BORDER,
+                border_error: FIELD_BORDER_ERROR,
+                border_focused: FIELD_BORDER_FOCUSED,
+                disabled_text: FIELD_DISABLED_TEXT,
+                group_fill: FIELD_GROUP_FILL,
+                group_border: FIELD_GROUP_BORDER,
+                row_spacing: FIELD_ROW_SPACING,
+                message_gap: FIELD_MESSAGE_GAP,
+                set_spacing: FIELD_SET_SPACING,
+                group_spacing: FIELD_GROUP_SPACING,
+                corner_radius: FIELD_CORNER_RADIUS,
+                border_pad: FIELD_BORDER_PAD,
+                min_height: FIELD_MIN_HEIGHT,
+                error_icon_size: FIELD_ERROR_ICON_SIZE,
+                text_size: FIELD_TEXT_SIZE,
             },
         },
     };
@@ -2197,6 +2297,20 @@ mod tests {
                 selection_stroke().color,
                 ACCENT_DEFAULT,
             ),
+            // Field tokens (T-002)
+            ("FIELD_LABEL", FIELD_LABEL, TEXT_PRIMARY),
+            ("FIELD_LEGEND", FIELD_LEGEND, TEXT_STRONG),
+            ("FIELD_HELP", FIELD_HELP, TEXT_MUTED),
+            ("FIELD_ERROR_TEXT", FIELD_ERROR_TEXT, TEXT_ERROR),
+            ("FIELD_ERROR_ICON", FIELD_ERROR_ICON, DANGER_DEFAULT),
+            ("FIELD_INPUT_FILL", FIELD_INPUT_FILL, SURFACE_BASE),
+            ("FIELD_INPUT_TEXT", FIELD_INPUT_TEXT, TEXT_PRIMARY),
+            ("FIELD_BORDER", FIELD_BORDER, BORDER_STRONG),
+            ("FIELD_BORDER_ERROR", FIELD_BORDER_ERROR, DANGER_DEFAULT),
+            ("FIELD_BORDER_FOCUSED", FIELD_BORDER_FOCUSED, FOCUS_RING),
+            ("FIELD_DISABLED_TEXT", FIELD_DISABLED_TEXT, TEXT_DISABLED),
+            ("FIELD_GROUP_FILL", FIELD_GROUP_FILL, SURFACE_PANEL),
+            ("FIELD_GROUP_BORDER", FIELD_GROUP_BORDER, BORDER_STRONG),
         ];
         for (name, component, expected) in pairs {
             assert_eq!(component, expected, "{name} must resolve to its role");
@@ -2215,6 +2329,8 @@ mod tests {
         assert_eq!(SPEC.component.canvas.wall_fill, WALL_FILL);
         assert_eq!(SPEC.component.button.primary_sm, BUTTON_PRIMARY_S);
         assert_eq!(SPEC.component.button.corner_radius, BUTTON_CORNER_RADIUS);
+        assert_eq!(SPEC.component.field.label, FIELD_LABEL);
+        assert_eq!(SPEC.component.field.corner_radius, FIELD_CORNER_RADIUS);
     }
 
     #[test]
