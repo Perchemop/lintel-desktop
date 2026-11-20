@@ -131,13 +131,6 @@ where
             tokens.border
         };
 
-        // Build the frame
-        let frame = egui::Frame::NONE
-            .fill(tokens.input_fill)
-            .stroke(egui::Stroke::new(1.0, border_colour))
-            .corner_radius(tokens.corner_radius)
-            .inner_margin(egui::Margin::symmetric(tokens.border_pad as i8, tokens.border_pad as i8));
-
         // Paint the frame background + border
         if ui.is_rect_visible(input_rect) {
             ui.painter().add(egui::Shape::Rect(egui::epaint::RectShape::new(
@@ -330,7 +323,7 @@ where
             });
 
             // Use the response from the header
-            let _ = state.show_body_indented(&header_response, ui, |ui| {
+            let _ = state.show_body_indented(&header_response.response, ui, |ui| {
                 ui.spacing_mut().item_spacing.y = tokens.set_spacing;
                 for field in self.fields {
                     field.show(ui);

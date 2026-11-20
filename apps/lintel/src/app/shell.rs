@@ -187,7 +187,7 @@ pub fn regions(
     if !app.palette.is_open() {
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
-            .show(ui.ctx(), |ui| {
+            .show(ui.ctx(), |ui| -> Option<Command> {
                 let cmd = inspector(
                     ui,
                     &app.doc,
@@ -219,7 +219,7 @@ pub fn regions(
 }
 
 /// Title bar region: app name, window controls, breadcrumb.
-fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::Response {
+fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, _now: i64) -> egui::Response {
     let resp = ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = theme::SPACING_MD;
 
