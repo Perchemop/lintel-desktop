@@ -1,6 +1,6 @@
 //! Headless unit tests for [`StyledButton`] (ticket T-001, AC-01/AC-02).
 //!
-//! Rendering runs through `Context::run` — no window, no GPU, no display
+//! Rendering runs through `Context::run_ui` — no window, no GPU, no display
 //! (guide K.13). Contrast and size rules come from the token table itself so
 //! the merge gate fails if a variant ever drops below WCAG AA.
 
