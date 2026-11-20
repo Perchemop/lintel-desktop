@@ -17,23 +17,17 @@ use eframe::egui;
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct Field<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+pub struct Field {
     label: String,
     required: bool,
-    input_fn: Option<F>,
+    input_fn: Option<Box<dyn FnOnce(&mut egui::Ui) -> egui::Response>>,
     error_text: Option<String>,
     help_text: Option<String>,
     disabled: bool,
     disabled_reason: Option<String>,
 }
 
-impl<F> Field<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+impl Field {
     /// Create a new field with the given label.
     pub fn new(label: impl Into<String>) -> Self {
         Self {
@@ -56,7 +50,7 @@ where
     /// Set the input widget. The closure receives a `Ui`, adds the input
     /// widget, and returns its `Response`. The field wires `labelled_by`
     /// and focus handling automatically.
-    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response) -> Self {
+    pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response + 'static) -> Self {
         self.input_fn = Some(Box::new(f));
         self
     }
@@ -232,21 +226,15 @@ where
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct FieldSet<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+pub struct FieldSet {
     legend: String,
-    fields: Vec<Field<F>>,
+    fields: Vec<Field>,
     collapsible: bool,
     default_open: bool,
     enabled: bool,
 }
 
-impl<F> FieldSet<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+impl FieldSet {
     /// Create a new field set with the given legend.
     pub fn new(legend: impl Into<String>) -> Self {
         Self {
@@ -259,13 +247,13 @@ where
     }
 
     /// Add a field to the set.
-    pub fn field(mut self, field: Field<F>) -> Self {
+    pub fn field(mut self, field: Field) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<F>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field>) -> Self {
         self.fields = fields;
         self
     }
@@ -358,20 +346,14 @@ where
 ///     .show(ui);
 /// ```
 #[derive(Debug)]
-pub struct FieldGroup<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
-    fields: Vec<Field<F>>,
+pub struct FieldGroup {
+    fields: Vec<Field>,
     direction: egui::Direction,
     spacing: f32,
     enabled: bool,
 }
 
-impl<F> FieldGroup<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+impl FieldGroup {
     /// Create a new field group.
     pub fn new() -> Self {
         Self {
@@ -395,13 +377,13 @@ where
     }
 
     /// Add a field.
-    pub fn field(mut self, field: Field<F>) -> Self {
+    pub fn field(mut self, field: Field) -> Self {
         self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<Field<F>>) -> Self {
+    pub fn fields(mut self, fields: Vec<Field>) -> Self {
         self.fields = fields;
         self
     }
@@ -450,10 +432,7 @@ where
     }
 }
 
-impl<F> Default for FieldGroup<F>
-where
-    F: FnOnce(&mut egui::Ui) -> egui::Response,
-{
+impl Default for FieldGroup {
     fn default() -> Self {
         Self::new()
     }
