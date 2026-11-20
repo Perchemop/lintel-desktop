@@ -544,80 +544,27 @@ pub const ICON_NAMES: &[&str] = &[
 /// build instead of shipping a blank icon.
 const ICON_SVGS: &[(&str, &[u8])] = &[
     // Tools (T-004)
-    (
-        "wall",
-        include_bytes!("../assets/icons/wall.svg"),
-    ),
-    (
-        "door",
-        include_bytes!("../assets/icons/door.svg"),
-    ),
-    (
-        "window",
-        include_bytes!("../assets/icons/window.svg"),
-    ),
-    (
-        "dimension",
-        include_bytes!("../assets/icons/dimension.svg"),
-    ),
-    (
-        "label",
-        include_bytes!("../assets/icons/label.svg"),
-    ),
-    (
-        "measurements",
-        include_bytes!("../assets/icons/measurements.svg"),
-    ),
-    (
-        "select",
-        include_bytes!("../assets/icons/select.svg"),
-    ),
-    (
-        "construction_line",
-        include_bytes!("../assets/icons/construction_line.svg"),
-    ),
-    (
-        "construction_ray",
-        include_bytes!("../assets/icons/construction_ray.svg"),
-    ),
-    (
-        "construction_circle",
-        include_bytes!("../assets/icons/construction_circle.svg"),
-    ),
-    (
-        "construction_arc",
-        include_bytes!("../assets/icons/construction_arc.svg"),
-    ),
-    (
-        "block",
-        include_bytes!("../assets/icons/block.svg"),
-    ),
+    ("wall", include_bytes!("../assets/icons/wall.svg")),
+    ("door", include_bytes!("../assets/icons/door.svg")),
+    ("window", include_bytes!("../assets/icons/window.svg")),
+    ("dimension", include_bytes!("../assets/icons/dimension.svg")),
+    ("label", include_bytes!("../assets/icons/label.svg")),
+    ("measurements", include_bytes!("../assets/icons/measurements.svg")),
+    ("select", include_bytes!("../assets/icons/select.svg")),
+    ("construction_line", include_bytes!("../assets/icons/construction_line.svg")),
+    ("construction_ray", include_bytes!("../assets/icons/construction_ray.svg")),
+    ("construction_circle", include_bytes!("../assets/icons/construction_circle.svg")),
+    ("construction_arc", include_bytes!("../assets/icons/construction_arc.svg")),
+    ("block", include_bytes!("../assets/icons/block.svg")),
     // Snap / Layer / UI (pre-existing)
-    (
-        "snap_endpoint",
-        include_bytes!("../assets/icons/snap_endpoint.svg"),
-    ),
-    (
-        "snap_midpoint",
-        include_bytes!("../assets/icons/snap_midpoint.svg"),
-    ),
-    (
-        "snap_center",
-        include_bytes!("../assets/icons/snap_center.svg"),
-    ),
-    (
-        "snap_intersection",
-        include_bytes!("../assets/icons/snap_intersection.svg"),
-    ),
+    ("snap_endpoint", include_bytes!("../assets/icons/snap_endpoint.svg")),
+    ("snap_midpoint", include_bytes!("../assets/icons/snap_midpoint.svg")),
+    ("snap_center", include_bytes!("../assets/icons/snap_center.svg")),
+    ("snap_intersection", include_bytes!("../assets/icons/snap_intersection.svg")),
     ("snap_grid", include_bytes!("../assets/icons/snap_grid.svg")),
     ("snap_ortho", include_bytes!("../assets/icons/snap_ortho.svg")),
-    (
-        "layer_visible",
-        include_bytes!("../assets/icons/layer_visible.svg"),
-    ),
-    (
-        "layer_lock",
-        include_bytes!("../assets/icons/layer_lock.svg"),
+    ("layer_visible", include_bytes!("../assets/icons/layer_visible.svg")),
+    ("layer_lock", include_bytes!("../assets/icons/layer_lock.svg")),
     ),
     (
         "layer_print",
@@ -1006,21 +953,9 @@ mod tests {
                 BUTTON_SECONDARY_M.text,
                 TEXT_PRIMARY,
             ),
-            (
-                "BUTTON_GHOST_S.text",
-                BUTTON_GHOST_S.text,
-                TEXT_PRIMARY,
-            ),
-            (
-                "BUTTON_DANGER_M.text",
-                BUTTON_DANGER_M.text,
-                TEXT_ON_ACCENT,
-            ),
-            (
-                "BUTTON_DANGER_M.hover",
-                BUTTON_DANGER_M.hover,
-                DANGER_HOVER,
-            ),
+            ("BUTTON_GHOST_S.text", BUTTON_GHOST_S.text, TEXT_PRIMARY),
+            ("BUTTON_DANGER_M.text", BUTTON_DANGER_M.text, TEXT_ON_ACCENT),
+            ("BUTTON_DANGER_M.hover", BUTTON_DANGER_M.hover, DANGER_HOVER),
             (
                 "BUTTON_PRIMARY_L.text_active",
                 BUTTON_PRIMARY_L.text_active,
