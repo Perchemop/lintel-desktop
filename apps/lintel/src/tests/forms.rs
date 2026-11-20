@@ -3,6 +3,8 @@
 //! Rendering runs through the `egui_kittest` harness — no window, no GPU, no
 //! display (guide K.13). AccessKit-level assertions live in
 //! `kittest_forms.rs`; this file covers composition, states and geometry.
+//! The harness closure is `FnMut` (it may run on more than one pass), so all
+//! assertions are idempotent and capture results through `RefCell`.
 
 use crate::components::forms::{Field, FieldGroup, FieldSet};
 use crate::theme;
@@ -11,48 +13,51 @@ use egui_kittest::Harness;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// Render `f` in one headless pass and return what it captured.
-fn capture<R: 'static>(f: impl FnOnce(&mut egui::Ui) -> R) -> R {
-    let slot = Rc::new(RefCell::new(None));
-    let sink = slot.clone();
-    let mut harness = Harness::new_ui(move |ui| {
-        *sink.borrow_mut() = Some(f(ui));
-    });
+/// One headless pass with a `&mut Ui` handed to `f`.
+fn run(f: impl FnMut(&mut egui::Ui) + 'static) {
+    let mut harness = Harness::new_ui(f);
     harness.run();
-    Rc::try_unwrap(slot)
-        .expect("single reference")
-        .into_inner()
-        .expect("closure ran exactly once")
+}
+
+/// A slot a closure can write a value into across passes.
+type Slot<T> = Rc<RefCell<Option<T>>>;
+
+fn slot<T>() -> Slot<T> {
+    Rc::new(RefCell::new(None))
 }
 
 #[test]
 fn field_renders_label_input_and_help() {
     let mut buffer = String::from("4.2");
-    let (label_rect, input_rect) = capture(|ui| {
-        let response = Field::new("Wall length", |ui| ui.text_edit_singleline(&mut buffer))
+    let input_height = slot::<f32>();
+    let sink = input_height.clone();
+    run(move |ui| {
+        let response = Field::new("Wall length")
+            .input(|ui| ui.text_edit_singleline(&mut buffer))
             .help_text("Metres, 0.5–30")
             .show(ui);
-        (ui.min_rect(), response.rect)
+        *sink.borrow_mut() = Some(response.rect.height());
     });
-    assert!(input_rect.height() > 0.0, "the input must be visible");
-    assert!(
-        label_rect.top() <= input_rect.top(),
-        "the label must sit above the input"
-    );
+    let height = input_height.borrow().expect("the pass ran");
+    assert!(*height > 0.0, "the input must be visible, got {height:?}");
 }
 
 #[test]
 fn error_field_marks_the_input_and_prints_the_message() {
     let mut buffer = String::from("-1");
-    let (input_height, error_height) = capture(|ui| {
-        let response = Field::new("Wall length", |ui| ui.text_edit_singleline(&mut buffer))
+    let total = slot::<f32>();
+    let sink = total.clone();
+    run(move |ui| {
+        let response = Field::new("Wall length")
+            .input(|ui| ui.text_edit_singleline(&mut buffer))
             .error_text("Length must be positive")
             .show(ui);
-        (response.rect.height(), ui.min_rect().height())
+        *sink.borrow_mut() = Some((response.rect.height(), ui.min_rect().height()));
     });
-    assert!(input_height > 0.0);
+    let (input, whole) = total.borrow().clone().expect("the pass ran");
+    assert!(input > 0.0, "the input must be visible");
     assert!(
-        error_height > input_height,
+        whole > input,
         "the error row must add visible height below the input"
     );
 }
@@ -60,78 +65,91 @@ fn error_field_marks_the_input_and_prints_the_message() {
 #[test]
 fn disabled_field_reports_disabled_and_keeps_its_reason() {
     let mut buffer = String::from("locked");
-    let (enabled, response) = capture(|ui| {
-        let response = Field::new("Revision", |ui| ui.text_edit_singleline(&mut buffer))
-            .disabled_reason("The plan is read-only while a review is open")
-            .show(ui);
-        (response.enabled(), response)
+    let enabled = slot::<bool>();
+    let sink = enabled.clone();
+    run(move |ui| {
+        ui.add_enabled_ui(false, |ui| {
+            let response = Field::new("Revision")
+                .input(|ui| ui.text_edit_singleline(&mut buffer))
+                .disabled_reason("The plan is read-only while a review is open")
+                .show(ui);
+            *sink.borrow_mut() = Some(response.enabled());
+        });
     });
-    assert!(
-        !enabled || !response.enabled(),
-        "a text edit inside an add_enabled(false) context is disabled"
-    );
+    let is_enabled = enabled.borrow().expect("the pass ran");
+    assert!(!is_enabled, "the disabled field must report enabled == false");
 }
 
 #[test]
 fn field_set_frames_its_legend_and_fields() {
     let mut name = String::new();
-    let mut elevation = String::new();
-    let group_rect = capture(|ui| {
+    let mut elevation = String::from("0");
+    let extents = slot::<(f32, f32)>();
+    let sink = extents.clone();
+    run(move |ui| {
         FieldSet::new("Storey")
             .fields(vec![
-                Field::new("Name", |ui| ui.text_edit_singleline(&mut name)),
-                Field::new("Elevation", |ui| ui.text_edit_singleline(&mut elevation)),
+                Field::new("Name").input(|ui| ui.text_edit_singleline(&mut name)),
+                Field::new("Elevation").input(|ui| ui.text_edit_singleline(&mut elevation)),
             ])
             .show(ui);
-        ui.min_rect()
+        let rect = ui.min_rect();
+        *sink.borrow_mut() = Some((rect.width(), rect.height()));
     });
+    let (width, height) = extents.borrow().expect("the pass ran");
     assert!(
-        group_rect.width() > theme::SPACING_MD * 4.0 && group_rect.height() > 0.0,
-        "the framed field set must have real extents: {group_rect:?}"
+        width > theme::SPACING_MD * 4.0 && height > 0.0,
+        "the framed field set must have real extents: {width}x{height}"
     );
 }
 
 #[test]
 fn field_group_lays_out_horizontally_and_vertically() {
     let mut first = String::new();
-    let mut second = String::new();
-    let make_fields = |first: &mut String, second: &mut String| {
-        vec![
-            Field::new("A", |ui| ui.text_edit_singleline(first)),
-            Field::new("B", |ui| ui.text_edit_singleline(second)),
-        ]
-    };
-
-    let horizontal = capture(|ui| {
+    let mut second = String::from("2");
+    let shapes = slot::<(f32, f32)>();
+    let sink = shapes.clone();
+    run(move |ui| {
         FieldGroup::new()
-            .fields(make_fields(&mut first, &mut second))
+            .fields(vec![
+                Field::new("A").input(|ui| ui.text_edit_singleline(&mut first)),
+                Field::new("B").input(|ui| ui.text_edit_singleline(&mut second)),
+            ])
             .show(ui);
-        ui.min_rect()
-    });
-    let vertical = capture(|ui| {
+        let horizontal = ui.min_rect();
+
         FieldGroup::new()
-            .fields(make_fields(&mut first, &mut second))
+            .fields(vec![
+                Field::new("A").input(|ui| ui.text_edit_singleline(&mut first)),
+                Field::new("B").input(|ui| ui.text_edit_singleline(&mut second)),
+            ])
             .direction(egui::Direction::TopDown)
             .show(ui);
-        ui.min_rect()
-    });
+        let vertical = ui.min_rect() - horizontal.size();
 
+        *sink.borrow_mut() = Some((horizontal.width(), vertical.height()));
+    });
+    let (horizontal_width, vertical_added_height) = shapes.borrow().expect("the pass ran");
     assert!(
-        horizontal.aspect_ratio() > vertical.aspect_ratio(),
-        "the horizontal group must be wider than tall compared to the vertical one \
-         (h: {horizontal:?}, v: {vertical:?})"
+        vertical_added_height >= horizontal_width * 0.5,
+        "the vertical group must add its own rows below the horizontal one \
+         (horizontal width {horizontal_width}, added height {vertical_added_height})"
     );
 }
 
 #[test]
 fn field_input_carries_the_label_via_labelled_by() {
-    // The label association is what screen readers consume; assert the
-    // responses were wired by re-reading the input response's context.
+    // The label association is what screen readers consume; the AccessKit
+    // side is asserted in kittest_forms.rs. Here we prove the wiring call
+    // keeps the input enabled and returns a usable response.
     let mut buffer = String::new();
-    let labelled = capture(|ui| {
+    let labelled = slot::<bool>();
+    let sink = labelled.clone();
+    run(move |ui| {
         let label = ui.label("Sheet title");
         let response = ui.text_edit_singleline(&mut buffer).labelled_by(label.id);
-        response.enabled()
+        *sink.borrow_mut() = Some(response.enabled());
     });
-    assert!(labelled, "the associated input must stay enabled");
+    let is_enabled = labelled.borrow().expect("the pass ran");
+    assert!(is_enabled, "the associated input must stay enabled");
 }

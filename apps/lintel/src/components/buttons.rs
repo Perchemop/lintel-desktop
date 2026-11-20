@@ -161,6 +161,9 @@ impl StyledButton {
 
     /// Show a loading spinner instead of the label. Interaction is disabled
     /// and the control keeps its size — no layout shift (guide II.30.10).
+    // Part of the ticket's builder API; no view drives a busy action yet
+    // (wired with the later slices), exercised by `tests::buttons` meanwhile.
+    #[allow(dead_code)]
     #[must_use]
     pub fn loading(mut self, loading: bool) -> Self {
         self.loading = loading;
@@ -168,6 +171,9 @@ impl StyledButton {
     }
 
     /// Enable or disable the button (default: enabled).
+    // Part of the ticket's builder API; views enable/disable buttons as the
+    // later slices land, exercised by `tests::buttons` meanwhile.
+    #[allow(dead_code)]
     #[must_use]
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
@@ -185,6 +191,9 @@ impl StyledButton {
 
     /// Explain on hover why the button is disabled (guide II.30.10). Without a
     /// reason, [`DISABLED_REASON`] is shown.
+    // Part of the ticket's builder API; views pass specific preconditions as
+    // the later slices land, exercised by `tests::buttons` meanwhile.
+    #[allow(dead_code)]
     #[must_use]
     pub fn disabled_reason(mut self, reason: impl Into<String>) -> Self {
         self.disabled_reason = Some(reason.into());

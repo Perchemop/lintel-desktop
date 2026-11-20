@@ -104,8 +104,13 @@ impl<'a> Field<'a> {
 
         // A field without an input is a display-only row; it still shows its
         // error/help slots so callers never need a second widget type.
+        let mut input_rect: Option<egui::Rect> = None;
         let response = match input {
-            Some(input) => input(ui).labelled_by(label_response.id),
+            Some(input) => {
+                let input_response = input(ui).labelled_by(label_response.id);
+                input_rect = Some(input_response.rect);
+                input_response
+            }
             None => label_response,
         };
 

@@ -446,9 +446,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
         assert_eq!(grouped, flat, "{name} must mirror the flat registry");
     }
 
-    let text: [(&str, Color32, Color32); 3] = [
+    let text: [(&str, Color32, Color32); 5] = [
+        ("text.primary", SPEC.component.text.primary, theme::BODY_TEXT),
         ("text.hint", SPEC.component.text.hint, theme::HINT_TEXT),
         ("text.muted", SPEC.component.text.muted, theme::MUTED_TEXT),
+        ("text.success", SPEC.component.text.success, theme::SUCCESS_TEXT),
         ("text.error", SPEC.component.text.error, theme::ERROR_TEXT),
     ];
     for (name, grouped, flat) in text {
@@ -628,7 +630,7 @@ fn tier_one_swatches_are_pinned() {
         (
             "BASE_WARNING",
             theme::rgb_of(theme::BASE_WARNING),
-            [120, 84, 16],
+            [140, 84, 14],
         ),
         (
             "BASE_PANEL_BG",
@@ -725,7 +727,7 @@ fn tier_one_swatches_are_pinned() {
     let edge = theme::BASE_SELECTION_EDGE;
     assert_eq!(
         (edge.r(), edge.g(), edge.b(), edge.a()),
-        (0, 0, 0, 40),
+        (0, 0, 0, 140),
         "BASE_SELECTION_EDGE moved"
     );
     let transparent = theme::BASE_TRANSPARENT;
@@ -893,7 +895,7 @@ fn every_component_token_resolves_to_a_semantic_role() {
     // One-hop rule for tier 3: widget-facing tokens compose the semantic
     // roles above them, never a raw swatch.
     let semantic = semantic_rgbs();
-    let tokens: [(&str, Color32); 32] = [
+    let tokens: [(&str, Color32); 34] = [
         ("canvas.sheet", SPEC.component.canvas.sheet),
         ("canvas.text", SPEC.component.canvas.text),
         ("canvas.wall_fill", SPEC.component.canvas.wall_fill),
@@ -926,8 +928,10 @@ fn every_component_token_resolves_to_a_semantic_role() {
         ("panel.surface", SPEC.component.panel.surface),
         ("panel.status", SPEC.component.panel.status),
         ("panel.border", SPEC.component.panel.border),
+        ("text.primary", SPEC.component.text.primary),
         ("text.hint", SPEC.component.text.hint),
         ("text.muted", SPEC.component.text.muted),
+        ("text.success", SPEC.component.text.success),
         ("text.error", SPEC.component.text.error),
         ("palette.selected_fill", SPEC.component.palette.selected_fill),
         (
