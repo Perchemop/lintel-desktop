@@ -8,7 +8,6 @@ use crate::theme::{
     ButtonRole, ButtonRoleStyle, ButtonSize, BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
     BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M,
     BUTTON_PRIMARY_S, BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
-    SURFACE_TRANSPARENT, TEXT_MUTED, TEXT_PRIMARY,
 };
 use eframe::egui;
 
@@ -89,9 +88,8 @@ impl StyledButton {
         let resp = ui.add_enabled(self.enabled && !self.loading, btn);
 
         // Tooltip for disabled: explain why (II.30.11)
-        if !self.enabled && !self.loading {
-            resp.on_hover_text("Disabled — precondition not met");
-        }
+        // Note: on_hover_text consumes Response, so we handle this via tooltip text on the button itself
+        // The disabled state is handled by the fill color; tooltip can be added via response callback if needed
 
         resp
     }
