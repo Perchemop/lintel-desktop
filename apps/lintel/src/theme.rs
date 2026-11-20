@@ -17,14 +17,18 @@
 //! 3. **Component tokens** (`WALL_FILL`, `PALETTE_*`, `BUTTON_*`) — where a role
 //!    is used. Widget code reads this layer only.
 //!
+//! [`ThemeSpec`] groups the three tiers into one value and [`SPEC`] is the
+//! single handle widget code reads (`SPEC.component.<group>.<token>`): the
+//! flat constants are the named registry, tier 1 and 2 are never widget input.
+//!
 //! Re-hueing the product is a tier-1 edit; re-styling one component is a tier-3
 //! edit; nothing in between needs to move.
 
 use eframe::egui::{Color32, ColorImage, Context, TextureHandle, TextureOptions};
 
-// ---------------------------------------------------------------------------
-// Tier 1 — base palette (raw swatches, no meaning attached)
-// ---------------------------------------------------------------------------
+// === TIER 1: BASE PALETTE ==================================================
+// Raw swatches, no meaning attached — the only `Color32` constructors here.
+// ===========================================================================
 
 pub const BASE_PAPER: Color32 = Color32::from_rgb(252, 248, 242); // warm off-white sheet
 pub const BASE_INK: Color32 = Color32::from_rgb(26, 24, 22); // near-black graphite
@@ -79,18 +83,24 @@ pub const BASE_SNAP_GRID: Color32 = Color32::from_rgb(130, 130, 130);
 /// Construction-geometry stroke. Darkened from (168,148,116) — 2.77:1 on
 /// PAPER, below the 3:1 UI-graphics floor — to 4.0:1 (guide II.30.7.1).
 pub const BASE_CONSTRUCTION: Color32 = Color32::from_rgb(140, 120, 90);
-// ---------------------------------------------------------------------------
-// Tier 2 — semantic roles (what a colour means)
-// ---------------------------------------------------------------------------
+/// Warning-text amber. Darkened from the midpoint-snap amber so it clears
+/// 4.5:1 on every light surface: 6.5:1 on PAPER, 6.0:1 on PANEL_BG, 5.6:1 on
+/// STATUS_BG (guide II.30.7.1).
+pub const BASE_WARNING: Color32 = Color32::from_rgb(120, 84, 16);
+/// Outline drawn around the selected block instance (main shell). Pinned at
+/// its pre-token value: 4.2:1 on PAPER, above the 3:1 UI-graphics floor.
+pub const BASE_BLOCK_HIGHLIGHT: Color32 = Color32::from_rgb(220, 60, 60);
+// === TIER 2: SEMANTIC ROLES ================================================
+// What a colour means, never what it looks like: every role is one hop from
+// a `BASE_*` swatch (or a sibling role), never a new value.
+// ===========================================================================
 
 // Surfaces.
 /// Canvas sheet and app background.
 pub const SURFACE_BASE: Color32 = BASE_PAPER;
 /// Inspector / toolbar panel fill.
-#[allow(dead_code)]
 pub const SURFACE_PANEL: Color32 = BASE_PANEL_BG;
 /// Status-bar strip fill.
-#[allow(dead_code)]
 pub const SURFACE_STATUS: Color32 = BASE_STATUS_BG;
 /// "Paint nothing" — the fill of a widget that has no background.
 pub const SURFACE_TRANSPARENT: Color32 = BASE_TRANSPARENT;
@@ -99,7 +109,6 @@ pub const SURFACE_SELECTION: Color32 = BASE_SELECTION_WASH;
 
 // Borders.
 /// Panel divider.
-#[allow(dead_code)]
 pub const BORDER_DEFAULT: Color32 = BASE_PANEL_BORDER;
 /// Outline of a selected row.
 pub const BORDER_SELECTION: Color32 = BASE_SELECTION_EDGE;
@@ -129,7 +138,10 @@ pub const TEXT_MATCH: Color32 = BASE_MATCH_BLUE;
 /// Valid-input message: 5.0:1 on the status strip.
 pub const TEXT_SUCCESS: Color32 = BASE_VALID;
 /// Error / destructive message.
-pub const TEXT_DANGER: Color32 = BASE_ERROR;
+pub const TEXT_ERROR: Color32 = BASE_ERROR;
+/// Warning message: 6.5:1 on the sheet, 6.0:1 on the panel, 5.6:1 on the
+/// status strip (guide II.30.7.1).
+pub const TEXT_WARNING: Color32 = BASE_WARNING;
 /// Warning message text (deep amber): 5.9:1 on the sheet, 5.5:1 on the panel
 /// and 5.1:1 on the status strip (guide II.30.7.1).
 #[allow(dead_code)] // consumed by the contrast merge-gate tests; first UI use lands with the status work
@@ -160,6 +172,8 @@ pub const TEXT_ON_ACCENT: Color32 = BASE_PAPER;
 // Structural strokes.
 /// Dark stroke for dimension lines, drag rectangles and the free-snap marker.
 pub const STROKE_STRONG: Color32 = BASE_INK;
+/// Highlight around the selected block instance (shell-level selection).
+pub const BLOCK_HIGHLIGHT: Color32 = BASE_BLOCK_HIGHLIGHT;
 
 // Snap markers: one colour per kind so the label is never the only signal.
 pub const SNAP_MIDPOINT: Color32 = BASE_SNAP_MIDPOINT;
@@ -191,20 +205,38 @@ pub const OPENING_GLAZING: Color32 = BASE_WINDOW_LINE;
 // is ~7.8:1 — both above the WCAG AA 4.5:1 threshold for normal text and the
 // 3:1 threshold for UI graphics. No separate focus colour is needed.
 
-// ---------------------------------------------------------------------------
-// Tier 3 — component tokens (where a role is used)
-// ---------------------------------------------------------------------------
+// === TIER 3: COMPONENT TOKENS ==============================================
+// Where a role is used: widget code reads this layer only, through `SPEC`.
+// ===========================================================================
 
 // Canvas geometry: walls, grid and openings.
 pub const WALL_FILL: Color32 = DRAFT_FILL;
 pub const WALL_STROKE: Color32 = DRAFT_STROKE;
-#[allow(dead_code)]
-pub const WALL_DRAFT: Color32 = DRAFT_PENDING;
+/// Geometry that is not committed to the model yet (wall-tool preview).
+pub const WALL_PENDING: Color32 = DRAFT_PENDING;
 pub const GRID_MINOR: Color32 = GRID_LINE_MINOR;
 pub const GRID_MAJOR: Color32 = GRID_LINE_MAJOR;
 pub const OPENING_GAP: Color32 = OPENING_CUT;
 pub const DOOR_LEAF: Color32 = OPENING_LEAF;
 pub const WINDOW_LINE: Color32 = OPENING_GLAZING;
+/// The sheet the canvas paints before anything is drawn on it.
+pub const CANVAS_SHEET: Color32 = SURFACE_BASE;
+/// Entity labels, the empty-canvas hint and the draft readout.
+pub const CANVAS_TEXT: Color32 = TEXT_PRIMARY;
+/// Construction-guide stroke on the canvas (warm grey).
+pub const CANVAS_CONSTRUCTION: Color32 = CONSTRUCTION_STROKE;
+/// A zero-width stroke ("paint nothing").
+pub const STROKE_NONE: Color32 = SURFACE_TRANSPARENT;
+/// The accent anything selected turns: labels, dimension lines, wall wash.
+pub const SELECTION_HIGHLIGHT: Color32 = ACCENT_DEFAULT;
+/// Rubber-band window selection (solid mode).
+pub const SELECTION_WINDOW: Color32 = ACCENT_DEFAULT;
+/// Rubber-band crossing selection (dashed mode).
+pub const SELECTION_CROSSING: Color32 = SUCCESS_DEFAULT;
+/// Committed dimension lines, witness lines and ticks.
+pub const DIMENSION_STROKE: Color32 = STROKE_STRONG;
+/// Outline drawn around the selected block instance.
+pub const BLOCK_INSTANCE_STROKE: Color32 = BLOCK_HIGHLIGHT;
 
 // Command palette: a command row and its parts.
 pub const PALETTE_SELECTED_FILL: Color32 = SURFACE_SELECTION;
@@ -215,6 +247,18 @@ pub const PALETTE_DISABLED: Color32 = TEXT_DISABLED; // 5.2:1 on the sheet
 pub const PALETTE_RECENT: Color32 = TEXT_SECONDARY; // 5.6:1 on the sheet
 pub const PALETTE_SHORTCUT: Color32 = TEXT_MUTED;
 pub const PALETTE_CATEGORY: Color32 = TEXT_DISABLED; // 5.2:1 on the sheet
+/// Unselected command rows paint nothing.
+pub const PALETTE_UNSELECTED_FILL: Color32 = SURFACE_TRANSPARENT;
+
+// Panels: shell surfaces (inspector window, status strip, dividers).
+pub const PANEL_SURFACE: Color32 = SURFACE_PANEL;
+pub const PANEL_BORDER: Color32 = BORDER_DEFAULT;
+pub const STATUS_SURFACE: Color32 = SURFACE_STATUS;
+
+// Widget text roles: tier-3 handles over the tier-2 text roles widgets use.
+pub const HINT_TEXT: Color32 = TEXT_HINT;
+pub const MUTED_TEXT: Color32 = TEXT_MUTED;
+pub const ERROR_TEXT: Color32 = TEXT_ERROR;
 
 /// The 2 px accent stroke drawn around selected entities.
 pub fn selection_stroke() -> egui::Stroke {
@@ -454,8 +498,705 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
     min_size: eframe::egui::vec2(40.0, 40.0),
 };
 
+// ---------------------------------------------------------------------------
+// Contrast methodology (spec v0.20.0 AC-08, ticket T-007, guide II.30.7.1)
+// ---------------------------------------------------------------------------
+
+/// WCAG 2.2 contrast gate for every palette Lintel ships, plus the dark and
+/// high-contrast reference palettes for the not-yet-wired theme switcher.
+///
+/// The maths (`rgb_of`, `relative_luminance`, `contrast_ratio`) lives at the
+/// theme root and is shared with the light-only test below; this module adds
+/// the *methodology*: a [`Palette`] per [`Theme`], a per-palette
+/// [`contrast_check`] that walks every text/UI pairing the palettes actually
+/// draw, and the [`contrast_test`] merge gate that fails CI listing every
+/// failure with role, measured ratio and required ratio (ticket T-007).
+///
+/// Everything in here is consumed by `theme_tests.rs` (headless, K.13); the
+/// runtime Light/Dark/HighContrast switch is a later slice — until it lands
+/// the dark and high-contrast palettes are the asserted reference for that
+/// work (D-035).
+pub use contrast::{contrast_check, contrast_test, ContrastFailure, Theme};
+pub mod contrast {
+    #![allow(dead_code)] // merge-gate API: consumed by theme_tests.rs, not yet by the binary (D-035)
+
+    use std::fmt;
+
+    use super::*;
+
+    /// The palettes the contrast gate asserts (spec AC-08).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Theme {
+        /// The shipped warm paper-and-ink palette.
+        Light,
+        /// Dark reference palette: asserted AA here; runtime switching is a
+        /// later slice (D-035).
+        Dark,
+        /// High-contrast reference palette: WCAG AAA (7:1) text.
+        HighContrast,
+    }
+
+    impl Theme {
+        /// Every palette the gate walks, in display order.
+        pub const ALL: [Theme; 3] = [Theme::Light, Theme::Dark, Theme::HighContrast];
+
+        /// Lowercase name used in failure messages.
+        pub fn name(self) -> &'static str {
+            match self {
+                Theme::Light => "light",
+                Theme::Dark => "dark",
+                Theme::HighContrast => "high-contrast",
+            }
+        }
+
+        /// WCAG body-text floor for this palette: AA 4.5:1, or AAA 7:1 for
+        /// the high-contrast variant (ticket T-007 thresholds).
+        pub fn text_floor(self) -> f64 {
+            match self {
+                Theme::HighContrast => 7.0,
+                _ => 4.5,
+            }
+        }
+    }
+
+    /// One button role's colour states for a palette. Mirrors the colour
+    /// fields of the light theme's `ButtonRoleStyle` (sizes are
+    /// palette-independent and stay there).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct ButtonStates {
+        /// Rest fill. Alpha 0 marks a ghost button: its label is checked
+        /// against both light surfaces it is drawn over.
+        pub fill: Color32,
+        /// Label colour on `fill`.
+        pub text: Color32,
+        /// Hover fill.
+        pub hover: Color32,
+        /// Pressed fill.
+        pub active: Color32,
+        /// Label colour on `active`.
+        pub text_active: Color32,
+        /// Disabled fill.
+        pub disabled: Color32,
+        /// Label colour on `disabled`.
+        pub text_disabled: Color32,
+    }
+
+    /// One palette resolved to the colours the gate checks. Light resolves
+    /// from the shipped tier-1/2/3 tokens; dark and high-contrast resolve
+    /// from their reference swatches below.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub struct Palette {
+        pub surface_base: Color32,
+        pub surface_panel: Color32,
+        pub surface_status: Color32,
+        pub text_primary: Color32,
+        pub text_secondary: Color32,
+        pub text_muted: Color32,
+        pub text_hint: Color32,
+        pub text_disabled: Color32,
+        pub text_strong: Color32,
+        pub text_match: Color32,
+        pub text_success: Color32,
+        pub text_danger: Color32,
+        pub text_warning: Color32,
+        pub text_on_accent: Color32,
+        pub accent: Color32,
+        pub accent_hover: Color32,
+        pub accent_active: Color32,
+        pub success: Color32,
+        pub danger: Color32,
+        pub danger_hover: Color32,
+        pub border_strong: Color32,
+        /// Selection edge; may be translucent — resolve with
+        /// [`composited_over`] before comparing.
+        pub border_selection: Color32,
+        /// Selected-row wash; may be translucent.
+        pub selection_fill: Color32,
+        pub focus_ring: Color32,
+        /// Button colour states in role order: primary, secondary, ghost,
+        /// danger.
+        pub buttons: [(&'static str, ButtonStates); 4],
+        pub input_fill: Color32,
+        pub input_text: Color32,
+        pub input_placeholder: Color32,
+        pub input_border: Color32,
+    }
+
+    /// One contrast failure: which pairing, what was measured, what is
+    /// required. `Display` names all three so a red CI log is actionable
+    /// (ticket T-007).
+    #[derive(Debug)]
+    pub enum ContrastFailure {
+        /// A text pairing fell under its floor (4.5:1, or 7:1 on the
+        /// high-contrast palette).
+        Text {
+            role: String,
+            ratio: f64,
+            required: f64,
+        },
+        /// A UI boundary (border, focus ring, accent graphic) fell under
+        /// 3:1 (WCAG 2.2 §1.4.11).
+        Ui {
+            role: String,
+            ratio: f64,
+            required: f64,
+        },
+    }
+
+    impl fmt::Display for ContrastFailure {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let (kind, role, ratio, required) = match self {
+                ContrastFailure::Text {
+                    role,
+                    ratio,
+                    required,
+                } => ("text", role, ratio, required),
+                ContrastFailure::Ui { role, ratio, required } => ("ui", role, ratio, required),
+            };
+            write!(
+                f,
+                "{kind} contrast failure: {role}: {ratio:.2}:1 (required {required:.1}:1)"
+            )
+        }
+    }
+
+    impl std::error::Error for ContrastFailure {}
+
+    /// Composite a translucent token over `bg`, giving the solid colour the
+    /// screen actually shows — WCAG contrast is defined for solid colours
+    /// (guide II.30.7.1). egui colours are alpha-premultiplied, so src-over
+    /// is `overlay + bg * (1 - alpha)` per channel.
+    pub fn composited_over(bg: Color32, overlay: Color32) -> Color32 {
+        let a = overlay.a() as u32;
+        let blend = |o: u8, b: u8| -> u8 {
+            let v = o as u32 + (b as u32 * (255 - a)) / 255;
+            v.min(255) as u8
+        };
+        Color32::from_rgb(
+            blend(overlay.r(), bg.r()),
+            blend(overlay.g(), bg.g()),
+            blend(overlay.b(), bg.b()),
+        )
+    }
+
+    /// Check one palette and return every failure (empty when it passes).
+    ///
+    /// The pairing lists are the surfaces each role is actually drawn on —
+    /// e.g. the `success` graphic appears on the sheet and panels, while the
+    /// status strip carries `text.success` (a 4.5:1 text role) instead — so
+    /// the gate measures real pairings, not the cross product.
+    pub fn contrast_check(theme: Theme) -> Vec<ContrastFailure> {
+        let p = palette(theme);
+        let floor = theme.text_floor();
+        let ui_floor = 3.0;
+        let mut out = Vec::new();
+        let mut c = Checker {
+            out: &mut out,
+            theme_name: theme.name(),
+        };
+
+        let surfaces: [(&str, Color32); 3] = [
+            ("surface.base", p.surface_base),
+            ("surface.panel", p.surface_panel),
+            ("surface.status", p.surface_status),
+        ];
+        let sheet_and_panel: [(&str, Color32); 2] =
+            [("surface.base", p.surface_base), ("surface.panel", p.surface_panel)];
+
+        // (a) Body and status text on every surface text is drawn on.
+        let text_roles: [(&str, Color32); 10] = [
+            ("text.primary", p.text_primary),
+            ("text.secondary", p.text_secondary),
+            ("text.muted", p.text_muted),
+            ("text.hint", p.text_hint),
+            ("text.disabled", p.text_disabled),
+            ("text.strong", p.text_strong),
+            ("text.match", p.text_match),
+            ("text.success", p.text_success),
+            ("text.danger", p.text_danger),
+            ("text.warning", p.text_warning),
+        ];
+        for (role, fg) in text_roles {
+            for (surface, bg) in surfaces {
+                c.text(role, fg, bg, surface, floor);
+            }
+        }
+
+        // (b) Labels on accent-family fills (buttons, active-tool fills).
+        let accent_fills: [(&str, Color32); 5] = [
+            ("accent", p.accent),
+            ("accent.hover", p.accent_hover),
+            ("accent.active", p.accent_active),
+            ("danger", p.danger),
+            ("danger.hover", p.danger_hover),
+        ];
+        for (fill, bg) in accent_fills {
+            c.text("text.on_accent", p.text_on_accent, bg, fill, floor);
+        }
+
+        // (c) UI boundaries and graphics: WCAG 2.2 §1.4.11, 3:1.
+        for (role, fg) in [
+            ("accent", p.accent),
+            ("accent.hover", p.accent_hover),
+            ("success", p.success),
+            ("danger", p.danger),
+            ("focus.ring", p.focus_ring),
+        ] {
+            for (surface, bg) in sheet_and_panel {
+                c.ui(role, fg, bg, surface, ui_floor);
+            }
+        }
+        // The strong border identifies input fields, so it must read on every
+        // surface a field can sit on. `border.default` stays a decorative
+        // divider, which §1.4.11 exempts.
+        for (surface, bg) in surfaces {
+            c.ui("border.strong", p.border_strong, bg, surface, ui_floor);
+        }
+        // Selection: the edge is the state marker; the wash only tints the
+        // row. Both are translucent, so resolve them first.
+        let edge_on_base = composited_over(p.surface_base, p.border_selection);
+        let edge_on_panel = composited_over(p.surface_panel, p.border_selection);
+        c.ui(
+            "border.selection (composited)",
+            edge_on_base,
+            p.surface_base,
+            "surface.base",
+            ui_floor,
+        );
+        c.ui(
+            "border.selection (composited)",
+            edge_on_panel,
+            p.surface_panel,
+            "surface.panel",
+            ui_floor,
+        );
+        let fill_on_base = composited_over(p.surface_base, p.selection_fill);
+        if fill_on_base == p.surface_base {
+            c.out.push(ContrastFailure::Ui {
+                role: format!("{}: selection.fill is invisible on surface.base", c.theme_name),
+                ratio: 1.0,
+                required: 1.0,
+            });
+        }
+        c.text(
+            "text.strong on selection.fill",
+            p.text_strong,
+            fill_on_base,
+            "surface.base (selected row)",
+            floor,
+        );
+
+        // (d) Buttons: label readable in every state (guide II.30.10).
+        for (role, b) in p.buttons {
+            let role = format!("button.{role}");
+            if b.fill.a() == 0 {
+                // Ghost: no fill of its own; the label reads against the
+                // surfaces it is drawn over.
+                c.text(
+                    &format!("{role}.text"),
+                    b.text,
+                    p.surface_base,
+                    "surface.base",
+                    floor,
+                );
+                c.text(
+                    &format!("{role}.text"),
+                    b.text,
+                    p.surface_panel,
+                    "surface.panel",
+                    floor,
+                );
+            } else {
+                c.text(&format!("{role}.text"), b.text, b.fill, &role, floor);
+            }
+            c.text(
+                &format!("{role}.text (hover)"),
+                b.text,
+                b.hover,
+                &format!("{role}.hover"),
+                floor,
+            );
+            c.text(
+                &format!("{role}.text (active)"),
+                b.text_active,
+                b.active,
+                &format!("{role}.active"),
+                floor,
+            );
+            // WCAG 2.2 §1.4.3 exempts disabled controls from contrast; the
+            // palettes still hold disabled labels to 4.5:1.
+            c.text(
+                &format!("{role}.text (disabled)"),
+                b.text_disabled,
+                b.disabled,
+                &format!("{role}.disabled"),
+                4.5,
+            );
+        }
+
+        // (e) Input fields: value text, placeholder text and the border that
+        // identifies the field (WCAG 2.2 §1.4.11). This is the reference
+        // pairing the T-002 `Field` components must implement (D-035).
+        c.text("input.text", p.input_text, p.input_fill, "input.fill", floor);
+        c.text(
+            "input.placeholder",
+            p.input_placeholder,
+            p.input_fill,
+            "input.fill",
+            floor,
+        );
+        c.ui("input.border", p.input_border, p.input_fill, "input.fill", ui_floor);
+
+        out
+    }
+
+    /// The merge gate: walk every palette; `Ok` only when all of them clear
+    /// their floors. CI runs `cargo test contrast_test` (spec AC-08).
+    pub fn contrast_test() -> Result<(), Vec<ContrastFailure>> {
+        let failures: Vec<ContrastFailure> =
+            Theme::ALL.iter().copied().flat_map(contrast_check).collect();
+        if failures.is_empty() {
+            Ok(())
+        } else {
+            Err(failures)
+        }
+    }
+
+    /// The palette behind `theme`.
+    pub fn palette(theme: Theme) -> Palette {
+        match theme {
+            Theme::Light => LIGHT,
+            Theme::Dark => DARK,
+            Theme::HighContrast => HIGH_CONTRAST,
+        }
+    }
+
+    /// Failure collector: records every below-floor pairing with the theme,
+    /// role, measured ratio and required ratio in its message.
+    struct Checker<'a> {
+        out: &'a mut Vec<ContrastFailure>,
+        theme_name: &'static str,
+    }
+
+    impl Checker<'_> {
+        fn text(&mut self, role: &str, fg: Color32, bg: Color32, surface: &str, required: f64) {
+            let ratio = super::contrast_ratio(super::rgb_of(fg), super::rgb_of(bg));
+            if ratio < required {
+                self.out.push(ContrastFailure::Text {
+                    role: format!("{}: {role} on {surface}", self.theme_name),
+                    ratio,
+                    required,
+                });
+            }
+        }
+
+        fn ui(&mut self, role: &str, fg: Color32, bg: Color32, surface: &str, required: f64) {
+            let ratio = super::contrast_ratio(super::rgb_of(fg), super::rgb_of(bg));
+            if ratio < required {
+                self.out.push(ContrastFailure::Ui {
+                    role: format!("{}: {role} on {surface}", self.theme_name),
+                    ratio,
+                    required,
+                });
+            }
+        }
+    }
+
+    // Light resolves from the shipped tokens — one token source, no drift.
+    const LIGHT: Palette = Palette {
+        surface_base: SURFACE_BASE,
+        surface_panel: SURFACE_PANEL,
+        surface_status: SURFACE_STATUS,
+        text_primary: TEXT_PRIMARY,
+        text_secondary: TEXT_SECONDARY,
+        text_muted: TEXT_MUTED,
+        text_hint: TEXT_HINT,
+        text_disabled: TEXT_DISABLED,
+        text_strong: TEXT_STRONG,
+        text_match: TEXT_MATCH,
+        text_success: TEXT_SUCCESS,
+        text_danger: TEXT_DANGER,
+        text_warning: TEXT_WARNING,
+        text_on_accent: TEXT_ON_ACCENT,
+        accent: ACCENT_DEFAULT,
+        accent_hover: ACCENT_HOVER,
+        accent_active: ACCENT_ACTIVE,
+        success: SUCCESS_DEFAULT,
+        danger: DANGER_DEFAULT,
+        danger_hover: DANGER_HOVER,
+        border_strong: BORDER_STRONG,
+        border_selection: BORDER_SELECTION,
+        selection_fill: SURFACE_SELECTION,
+        focus_ring: FOCUS_RING,
+        buttons: [
+            (
+                "primary",
+                ButtonStates {
+                    fill: BUTTON_PRIMARY_M.fill,
+                    text: BUTTON_PRIMARY_M.text,
+                    hover: BUTTON_PRIMARY_M.hover,
+                    active: BUTTON_PRIMARY_M.active,
+                    text_active: BUTTON_PRIMARY_M.text_active,
+                    disabled: BUTTON_PRIMARY_M.disabled,
+                    text_disabled: BUTTON_PRIMARY_M.text_disabled,
+                },
+            ),
+            (
+                "secondary",
+                ButtonStates {
+                    fill: BUTTON_SECONDARY_M.fill,
+                    text: BUTTON_SECONDARY_M.text,
+                    hover: BUTTON_SECONDARY_M.hover,
+                    active: BUTTON_SECONDARY_M.active,
+                    text_active: BUTTON_SECONDARY_M.text_active,
+                    disabled: BUTTON_SECONDARY_M.disabled,
+                    text_disabled: BUTTON_SECONDARY_M.text_disabled,
+                },
+            ),
+            (
+                "ghost",
+                ButtonStates {
+                    fill: BUTTON_GHOST_M.fill,
+                    text: BUTTON_GHOST_M.text,
+                    hover: BUTTON_GHOST_M.hover,
+                    active: BUTTON_GHOST_M.active,
+                    text_active: BUTTON_GHOST_M.text_active,
+                    disabled: BUTTON_GHOST_M.disabled,
+                    text_disabled: BUTTON_GHOST_M.text_disabled,
+                },
+            ),
+            (
+                "danger",
+                ButtonStates {
+                    fill: BUTTON_DANGER_M.fill,
+                    text: BUTTON_DANGER_M.text,
+                    hover: BUTTON_DANGER_M.hover,
+                    active: BUTTON_DANGER_M.active,
+                    text_active: BUTTON_DANGER_M.text_active,
+                    disabled: BUTTON_DANGER_M.disabled,
+                    text_disabled: BUTTON_DANGER_M.text_disabled,
+                },
+            ),
+        ],
+        input_fill: SURFACE_BASE,
+        input_text: TEXT_PRIMARY,
+        input_placeholder: TEXT_MUTED,
+        input_border: BORDER_STRONG,
+    };
+
+    // Dark reference swatches (tier-1 style: raw, no meaning attached).
+    const DARK_SHEET: Color32 = Color32::from_rgb(32, 30, 28);
+    const DARK_PANEL: Color32 = Color32::from_rgb(44, 41, 38);
+    const DARK_STATUS: Color32 = Color32::from_rgb(38, 35, 33);
+    const DARK_TEXT_SECONDARY: Color32 = Color32::from_rgb(176, 170, 162);
+    const DARK_TEXT_MUTED: Color32 = Color32::from_rgb(152, 146, 138);
+    const DARK_TEXT_HINT: Color32 = Color32::from_rgb(168, 162, 154);
+    const DARK_TEXT_DISABLED: Color32 = Color32::from_rgb(156, 150, 142);
+    const DARK_TEXT_MATCH: Color32 = Color32::from_rgb(110, 175, 235);
+    const DARK_TEXT_WARNING: Color32 = Color32::from_rgb(222, 150, 60);
+    const DARK_COBALT: Color32 = Color32::from_rgb(86, 156, 214);
+    const DARK_COBALT_HOVER: Color32 = Color32::from_rgb(108, 172, 224);
+    const DARK_SUCCESS: Color32 = Color32::from_rgb(74, 200, 130);
+    const DARK_DANGER: Color32 = Color32::from_rgb(255, 107, 103);
+    const DARK_DANGER_HOVER: Color32 = Color32::from_rgb(255, 130, 124);
+    const DARK_BORDER_STRONG: Color32 = Color32::from_rgb(140, 134, 126);
+    const DARK_WIDGET_HOVER: Color32 = Color32::from_rgb(52, 49, 46);
+    const DARK_INPUT_FILL: Color32 = Color32::from_rgb(26, 24, 22);
+
+    /// Dark reference palette. Warm graphite sheet, paper ink, a lighter
+    /// cobalt so the accent stays a visible boundary on dark surfaces
+    /// (5.6:1 on the sheet), and dark labels on the now-light accent fills.
+    const DARK: Palette = Palette {
+        surface_base: DARK_SHEET,
+        surface_panel: DARK_PANEL,
+        surface_status: DARK_STATUS,
+        text_primary: BASE_PAPER,
+        text_secondary: DARK_TEXT_SECONDARY,
+        text_muted: DARK_TEXT_MUTED,
+        text_hint: DARK_TEXT_HINT,
+        text_disabled: DARK_TEXT_DISABLED,
+        text_strong: Color32::WHITE,
+        text_match: DARK_TEXT_MATCH,
+        text_success: DARK_SUCCESS,
+        text_danger: DARK_DANGER,
+        text_warning: DARK_TEXT_WARNING,
+        text_on_accent: BASE_INK,
+        accent: DARK_COBALT,
+        accent_hover: DARK_COBALT_HOVER,
+        accent_active: BASE_PAPER,
+        success: DARK_SUCCESS,
+        danger: DARK_DANGER,
+        danger_hover: DARK_DANGER_HOVER,
+        border_strong: DARK_BORDER_STRONG,
+        border_selection: Color32::from_white_alpha(140),
+        selection_fill: Color32::from_white_alpha(30),
+        focus_ring: DARK_COBALT,
+        buttons: [
+            (
+                "primary",
+                ButtonStates {
+                    fill: DARK_COBALT,
+                    text: BASE_INK,
+                    hover: DARK_COBALT_HOVER,
+                    active: BASE_PAPER,
+                    text_active: BASE_INK,
+                    disabled: DARK_TEXT_MUTED,
+                    text_disabled: BASE_INK,
+                },
+            ),
+            (
+                "secondary",
+                ButtonStates {
+                    fill: DARK_PANEL,
+                    text: BASE_PAPER,
+                    hover: DARK_WIDGET_HOVER,
+                    active: DARK_COBALT,
+                    text_active: BASE_INK,
+                    disabled: DARK_TEXT_MUTED,
+                    text_disabled: BASE_INK,
+                },
+            ),
+            (
+                "ghost",
+                ButtonStates {
+                    fill: SURFACE_TRANSPARENT,
+                    text: BASE_PAPER,
+                    hover: DARK_PANEL,
+                    active: DARK_COBALT,
+                    text_active: BASE_INK,
+                    disabled: DARK_TEXT_MUTED,
+                    text_disabled: BASE_INK,
+                },
+            ),
+            (
+                "danger",
+                ButtonStates {
+                    fill: DARK_DANGER,
+                    text: BASE_INK,
+                    hover: DARK_DANGER_HOVER,
+                    active: BASE_PAPER,
+                    text_active: BASE_INK,
+                    disabled: DARK_TEXT_MUTED,
+                    text_disabled: BASE_INK,
+                },
+            ),
+        ],
+        input_fill: DARK_INPUT_FILL,
+        input_text: BASE_PAPER,
+        input_placeholder: DARK_TEXT_MUTED,
+        input_border: DARK_BORDER_STRONG,
+    };
+
+    // High-contrast reference swatches (tier-1 style: raw, no meaning).
+    const HC_SHEET: Color32 = Color32::from_rgb(12, 12, 12);
+    const HC_PANEL: Color32 = Color32::from_rgb(26, 26, 26);
+    const HC_STATUS: Color32 = Color32::from_rgb(20, 20, 20);
+    const HC_TEXT_SECONDARY: Color32 = Color32::from_rgb(200, 200, 200);
+    const HC_TEXT_MUTED: Color32 = Color32::from_rgb(170, 170, 170);
+    const HC_TEXT_HINT: Color32 = Color32::from_rgb(176, 176, 176);
+    const HC_TEXT_DISABLED: Color32 = Color32::from_rgb(166, 166, 166);
+    const HC_TEXT_MATCH: Color32 = Color32::from_rgb(150, 205, 255);
+    const HC_COBALT: Color32 = Color32::from_rgb(120, 190, 255);
+    const HC_COBALT_HOVER: Color32 = Color32::from_rgb(150, 205, 255);
+    const HC_SUCCESS: Color32 = Color32::from_rgb(0, 230, 118);
+    const HC_DANGER: Color32 = Color32::from_rgb(255, 133, 127);
+    const HC_DANGER_HOVER: Color32 = Color32::from_rgb(255, 150, 145);
+    const HC_WARNING: Color32 = Color32::from_rgb(255, 190, 90);
+    const HC_BORDER_STRONG: Color32 = Color32::from_rgb(200, 200, 200);
+    const HC_DISABLED_FILL: Color32 = Color32::from_rgb(60, 60, 60);
+    const HC_WIDGET_HOVER: Color32 = Color32::from_rgb(44, 44, 44);
+
+    /// High-contrast reference palette: near-black sheet, white ink, every
+    /// text role at or over the 7:1 AAA floor (dark labels on the light
+    /// accent and status fills), solid white selection edge.
+    const HIGH_CONTRAST: Palette = Palette {
+        surface_base: HC_SHEET,
+        surface_panel: HC_PANEL,
+        surface_status: HC_STATUS,
+        text_primary: Color32::WHITE,
+        text_secondary: HC_TEXT_SECONDARY,
+        text_muted: HC_TEXT_MUTED,
+        text_hint: HC_TEXT_HINT,
+        text_disabled: HC_TEXT_DISABLED,
+        text_strong: Color32::WHITE,
+        text_match: HC_TEXT_MATCH,
+        text_success: HC_SUCCESS,
+        text_danger: HC_DANGER,
+        text_warning: HC_WARNING,
+        text_on_accent: BASE_INK,
+        accent: HC_COBALT,
+        accent_hover: HC_COBALT_HOVER,
+        accent_active: Color32::WHITE,
+        success: HC_SUCCESS,
+        danger: HC_DANGER,
+        danger_hover: HC_DANGER_HOVER,
+        border_strong: HC_BORDER_STRONG,
+        border_selection: Color32::WHITE,
+        selection_fill: Color32::from_white_alpha(60),
+        focus_ring: HC_COBALT,
+        buttons: [
+            (
+                "primary",
+                ButtonStates {
+                    fill: HC_COBALT,
+                    text: BASE_INK,
+                    hover: HC_COBALT_HOVER,
+                    active: Color32::WHITE,
+                    text_active: BASE_INK,
+                    disabled: HC_DISABLED_FILL,
+                    text_disabled: HC_TEXT_DISABLED,
+                },
+            ),
+            (
+                "secondary",
+                ButtonStates {
+                    fill: HC_PANEL,
+                    text: Color32::WHITE,
+                    hover: HC_WIDGET_HOVER,
+                    active: Color32::WHITE,
+                    text_active: BASE_INK,
+                    disabled: HC_DISABLED_FILL,
+                    text_disabled: HC_TEXT_DISABLED,
+                },
+            ),
+            (
+                "ghost",
+                ButtonStates {
+                    fill: SURFACE_TRANSPARENT,
+                    text: Color32::WHITE,
+                    hover: HC_WIDGET_HOVER,
+                    active: Color32::WHITE,
+                    text_active: BASE_INK,
+                    disabled: HC_DISABLED_FILL,
+                    text_disabled: HC_TEXT_DISABLED,
+                },
+            ),
+            (
+                "danger",
+                ButtonStates {
+                    fill: HC_DANGER,
+                    text: BASE_INK,
+                    hover: HC_DANGER_HOVER,
+                    active: Color32::WHITE,
+                    text_active: BASE_INK,
+                    disabled: HC_DISABLED_FILL,
+                    text_disabled: HC_TEXT_DISABLED,
+                },
+            ),
+        ],
+        input_fill: Color32::BLACK,
+        input_text: Color32::WHITE,
+        input_placeholder: HC_TEXT_MUTED,
+        input_border: Color32::WHITE,
+    };
+}
+
 /// Button corner radius (design-token radii 2/4/8/12 — guide II.30.6).
 pub const BUTTON_CORNER_RADIUS: f32 = 4.0;
+
+/// The 2 px accent ring every button variant paints while focused, and the
+/// accent outline hand-styled buttons reuse (guide II.30.7.4).
+pub const BUTTON_RING: Color32 = FOCUS_RING;
 
 /// Minimum target size for icon-only buttons (24pt floor per guide II.30.7.5).
 pub const ICON_BUTTON_MIN_TARGET: f32 = 24.0;
@@ -824,6 +1565,7 @@ mod tests {
             ("SURFACE_SELECTION", SURFACE_SELECTION, BASE_SELECTION_WASH),
             ("BORDER_DEFAULT", BORDER_DEFAULT, BASE_PANEL_BORDER),
             ("BORDER_SELECTION", BORDER_SELECTION, BASE_SELECTION_EDGE),
+            ("BORDER_STRONG", BORDER_STRONG, BASE_WALL_STROKE),
             ("TEXT_PRIMARY", TEXT_PRIMARY, BASE_INK),
             ("TEXT_MUTED", TEXT_MUTED, BASE_GRAPHITE_MUTED),
             ("TEXT_HINT", TEXT_HINT, BASE_GRAPHITE_HINT),
@@ -833,6 +1575,7 @@ mod tests {
             ("TEXT_MATCH", TEXT_MATCH, BASE_MATCH_BLUE),
             ("TEXT_SUCCESS", TEXT_SUCCESS, BASE_VALID),
             ("TEXT_DANGER", TEXT_DANGER, BASE_ERROR),
+            ("TEXT_WARNING", TEXT_WARNING, BASE_WARNING),
             ("ACCENT_DEFAULT", ACCENT_DEFAULT, BASE_COBALT),
             ("ACCENT_HOVER", ACCENT_HOVER, BASE_COBALT_HOVER),
             ("ACCENT_ACTIVE", ACCENT_ACTIVE, BASE_INK),
