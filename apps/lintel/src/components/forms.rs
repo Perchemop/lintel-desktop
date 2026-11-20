@@ -4,7 +4,7 @@
 //! spec v0.20.0 AC-03). All colours/spacing/radii from `SPEC.component.field`.
 //! No raw `Color32` outside `theme.rs`.
 
-use crate::theme::{self, SPEC};
+use crate::theme::SPEC;
 use eframe::egui;
 
 /// A single form field: label + input + optional error/help text.
@@ -15,11 +15,11 @@ use eframe::egui;
 ///     .help_text("Exterior walls typically ≥ 200 mm")
 ///     .show(ui);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Field<'a> {
     label: String,
     required: bool,
-    input_builder: Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>,
+    input_fn: Option<Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>>,
     error_text: Option<String>,
     help_text: Option<String>,
     disabled: bool,
@@ -32,7 +32,7 @@ impl<'a> Field<'a> {
         Self {
             label: label.into(),
             required: false,
-            input_builder: Box::new(|_ui| egui::Response::default()),
+            input_fn: None,
             error_text: None,
             help_text: None,
             disabled: false,
@@ -50,7 +50,7 @@ impl<'a> Field<'a> {
     /// widget, and returns its `Response`. The field wires `labelled_by`
     /// and focus handling automatically.
     pub fn input(mut self, f: impl FnOnce(&mut egui::Ui) -> egui::Response + 'a) -> Self {
-        self.input_builder = Box::new(f);
+        self.input_fn = Some(Box::new(f));
         self
     }
 
@@ -96,7 +96,7 @@ impl<'a> Field<'a> {
                 .color(tokens.label),
         );
 
-        // Input row — paint a custom frame so we control border colour by state
+        // Reserve space for the input
         let input_rect = ui.available_rect_before_wrap();
         let input_height = tokens.min_height;
         let input_width = input_rect.width();
@@ -120,7 +120,7 @@ impl<'a> Field<'a> {
             .fill(tokens.input_fill)
             .stroke(egui::Stroke::new(1.0, border_colour))
             .corner_radius(tokens.corner_radius)
-            .inner_margin(egui::Margin::symmetric(tokens.border_pad as i8, tokens.border_pad as i8));
+            .inner_margin(egui::Margin::symmetric(tokens.border_pad, tokens.border_pad));
 
         // Paint the frame background + border
         if ui.is_rect_visible(input_rect) {
@@ -143,7 +143,11 @@ impl<'a> Field<'a> {
         );
 
         // The closure returns the input widget's Response
-        let input_resp = (self.input_builder)(&mut child_ui);
+        let input_resp = if let Some(f) = self.input_fn {
+            f(&mut child_ui)
+        } else {
+            child_ui.allocate_exact_size(egui::Vec2::ZERO, egui::Sense::hover()).1
+        };
 
         // Associate label with input for AccessKit (II.30.7.4)
         let labelled_resp = input_resp.labelled_by(label_resp.id);
@@ -200,14 +204,25 @@ impl<'a> Field<'a> {
         // Disabled tooltip
         if self.disabled {
             if let Some(reason) = &self.disabled_reason {
-                labelled_resp.on_disabled_hover_text(reason);
+                // Use on_disabled_hover_text for disabled state
+                // Note: on_disabled_hover_text takes ownership, so we need the response
+                // This is a placeholder - in real code we'd use the response directly
             }
         }
 
         // Restore default spacing
         ui.spacing_mut().item_spacing.y = tokens.row_spacing;
 
-        labelled_resp
+        // Return the labelled response
+        if self.disabled {
+            if let Some(reason) = self.disabled_reason {
+                labelled_resp.on_disabled_hover_text(reason)
+            } else {
+                labelled_resp
+            }
+        } else {
+            labelled_resp
+        }
     }
 }
 
@@ -221,7 +236,7 @@ impl<'a> Field<'a> {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct FieldSet<'a> {
     legend: String,
     fields: Vec<Field<'a>>,
@@ -340,9 +355,9 @@ impl<'a> FieldSet<'a> {
 ///     ])
 ///     .show(ui);
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct FieldGroup<'a> {
-    fields: Vec<Box<dyn FnOnce(&mut egui::Ui) + 'a>>,
+    fields: Vec<Field<'a>>,
     direction: egui::Direction,
     spacing: f32,
     enabled: bool,
@@ -372,16 +387,14 @@ impl<'a> FieldGroup<'a> {
     }
 
     /// Add a field.
-    pub fn field(mut self, f: impl FnOnce(&mut egui::Ui) + 'a) -> Self {
-        self.fields.push(Box::new(f));
+    pub fn field(mut self, field: Field<'a>) -> Self {
+        self.fields.push(field);
         self
     }
 
     /// Set multiple fields at once.
-    pub fn fields(mut self, fields: Vec<impl FnOnce(&mut egui::Ui) + 'a>) -> Self {
-        for f in fields {
-            self.fields.push(Box::new(f));
-        }
+    pub fn fields(mut self, fields: Vec<Field<'a>>) -> Self {
+        self.fields = fields;
         self
     }
 
@@ -403,16 +416,16 @@ impl<'a> FieldGroup<'a> {
             egui::Direction::LeftToRight => {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = self.spacing;
-                    for f in self.fields {
-                        f(ui);
+                    for field in self.fields {
+                        field.show(ui);
                     }
                 });
             }
             egui::Direction::TopDown => {
                 ui.vertical(|ui| {
                     ui.spacing_mut().item_spacing.y = self.spacing;
-                    for f in self.fields {
-                        f(ui);
+                    for field in self.fields {
+                        field.show(ui);
                     }
                 });
             }
@@ -420,8 +433,8 @@ impl<'a> FieldGroup<'a> {
                 // Default to horizontal for any other direction
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = self.spacing;
-                    for f in self.fields {
-                        f(ui);
+                    for field in self.fields {
+                        field.show(ui);
                     }
                 });
             }
@@ -440,19 +453,19 @@ mod tests {
     use super::*;
     use eframe::egui;
 
-    /// Run a headless egui frame with the given UI closure.
+    /// Run a headless egui frame with the given UI closure (egui 0.36
+    /// removed `Context::run`; `run_ui` hands over a `&mut Ui` directly).
     fn with_ui(f: impl FnOnce(&mut egui::Ui)) {
         let ctx = egui::Context::default();
-        ctx.run(egui::RawInput::default(), |ctx| {
-            egui::CentralPanel::default().show(ctx, |ui| f(ui));
-        });
+        let _ = ctx.run_ui(egui::RawInput::default(), |ui| f(ui));
     }
 
     #[test]
     fn field_renders_label_and_input_without_panic() {
         with_ui(|ui| {
+            let mut val = 200.0;
             Field::new("Wall thickness")
-                .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0).suffix(" mm")))
+                .input(|ui| ui.add(egui::DragValue::new(&mut val).speed(10.0).suffix(" mm")))
                 .show(ui);
         });
     }
@@ -460,8 +473,9 @@ mod tests {
     #[test]
     fn field_with_error_shows_error_icon_and_text() {
         with_ui(|ui| {
+            let mut val = 200.0;
             Field::new("Wall thickness")
-                .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0).suffix(" mm")))
+                .input(|ui| ui.add(egui::DragValue::new(&mut val).speed(10.0).suffix(" mm")))
                 .error_text("Must be ≥ 100 mm")
                 .show(ui);
         });
@@ -470,8 +484,9 @@ mod tests {
     #[test]
     fn field_with_help_shows_help_text() {
         with_ui(|ui| {
+            let mut val = 200.0;
             Field::new("Wall thickness")
-                .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0).suffix(" mm")))
+                .input(|ui| ui.add(egui::DragValue::new(&mut val).speed(10.0).suffix(" mm")))
                 .help_text("Exterior walls typically ≥ 200 mm")
                 .show(ui);
         });
@@ -480,8 +495,9 @@ mod tests {
     #[test]
     fn field_disabled_renders_with_reason() {
         with_ui(|ui| {
+            let mut val = 200.0;
             Field::new("Wall thickness")
-                .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0).suffix(" mm")))
+                .input(|ui| ui.add(egui::DragValue::new(&mut val).speed(10.0).suffix(" mm")))
                 .disabled(true)
                 .disabled_reason("No wall selected")
                 .show(ui);
@@ -491,9 +507,10 @@ mod tests {
     #[test]
     fn field_required_shows_asterisk() {
         with_ui(|ui| {
+            let mut val = 200.0;
             Field::new("Wall thickness")
                 .required(true)
-                .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0).suffix(" mm")))
+                .input(|ui| ui.add(egui::DragValue::new(&mut val).speed(10.0).suffix(" mm")))
                 .show(ui);
         });
     }
@@ -501,18 +518,14 @@ mod tests {
     #[test]
     fn fieldset_renders_legend_and_fields() {
         with_ui(|ui| {
+            let mut t = 200.0;
+            let mut h = 2800.0;
             FieldSet::new("Wall properties")
                 .fields(vec![
-                    |ui| {
-                        Field::new("Thickness")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0)))
-                            .show(ui);
-                    },
-                    |ui| {
-                        Field::new("Height")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 2800.0).speed(10.0)))
-                            .show(ui);
-                    },
+                    Field::new("Thickness")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut t).speed(10.0))),
+                    Field::new("Height")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut h).speed(10.0))),
                 ])
                 .show(ui);
         });
@@ -521,15 +534,13 @@ mod tests {
     #[test]
     fn fieldset_collapsible_renders_without_panic() {
         with_ui(|ui| {
+            let mut t = 200.0;
             FieldSet::new("Wall properties")
                 .collapsible(true)
                 .default_open(false)
                 .fields(vec![
-                    |ui| {
-                        Field::new("Thickness")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0)))
-                            .show(ui);
-                    },
+                    Field::new("Thickness")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut t).speed(10.0))),
                 ])
                 .show(ui);
         });
@@ -538,14 +549,12 @@ mod tests {
     #[test]
     fn fieldset_disabled_renders_grayed_out() {
         with_ui(|ui| {
+            let mut t = 200.0;
             FieldSet::new("Wall properties")
                 .enabled(false)
                 .fields(vec![
-                    |ui| {
-                        Field::new("Thickness")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 200.0).speed(10.0)))
-                            .show(ui);
-                    },
+                    Field::new("Thickness")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut t).speed(10.0))),
                 ])
                 .show(ui);
         });
@@ -554,19 +563,15 @@ mod tests {
     #[test]
     fn fieldgroup_horizontal_renders_fields_side_by_side() {
         with_ui(|ui| {
+            let mut w = 4000.0;
+            let mut h = 3000.0;
             FieldGroup::new()
                 .direction(egui::Direction::LeftToRight)
                 .fields(vec![
-                    |ui| {
-                        Field::new("Width")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 4000.0).speed(10.0)))
-                            .show(ui);
-                    },
-                    |ui| {
-                        Field::new("Height")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 3000.0).speed(10.0)))
-                            .show(ui);
-                    },
+                    Field::new("Width")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut w).speed(10.0))),
+                    Field::new("Height")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut h).speed(10.0))),
                 ])
                 .show(ui);
         });
@@ -575,19 +580,15 @@ mod tests {
     #[test]
     fn fieldgroup_vertical_renders_fields_stacked() {
         with_ui(|ui| {
+            let mut w = 4000.0;
+            let mut h = 3000.0;
             FieldGroup::new()
                 .direction(egui::Direction::TopDown)
                 .fields(vec![
-                    |ui| {
-                        Field::new("Width")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 4000.0).speed(10.0)))
-                            .show(ui);
-                    },
-                    |ui| {
-                        Field::new("Height")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 3000.0).speed(10.0)))
-                            .show(ui);
-                    },
+                    Field::new("Width")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut w).speed(10.0))),
+                    Field::new("Height")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut h).speed(10.0))),
                 ])
                 .show(ui);
         });
@@ -596,20 +597,16 @@ mod tests {
     #[test]
     fn fieldgroup_custom_spacing() {
         with_ui(|ui| {
+            let mut a = 1.0;
+            let mut b = 2.0;
             FieldGroup::new()
                 .direction(egui::Direction::LeftToRight)
                 .spacing(24.0)
                 .fields(vec![
-                    |ui| {
-                        Field::new("A")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 1.0)))
-                            .show(ui);
-                    },
-                    |ui| {
-                        Field::new("B")
-                            .input(|ui| ui.add(egui::DragValue::new(&mut 2.0)))
-                            .show(ui);
-                    },
+                    Field::new("A")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut a))),
+                    Field::new("B")
+                        .input(|ui| ui.add(egui::DragValue::new(&mut b))),
                 ])
                 .show(ui);
         });
