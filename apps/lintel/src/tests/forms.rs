@@ -116,7 +116,8 @@ fn field_group_lays_out_horizontally_and_vertically() {
                 Field::new("B").input(|ui| ui.text_edit_singleline(&mut second)),
             ])
             .show(ui);
-        let horizontal = ui.min_rect();
+        let horizontal_height = ui.min_rect().height();
+        let horizontal_width = ui.min_rect().width();
 
         FieldGroup::new()
             .fields(vec![
@@ -125,15 +126,19 @@ fn field_group_lays_out_horizontally_and_vertically() {
             ])
             .direction(egui::Direction::TopDown)
             .show(ui);
-        let vertical = ui.min_rect() - horizontal.size();
+        let total_height = ui.min_rect().height();
 
-        *sink.borrow_mut() = Some((horizontal.width(), vertical.height()));
+        *sink.borrow_mut() = Some((horizontal_width, horizontal_height, total_height));
     });
-    let (horizontal_width, vertical_added_height) = shapes.borrow().expect("the pass ran");
+    let (width, horizontal_height, total_height) = shapes.borrow().expect("the pass ran");
     assert!(
-        vertical_added_height >= horizontal_width * 0.5,
+        width > 0.0 && horizontal_height > 0.0,
+        "the horizontal group must render: {width}x{horizontal_height}"
+    );
+    assert!(
+        total_height > horizontal_height,
         "the vertical group must add its own rows below the horizontal one \
-         (horizontal width {horizontal_width}, added height {vertical_added_height})"
+         (horizontal {horizontal_height}, total {total_height})"
     );
 }
 

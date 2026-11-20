@@ -596,6 +596,7 @@ pub mod contrast {
         pub text_match: Color32,
         pub text_success: Color32,
         pub text_danger: Color32,
+        pub text_error: Color32,
         pub text_warning: Color32,
         pub text_on_accent: Color32,
         pub accent: Color32,
@@ -702,7 +703,7 @@ pub mod contrast {
             [("surface.base", p.surface_base), ("surface.panel", p.surface_panel)];
 
         // (a) Body and status text on every surface text is drawn on.
-        let text_roles: [(&str, Color32); 10] = [
+        let text_roles: [(&str, Color32); 11] = [
             ("text.primary", p.text_primary),
             ("text.secondary", p.text_secondary),
             ("text.muted", p.text_muted),
@@ -712,6 +713,7 @@ pub mod contrast {
             ("text.match", p.text_match),
             ("text.success", p.text_success),
             ("text.danger", p.text_danger),
+            ("text.error", p.text_error),
             ("text.warning", p.text_warning),
         ];
         for (role, fg) in text_roles {

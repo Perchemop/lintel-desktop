@@ -6,6 +6,7 @@
 
 use crate::canvas::{SnapModeKind, SnapModes};
 use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::command::Command;
 use lintel_core::units::UnitSystem;
@@ -31,7 +32,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
         ui.label(
             egui::RichText::new(snap_text)
                 .small()
-                .color(theme::TEXT_HINT),
+                .color(SPEC.component.text.hint),
         );
         ui.separator();
 
@@ -47,7 +48,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
             ui,
             "Grid",
             grid_on,
-            theme::TEXT_HINT,
+            SPEC.component.text.hint,
             "Toggle the drawing grid (G).",
             || {
                 app.snap.grid_enabled = !grid_on;
@@ -58,7 +59,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
             ui,
             "Ortho",
             ortho_on,
-            theme::TEXT_HINT,
+            SPEC.component.text.hint,
             "Toggle orthogonal drawing (O).",
             || {
                 app.snap.ortho = !ortho_on;
@@ -100,9 +101,9 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
         if ui
             .add(
                 egui::Button::new(units.label())
-                    .fill(crate::theme::BUTTON_PRIMARY_S.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_sm.fill)
+                    .min_size(SPEC.component.button.primary_sm.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Click to switch the unit system.")
             .clicked()
@@ -115,7 +116,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
             let version = ui.link(
                 egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
                     .small()
-                    .color(theme::TEXT_HINT),
+                    .color(SPEC.component.text.hint),
             );
             if version
                 .on_hover_text("Release notes and update status")
@@ -139,7 +140,7 @@ fn chip(
     let text = egui::RichText::new(label).small().color(if active {
         active_colour
     } else {
-        theme::TEXT_HINT
+        SPEC.component.text.hint
     });
     let response = ui.selectable_label(active, text).on_hover_text(hint);
     if response.clicked() {
