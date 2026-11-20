@@ -187,7 +187,7 @@ pub fn regions(
         let resp = egui::Window::new("Inspector")
             .default_pos(egui::Pos2::new(4.0, 40.0))
             .show(ctx, |ui| {
-                if let Some(cmd) = inspector(
+                let cmd = inspector(
                     ui,
                     &app.doc,
                     &app.selection,
@@ -195,9 +195,11 @@ pub fn regions(
                     &mut app.inspector_draft,
                     app.tool == Tool::Measurements,
                     app.selected_block_instance,
-                ) {
+                );
+                if let Some(cmd) = cmd {
                     let _ = app.doc.apply(cmd, now);
                 }
+                cmd
             });
         inspector_response = resp;
     }
@@ -218,6 +220,50 @@ pub fn regions(
 /// Title bar region: app name, window controls, breadcrumb.
 fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::Response {
     let resp = ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = theme::SPACING_MD;
+
+        // App name
+        ui.label(
+            egui::RichText::new("Lintel")
+                .heading()
+                .color(theme::TEXT_PRIMARY),
+        );
+
+        ui.separator();
+
+        // Breadcrumb: active level name
+        if let Some(level) = app.doc.project().active_level() {
+            ui.label(
+                egui::RichText::new(&level.name)
+                    .small()
+                    .color(theme::TEXT_MUTED),
+            );
+        }
+
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            // Window controls (cross-platform, not OS native)
+            if ui
+                .add(StyledButton::new("✕").role(ButtonRole::Ghost).size(ButtonSize::Sm))
+                .on_hover_text("Close Lintel")
+                .clicked()
+            {
+                ui.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+
+            // Update status indicator
+            if let Some(status) = app.status.clone()
+                && now_epoch_s().saturating_sub(app.status_at) < 8
+            {
+                ui.label(
+                    egui::RichText::new(status)
+                        .small()
+                        .color(theme::TEXT_DANGER),
+                );
+            }
+        });
+    });
+    resp.response
+}
         ui.spacing_mut().item_spacing.x = theme::SPACING_MD;
 
         // App name
@@ -319,7 +365,7 @@ fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
             });
         });
     });
-    resp
+    resp.response
 }
 
 /// A tool button in the rail.

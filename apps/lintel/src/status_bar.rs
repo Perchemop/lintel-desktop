@@ -10,7 +10,7 @@ use eframe::egui;
 use lintel_core::command::Command;
 use lintel_core::units::UnitSystem;
 
-pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
+pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::Response {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 4.0;
 
@@ -124,7 +124,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
                 app.showing_notes = true;
             }
         });
-    });
+    }).response
 }
 
 /// One toggle chip: the label, coloured by its kind when it is active.
