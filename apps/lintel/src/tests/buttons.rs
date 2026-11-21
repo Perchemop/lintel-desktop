@@ -8,9 +8,9 @@
 use crate::components::buttons::{ButtonVisualState, StyledButton};
 use crate::theme::{
     BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L, BUTTON_GHOST_M,
-    BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
-    BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
-    ButtonRole, ButtonSize, SURFACE_BASE, contrast_ratio, rgb_of,
+    BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S, BUTTON_SECONDARY_L,
+    BUTTON_SECONDARY_M, BUTTON_SECONDARY_S, ButtonRole, ButtonSize, SURFACE_BASE, contrast_ratio,
+    rgb_of,
 };
 use eframe::egui;
 use std::cell::RefCell;
@@ -42,7 +42,7 @@ const ALL_ROLES: [ButtonRole; 4] = [
 /// Run one headless egui pass and hand the panel `Ui` to `f`.
 // `Context::run_ui` re-runs its closure, so the body must be `FnMut`; the
 // test bodies are pure draws and satisfy that trivially.
-fn with_ui(f: impl FnMut(&mut egui::Ui)) {
+fn with_ui(mut f: impl FnMut(&mut egui::Ui)) {
     let ctx = egui::Context::default();
     let _ = ctx.run_ui(egui::RawInput::default(), |root| {
         egui::CentralPanel::default().show(root, |ui| f(ui));
@@ -53,7 +53,7 @@ fn with_ui(f: impl FnMut(&mut egui::Ui)) {
 fn button_rect_with_input(
     ctx: &egui::Context,
     input: egui::RawInput,
-    f: impl FnMut(&mut egui::Ui) -> egui::Response,
+    mut f: impl FnMut(&mut egui::Ui) -> egui::Response,
 ) -> egui::Rect {
     let slot = std::cell::RefCell::new(None);
     let _ = ctx.run_ui(input, |root| {
@@ -65,10 +65,7 @@ fn button_rect_with_input(
 }
 
 /// Run one pass on `ctx` with default input and return the widget's rect.
-fn button_rect(
-    ctx: &egui::Context,
-    f: impl FnMut(&mut egui::Ui) -> egui::Response,
-) -> egui::Rect {
+fn button_rect(ctx: &egui::Context, f: impl FnMut(&mut egui::Ui) -> egui::Response) -> egui::Rect {
     button_rect_with_input(ctx, egui::RawInput::default(), f)
 }
 
@@ -141,7 +138,10 @@ fn narrow_label_pins_the_24pt_floor_for_every_role() {
     // not the text — decides the size (guide II.30.7.5).
     with_ui(|ui| {
         for role in ALL_ROLES {
-            let response = StyledButton::new("·").role(role).size(ButtonSize::Sm).show(ui);
+            let response = StyledButton::new("·")
+                .role(role)
+                .size(ButtonSize::Sm)
+                .show(ui);
             assert!(
                 response.rect.width() >= 24.0,
                 "{role:?}: width {} is below the 24pt floor",
@@ -161,11 +161,16 @@ fn long_labels_grow_the_button_beyond_the_floor() {
     // `min_size` is a floor, never a cap: a long label must widen the button
     // instead of clipping (guide II.30.7.6).
     with_ui(|ui| {
-        let narrow = StyledButton::new("·").size(ButtonSize::Sm).show(ui).rect.width();
+        let narrow = StyledButton::new("·")
+            .size(ButtonSize::Sm)
+            .show(ui)
+            .rect
+            .width();
         let wide = StyledButton::new("Construction circle")
             .size(ButtonSize::Sm)
             .show(ui)
-            .rect.width();
+            .rect
+            .width();
         assert!(
             wide > narrow,
             "a long label must grow the button (narrow {narrow}, wide {wide}), not clip"
@@ -200,7 +205,10 @@ fn loading_keeps_size_stable() {
         }
         // A label wider than the token floor: the label's reserved width must
         // survive loading, because the spinner is drawn inside that space.
-        let normal = StyledButton::new("Construction circle").show(ui).rect.size();
+        let normal = StyledButton::new("Construction circle")
+            .show(ui)
+            .rect
+            .size();
         let loading = StyledButton::new("Construction circle")
             .loading(true)
             .show(ui)
@@ -218,7 +226,11 @@ fn loading_keeps_size_stable() {
 fn selected_state_renders_and_keeps_size() {
     with_ui(|ui| {
         let normal = StyledButton::new("Wall").show(ui).rect.size();
-        let selected = StyledButton::new("Wall").selected(true).show(ui).rect.size();
+        let selected = StyledButton::new("Wall")
+            .selected(true)
+            .show(ui)
+            .rect
+            .size();
         assert_eq!(normal, selected, "selection must not shift layout");
     });
 }
@@ -231,7 +243,9 @@ fn hover_does_not_move_or_resize_a_button() {
     let at_rest = button_rect(&ctx, |ui| StyledButton::new("Hover me").show(ui));
 
     let mut hovered_input = egui::RawInput::default();
-    hovered_input.events.push(egui::Event::PointerMoved(at_rest.center()));
+    hovered_input
+        .events
+        .push(egui::Event::PointerMoved(at_rest.center()));
     let hovered = button_rect_with_input(&ctx, hovered_input, |ui| {
         StyledButton::new("Hover me").show(ui)
     });
@@ -244,10 +258,14 @@ fn hovering_a_disabled_button_is_stable_and_panic_free() {
     // The second pass hovers a disabled button, running the
     // "explain why" tooltip path end to end (guide II.30.10).
     let ctx = egui::Context::default();
-    let at_rest = button_rect(&ctx, |ui| StyledButton::new("Delete").enabled(false).show(ui));
+    let at_rest = button_rect(&ctx, |ui| {
+        StyledButton::new("Delete").enabled(false).show(ui)
+    });
 
     let mut hovered_input = egui::RawInput::default();
-    hovered_input.events.push(egui::Event::PointerMoved(at_rest.center()));
+    hovered_input
+        .events
+        .push(egui::Event::PointerMoved(at_rest.center()));
     let hovered = button_rect_with_input(&ctx, hovered_input, |ui| {
         StyledButton::new("Delete").enabled(false).show(ui)
     });
@@ -321,7 +339,10 @@ fn non_interactive_states_refuse_interaction() {
         assert!(state.interactive(), "{state:?} must accept interaction");
     }
     for state in [ButtonVisualState::Disabled, ButtonVisualState::Loading] {
-        assert!(!state.interactive(), "{state:?} must not accept interaction");
+        assert!(
+            !state.interactive(),
+            "{state:?} must not accept interaction"
+        );
     }
 }
 

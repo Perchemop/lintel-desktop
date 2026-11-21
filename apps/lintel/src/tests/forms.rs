@@ -78,7 +78,10 @@ fn disabled_field_reports_disabled_and_keeps_its_reason() {
         });
     });
     let is_enabled = enabled.borrow().expect("the pass ran");
-    assert!(!is_enabled, "the disabled field must report enabled == false");
+    assert!(
+        !is_enabled,
+        "the disabled field must report enabled == false"
+    );
 }
 
 #[test]

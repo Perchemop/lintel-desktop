@@ -5,6 +5,7 @@
 use crate::components::icons::{IconName, icon_texture, preload_all};
 use eframe::egui;
 use egui_kittest::Harness;
+use egui_kittest::kittest::Queryable;
 
 /// Test that all tool icons can be loaded as textures at exact pixel sizes.
 #[test]
@@ -32,7 +33,7 @@ fn tool_icons_load_at_all_standard_sizes() {
 
     for icon in tool_icons {
         for &sz in &sizes {
-            let handle = icon_texture(harness.ctx(), icon, sz);
+            let handle = icon_texture(harness.ctx, icon, sz);
             let expected = egui::Vec2::splat(sz);
             assert_eq!(
                 handle.size_vec2(),
@@ -73,7 +74,7 @@ fn legacy_icons_load_at_all_standard_sizes() {
 
     for icon in legacy_icons {
         for &sz in &sizes {
-            let handle = icon_texture(harness.ctx(), icon, sz);
+            let handle = icon_texture(harness.ctx, icon, sz);
             let expected = egui::Vec2::splat(sz);
             assert_eq!(
                 handle.size_vec2(),
@@ -90,16 +91,13 @@ fn legacy_icons_load_at_all_standard_sizes() {
 #[test]
 fn icon_button_has_accessible_name_and_role() {
     let mut harness = Harness::new_ui(|ui| {
-        crate::components::icons::icon_button(
-            ui,
-            IconName::Wall,
-            24.0,
-            "Wall tool",
-        );
+        crate::components::icons::icon_button(ui, IconName::Wall, 24.0, "Wall tool");
     });
     harness.run();
 
-    let buttons: Vec<_> = harness.get_all_by_role(egui::accesskit::Role::Button).collect();
+    let buttons: Vec<_> = harness
+        .get_all_by_role(egui::accesskit::Role::Button)
+        .collect();
     assert_eq!(buttons.len(), 1, "icon_button must register as Button role");
 
     let name = buttons[0].accesskit_node().label().unwrap_or_default();
@@ -125,11 +123,12 @@ fn icon_texture_caching_returns_same_handle() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h1 = icon_texture(harness.ctx(), IconName::Window, 24.0);
-    let h2 = icon_texture(harness.ctx(), IconName::Window, 24.0);
+    let h1 = icon_texture(harness.ctx, IconName::Window, 24.0);
+    let h2 = icon_texture(harness.ctx, IconName::Window, 24.0);
 
     assert_eq!(
-        h1.id(), h2.id(),
+        h1.id(),
+        h2.id(),
         "repeated icon_texture calls must return cached handle"
     );
 }
@@ -140,11 +139,12 @@ fn icon_texture_different_sizes_produce_different_handles() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h24 = icon_texture(harness.ctx(), IconName::Select, 24.0);
-    let h32 = icon_texture(harness.ctx(), IconName::Select, 32.0);
+    let h24 = icon_texture(harness.ctx, IconName::Select, 24.0);
+    let h32 = icon_texture(harness.ctx, IconName::Select, 32.0);
 
     assert_ne!(
-        h24.id(), h32.id(),
+        h24.id(),
+        h32.id(),
         "different sizes must produce different textures"
     );
     assert_eq!(h24.size_vec2(), egui::Vec2::splat(24.0));

@@ -9,9 +9,9 @@
 //! contrast_test`).
 
 use crate::theme::{
-    ACCENT_DEFAULT, ACCENT_HOVER, BORDER_STRONG, BUTTON_DANGER_M, BUTTON_GHOST_M,
-    BUTTON_PRIMARY_M, BUTTON_SECONDARY_M, ContrastFailure, SURFACE_BASE, SURFACE_PANEL,
-    SURFACE_STATUS, TEXT_DANGER, TEXT_ERROR, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_WARNING, Theme,
+    ACCENT_DEFAULT, ACCENT_HOVER, BORDER_STRONG, BUTTON_DANGER_M, BUTTON_GHOST_M, BUTTON_PRIMARY_M,
+    BUTTON_SECONDARY_M, ContrastFailure, SURFACE_BASE, SURFACE_PANEL, SURFACE_STATUS, TEXT_DANGER,
+    TEXT_ERROR, TEXT_PRIMARY, TEXT_SECONDARY, TEXT_WARNING, Theme,
     contrast::{composited_over, contrast_ratio, contrast_test, palette, rgb_of},
 };
 
@@ -29,7 +29,10 @@ fn contrast_test_all_palettes_pass() {
 /// `TEXT_SECONDARY` clear 4.5:1 on every surface they are drawn on.
 #[test]
 fn contrast_test_light_body_text_meets_aa() {
-    for (role, fg) in [("TEXT_PRIMARY", TEXT_PRIMARY), ("TEXT_SECONDARY", TEXT_SECONDARY)] {
+    for (role, fg) in [
+        ("TEXT_PRIMARY", TEXT_PRIMARY),
+        ("TEXT_SECONDARY", TEXT_SECONDARY),
+    ] {
         for (surface, bg) in [
             ("SURFACE_BASE", SURFACE_BASE),
             ("SURFACE_PANEL", SURFACE_PANEL),
@@ -45,14 +48,20 @@ fn contrast_test_light_body_text_meets_aa() {
 #[test]
 fn contrast_test_dark_body_text_meets_aa() {
     let p = palette(Theme::Dark);
-    for (role, fg) in [("text.primary", p.text_primary), ("text.secondary", p.text_secondary)] {
+    for (role, fg) in [
+        ("text.primary", p.text_primary),
+        ("text.secondary", p.text_secondary),
+    ] {
         for (surface, bg) in [
             ("surface.base", p.surface_base),
             ("surface.panel", p.surface_panel),
             ("surface.status", p.surface_status),
         ] {
             let r = contrast_ratio(rgb_of(fg), rgb_of(bg));
-            assert!(r >= 4.5, "dark {role} on {surface} is {r:.2}:1 (needs 4.5:1)");
+            assert!(
+                r >= 4.5,
+                "dark {role} on {surface} is {r:.2}:1 (needs 4.5:1)"
+            );
         }
     }
 }
@@ -101,9 +110,10 @@ fn contrast_test_accent_and_border_tokens_meet_ui_floor() {
             ("focus.ring", p.focus_ring),
             ("border.strong", p.border_strong),
         ] {
-            for (surface, bg) in
-                [("surface.base", p.surface_base), ("surface.panel", p.surface_panel)]
-            {
+            for (surface, bg) in [
+                ("surface.base", p.surface_base),
+                ("surface.panel", p.surface_panel),
+            ] {
                 let r = contrast_ratio(rgb_of(fg), rgb_of(bg));
                 assert!(
                     r >= 3.0,

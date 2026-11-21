@@ -1062,7 +1062,10 @@ fn paint_opening(
         Some(swing) => {
             let hinge = world_to_screen(view, rect, swing.hinge);
             let leaf = world_to_screen(view, rect, swing.leaf_end);
-            painter.line_segment([hinge, leaf], egui::Stroke::new(0.9, SPEC.component.canvas.door_leaf));
+            painter.line_segment(
+                [hinge, leaf],
+                egui::Stroke::new(0.9, SPEC.component.canvas.door_leaf),
+            );
             let arc: Vec<egui::Pos2> = geom::arc_points(
                 swing.hinge,
                 swing.radius,

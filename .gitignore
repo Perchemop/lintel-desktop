@@ -2,6 +2,12 @@
 /dist
 /dist-static
 *.log
+*.AppImage
+*.deb
+*.rpm
+*.msi
+*.dmg
+*.pkg
 .DS_Store
 .opencode/
 opencode.json

@@ -3,8 +3,11 @@
 //! Pattern copied from `spaceui` `Theme::install()` returning `Regions`
 //! (spec v0.20.0 AC-06, T-005). All colours/spacing from theme tokens.
 
-use crate::canvas::{Canvas, CanvasResponse, Selection, SelectionBand, SnapModeKind, SnapModes, View, Draft, world_to_screen, screen_to_world};
 use crate::app::tool::Tool;
+use crate::canvas::{
+    Canvas, CanvasResponse, Draft, Selection, SelectionBand, SnapModeKind, SnapModes, View,
+    screen_to_world, world_to_screen,
+};
 use crate::components::buttons::{ButtonRole, ButtonSize, StyledButton};
 use crate::inspector::{InspectorDraft, inspector};
 use crate::layout::helpers::{card, tool_group, vstack};
@@ -30,12 +33,15 @@ pub struct Regions {
     pub title_bar: egui::Response,
     /// Left rail (tool palette) response.
     pub rail: egui::Response,
-    /// Center canvas response.
-    pub canvas: CanvasResponse,
+    /// Center canvas region response.
+    pub canvas: egui::Response,
+    /// The canvas' input/readout payload for the shell to act on.
+    pub canvas_input: CanvasResponse,
     /// Status bar at bottom of canvas.
     pub status_bar: egui::Response,
-    /// Inspector window response (floating, right side).
-    pub inspector: Option<egui::InnerResponse<()>>,
+    /// Inspector window response (floating, right side). egui wraps the
+    /// closure result in `Option`, so the inner value is `Option<()>`.
+    pub inspector: Option<egui::InnerResponse<Option<()>>>,
     /// Command palette response (modal overlay).
     pub palette: Option<egui::ModalResponse<()>>,
 }
@@ -44,19 +50,19 @@ pub struct Regions {
 ///
 /// This follows the `spaceui` pattern: `Theme::install(ui) -> Regions`
 /// where the caller fills each region with content.
-pub fn regions(
-    ui: &mut egui::Ui,
-    app: &mut crate::LintelApp,
-    now: i64,
-) -> Regions {
+pub fn regions(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> Regions {
     // Poll update check
     app.poll_update();
     if app.update_rx.is_some() {
-        ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(500));
     }
 
     // Handle global shortcuts
-    if ui.ctx().input(|i| i.modifiers.command && i.key_pressed(egui::Key::K)) {
+    if ui
+        .ctx()
+        .input(|i| i.modifiers.command && i.key_pressed(egui::Key::K))
+    {
         app.toggle_palette();
     }
 
@@ -64,6 +70,7 @@ pub fn regions(
     let mut title_bar_response = None;
     let mut rail_response = None;
     let mut canvas_response = None;
+    let mut canvas_region_response = None;
     let mut status_bar_response = None;
     let mut inspector_response = None;
     let mut palette_response = None;
@@ -98,6 +105,7 @@ pub fn regions(
                 app.band.as_ref(),
             );
             canvas_response = Some(resp);
+            canvas_region_response = resp.widget_id.and_then(|id| ui.ctx().read_response(id));
 
             let dimension_painter = ui.painter_at(rect);
             crate::dimension_ui::render_dimensions(
@@ -210,7 +218,8 @@ pub fn regions(
     Regions {
         title_bar: title_bar_response.unwrap(),
         rail: rail_response.unwrap(),
-        canvas: canvas_response.unwrap(),
+        canvas: canvas_region_response.expect("the canvas widget must expose a response"),
+        canvas_input: canvas_response.unwrap(),
         status_bar: status_bar_response.unwrap(),
         inspector: inspector_response,
         palette: palette_response,
@@ -243,7 +252,11 @@ fn title_bar(ui: &mut egui::Ui, app: &mut crate::LintelApp, _now: i64) -> egui::
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             // Window controls (cross-platform, not OS native)
             if ui
-                .add(StyledButton::new("✕").role(ButtonRole::Ghost).size(ButtonSize::Sm))
+                .add(
+                    StyledButton::new("✕")
+                        .role(ButtonRole::Ghost)
+                        .size(ButtonSize::Sm),
+                )
                 .on_hover_text("Close Lintel")
                 .clicked()
             {
@@ -280,7 +293,14 @@ fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
                     tool_button(ui, app, "Wall", Tool::Wall, "W", ButtonRole::Primary);
                     tool_button(ui, app, "Door", Tool::Door, "D", ButtonRole::Secondary);
                     tool_button(ui, app, "Window", Tool::Window, "N", ButtonRole::Secondary);
-                    tool_button(ui, app, "Dimension", Tool::Dimension, "M", ButtonRole::Secondary);
+                    tool_button(
+                        ui,
+                        app,
+                        "Dimension",
+                        Tool::Dimension,
+                        "M",
+                        ButtonRole::Secondary,
+                    );
                     tool_button(ui, app, "Label", Tool::Label, "L", ButtonRole::Secondary);
                     tool_button(ui, app, "Block", Tool::Block, "B", ButtonRole::Secondary);
                 });
@@ -289,10 +309,38 @@ fn rail(ui: &mut egui::Ui, app: &mut crate::LintelApp) -> egui::Response {
             // Construction tools
             tool_group(ui, "Construction", |ui| {
                 vstack(ui, theme::SPACING_SM, |ui| {
-                    tool_button(ui, app, "Line", Tool::ConstructionLine, "C", ButtonRole::Ghost);
-                    tool_button(ui, app, "Ray", Tool::ConstructionRay, "Shift+C", ButtonRole::Ghost);
-                    tool_button(ui, app, "Circle", Tool::ConstructionCircle, "Q", ButtonRole::Ghost);
-                    tool_button(ui, app, "Arc", Tool::ConstructionArc, "X", ButtonRole::Ghost);
+                    tool_button(
+                        ui,
+                        app,
+                        "Line",
+                        Tool::ConstructionLine,
+                        "C",
+                        ButtonRole::Ghost,
+                    );
+                    tool_button(
+                        ui,
+                        app,
+                        "Ray",
+                        Tool::ConstructionRay,
+                        "Shift+C",
+                        ButtonRole::Ghost,
+                    );
+                    tool_button(
+                        ui,
+                        app,
+                        "Circle",
+                        Tool::ConstructionCircle,
+                        "Q",
+                        ButtonRole::Ghost,
+                    );
+                    tool_button(
+                        ui,
+                        app,
+                        "Arc",
+                        Tool::ConstructionArc,
+                        "X",
+                        ButtonRole::Ghost,
+                    );
                 });
             });
 
@@ -354,7 +402,11 @@ fn snap_chip(ui: &mut egui::Ui, app: &mut crate::LintelApp, kind: SnapModeKind, 
     let resp = ui
         .add(
             StyledButton::new(label)
-                .role(if active { ButtonRole::Primary } else { ButtonRole::Ghost })
+                .role(if active {
+                    ButtonRole::Primary
+                } else {
+                    ButtonRole::Ghost
+                })
                 .size(ButtonSize::Sm),
         )
         .on_hover_text(format!("Toggle {} snap ({})", kind.label(), key));

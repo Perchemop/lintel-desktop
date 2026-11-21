@@ -46,7 +46,7 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
     for node in &inputs {
         let labelled_by = node.accesskit_node().labelled_by();
         assert!(
-            !labelled_by.is_empty(),
+            labelled_by.next().is_some(),
             "every form input must be associated with its label (II.30.7.4)"
         );
     }
@@ -97,12 +97,11 @@ fn the_error_state_is_announced_as_text() {
     harness.run();
 
     // Colour alone is never the signal (II.30.7.2): the message itself must
-    // be a labelled AccessKit node. egui exposes labels either as Label or
-    // StaticText depending on context — both are announced.
+    // be a labelled AccessKit node.
     let error = harness.get_by_label("Length must be positive");
     let role = error.accesskit_node().role();
     assert!(
-        matches!(role, Role::Label | Role::StaticText),
+        matches!(role, Role::Label),
         "the error message must be announced as a label, got {role:?}"
     );
 }

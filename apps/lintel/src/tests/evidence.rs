@@ -16,8 +16,8 @@ use crate::components::forms::{Field, FieldSet};
 use crate::layout::helpers::{card, card_compact, hstack, tool_group, vstack, wrap_row};
 use crate::theme;
 use eframe::egui;
-use egui_kittest::kittest::{NodeT, Queryable};
 use egui_kittest::Harness;
+use egui_kittest::kittest::{NodeT, Queryable};
 use std::path::PathBuf;
 
 /// Render evidence only when the CI job (or a reviewer) asks for it.
@@ -208,7 +208,14 @@ fn layout_sheet_ui(ui: &mut egui::Ui) {
             );
             wrap_row(ui, theme::SPACING_SM, theme::SPACING_SM, |ui| {
                 for label in [
-                    "Select", "Wall", "Door", "Window", "Dimension", "Label", "Block", "Measure",
+                    "Select",
+                    "Wall",
+                    "Door",
+                    "Window",
+                    "Dimension",
+                    "Label",
+                    "Block",
+                    "Measure",
                 ] {
                     StyledButton::new(label)
                         .role(ButtonRole::Secondary)

@@ -28,9 +28,9 @@
 pub use crate::theme::{ButtonRole, ButtonSize};
 
 use crate::theme::{
-    ButtonRoleStyle, BUTTON_CORNER_RADIUS, BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S,
-    BUTTON_GHOST_L, BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M,
-    BUTTON_PRIMARY_S, BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S,
+    BUTTON_CORNER_RADIUS, BUTTON_DANGER_L, BUTTON_DANGER_M, BUTTON_DANGER_S, BUTTON_GHOST_L,
+    BUTTON_GHOST_M, BUTTON_GHOST_S, BUTTON_PRIMARY_L, BUTTON_PRIMARY_M, BUTTON_PRIMARY_S,
+    BUTTON_SECONDARY_L, BUTTON_SECONDARY_M, BUTTON_SECONDARY_S, ButtonRoleStyle,
 };
 use eframe::egui;
 
@@ -247,11 +247,7 @@ impl StyledButton {
                     self.label.clone(),
                 )
             } else {
-                egui::WidgetInfo::labeled(
-                    egui::WidgetType::Button,
-                    interactive,
-                    self.label.clone(),
-                )
+                egui::WidgetInfo::labeled(egui::WidgetType::Button, interactive, self.label.clone())
             }
         });
 
@@ -263,7 +259,8 @@ impl StyledButton {
             response.is_pointer_button_down_on(),
         );
 
-        ui.painter().rect_filled(rect, BUTTON_CORNER_RADIUS, state.fill(spec));
+        ui.painter()
+            .rect_filled(rect, BUTTON_CORNER_RADIUS, state.fill(spec));
 
         // Selection carries a fill AND a marker (guide II.30.7.2): 2px inner
         // outline in the label colour, so it reads on every role's fill.
@@ -379,7 +376,9 @@ pub fn primary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
 /// Convenience: secondary action button.
 #[allow(dead_code)]
 pub fn secondary_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
-    StyledButton::new(label).role(ButtonRole::Secondary).show(ui)
+    StyledButton::new(label)
+        .role(ButtonRole::Secondary)
+        .show(ui)
 }
 
 /// Convenience: ghost toolbar button.

@@ -312,20 +312,20 @@ pub fn snap_marker_colour(kind: &crate::canvas::SnapModeKind) -> Color32 {
         crate::canvas::SnapModeKind::Free => STROKE_STRONG,
     }
 }
-/// Convert an egui colour to a plain RGB tuple (alpha dropped). Useful for the
-/// WCAG contrast helpers below, which operate on `(u8, u8, u8)` so they have
+/// Convert an egui colour to a plain RGB triple (alpha dropped). Useful for
+/// the WCAG contrast helpers below, which operate on `[u8; 3]` so they have
 /// no egui dependency in the maths.
 // Consumed by the `theme_colours_meet_wcag_aa` merge-gate test (guide
 // II.30.7.1); the binary itself does not call it yet, hence the allow.
 #[allow(dead_code)]
-pub fn rgb_of(colour: Color32) -> (u8, u8, u8) {
-    (colour.r(), colour.g(), colour.b())
+pub fn rgb_of(colour: Color32) -> [u8; 3] {
+    [colour.r(), colour.g(), colour.b()]
 }
 
 /// Relative luminance per WCAG 2.2 (sRGB linearised). Guide II.30.7.1.
 // Consumed by the contrast merge-gate test; see `rgb_of`.
 #[allow(dead_code)]
-pub fn relative_luminance(rgb: (u8, u8, u8)) -> f64 {
+pub fn relative_luminance(rgb: [u8; 3]) -> f64 {
     fn channel(c: u8) -> f64 {
         let c = c as f64 / 255.0;
         if c <= 0.03928 {
@@ -334,13 +334,13 @@ pub fn relative_luminance(rgb: (u8, u8, u8)) -> f64 {
             ((c + 0.055) / 1.055).powf(2.4)
         }
     }
-    0.2126 * channel(rgb.0) + 0.7152 * channel(rgb.1) + 0.0722 * channel(rgb.2)
+    0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2])
 }
 
 /// Contrast ratio `(L1 + 0.05) / (L2 + 0.05)`, lighter over darker.
 // Consumed by the contrast merge-gate test; see `rgb_of`.
 #[allow(dead_code)]
-pub fn contrast_ratio(a: (u8, u8, u8), b: (u8, u8, u8)) -> f64 {
+pub fn contrast_ratio(a: [u8; 3], b: [u8; 3]) -> f64 {
     let la = relative_luminance(a);
     let lb = relative_luminance(b);
     let (hi, lo) = if la >= lb { (la, lb) } else { (lb, la) };
@@ -550,7 +550,7 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
 /// runtime Light/Dark/HighContrast switch is a later slice — until it lands
 /// the dark and high-contrast palettes are the asserted reference for that
 /// work (D-035).
-pub use contrast::{contrast_check, contrast_test, ContrastFailure, Theme};
+pub use contrast::{ContrastFailure, Theme, contrast_check, contrast_test};
 pub mod contrast {
     #![allow(dead_code)] // merge-gate API: consumed by theme_tests.rs, not yet by the binary (D-035)
 
@@ -559,7 +559,7 @@ pub mod contrast {
     use super::*;
 
     // Re-export the colour maths functions from the parent module for the merge-gate tests.
-    pub use super::{rgb_of, contrast_ratio};
+    pub use super::{contrast_ratio, rgb_of};
 
     /// The palettes the contrast gate asserts (spec AC-08).
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -689,7 +689,11 @@ pub mod contrast {
                     ratio,
                     required,
                 } => ("text", role, ratio, required),
-                ContrastFailure::Ui { role, ratio, required } => ("ui", role, ratio, required),
+                ContrastFailure::Ui {
+                    role,
+                    ratio,
+                    required,
+                } => ("ui", role, ratio, required),
             };
             write!(
                 f,
@@ -738,8 +742,10 @@ pub mod contrast {
             ("surface.panel", p.surface_panel),
             ("surface.status", p.surface_status),
         ];
-        let sheet_and_panel: [(&str, Color32); 2] =
-            [("surface.base", p.surface_base), ("surface.panel", p.surface_panel)];
+        let sheet_and_panel: [(&str, Color32); 2] = [
+            ("surface.base", p.surface_base),
+            ("surface.panel", p.surface_panel),
+        ];
 
         // (a) Body and status text on every surface text is drawn on.
         let text_roles: [(&str, Color32); 11] = [
@@ -812,7 +818,10 @@ pub mod contrast {
         let fill_on_base = composited_over(p.surface_base, p.selection_fill);
         if fill_on_base == p.surface_base {
             c.out.push(ContrastFailure::Ui {
-                role: format!("{}: selection.fill is invisible on surface.base", c.theme_name),
+                role: format!(
+                    "{}: selection.fill is invisible on surface.base",
+                    c.theme_name
+                ),
                 ratio: 1.0,
                 required: 1.0,
             });
@@ -876,7 +885,13 @@ pub mod contrast {
         // (e) Input fields: value text, placeholder text and the border that
         // identifies the field (WCAG 2.2 §1.4.11). This is the reference
         // pairing the T-002 `Field` components must implement (D-035).
-        c.text("input.text", p.input_text, p.input_fill, "input.fill", floor);
+        c.text(
+            "input.text",
+            p.input_text,
+            p.input_fill,
+            "input.fill",
+            floor,
+        );
         c.text(
             "input.placeholder",
             p.input_placeholder,
@@ -884,7 +899,13 @@ pub mod contrast {
             "input.fill",
             floor,
         );
-        c.ui("input.border", p.input_border, p.input_fill, "input.fill", ui_floor);
+        c.ui(
+            "input.border",
+            p.input_border,
+            p.input_fill,
+            "input.fill",
+            ui_floor,
+        );
 
         out
     }
@@ -892,8 +913,11 @@ pub mod contrast {
     /// The merge gate: walk every palette; `Ok` only when all of them clear
     /// their floors. CI runs `cargo test contrast_test` (spec AC-08).
     pub fn contrast_test() -> Result<(), Vec<ContrastFailure>> {
-        let failures: Vec<ContrastFailure> =
-            Theme::ALL.iter().copied().flat_map(contrast_check).collect();
+        let failures: Vec<ContrastFailure> = Theme::ALL
+            .iter()
+            .copied()
+            .flat_map(contrast_check)
+            .collect();
         if failures.is_empty() {
             Ok(())
         } else {
@@ -1358,6 +1382,8 @@ pub const ICON_NAMES: &[&str] = &[
     "snap_intersection",
     "snap_grid",
     "snap_ortho",
+    "snap_perpendicular",
+    "snap_tangent",
     "layer_visible",
     "layer_lock",
     "layer_print",
@@ -1378,26 +1404,82 @@ const ICON_SVGS: &[(&str, &[u8])] = &[
     ("window", include_bytes!("../assets/icons/window.svg")),
     ("dimension", include_bytes!("../assets/icons/dimension.svg")),
     ("label", include_bytes!("../assets/icons/label.svg")),
-    ("measurements", include_bytes!("../assets/icons/measurements.svg")),
+    (
+        "measurements",
+        include_bytes!("../assets/icons/measurements.svg"),
+    ),
     ("select", include_bytes!("../assets/icons/select.svg")),
-    ("construction_line", include_bytes!("../assets/icons/construction_line.svg")),
-    ("construction_ray", include_bytes!("../assets/icons/construction_ray.svg")),
-    ("construction_circle", include_bytes!("../assets/icons/construction_circle.svg")),
-    ("construction_arc", include_bytes!("../assets/icons/construction_arc.svg")),
+    (
+        "construction_line",
+        include_bytes!("../assets/icons/construction_line.svg"),
+    ),
+    (
+        "construction_ray",
+        include_bytes!("../assets/icons/construction_ray.svg"),
+    ),
+    (
+        "construction_circle",
+        include_bytes!("../assets/icons/construction_circle.svg"),
+    ),
+    (
+        "construction_arc",
+        include_bytes!("../assets/icons/construction_arc.svg"),
+    ),
     ("block", include_bytes!("../assets/icons/block.svg")),
     // Snap / Layer / UI (pre-existing)
-    ("snap_endpoint", include_bytes!("../assets/icons/snap_endpoint.svg")),
-    ("snap_midpoint", include_bytes!("../assets/icons/snap_midpoint.svg")),
-    ("snap_center", include_bytes!("../assets/icons/snap_center.svg")),
-    ("snap_intersection", include_bytes!("../assets/icons/snap_intersection.svg")),
+    (
+        "snap_endpoint",
+        include_bytes!("../assets/icons/snap_endpoint.svg"),
+    ),
+    (
+        "snap_midpoint",
+        include_bytes!("../assets/icons/snap_midpoint.svg"),
+    ),
+    (
+        "snap_center",
+        include_bytes!("../assets/icons/snap_center.svg"),
+    ),
+    (
+        "snap_intersection",
+        include_bytes!("../assets/icons/snap_intersection.svg"),
+    ),
     ("snap_grid", include_bytes!("../assets/icons/snap_grid.svg")),
-    ("snap_ortho", include_bytes!("../assets/icons/snap_ortho.svg")),
-    ("layer_visible", include_bytes!("../assets/icons/layer_visible.svg")),
-    ("layer_lock", include_bytes!("../assets/icons/layer_lock.svg")),
-    ("layer_print", include_bytes!("../assets/icons/layer_print.svg")),
-    ("dimension_aligned", include_bytes!("../assets/icons/dimension_aligned.svg")),
-    ("dimension_radial", include_bytes!("../assets/icons/dimension_radial.svg")),
-    ("block_insert", include_bytes!("../assets/icons/block_insert.svg")),
+    (
+        "snap_ortho",
+        include_bytes!("../assets/icons/snap_ortho.svg"),
+    ),
+    (
+        "snap_perpendicular",
+        include_bytes!("../assets/icons/snap_perpendicular.svg"),
+    ),
+    (
+        "snap_tangent",
+        include_bytes!("../assets/icons/snap_tangent.svg"),
+    ),
+    (
+        "layer_visible",
+        include_bytes!("../assets/icons/layer_visible.svg"),
+    ),
+    (
+        "layer_lock",
+        include_bytes!("../assets/icons/layer_lock.svg"),
+    ),
+    (
+        "layer_print",
+        include_bytes!("../assets/icons/layer_print.svg"),
+    ),
+    (
+        "dimension_aligned",
+        include_bytes!("../assets/icons/dimension_aligned.svg"),
+    ),
+    (
+        "dimension_radial",
+        include_bytes!("../assets/icons/dimension_radial.svg"),
+    ),
+    (
+        "block_insert",
+        include_bytes!("../assets/icons/block_insert.svg"),
+    ),
 ];
 
 /// Painted when a caller asks for a name that is not in the registry: a
@@ -2018,7 +2100,11 @@ mod tests {
         let ok = rgb_of(TEXT_SUCCESS);
         let err = rgb_of(TEXT_ERROR);
         let warn = rgb_of(TEXT_WARNING);
-        for (name, col) in [("TEXT_SUCCESS", ok), ("TEXT_ERROR", err), ("TEXT_WARNING", warn)] {
+        for (name, col) in [
+            ("TEXT_SUCCESS", ok),
+            ("TEXT_ERROR", err),
+            ("TEXT_WARNING", warn),
+        ] {
             assert!(
                 contrast_ratio(col, sheet) >= 4.5,
                 "{name} on SURFACE_BASE is {:.2}:1",

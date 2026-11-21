@@ -124,7 +124,8 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
                 app.showing_notes = true;
             }
         });
-    }).response
+    })
+    .response
 }
 
 /// One toggle chip: the label, coloured by its kind when it is active.

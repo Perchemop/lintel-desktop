@@ -112,11 +112,7 @@ impl IconName {
 
 /// Get a texture handle for `icon` at `size_pt` points.
 /// Delegates to `theme::icon_texture` which caches per (name, physical pixels).
-pub fn icon_texture(
-    ctx: &Context,
-    icon: IconName,
-    size_pt: f32,
-) -> TextureHandle {
+pub fn icon_texture(ctx: &Context, icon: IconName, size_pt: f32) -> TextureHandle {
     theme::icon_texture(ctx, icon.key(), size_pt)
 }
 
@@ -145,11 +141,9 @@ pub fn icon_button(
 
     // Set accessible name on the widget info so AccessKit reads it.
     // In egui 0.36, widget_info closure takes 0 args; use WidgetInfo::labeled.
-    resp.widget_info(|| egui::WidgetInfo::labeled(
-        egui::WidgetType::Button,
-        true,
-        accessible_name.to_owned(),
-    ));
+    resp.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, true, accessible_name.to_owned())
+    });
 
     resp.on_hover_text(accessible_name)
 }
@@ -184,7 +178,11 @@ mod tests {
     fn icon_names_are_unique() {
         let mut seen = std::collections::HashSet::new();
         for icon in IconName::all() {
-            assert!(seen.insert(icon.key()), "duplicate icon key: {}", icon.key());
+            assert!(
+                seen.insert(icon.key()),
+                "duplicate icon key: {}",
+                icon.key()
+            );
         }
     }
 
@@ -192,9 +190,18 @@ mod tests {
     fn all_tool_icons_present() {
         // The 12 tool icons required by T-004
         let tool_keys = [
-            "wall", "door", "window", "dimension", "label", "measurements",
-            "select", "construction_line", "construction_ray",
-            "construction_circle", "construction_arc", "block",
+            "wall",
+            "door",
+            "window",
+            "dimension",
+            "label",
+            "measurements",
+            "select",
+            "construction_line",
+            "construction_ray",
+            "construction_circle",
+            "construction_arc",
+            "block",
         ];
         for key in tool_keys {
             assert!(

@@ -19,7 +19,7 @@
 //! through `theme::rgb_of` / channel accessors so the raw-colour grep gate
 //! (`Color32::from_` only in `theme.rs`) stays clean.
 
-use crate::theme::{self, ThemeSpec, SPEC};
+use crate::theme::{self, SPEC, ThemeSpec};
 use eframe::egui::Color32;
 
 #[test]
@@ -49,7 +49,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.base.graphite_secondary,
             theme::BASE_GRAPHITE_SECONDARY,
         ),
-        ("base.match_blue", SPEC.base.match_blue, theme::BASE_MATCH_BLUE),
+        (
+            "base.match_blue",
+            SPEC.base.match_blue,
+            theme::BASE_MATCH_BLUE,
+        ),
         ("base.cobalt", SPEC.base.cobalt, theme::BASE_COBALT),
         (
             "base.cobalt_hover",
@@ -84,8 +88,16 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.base.wall_pending,
             theme::BASE_WALL_PENDING,
         ),
-        ("base.grid_minor", SPEC.base.grid_minor, theme::BASE_GRID_MINOR),
-        ("base.grid_major", SPEC.base.grid_major, theme::BASE_GRID_MAJOR),
+        (
+            "base.grid_minor",
+            SPEC.base.grid_minor,
+            theme::BASE_GRID_MINOR,
+        ),
+        (
+            "base.grid_major",
+            SPEC.base.grid_major,
+            theme::BASE_GRID_MAJOR,
+        ),
         (
             "base.window_line",
             SPEC.base.window_line,
@@ -121,7 +133,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.base.snap_tangent,
             theme::BASE_SNAP_TANGENT,
         ),
-        ("base.snap_ortho", SPEC.base.snap_ortho, theme::BASE_SNAP_ORTHO),
+        (
+            "base.snap_ortho",
+            SPEC.base.snap_ortho,
+            theme::BASE_SNAP_ORTHO,
+        ),
         ("base.snap_grid", SPEC.base.snap_grid, theme::BASE_SNAP_GRID),
         (
             "base.construction",
@@ -190,7 +206,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.semantic.text_muted,
             theme::TEXT_MUTED,
         ),
-        ("semantic.text_hint", SPEC.semantic.text_hint, theme::TEXT_HINT),
+        (
+            "semantic.text_hint",
+            SPEC.semantic.text_hint,
+            theme::TEXT_HINT,
+        ),
         (
             "semantic.text_strong",
             SPEC.semantic.text_strong,
@@ -296,7 +316,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.semantic.snap_ortho,
             theme::SNAP_ORTHO,
         ),
-        ("semantic.snap_grid", SPEC.semantic.snap_grid, theme::SNAP_GRID),
+        (
+            "semantic.snap_grid",
+            SPEC.semantic.snap_grid,
+            theme::SNAP_GRID,
+        ),
         (
             "semantic.construction_stroke",
             SPEC.semantic.construction_stroke,
@@ -349,8 +373,16 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
 
     // Tier 3 — grouped spec fields must equal the flat component constants.
     let canvas: [(&str, Color32, Color32); 17] = [
-        ("canvas.sheet", SPEC.component.canvas.sheet, theme::CANVAS_SHEET),
-        ("canvas.text", SPEC.component.canvas.text, theme::CANVAS_TEXT),
+        (
+            "canvas.sheet",
+            SPEC.component.canvas.sheet,
+            theme::CANVAS_SHEET,
+        ),
+        (
+            "canvas.text",
+            SPEC.component.canvas.text,
+            theme::CANVAS_TEXT,
+        ),
         (
             "canvas.wall_fill",
             SPEC.component.canvas.wall_fill,
@@ -453,12 +485,24 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
     }
 
     let text: [(&str, Color32, Color32); 6] = [
-        ("text.primary", SPEC.component.text.primary, theme::BODY_TEXT),
+        (
+            "text.primary",
+            SPEC.component.text.primary,
+            theme::BODY_TEXT,
+        ),
         ("text.hint", SPEC.component.text.hint, theme::HINT_TEXT),
         ("text.muted", SPEC.component.text.muted, theme::MUTED_TEXT),
-        ("text.success", SPEC.component.text.success, theme::SUCCESS_TEXT),
+        (
+            "text.success",
+            SPEC.component.text.success,
+            theme::SUCCESS_TEXT,
+        ),
         ("text.error", SPEC.component.text.error, theme::ERROR_TEXT),
-        ("text.danger", SPEC.component.text.danger, theme::DANGER_TEXT),
+        (
+            "text.danger",
+            SPEC.component.text.danger,
+            theme::DANGER_TEXT,
+        ),
     ];
     for (name, grouped, flat) in text {
         assert_eq!(grouped, flat, "{name} must mirror the flat registry");
@@ -480,7 +524,11 @@ fn themespec_mirrors_the_flat_registry_field_by_field() {
             SPEC.component.palette.selected_stroke,
             theme::PALETTE_SELECTED_STROKE,
         ),
-        ("palette.hit", SPEC.component.palette.hit, theme::PALETTE_HIT),
+        (
+            "palette.hit",
+            SPEC.component.palette.hit,
+            theme::PALETTE_HIT,
+        ),
         (
             "palette.label",
             SPEC.component.palette.label,
@@ -592,7 +640,11 @@ fn tier_one_swatches_are_pinned() {
     // move a single base value. If a swatch changes deliberately, change it
     // here AND in the release notes.
     let pins: [(&str, [u8; 3], [u8; 3]); 32] = [
-        ("BASE_PAPER", theme::rgb_of(theme::BASE_PAPER), [252, 248, 242]),
+        (
+            "BASE_PAPER",
+            theme::rgb_of(theme::BASE_PAPER),
+            [252, 248, 242],
+        ),
         ("BASE_INK", theme::rgb_of(theme::BASE_INK), [26, 24, 22]),
         (
             "BASE_GRAPHITE_MUTED",
@@ -620,16 +672,32 @@ fn tier_one_swatches_are_pinned() {
             theme::rgb_of(theme::BASE_MATCH_BLUE),
             [20, 90, 160],
         ),
-        ("BASE_COBALT", theme::rgb_of(theme::BASE_COBALT), [18, 78, 120]),
+        (
+            "BASE_COBALT",
+            theme::rgb_of(theme::BASE_COBALT),
+            [18, 78, 120],
+        ),
         (
             "BASE_COBALT_HOVER",
             theme::rgb_of(theme::BASE_COBALT_HOVER),
             [24, 94, 140],
         ),
-        ("BASE_GREEN", theme::rgb_of(theme::BASE_GREEN), [34, 158, 96]),
-        ("BASE_VALID", theme::rgb_of(theme::BASE_VALID), [26, 112, 62]),
+        (
+            "BASE_GREEN",
+            theme::rgb_of(theme::BASE_GREEN),
+            [34, 158, 96],
+        ),
+        (
+            "BASE_VALID",
+            theme::rgb_of(theme::BASE_VALID),
+            [26, 112, 62],
+        ),
         ("BASE_ERROR", theme::rgb_of(theme::BASE_ERROR), [139, 0, 0]),
-        ("BASE_DANGER", theme::rgb_of(theme::BASE_DANGER), [180, 0, 0]),
+        (
+            "BASE_DANGER",
+            theme::rgb_of(theme::BASE_DANGER),
+            [180, 0, 0],
+        ),
         (
             "BASE_DANGER_HOVER",
             theme::rgb_of(theme::BASE_DANGER_HOVER),
@@ -740,7 +808,12 @@ fn tier_one_swatches_are_pinned() {
     );
     let transparent = theme::BASE_TRANSPARENT;
     assert_eq!(
-        (transparent.r(), transparent.g(), transparent.b(), transparent.a()),
+        (
+            transparent.r(),
+            transparent.g(),
+            transparent.b(),
+            transparent.a()
+        ),
         (0, 0, 0, 0),
         "BASE_TRANSPARENT moved"
     );
@@ -923,7 +996,10 @@ fn every_component_token_resolves_to_a_semantic_role() {
         ),
         ("canvas.stroke_none", SPEC.component.canvas.stroke_none),
         ("canvas.selection", SPEC.component.canvas.selection),
-        ("canvas.selection_window", SPEC.component.canvas.selection_window),
+        (
+            "canvas.selection_window",
+            SPEC.component.canvas.selection_window,
+        ),
         (
             "canvas.selection_crossing",
             SPEC.component.canvas.selection_crossing,
@@ -945,7 +1021,10 @@ fn every_component_token_resolves_to_a_semantic_role() {
         ("text.success", SPEC.component.text.success),
         ("text.error", SPEC.component.text.error),
         ("text.danger", SPEC.component.text.danger),
-        ("palette.selected_fill", SPEC.component.palette.selected_fill),
+        (
+            "palette.selected_fill",
+            SPEC.component.palette.selected_fill,
+        ),
         (
             "palette.unselected_fill",
             SPEC.component.palette.unselected_fill,
@@ -1035,7 +1114,8 @@ fn button_group_covers_all_twelve_variants_with_size_floors() {
         );
     }
     assert_eq!(
-        SPEC.component.button.corner_radius, theme::BUTTON_CORNER_RADIUS,
+        SPEC.component.button.corner_radius,
+        theme::BUTTON_CORNER_RADIUS,
         "grouped corner radius must mirror the flat token"
     );
 }
