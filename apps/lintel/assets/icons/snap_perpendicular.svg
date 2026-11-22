@@ -1,0 +1,7 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): perpendicular snap — a line and
+     a short segment meeting it at 90°, with the right-angle corner marked. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 20 H20"/>
+  <path d="M12 20 V6"/>
+  <path d="M12 16 H17" stroke-width="1.5"/>
+</svg>

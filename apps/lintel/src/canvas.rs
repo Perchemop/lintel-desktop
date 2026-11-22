@@ -6,6 +6,7 @@
 //! model itself.
 
 use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::construction::{ConstructionEntity, ConstructionKind};
 use lintel_core::geom::{self, Bounds, Point2};
@@ -250,8 +251,8 @@ impl SelectionModeKind {
     /// AutoCAD's convention: a window box is blue, a crossing box green.
     pub fn colour(self) -> egui::Color32 {
         match self {
-            SelectionModeKind::Window => theme::ACCENT_DEFAULT,
-            SelectionModeKind::Crossing => theme::SUCCESS_DEFAULT,
+            SelectionModeKind::Window => SPEC.component.canvas.selection_window,
+            SelectionModeKind::Crossing => SPEC.component.canvas.selection_crossing,
         }
     }
 
@@ -704,7 +705,7 @@ impl Canvas {
         response.press = egui_response.interact_pointer_pos();
         response.drag_started = egui_response.drag_started_by(egui::PointerButton::Primary);
         response.drag_stopped = egui_response.drag_stopped_by(egui::PointerButton::Primary);
-        painter.rect_filled(rect, 0.0, theme::SURFACE_BASE);
+        painter.rect_filled(rect, 0.0, SPEC.component.canvas.sheet);
 
         let hover = egui_response.hover_pos();
         response.pointer_world = hover.map(|p| screen_to_world(view, rect, p));
@@ -747,7 +748,7 @@ impl Canvas {
                 egui::Align2::CENTER_CENTER,
                 room.area_label(),
                 egui::FontId::proportional(11.0),
-                theme::TEXT_PRIMARY.linear_multiply(0.55),
+                SPEC.component.canvas.text.linear_multiply(0.55),
             );
         }
 
@@ -755,9 +756,9 @@ impl Canvas {
         for label in geometry.labels() {
             let pos = world_to_screen(view, rect, label.anchor);
             let colour = if selection.contains(EntityId::Label(label.id)) {
-                theme::ACCENT_DEFAULT
+                SPEC.component.canvas.selection
             } else {
-                theme::TEXT_PRIMARY
+                SPEC.component.canvas.text
             };
             painter.text(
                 pos,
@@ -826,7 +827,7 @@ impl Canvas {
                 egui::Align2::LEFT_TOP,
                 format!("{length:.0} mm  {angle:.0}°"),
                 egui::FontId::proportional(11.0),
-                theme::TEXT_PRIMARY,
+                SPEC.component.canvas.text,
             );
         }
 
@@ -895,7 +896,7 @@ fn paint_construction(
     view: &View,
     guide: &ConstructionEntity,
 ) {
-    let stroke = egui::Stroke::new(1.0, theme::CONSTRUCTION_STROKE);
+    let stroke = egui::Stroke::new(1.0, SPEC.component.canvas.construction_stroke);
     let kind = guide.kind.clone();
     match kind {
         ConstructionKind::Line { start, end } => {
@@ -961,9 +962,9 @@ fn paint_grid(painter: &egui::Painter, rect: egui::Rect, view: &View, spacing_mm
         let p0 = world_to_screen(view, rect, Point2::new(x, wb));
         let p1 = world_to_screen(view, rect, Point2::new(x, wt));
         let stroke = if g % 5 == 0 {
-            egui::Stroke::new(0.9, theme::GRID_MAJOR)
+            egui::Stroke::new(0.9, SPEC.component.canvas.grid_major)
         } else {
-            egui::Stroke::new(0.5, theme::GRID_MINOR)
+            egui::Stroke::new(0.5, SPEC.component.canvas.grid_minor)
         };
         painter.line_segment([p0, p1], stroke);
     }
@@ -974,9 +975,9 @@ fn paint_grid(painter: &egui::Painter, rect: egui::Rect, view: &View, spacing_mm
         let p0 = world_to_screen(view, rect, Point2::new(wl, y));
         let p1 = world_to_screen(view, rect, Point2::new(wr, y));
         let stroke = if g % 5 == 0 {
-            egui::Stroke::new(0.9, theme::GRID_MAJOR)
+            egui::Stroke::new(0.9, SPEC.component.canvas.grid_major)
         } else {
-            egui::Stroke::new(0.5, theme::GRID_MINOR)
+            egui::Stroke::new(0.5, SPEC.component.canvas.grid_minor)
         };
         painter.line_segment([p0, p1], stroke);
     }
@@ -995,22 +996,22 @@ fn paint_wall(
         .map(|p| world_to_screen(view, rect, *p))
         .collect();
     let fill = if selected {
-        theme::ACCENT_DEFAULT.linear_multiply(0.12)
+        SPEC.component.canvas.selection.linear_multiply(0.12)
     } else {
-        theme::WALL_FILL
+        SPEC.component.canvas.wall_fill
     };
     painter.add(egui::Shape::convex_polygon(
         pts.clone(),
         fill,
         egui::Stroke {
             width: 0.0,
-            color: theme::SURFACE_TRANSPARENT,
+            color: SPEC.component.canvas.stroke_none,
         },
     ));
     let stroke = if selected {
         theme::selection_stroke()
     } else {
-        egui::Stroke::new(0.9, theme::WALL_STROKE)
+        egui::Stroke::new(0.9, SPEC.component.canvas.wall_stroke)
     };
     let n = pts.len();
     for i in 0..n {
@@ -1043,17 +1044,17 @@ fn paint_opening(
     ];
     painter.add(egui::Shape::convex_polygon(
         quad.to_vec(),
-        theme::OPENING_GAP,
+        SPEC.component.canvas.opening_gap,
         egui::Stroke {
             width: 0.0,
-            color: theme::SURFACE_TRANSPARENT,
+            color: SPEC.component.canvas.stroke_none,
         },
     ));
 
     for jamb in [start, end] {
         painter.line_segment(
             [jamb + n_screen, jamb - n_screen],
-            egui::Stroke::new(0.9, theme::WALL_STROKE),
+            egui::Stroke::new(0.9, SPEC.component.canvas.wall_stroke),
         );
     }
 
@@ -1061,7 +1062,10 @@ fn paint_opening(
         Some(swing) => {
             let hinge = world_to_screen(view, rect, swing.hinge);
             let leaf = world_to_screen(view, rect, swing.leaf_end);
-            painter.line_segment([hinge, leaf], egui::Stroke::new(0.9, theme::DOOR_LEAF));
+            painter.line_segment(
+                [hinge, leaf],
+                egui::Stroke::new(0.9, SPEC.component.canvas.door_leaf),
+            );
             let arc: Vec<egui::Pos2> = geom::arc_points(
                 swing.hinge,
                 swing.radius,
@@ -1074,7 +1078,7 @@ fn paint_opening(
             .collect();
             painter.add(egui::Shape::line(
                 arc,
-                egui::Stroke::new(0.7, theme::DOOR_LEAF),
+                egui::Stroke::new(0.7, SPEC.component.canvas.door_leaf),
             ));
         }
         None => {
@@ -1084,11 +1088,11 @@ fn paint_opening(
             );
             painter.line_segment(
                 [start + inset, end + inset],
-                egui::Stroke::new(0.7, theme::WINDOW_LINE),
+                egui::Stroke::new(0.7, SPEC.component.canvas.window_line),
             );
             painter.line_segment(
                 [start - inset, end - inset],
-                egui::Stroke::new(0.7, theme::WINDOW_LINE),
+                egui::Stroke::new(0.7, SPEC.component.canvas.window_line),
             );
         }
     }

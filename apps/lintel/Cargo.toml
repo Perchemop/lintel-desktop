@@ -1,6 +1,6 @@
 [package]
 name = "lintel"
-version = "0.19.0"
+version = "0.20.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
@@ -19,8 +19,17 @@ egui = { version = "=0.36" }
 # Window icon: decode the embedded PNG for egui::IconData.
 image = "0.25"
 
+# SVG rasterization for the icon system (theme::icon_texture): original
+# CAD-workflow SVGs in assets/icons/, rendered at exact pixel size with the
+# same renderer egui_extras' SVG loader uses. Not an icon crate — no Lucide,
+# Tabler, Phosphor or any packaged icon set (spec v0.20.0 AC-05, D-034).
+resvg = "0.45"
+
 [dev-dependencies]
-# AccessKit / snapshot testing harness (guide II.27.12 / K.7)
-egui_kittest = "0.36"
+# AccessKit / snapshot testing harness (guide II.27.12 / K.7). The `wgpu`
+# feature adds the software/GPU test renderer that `Harness::render()` needs
+# to produce the design-evidence PNGs (ticket T-008, guide II.30.8); the
+# renderer initialises lazily, so AccessKit-only tests never touch it.
+egui_kittest = { version = "0.36", features = ["wgpu"] }
 # Unit test helpers if needed
 serde = { version = "1", features = ["derive"] }

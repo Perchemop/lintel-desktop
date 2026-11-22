@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Form components (T-002, spec v0.20.0 AC-03): `components/forms.rs` with
+  `Field` (label + input + error/help slots, `labelled_by` AccessKit
+  association, disabled-reason tooltip, painted error icon + 2px danger
+  stroke — never colour alone), `FieldSet` (framed legend, collapsible
+  option) and `FieldGroup` (horizontal/vertical), all reading
+  `SPEC.component.field` (D-035's pinned input pairing: `BORDER_STRONG`
+  boundary, `TEXT_ERROR` messages)
+- Layout helpers (T-003, spec v0.20.0 AC-04): `layout/helpers.rs`
+  `vstack`/`hstack`/`wrap_row`/`card` (+ `card_compact`, `tool_group`),
+  every helper returning its `InnerResponse` so callers can compose
+  responses; `wrap_row` reflows at narrow widths instead of clipping and
+  `card` carries the `SHADOW_LEVEL_1` elevation
+- Rendered design evidence (T-008, spec AC-09, guide II.30.8): env-gated
+  `evidence_*` tests render light/dark/state/focus sheets into
+  `docs/qc/{buttons,form,layout}-evidence/*.png` headlessly (egui_kittest's
+  wgpu test renderer); the `kittest` CI job generates the PNGs and uploads
+  them as workflow artefacts — never committed, no pixel baselines; each
+  evidence folder documents its contents (D-036)
+- egui_kittest AccessKit assertions (T-008): form inputs carry labelled-by
+  relations to their labels, error/help texts are announced as label nodes,
+  Tab follows visual order (field → field → submit); layout resizes 400 →
+  1200 px with a proof that no two exposed controls intersect and every
+  button stays ≥ 24 pt
+- `docs/design/gui-stack.md`: the II.30.2 stack record — egui/eframe
+  **0.36.2** resolved, three-tier token system, component architecture,
+  evidence pipeline and the 0.36 API breaks (`Context::run_ui`,
+  `CornerRadius`, `Shadow`) that all widget code is matched against
+- Contrast methodology (T-007, spec v0.20.0 AC-08): `theme::contrast_test()`
+  walks every text/UI pairing of the light palette plus new dark and
+  high-contrast reference palettes — 4.5:1 body text, 3:1 UI boundaries,
+  7:1 high-contrast text — failing with role, measured ratio and required
+  ratio; new required CI check `contrast-test` runs `cargo test
+  contrast_test` (D-035)
+- Tokens: `BASE_WARNING` / `TEXT_WARNING` (deep-amber warning text, 5.9:1 on
+  the sheet) and `BORDER_STRONG` (7.8:1 outline role for fields and
+  WCAG 2.2 §1.4.11 component boundaries)
+
+### Changed
+
+- egui_kittest dev-dependency gains the `wgpu` feature: the test renderer
+  initialises lazily, so AccessKit-only tests are unchanged while the
+  evidence generator can render PNGs (T-008)
+- Both crates bumped 0.19.0 → 0.20.0
+- `BASE_SELECTION_EDGE` raised from alpha 40 to 140: the command-palette
+  selection outline was 1.2:1 on the sheet, under the WCAG 2.2 §1.4.11
+  3:1 state-indicator floor; it now composites to 4.7:1 (4.6:1 on panels)
+
 ## v0.19.0 — 2026-11-19
 
 ### Added

@@ -1,0 +1,10 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): dimension tool — a dimension line
+     with arrows at both ends and a center mark. Ink matches theme::BASE_INK (#1A1816). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 12 L20 12"/>
+  <path d="M4 12 L8 8"/>
+  <path d="M4 12 L8 16"/>
+  <path d="M20 12 L16 8"/>
+  <path d="M20 12 L16 16"/>
+  <path d="M11 9 L13 15"/>
+</svg>

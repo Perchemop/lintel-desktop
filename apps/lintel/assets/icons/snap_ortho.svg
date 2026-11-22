@@ -1,0 +1,6 @@
+<!-- Lintel original icon (MIT OR Apache-2.0): orthogonal lock — a right-angle
+     path with the diagonal it locks away ghosted as dashes. Ink = BASE_INK. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1816" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5 19 H19 V5"/>
+  <path d="M5 19 L19 5" stroke-dasharray="2 3" stroke-width="1.5"/>
+</svg>

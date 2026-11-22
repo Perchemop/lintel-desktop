@@ -4,7 +4,7 @@
 //! never mutates the model itself.
 
 use crate::canvas::{Selection, View, world_to_screen};
-use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::ids::EntityId;
 use lintel_core::join::PlanGeometry;
@@ -30,9 +30,9 @@ pub fn render_dimensions(
         let se = world_to_screen(view, rect, dim.effective_end(Some(level)));
 
         let stroke_color = if selected {
-            theme::ACCENT_DEFAULT
+            SPEC.component.canvas.selection
         } else {
-            theme::STROKE_STRONG
+            SPEC.component.canvas.dimension_stroke
         };
         let line_stroke = egui::Stroke::new(1.0, stroke_color);
 
@@ -83,11 +83,11 @@ pub fn render_dimensions(
         // Grip markers on anchored measured points.
         if dim.start_anchor.is_some() {
             let r = egui::Rect::from_center_size(ss, egui::vec2(4.0, 4.0));
-            painter.rect_filled(r, 0.0, theme::ACCENT_DEFAULT);
+            painter.rect_filled(r, 0.0, SPEC.component.canvas.selection);
         }
         if dim.end_anchor.is_some() {
             let r = egui::Rect::from_center_size(se, egui::vec2(4.0, 4.0));
-            painter.rect_filled(r, 0.0, theme::ACCENT_DEFAULT);
+            painter.rect_filled(r, 0.0, SPEC.component.canvas.selection);
         }
     }
 }

@@ -5,12 +5,12 @@
 //! core `Command`s for unit changes; it never owns geometry or history.
 
 use crate::canvas::{SnapModeKind, SnapModes};
-use crate::theme;
+use crate::theme::SPEC;
 use eframe::egui;
 use lintel_core::command::Command;
 use lintel_core::units::UnitSystem;
 
-pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
+pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::Response {
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 4.0;
 
@@ -31,7 +31,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         ui.label(
             egui::RichText::new(snap_text)
                 .small()
-                .color(theme::TEXT_HINT),
+                .color(SPEC.component.text.hint),
         );
         ui.separator();
 
@@ -47,7 +47,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             ui,
             "Grid",
             grid_on,
-            theme::TEXT_HINT,
+            SPEC.component.text.hint,
             "Toggle the drawing grid (G).",
             || {
                 app.snap.grid_enabled = !grid_on;
@@ -58,7 +58,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             ui,
             "Ortho",
             ortho_on,
-            theme::TEXT_HINT,
+            SPEC.component.text.hint,
             "Toggle orthogonal drawing (O).",
             || {
                 app.snap.ortho = !ortho_on;
@@ -100,9 +100,9 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
         if ui
             .add(
                 egui::Button::new(units.label())
-                    .fill(crate::theme::BUTTON_PRIMARY_S.fill)
-                    .min_size(crate::theme::BUTTON_PRIMARY_S.min_size)
-                    .stroke(egui::Stroke::new(2.0, crate::theme::ACCENT_DEFAULT)),
+                    .fill(SPEC.component.button.primary_sm.fill)
+                    .min_size(SPEC.component.button.primary_sm.min_size)
+                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
             )
             .on_hover_text("Click to switch the unit system.")
             .clicked()
@@ -115,7 +115,7 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
             let version = ui.link(
                 egui::RichText::new(format!("Lintel v{}", env!("CARGO_PKG_VERSION")))
                     .small()
-                    .color(theme::TEXT_HINT),
+                    .color(SPEC.component.text.hint),
             );
             if version
                 .on_hover_text("Release notes and update status")
@@ -124,7 +124,8 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
                 app.showing_notes = true;
             }
         });
-    });
+    })
+    .response
 }
 
 /// One toggle chip: the label, coloured by its kind when it is active.
@@ -139,7 +140,7 @@ fn chip(
     let text = egui::RichText::new(label).small().color(if active {
         active_colour
     } else {
-        theme::TEXT_HINT
+        SPEC.component.text.hint
     });
     let response = ui.selectable_label(active, text).on_hover_text(hint);
     if response.clicked() {
