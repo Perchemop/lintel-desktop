@@ -270,14 +270,13 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
       architecture, evidence pipeline, 0.36 API breaks), evidence-folder
       READMEs, version bumps 0.19.0 → 0.20.0 (both crates + Cargo.lock
       entries), DECISIONS D-036.
-- [ ] Verification: CI run for the combined v0.20.0 branch (orchestrator
-      `ci.sh` run to follow; red-run/green-run IDs recorded here when done).
+- [x] Verification: CI run `45011366547` (green) → `45012462251` (green). All checks
+      passed; PR #64 merged to main.
 
-## v0.19.0 Status — RELEASE PREP
+## v0.19.0 Status — RELEASED
 
 **Snaps, Sheets & Full Keyboard Reach.** All five items merged to `main` with
-CI green. Version bumps are staged in the working tree; the tag and release
-are the remaining gate.
+CI green; `v0.19.0` tagged and signed release published.
 
 - [x] SNAP_* semantic tokens — five snap-marker colours (Midpoint,
       Perpendicular, Tangent, Ortho, Grid) moved from raw `Color32` in

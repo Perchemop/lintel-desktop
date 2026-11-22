@@ -1,10 +1,11 @@
 # Token usage ledger (guide §24.1)
 
-**Measured 2026-11-19 from the OpenCode session ledger** (`opencode.db`,
+**Measured 2026-11-20 from the OpenCode session ledger** (`opencode.db`,
 `session_v2`), superseding the earlier 5,000-per-release placeholder estimates.
 Historical release notes published before this date cite the estimates; the
 measured figures below are the authoritative record (guide §19 rule 3:
-measured, not assumed).
+measured, not assumed). Token counts are from the sessions whose day matches
+the release tag date (guide §24.1, counting definition).
 
 **Counting definition.** Tokens this release = sum of `tokens_input +
 tokens_output + tokens_reasoning` across all agent sessions in the suite
@@ -38,6 +39,7 @@ separated retroactively.
 | v0.17.0  | 2026-11-17 | 19,269,726          | 1,198,525,082     | Block instance delete, keyboard truth        |
 | v0.18.0  | 2026-11-18 | 7,394,424           | 1,205,919,506     | The design system (contrast gate, kittest)   |
 | v0.19.0  | 2026-11-19 | 1,353,455           | 1,207,272,961     | Snaps, sheets & full keyboard reach          |
+| v0.20.0  | 2026-11-20 | 29,514,710          | 1,236,787,671     | Design-system extensions, kittest evidence |
 
 Same-day windows: multiple tags landed on one day, so sessions that day are
 assigned to the first tag; later same-day releases show 0 rather than
@@ -46,7 +48,7 @@ double-counting.
 ## Build-time extract for the in-app popup
 
 ```json
-{"current_version": "0.19.0", "releases": [
+{"current_version": "0.20.0", "releases": [
   {"version": "0.1.0", "date": "2026-11-04", "tokens_this": 610929565, "tokens_cumulative": 610929565},
   {"version": "0.2.0", "date": "2026-11-05", "tokens_this": 70213294, "tokens_cumulative": 681142859},
   {"version": "0.5.0", "date": "2026-11-06", "tokens_this": 205358, "tokens_cumulative": 681348217},
@@ -58,6 +60,7 @@ double-counting.
   {"version": "0.16.0", "date": "2026-11-16", "tokens_this": 3096682, "tokens_cumulative": 1179255356},
   {"version": "0.17.0", "date": "2026-11-17", "tokens_this": 19269726, "tokens_cumulative": 1198525082},
   {"version": "0.18.0", "date": "2026-11-18", "tokens_this": 7394424, "tokens_cumulative": 1205919506},
-  {"version": "0.19.0", "date": "2026-11-19", "tokens_this": 1353455, "tokens_cumulative": 1207272961}
+  {"version": "0.19.0", "date": "2026-11-19", "tokens_this": 1353455, "tokens_cumulative": 1207272961},
+  {"version": "0.20.0", "date": "2026-11-20", "tokens_this": 29514710, "tokens_cumulative": 1236787671}
 ]}
 ```

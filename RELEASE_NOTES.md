@@ -1,13 +1,10 @@
-## Lintel 0.20.0 — Design System Extensions (draft)
+## Lintel 0.20.0 — Design System Extensions
 
 **Summary.** This release finishes the v0.20.0 design-system slice: the
 button, form and layout component layer is complete, every colour resolves
 through the three token tiers, contrast is enforced per palette by a
 dedicated CI check, and the interface is now proven with rendered evidence
 and AccessKit assertions instead of claims.
-
-> **Draft** — finalised at release time; per-release token metrics are
-> appended by the release workflow from the `docs/tokens.md` ledger.
 
 ### Added
 - Form components (T-002): `Field` (label + input + error/help, screen-reader
@@ -38,6 +35,16 @@ and AccessKit assertions instead of claims.
   ships (dark evidence screenshots show egui's dark chrome)
 - Shell workbench (activity bar, status bar, editor tabs) and docking remain
   separate milestones per the v0.20.0 spec
+
+### Artefacts
+`lintel-windows-x86_64-setup.exe`, `lintel-windows-x86_64.zip`, `lintel-linux-x86_64.zip`, `lintel-linux-aarch64.zip`, `lintel-macos-aarch64.zip`, `lintel-macos-aarch64.dmg`, `lintel-appimage-x86_64.AppImage`, `SHA256SUMS.txt`, and `SHA256SUMS.txt.asc` (signed).
+
+### Token metrics
+Measured from the OpenCode session ledger and recorded in `docs/tokens.md`
+(guide §24.1; supersedes the earlier per-release estimates):
+
+- This release: 29,514,710 tokens (input + output + reasoning)
+- Cumulative since development began: 1,236,787,671 tokens
 
 ---
 ## Lintel 0.19.0 — Snaps, Sheets & Full Keyboard Reach
