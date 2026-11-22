@@ -15,9 +15,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 /// One headless pass on a fresh context, `f` may run more than once.
+///
+/// The pass output is drained before it drops: `TexturesDelta`'s Drop
+/// guard panics if unapplied deltas remain (epaint 0.36.2), and a headless
+/// test never applies them to a renderer.
 fn run(f: impl FnMut(&mut egui::Ui)) {
     let ctx = egui::Context::default();
-    let _ = ctx.run_ui(egui::RawInput::default(), f);
+    let mut out = ctx.run_ui(egui::RawInput::default(), f);
+    out.textures_delta.clear();
 }
 
 type Slot<T> = Rc<RefCell<Option<T>>>;
