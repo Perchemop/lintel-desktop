@@ -142,7 +142,8 @@ fn contrast_test_accent_and_border_tokens_meet_ui_floor() {
 fn contrast_test_button_states_all_roles_all_themes() {
     for theme in Theme::ALL {
         let floor = theme.text_floor();
-        for (role, b) in palette(theme).buttons {
+        let p = palette(theme);
+        for (role, b) in p.buttons {
             for (state, fg, bg, state_floor) in [
                 ("fill", b.text, b.fill, floor),
                 ("hover", b.text, b.hover, floor),
@@ -151,10 +152,11 @@ fn contrast_test_button_states_all_roles_all_themes() {
             ] {
                 if bg.a() == 0 {
                     // Ghost: no fill of its own; the label reads against the
-                    // light surfaces the button is drawn over.
+                    // palette's own surfaces the button is drawn over (the
+                    // dark/HC palettes ship light ghost labels on dark sheets).
                     for (surface, wash) in [
-                        ("surface.base", SURFACE_BASE),
-                        ("surface.panel", SURFACE_PANEL),
+                        ("surface.base", p.surface_base),
+                        ("surface.panel", p.surface_panel),
                     ] {
                         let r = contrast_ratio(rgb_of(fg), rgb_of(wash));
                         assert!(

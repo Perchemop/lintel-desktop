@@ -436,7 +436,10 @@ mod tests {
     /// `Context::run`; `run_ui` hands over a `&mut Ui` directly.
     fn with_ui(mut f: impl FnMut(&mut egui::Ui)) {
         let ctx = egui::Context::default();
-        let _ = ctx.run_ui(egui::RawInput::default(), |ui| f(ui));
+        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| f(ui));
+        // epaint panics if a TexturesDelta drops with unapplied deltas; a
+        // bare run_ui never feeds a renderer, so mark the delta handled.
+        out.textures_delta.clear();
     }
 
     #[test]

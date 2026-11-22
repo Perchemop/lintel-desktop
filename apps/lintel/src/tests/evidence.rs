@@ -273,7 +273,9 @@ fn evidence_buttons_states() {
     }
     let mut harness = Harness::new_ui(button_states_sheet_ui);
     harness.set_size(egui::vec2(540.0, 300.0));
-    harness.run();
+    // The Loading state paints a spinner, which repaints forever — run a
+    // fixed step budget instead of run()'s settle-until-stable loop.
+    harness.run_steps(3);
     render_to(&mut harness, "buttons-evidence", "buttons-states");
 }
 

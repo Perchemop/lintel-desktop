@@ -45,7 +45,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev xvfb
 
-      - name: Install swiftshader Vulkan
+      # mesa-vulkan-drivers provides lavapipe (software Vulkan); the loader
+      # discovers it under /usr/share/vulkan/icd.d, so no VK_ICD override.
+      - name: Install Mesa lavapipe (software Vulkan)
         run: |
           sudo apt-get install -y libvulkan1 mesa-vulkan-drivers
 
@@ -75,7 +77,6 @@ jobs:
         env:
           CI: "true"
           DISPLAY: ":99"
-          VK_ICD_FILENAMES: "/etc/vulkan/icd.d/swiftshader_icd.json"
 
       # Ticket T-008 / guide II.30.8: render the design-evidence PNGs
       # (buttons, forms, layout) headlessly and upload them for the PR
@@ -86,7 +87,6 @@ jobs:
         env:
           CI: "true"
           DISPLAY: ":99"
-          VK_ICD_FILENAMES: "/etc/vulkan/icd.d/swiftshader_icd.json"
 
       - name: Upload design-system evidence
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

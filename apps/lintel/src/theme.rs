@@ -1098,8 +1098,11 @@ pub mod contrast {
         danger: DARK_DANGER,
         danger_hover: DARK_DANGER_HOVER,
         border_strong: DARK_BORDER_STRONG,
-        border_selection: Color32::from_rgba_premultiplied(255, 255, 255, 140),
-        selection_fill: Color32::from_rgba_premultiplied(255, 255, 255, 30),
+        // from_white_alpha produces correctly premultiplied rgb (the raw
+        // 255/255/255 form composited to opaque white and collapsed the
+        // selected-row contrast to 1.00:1 — caught by the T-007 gate).
+        border_selection: Color32::from_rgba_premultiplied(140, 140, 140, 140),
+        selection_fill: Color32::from_rgba_premultiplied(30, 30, 30, 30),
         focus_ring: DARK_COBALT,
         buttons: [
             (
@@ -1204,7 +1207,8 @@ pub mod contrast {
         danger_hover: HC_DANGER_HOVER,
         border_strong: HC_BORDER_STRONG,
         border_selection: Color32::WHITE,
-        selection_fill: Color32::from_rgba_premultiplied(255, 255, 255, 60),
+        // Correctly premultiplied white wash (see the dark palette note).
+        selection_fill: Color32::from_rgba_premultiplied(60, 60, 60, 60),
         focus_ring: HC_COBALT,
         buttons: [
             (

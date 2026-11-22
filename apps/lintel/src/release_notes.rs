@@ -9,6 +9,9 @@
 pub struct ReleaseNote {
     /// Version string, without a leading `v`.
     pub version: String,
+    /// True while the section is still a pre-release draft: drafts carry no
+    /// measured token figures yet (guide §19 rule 3 — measured, not assumed).
+    pub is_draft: bool,
     /// One-or-two-sentence honest summary.
     pub summary: String,
     /// What the release added.
@@ -29,8 +32,8 @@ const RELEASE_NOTES_MD: &str = include_str!("../../../RELEASE_NOTES.md");
 
 /// Explains how the token figures below should be read.
 pub const TOKEN_METRIC_NOTE: &str = "Ledger-era figures come from the CI-managed \
-`docs/tokens.json`; releases before 0.10.0 predate the ledger and carry no \
-figures (this reconciles the legacy 4.9M accounting — audit F7).";
+`docs/tokens.md` ledger; releases before 0.10.0 predate the ledger and \
+carry no figures (this reconciles the legacy 4.9M accounting — audit F7).";
 
 /// Parses `RELEASE_NOTES_MD` and returns every published release, newest first.
 pub fn releases() -> Vec<ReleaseNote> {
@@ -43,10 +46,17 @@ pub fn releases() -> Vec<ReleaseNote> {
     out
 }
 
-/// Cumulative token total reported by the newest entry, when present.
+/// Cumulative token total reported by the newest published entry, when
+/// present. Draft sections carry no measured figures yet (guide §19 rule 3),
+/// so they are skipped, not read.
 pub fn latest_cumulative_tokens() -> Option<u64> {
-    let first = split_sections(RELEASE_NOTES_MD).into_iter().next()?;
-    extract_number(&first, "Cumulative since development began:")
+    split_sections(RELEASE_NOTES_MD).iter().find_map(|section| {
+        let note = parse_section(section)?;
+        if note.is_draft {
+            return None;
+        }
+        extract_number(section, "Cumulative since development began:")
+    })
 }
 
 fn split_sections(text: &str) -> Vec<String> {
@@ -71,12 +81,14 @@ fn parse_section(text: &str) -> Option<ReleaseNote> {
 
     // Heading: "## Lintel <version> — <title>"
     let mut version: Option<String> = None;
+    let mut is_draft = false;
     for line in &lines {
         let t = line.trim();
         if let Some(rest) = t.strip_prefix("## Lintel ") {
             let ver = rest.split_whitespace().next().unwrap_or("").to_string();
             if !ver.is_empty() {
                 version = Some(ver);
+                is_draft = rest.contains("(draft)");
             }
             break;
         }
@@ -120,6 +132,7 @@ fn parse_section(text: &str) -> Option<ReleaseNote> {
 
     Some(ReleaseNote {
         version,
+        is_draft,
         summary,
         added,
         changed,
@@ -257,10 +270,15 @@ mod tests {
         // The newest figure is *measured* from the session ledger (guide §19
         // rule 3) and varies per release — assert presence, not a value.
         let rs = releases();
-        let newest = rs.first().expect("at least one release");
+        // A pre-release draft section carries no figures yet (guide §19 rule
+        // 3); the newest *published* release must.
+        let newest = rs
+            .iter()
+            .find(|r| !r.is_draft)
+            .expect("at least one published release");
         assert!(
             newest.tokens_this_release.is_some(),
-            "the newest release must carry a token figure"
+            "the newest published release must carry a token figure"
         );
         let first_ledger = rs.iter().find(|r| r.version == "0.10.0").unwrap();
         assert_eq!(first_ledger.tokens_this_release, Some(5000));

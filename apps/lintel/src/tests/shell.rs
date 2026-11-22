@@ -22,11 +22,14 @@ fn shell_pass(app: &mut LintelApp, now: i64) -> crate::app::shell::Regions {
         ..egui::RawInput::default()
     };
 
-    let _ = ctx.run_ui(input, |root| {
+    let mut out = ctx.run_ui(input, |root| {
         egui::CentralPanel::default().show(root, |ui| {
             *slot.borrow_mut() = Some(regions(ui, app, now));
         });
     });
+    // epaint panics if a TexturesDelta drops with unapplied deltas; a bare
+    // run_ui never feeds a renderer, so mark the delta handled.
+    out.textures_delta.clear();
 
     slot.into_inner().expect("the shell pass ran")
 }

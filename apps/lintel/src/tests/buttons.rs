@@ -43,9 +43,12 @@ const ALL_ROLES: [ButtonRole; 4] = [
 // test bodies are pure draws and satisfy that trivially.
 fn with_ui(mut f: impl FnMut(&mut egui::Ui)) {
     let ctx = egui::Context::default();
-    let _ = ctx.run_ui(egui::RawInput::default(), |root| {
+    let mut out = ctx.run_ui(egui::RawInput::default(), |root| {
         egui::CentralPanel::default().show(root, |ui| f(ui));
     });
+    // epaint panics if a TexturesDelta drops with unapplied deltas; a bare
+    // run_ui never feeds a renderer, so mark the delta handled.
+    out.textures_delta.clear();
 }
 
 /// Run one pass on `ctx` and return the rect of the widget `f` adds.
@@ -55,11 +58,12 @@ fn button_rect_with_input(
     mut f: impl FnMut(&mut egui::Ui) -> egui::Response,
 ) -> egui::Rect {
     let slot = std::cell::RefCell::new(None);
-    let _ = ctx.run_ui(input, |root| {
+    let mut out = ctx.run_ui(input, |root| {
         egui::CentralPanel::default().show(root, |ui| {
             *slot.borrow_mut() = Some(f(ui).rect);
         });
     });
+    out.textures_delta.clear(); // no renderer consumes the pass output
     slot.into_inner().expect("ui body ran")
 }
 
@@ -268,7 +272,6 @@ fn hovering_a_disabled_button_is_stable_and_panic_free() {
     let hovered = button_rect_with_input(&ctx, hovered_input, |ui| {
         StyledButton::new("Delete").enabled(false).show(ui)
     });
-
     assert_eq!(
         at_rest, hovered,
         "hover on a disabled button must not move or resize it"
@@ -366,11 +369,19 @@ fn button_tokens_meet_wcag_aa_in_every_state() {
         let text = rgb_of(spec.text);
         let sheet = rgb_of(SURFACE_BASE);
 
+        // Ghost buttons have no fill of their own; their label reads against
+        // the sheet it sits on (the palette-level gate applies the same rule).
+        let fill_surface = if spec.fill.a() == 0 {
+            SURFACE_BASE
+        } else {
+            spec.fill
+        };
+
         // Default, hover and pressed labels are normal text (4.5:1).
         assert!(
-            contrast_ratio(text, rgb_of(spec.fill)) >= 4.5,
+            contrast_ratio(text, rgb_of(fill_surface)) >= 4.5,
             "{name}: label on fill is {:.2}:1",
-            contrast_ratio(text, rgb_of(spec.fill))
+            contrast_ratio(text, rgb_of(fill_surface))
         );
         assert!(
             contrast_ratio(text, rgb_of(spec.hover)) >= 4.5,
