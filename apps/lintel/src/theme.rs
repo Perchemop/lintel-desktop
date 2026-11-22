@@ -364,6 +364,8 @@ pub enum ButtonRole {
 pub enum ButtonSize {
     Sm,
     Md,
+    #[allow(dead_code)]
+    // 12-variant API completeness; theme_tiers asserts all role×size tokens (spec T-001)
     Lg,
 }
 
@@ -550,9 +552,11 @@ pub const BUTTON_DANGER_L: ButtonRoleStyle = ButtonRoleStyle {
 /// runtime Light/Dark/HighContrast switch is a later slice — until it lands
 /// the dark and high-contrast palettes are the asserted reference for that
 /// work (D-035).
+#[allow(unused_imports)]
+// merge-gate API re-export: consumed by theme_tests.rs through this path (D-035)
 pub use contrast::{ContrastFailure, Theme, contrast_check, contrast_test};
 pub mod contrast {
-    #![allow(dead_code)] // merge-gate API: consumed by theme_tests.rs, not yet by the binary (D-035)
+    #![allow(dead_code, unused_imports)] // merge-gate API: consumed by theme_tests.rs, not yet by the binary (D-035)
 
     use std::fmt;
 
@@ -1264,9 +1268,11 @@ pub const BUTTON_CORNER_RADIUS: f32 = 4.0;
 
 /// The 2 px accent ring every button variant paints while focused, and the
 /// accent outline hand-styled buttons reuse (guide II.30.7.4).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const BUTTON_RING: Color32 = FOCUS_RING;
 
 /// Minimum target size for icon-only buttons (24pt floor per guide II.30.7.5).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const ICON_BUTTON_MIN_TARGET: f32 = 24.0;
 
 // ---------------------------------------------------------------------------
@@ -1285,18 +1291,23 @@ pub const SPACING_MD: f32 = SPACING_BASE * 2.0;
 /// Large spacing: 12pt (3× base).
 pub const SPACING_LG: f32 = SPACING_BASE * 3.0;
 /// Extra-large spacing: 16pt (4× base).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const SPACING_XL: f32 = SPACING_BASE * 4.0;
 /// 2XL spacing: 24pt (6× base).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const SPACING_2XL: f32 = SPACING_BASE * 6.0;
 
 /// Corner radius scale (guide II.30.6): 2 / 4 / 8 / 12.
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const RADIUS_XS: f32 = 2.0;
 pub const RADIUS_SM: f32 = 4.0;
 pub const RADIUS_MD: f32 = 8.0;
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const RADIUS_LG: f32 = 12.0;
 
 /// Elevation shadows for raised surfaces (guide II.30.6).
 /// Level 1: subtle lift (cards, panels).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const SHADOW_LEVEL_1: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(20),
     offset: [0, 2],
@@ -1304,6 +1315,7 @@ pub const SHADOW_LEVEL_1: egui::Shadow = egui::Shadow {
     spread: 0,
 };
 /// Level 2: medium lift (dropdowns, tooltips).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const SHADOW_LEVEL_2: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(35),
     offset: [0, 6],
@@ -1311,6 +1323,7 @@ pub const SHADOW_LEVEL_2: egui::Shadow = egui::Shadow {
     spread: 0,
 };
 /// Level 3: high lift (modals, overlays).
+#[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
 pub const SHADOW_LEVEL_3: egui::Shadow = egui::Shadow {
     color: Color32::from_black_alpha(50),
     offset: [0, 16],
@@ -1397,6 +1410,7 @@ pub const ICON_NAMES: &[&str] = &[
 /// Compiled in with `include_bytes!` so release binaries (AppImage, MSI, dmg)
 /// never read assets from disk, and so a missing or renamed file breaks the
 /// build instead of shipping a blank icon.
+#[allow(dead_code)] // icon registry: consumed by rasterize_icon/theme tests, pending shell adoption (D-034/D-035)
 const ICON_SVGS: &[(&str, &[u8])] = &[
     // Tools (T-004)
     ("wall", include_bytes!("../assets/icons/wall.svg")),
@@ -1485,9 +1499,11 @@ const ICON_SVGS: &[(&str, &[u8])] = &[
 /// Painted when a caller asks for a name that is not in the registry: a
 /// dashed square with a slash, so a wiring mistake is visible on screen
 /// (guide II.30.11 — an error state, never a silent blank).
+#[allow(dead_code)] // icon registry: painted for unknown names, pending shell adoption (D-034/D-035)
 const PLACEHOLDER_SVG: &str = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1A1816\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"1\" stroke-dasharray=\"3 3\"/><path d=\"M9 15 L15 9\"/></svg>";
 
 /// The embedded SVG for a semantic icon name, if one is registered.
+#[allow(dead_code)] // icon pipeline step, pending shell adoption (D-034/D-035)
 fn icon_svg(name: &str) -> Option<&'static [u8]> {
     ICON_SVGS
         .iter()
@@ -1499,6 +1515,7 @@ fn icon_svg(name: &str) -> Option<&'static [u8]> {
 ///
 /// Hostile input is clamped: a zero or negative size still yields one pixel
 /// (guide §2.6 — input-derived numbers are checked, never trusted).
+#[allow(dead_code)] // icon pipeline step, pending shell adoption (D-034/D-035)
 fn icon_pixel_size(ctx: &Context, size_pt: f32) -> usize {
     (size_pt.max(1.0) * ctx.pixels_per_point()).round().max(1.0) as usize
 }
@@ -1509,6 +1526,7 @@ fn icon_pixel_size(ctx: &Context, size_pt: f32) -> usize {
 /// into a transparent tiny-skia pixmap and hands the premultiplied RGBA
 /// straight to epaint. Parse or allocation failures degrade to a transparent
 /// image with a log line rather than panicking (guide §2.6).
+#[allow(dead_code)] // icon pipeline step, pending shell adoption (D-034/D-035)
 pub(crate) fn rasterize_icon(name: &str, px: usize) -> ColorImage {
     let source = match icon_svg(name) {
         Some(bytes) => bytes,
@@ -1553,6 +1571,7 @@ pub(crate) fn rasterize_icon(name: &str, px: usize) -> ColorImage {
 /// keyed by the physical size so a display-scale change rasterizes afresh at
 /// the new resolution. Per-context storage also keeps a kittest harness's
 /// texture ids separate from the app's.
+#[allow(dead_code)] // icon pipeline entry, pending shell adoption (D-034/D-035)
 pub fn icon_texture(ctx: &Context, name: &str, size_pt: f32) -> TextureHandle {
     let px = icon_pixel_size(ctx, size_pt);
     let cache_key = egui::Id::new(("lintel_icon_texture", name, px));

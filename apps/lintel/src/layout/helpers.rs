@@ -8,6 +8,8 @@
 //! All spacing, radii, and colours come from theme tokens — no raw `Color32`
 //! (guide II.30.6).
 
+#![allow(dead_code)] // layout helpers pending shell adoption (v0.20.1); exercised by src/tests/evidence.rs (D-035)
+
 use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;

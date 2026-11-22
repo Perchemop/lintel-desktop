@@ -45,7 +45,7 @@ fn field_renders_label_input_and_help() {
 #[test]
 fn error_field_marks_the_input_and_prints_the_message() {
     let mut buffer = String::from("-1");
-    let total = slot::<f32>();
+    let total = slot::<(f32, f32)>();
     let sink = total.clone();
     run(move |ui| {
         let response = Field::new("Wall length")
@@ -54,7 +54,7 @@ fn error_field_marks_the_input_and_prints_the_message() {
             .show(ui);
         *sink.borrow_mut() = Some((response.rect.height(), ui.min_rect().height()));
     });
-    let (input, whole) = total.borrow().clone().expect("the pass ran");
+    let (input, whole) = (*total.borrow()).expect("the pass ran");
     assert!(input > 0.0, "the input must be visible");
     assert!(
         whole > input,

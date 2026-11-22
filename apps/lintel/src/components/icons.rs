@@ -4,6 +4,8 @@
 //! This module provides the `IconName` enum for compile-time safety,
 //! convenience functions `show_icon`/`icon_button`, and AccessKit wiring.
 
+#![allow(dead_code)] // icon component library pending shell adoption (v0.20.1); exercised by src/tests/icons.rs (D-034/D-035)
+
 use crate::theme;
 use eframe::egui::{self, Context, TextureHandle};
 

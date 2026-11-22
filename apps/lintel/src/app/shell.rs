@@ -4,30 +4,25 @@
 //! (spec v0.20.0 AC-06, T-005). All colours/spacing from theme tokens.
 
 use crate::app::tool::Tool;
-use crate::canvas::{
-    Canvas, CanvasResponse, Draft, Selection, SelectionBand, SnapModeKind, SnapModes, View,
-    screen_to_world, world_to_screen,
-};
+use crate::canvas::{Canvas, CanvasResponse, SnapModeKind, world_to_screen};
 use crate::components::buttons::{ButtonRole, ButtonSize, StyledButton};
-use crate::inspector::{InspectorDraft, inspector};
-use crate::layout::helpers::{card, tool_group, vstack};
+use crate::inspector::inspector;
+use crate::layout::helpers::{tool_group, vstack};
 use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;
-use lintel_core::{
-    BlockId,
-    command::Command,
-    document::Document,
-    geom::{Bounds, Point2, Vec2},
-    ids::EntityId,
-    join::{Hit, PlanGeometry},
-};
+use lintel_core::{geom::Point2, join::PlanGeometry};
 
 /// The three main layout regions returned by `Shell::regions()`.
 ///
 /// - `title_bar`: Top strip with app name, window controls, breadcrumb
 /// - `rail`: Left sidebar with tool palette (draw, modify, snap, layers)
 /// - `canvas`: Center drawing area + rulers + status
+///
+/// The fields are the regions API contract (T-005 spaceui pattern): the
+/// shell consumes the render side-effects itself, and callers (main.rs,
+/// tests/shell.rs) read the responses they need.
+#[allow(dead_code)]
 pub struct Regions {
     /// Top title bar response.
     pub title_bar: egui::Response,
@@ -73,7 +68,6 @@ pub fn regions(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> Regio
     let mut canvas_region_response = None;
     let mut status_bar_response = None;
     let mut inspector_response = None;
-    let mut palette_response = None;
 
     egui::CentralPanel::default().show(ui, |ui| {
         // Top: Title bar
@@ -139,50 +133,49 @@ pub fn regions(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> Regio
             }
 
             // Highlight selected block instance
-            if let Some(id) = app.selected_block_instance {
-                if let Some(level) = app.doc.project().active_level()
-                    && let Some(instance) = level.block_instance(id)
-                {
-                    let def = level.block_def(instance.block_id);
-                    let mut min_x = f64::INFINITY;
-                    let mut min_y = f64::INFINITY;
-                    let mut max_x = f64::NEG_INFINITY;
-                    let mut max_y = f64::NEG_INFINITY;
-                    let mut any = false;
-                    if let Some(def) = def {
-                        for local in def.local_points() {
-                            let p = instance.transform_point(local);
-                            min_x = min_x.min(p.x);
-                            min_y = min_y.min(p.y);
-                            max_x = max_x.max(p.x);
-                            max_y = max_y.max(p.y);
-                            any = true;
-                        }
+            if let Some(id) = app.selected_block_instance
+                && let Some(level) = app.doc.project().active_level()
+                && let Some(instance) = level.block_instance(id)
+            {
+                let def = level.block_def(instance.block_id);
+                let mut min_x = f64::INFINITY;
+                let mut min_y = f64::INFINITY;
+                let mut max_x = f64::NEG_INFINITY;
+                let mut max_y = f64::NEG_INFINITY;
+                let mut any = false;
+                if let Some(def) = def {
+                    for local in def.local_points() {
+                        let p = instance.transform_point(local);
+                        min_x = min_x.min(p.x);
+                        min_y = min_y.min(p.y);
+                        max_x = max_x.max(p.x);
+                        max_y = max_y.max(p.y);
+                        any = true;
                     }
-                    if !any {
-                        const HALF: f64 = 250.0;
-                        min_x = instance.param.x - HALF;
-                        min_y = instance.param.y - HALF;
-                        max_x = instance.param.x + HALF;
-                        max_y = instance.param.y + HALF;
-                    }
-                    let a = world_to_screen(&app.view, rect, Point2::new(min_x, min_y));
-                    let b = world_to_screen(&app.view, rect, Point2::new(max_x, max_y));
-                    let r = egui::Rect::from_two_pos(a, b);
-                    let painter = ui.painter_at(rect);
-                    painter.rect_stroke(
-                        r,
-                        0.0,
-                        egui::Stroke::new(2.0, SPEC.component.canvas.block_instance_stroke),
-                        egui::StrokeKind::Outside,
-                    );
                 }
+                if !any {
+                    const HALF: f64 = 250.0;
+                    min_x = instance.param.x - HALF;
+                    min_y = instance.param.y - HALF;
+                    max_x = instance.param.x + HALF;
+                    max_y = instance.param.y + HALF;
+                }
+                let a = world_to_screen(&app.view, rect, Point2::new(min_x, min_y));
+                let b = world_to_screen(&app.view, rect, Point2::new(max_x, max_y));
+                let r = egui::Rect::from_two_pos(a, b);
+                let painter = ui.painter_at(rect);
+                painter.rect_stroke(
+                    r,
+                    0.0,
+                    egui::Stroke::new(2.0, SPEC.component.canvas.block_instance_stroke),
+                    egui::StrokeKind::Outside,
+                );
             }
 
             app.pointer_world = canvas_response.as_ref().unwrap().pointer_world;
             app.last_snap = canvas_response.as_ref().unwrap().snap;
 
-            app.handle_canvas_input(ui, canvas_response.as_ref().unwrap().clone(), rect, now);
+            app.handle_canvas_input(ui, *canvas_response.as_ref().unwrap(), rect, now);
         });
 
         ui.separator();
@@ -212,8 +205,8 @@ pub fn regions(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> Regio
         inspector_response = resp;
     }
 
-    // Command palette
-    palette_response = crate::command_palette::show(ui.ctx(), app, now);
+    // Command palette (unconditionally: show() itself handles the closed state)
+    let palette_response = crate::command_palette::show(ui.ctx(), app, now);
 
     Regions {
         title_bar: title_bar_response.unwrap(),

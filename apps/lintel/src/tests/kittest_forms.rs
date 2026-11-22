@@ -44,7 +44,7 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
     let inputs: Vec<_> = harness.get_all_by_role(Role::TextInput).collect();
     assert_eq!(inputs.len(), 2, "both fields must expose TextInput roles");
     for node in &inputs {
-        let labelled_by = node.accesskit_node().labelled_by();
+        let mut labelled_by = node.accesskit_node().labelled_by();
         assert!(
             labelled_by.next().is_some(),
             "every form input must be associated with its label (II.30.7.4)"
@@ -84,7 +84,7 @@ fn inputs_carry_their_labels_and_tab_follows_visual_order() {
 
 #[test]
 fn the_error_state_is_announced_as_text() {
-    let mut buffer = String::from("-1");
+    let buffer = String::from("-1");
     let mut harness = egui_kittest::Harness::new_ui(move |ui| {
         // Recreate the buffer each pass: the harness closure is FnMut, and a
         // static error keeps the tree stable across passes.
@@ -108,7 +108,7 @@ fn the_error_state_is_announced_as_text() {
 
 #[test]
 fn help_text_is_announced_as_text() {
-    let mut buffer = String::from("4.2");
+    let buffer = String::from("4.2");
     let mut harness = egui_kittest::Harness::new_ui(move |ui| {
         let mut buffer = buffer.clone();
         Field::new("Wall length")

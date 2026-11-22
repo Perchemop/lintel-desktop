@@ -17,8 +17,10 @@ fn shell_pass(app: &mut LintelApp, now: i64) -> crate::app::shell::Regions {
     ctx.set_pixels_per_point(1.0);
 
     let slot = RefCell::new(None);
-    let mut input = egui::RawInput::default();
-    input.screen_rect = Some(egui::Rect::from_min_size(egui::Pos2::ZERO, WINDOW_SIZE));
+    let input = egui::RawInput {
+        screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, WINDOW_SIZE)),
+        ..egui::RawInput::default()
+    };
 
     let _ = ctx.run_ui(input, |root| {
         egui::CentralPanel::default().show(root, |ui| {

@@ -17,7 +17,7 @@ use crate::layout::helpers::{card, card_compact, hstack, tool_group, vstack, wra
 use crate::theme;
 use eframe::egui;
 use egui_kittest::Harness;
-use egui_kittest::kittest::{NodeT, Queryable};
+use egui_kittest::kittest::Queryable;
 use std::path::PathBuf;
 
 /// Render evidence only when the CI job (or a reviewer) asks for it.

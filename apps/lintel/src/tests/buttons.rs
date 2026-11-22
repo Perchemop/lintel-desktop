@@ -13,7 +13,6 @@ use crate::theme::{
     rgb_of,
 };
 use eframe::egui;
-use std::cell::RefCell;
 
 /// All twelve role × size component tokens.
 const ALL_VARIANTS: [&str; 12] = [

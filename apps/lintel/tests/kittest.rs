@@ -13,7 +13,7 @@ use egui_kittest::kittest::{NodeT, Queryable};
 #[test]
 fn harness_exposes_an_egui_button_with_role_and_label() {
     let mut harness = egui_kittest::Harness::new_ui(|ui| {
-        ui.button("Harness smoke");
+        let _ = ui.button("Harness smoke");
     });
     harness.run();
 

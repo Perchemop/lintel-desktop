@@ -1,7 +1,5 @@
 //! Tool palette: all drawing and construction tools available in Lintel.
 
-use eframe::egui;
-
 /// Active drawing/editing tool.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Tool {
@@ -37,6 +35,7 @@ impl Tool {
         }
     }
 
+    #[allow(dead_code)] // keyboard-truth metadata; consumed by docs/qc/shortcuts.md review and the rail's future hint layer
     pub fn shortcut(self) -> &'static str {
         match self {
             Tool::Select => "S",
@@ -54,6 +53,7 @@ impl Tool {
         }
     }
 
+    #[allow(dead_code)] // palette/rail button role mapping; exercised by the button tests, pending rail adoption (D-035)
     pub fn role(self) -> crate::components::buttons::ButtonRole {
         match self {
             Tool::Select => crate::components::buttons::ButtonRole::Ghost,

@@ -5,7 +5,7 @@
 use crate::components::icons::{IconName, icon_texture, preload_all};
 use eframe::egui;
 use egui_kittest::Harness;
-use egui_kittest::kittest::Queryable;
+use egui_kittest::kittest::{NodeT, Queryable};
 
 /// Test that all tool icons can be loaded as textures at exact pixel sizes.
 #[test]
@@ -33,7 +33,7 @@ fn tool_icons_load_at_all_standard_sizes() {
 
     for icon in tool_icons {
         for &sz in &sizes {
-            let handle = icon_texture(harness.ctx, icon, sz);
+            let handle = icon_texture(&harness.ctx, icon, sz);
             let expected = egui::Vec2::splat(sz);
             assert_eq!(
                 handle.size_vec2(),
@@ -74,7 +74,7 @@ fn legacy_icons_load_at_all_standard_sizes() {
 
     for icon in legacy_icons {
         for &sz in &sizes {
-            let handle = icon_texture(harness.ctx, icon, sz);
+            let handle = icon_texture(&harness.ctx, icon, sz);
             let expected = egui::Vec2::splat(sz);
             assert_eq!(
                 handle.size_vec2(),
@@ -113,8 +113,8 @@ fn show_icon_renders_without_panic() {
     harness.run();
 
     // The Image widget should be present; verify no panics via successful run.
-    // AccessKit doesn't expose Image role by default; we check the harness ran.
-    assert!(true, "show_icon must complete without panic");
+    // AccessKit doesn't expose Image role by default, so the harness completing
+    // without panicking is the assertion — reaching this line is the proof.
 }
 
 /// Test that repeated calls to icon_texture return the same cached handle.
@@ -123,8 +123,8 @@ fn icon_texture_caching_returns_same_handle() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h1 = icon_texture(harness.ctx, IconName::Window, 24.0);
-    let h2 = icon_texture(harness.ctx, IconName::Window, 24.0);
+    let h1 = icon_texture(&harness.ctx, IconName::Window, 24.0);
+    let h2 = icon_texture(&harness.ctx, IconName::Window, 24.0);
 
     assert_eq!(
         h1.id(),
@@ -139,8 +139,8 @@ fn icon_texture_different_sizes_produce_different_handles() {
     let mut harness = Harness::new_ui(|_| {});
     harness.run();
 
-    let h24 = icon_texture(harness.ctx, IconName::Select, 24.0);
-    let h32 = icon_texture(harness.ctx, IconName::Select, 32.0);
+    let h24 = icon_texture(&harness.ctx, IconName::Select, 24.0);
+    let h32 = icon_texture(&harness.ctx, IconName::Select, 32.0);
 
     assert_ne!(
         h24.id(),

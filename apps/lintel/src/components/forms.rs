@@ -9,9 +9,14 @@
 //! immediate-mode call chain consumes the fields in the same scope that owns
 //! their state.
 
+#![allow(dead_code)] // component library pending shell adoption (v0.20.1); exercised by src/tests/forms.rs and the in-module harness (D-035)
+
 use crate::theme;
 use crate::theme::SPEC;
 use eframe::egui;
+
+/// Type-erased input renderer for a [`Field`] (clippy::type_complexity).
+pub type FieldInput<'a> = Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>;
 
 /// A single form field: label + input + optional error/help text.
 ///
@@ -24,7 +29,7 @@ use eframe::egui;
 pub struct Field<'a> {
     label: String,
     required: bool,
-    input_fn: Option<Box<dyn FnOnce(&mut egui::Ui) -> egui::Response + 'a>>,
+    input_fn: Option<FieldInput<'a>>,
     error_text: Option<String>,
     help_text: Option<String>,
     disabled: bool,
