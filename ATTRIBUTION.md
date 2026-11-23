@@ -46,3 +46,8 @@ No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
 - **pstack playbooks** (verify-and-stop, surgical-patch, safe-refactor,
   investigate-first, lean-build, migration) — concepts from
   cursor/plugins/pstack (Apache-2.0), consumed as native OpenCode skills.
+- **Native DSH skills** (verify-and-stop, surgical-patch, safe-refactor,
+  investigate-first, lean-build, migration, scope-creep-check, dependency-doctor,
+  first-reader, commit-archaeologist) — native DSH skill packages installed at
+  `~/.config/dsh/skill/`, Apache-2.0, invoked automatically at workflow gates
+  per `~/.config/opencode/instructions/skill-triggers.md`.
