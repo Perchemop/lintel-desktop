@@ -1181,6 +1181,10 @@ impl LintelApp {
         let Some(host) = host else {
             let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
             self.selection.set_from_hit(hit);
+            self.note_status(
+                "Click on a wall to place a door or window".to_string(),
+                now,
+            );
             return;
         };
         let kind = match self.tool {
@@ -1189,16 +1193,26 @@ impl LintelApp {
             _ => unreachable!("openings only come from the door or window tool"),
         };
         let wall = geometry.wall(host).expect("host wall");
-        let offset = wall
-            .wall
-            .start
-            .distance(world)
-            .clamp(0.0, wall.wall.length());
-        let _ = self
+        // Project the click onto the wall centerline so the offset is measured
+        // along the wall, not as a raw Euclidean distance (which would be wrong
+        // for clicks off-center from the wall).
+        let wall_vec = wall.wall.end - wall.wall.start;
+        let click_vec = world - wall.wall.start;
+        let t = click_vec.dot(wall_vec) / wall_vec.length_sq();
+        let offset = wall_vec.length() * t.clamp(0.0, 1.0);
+        match self
             .doc
-            .apply(Command::PlaceOpening { kind, host, offset }, now);
-        self.selection.replace(EntityId::Wall(host));
-        self.draft = Draft::default();
+            .apply(Command::PlaceOpening { kind, host, offset }, now)
+        {
+            Ok(_) => {
+                self.selection.replace(EntityId::Wall(host));
+                self.draft = Draft::default();
+            }
+            Err(e) => self.note_status(
+                format!("Cannot place {}: {}", kind.label().to_ascii_lowercase(), e),
+                now,
+            ),
+        };
     }
 
     fn dialogs(&mut self, ui: &mut egui::Ui, now: i64) {
