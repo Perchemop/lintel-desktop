@@ -1181,10 +1181,7 @@ impl LintelApp {
         let Some(host) = host else {
             let hit = geometry.hit_test(world, self.snap.anchor_tolerance);
             self.selection.set_from_hit(hit);
-            self.note_status(
-                "Click on a wall to place a door or window".to_string(),
-                now,
-            );
+            self.note_status("Click on a wall to place a door or window".to_string(), now);
             return;
         };
         let kind = match self.tool {
