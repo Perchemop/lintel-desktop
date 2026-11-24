@@ -51,3 +51,5 @@ No GPL/AGPL/MPL-2.0 crates are used without explicit maintainer approval.
   first-reader, commit-archaeologist) — native DSH skill packages installed at
   `~/.config/dsh/skill/`, Apache-2.0, invoked automatically at workflow gates
   per `~/.config/opencode/instructions/skill-triggers.md`.
+- **caveman** — terse response style (~65% token reduction), MIT licence,
+  `~/.config/dsh/skill/caveman/`, invoked when concise output is needed.
