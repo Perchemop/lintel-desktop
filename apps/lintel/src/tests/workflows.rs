@@ -3,11 +3,14 @@
 //! module and the inline module would otherwise collide on the name `tests`).
 
 use crate::plan_summary;
+use crate::wall_offset_along_centerline;
 use lintel_core::command::Command;
 use lintel_core::dimension::DimensionKind;
 use lintel_core::document::Document;
 use lintel_core::geom::Point2;
+use lintel_core::ids::WallId;
 use lintel_core::opening::OpeningKind;
+use lintel_core::wall::Wall;
 
 #[test]
 fn an_empty_level_summarises_to_zeroes() {
@@ -111,5 +114,23 @@ fn the_summary_appends_room_count_when_rooms_exist() {
     assert_eq!(
         plan_summary(doc.project()),
         "Level 0: 4 walls, 0 doors, 0 windows, 0 dimensions, 1 room"
+    );
+}
+
+#[test]
+fn opening_offset_projects_onto_the_wall_centreline() {
+    let wall = Wall::new(
+        WallId(1),
+        Point2::new(0.0, 0.0),
+        Point2::new(4000.0, 0.0),
+        200.0,
+        2800.0,
+    );
+    // A click 200 mm off the centreline must project to 2000 mm along the wall,
+    // not to the ~2010 mm raw Euclidean distance that used to break fitting.
+    let offset = wall_offset_along_centerline(&wall, Point2::new(2000.0, -200.0));
+    assert!(
+        (offset - 2000.0).abs() < 1e-6,
+        "offset should project onto the centreline, got {offset}"
     );
 }

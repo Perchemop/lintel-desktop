@@ -84,6 +84,21 @@ pub struct LintelApp {
     selected_block_instance: Option<BlockId>,
 }
 
+/// Project a pointer position onto a wall's centreline and return the
+/// resulting offset along that centreline, clamped to the wall's length.
+///
+/// Opening placement uses this rather than the raw Euclidean distance from the
+/// wall start: clicking off the centreline must still land on the wall.
+pub(crate) fn wall_offset_along_centerline(
+    wall: &lintel_core::wall::Wall,
+    world: Point2,
+) -> f64 {
+    let wall_vec = wall.end - wall.start;
+    let click_vec = world - wall.start;
+    let t = click_vec.dot(wall_vec) / wall_vec.length_sq();
+    wall_vec.length() * t.clamp(0.0, 1.0)
+}
+
 impl LintelApp {
     fn new() -> Self {
         let now = now_epoch_s();
@@ -1190,13 +1205,7 @@ impl LintelApp {
             _ => unreachable!("openings only come from the door or window tool"),
         };
         let wall = geometry.wall(host).expect("host wall");
-        // Project the click onto the wall centerline so the offset is measured
-        // along the wall, not as a raw Euclidean distance (which would be wrong
-        // for clicks off-center from the wall).
-        let wall_vec = wall.wall.end - wall.wall.start;
-        let click_vec = world - wall.wall.start;
-        let t = click_vec.dot(wall_vec) / wall_vec.length_sq();
-        let offset = wall_vec.length() * t.clamp(0.0, 1.0);
+        let offset = wall_offset_along_centerline(&wall.wall, world);
         match self
             .doc
             .apply(Command::PlaceOpening { kind, host, offset }, now)
