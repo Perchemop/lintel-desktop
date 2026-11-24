@@ -1,3 +1,36 @@
+## Lintel 0.20.1 — Door & Window Placement Fixes (draft)
+
+**Summary.** This patch release fixes the door and window placement bugs
+that shipped in v0.20.0: openings now place on the first click of a wall,
+and every failed placement gives visible feedback instead of failing
+silently.
+
+> **Draft** — finalised at release time; per-release token metrics are
+> appended by the release workflow from the `docs/tokens.md` ledger.
+
+### Fixed
+- Doors and windows place on the first click of a wall: the click offset is
+  projected onto the wall centreline instead of measuring straight-line
+  distance from the wall start, so off-centre clicks no longer produce
+  invalid offsets that were silently discarded (PRs #68, #70)
+- Failed placements — wall too short, overlapping openings — show an error
+  note in the status bar instead of doing nothing (PR #68)
+- Placing with no wall under the cursor shows a status hint (PR #68)
+- An opening's stored position keeps its offset along the wall centreline
+  (stored as `wall_offset_along_centerline`; regression-tested in
+  `apps/lintel/src/tests/workflows.rs`) (PR #70)
+
+### Known limitations
+- Same as v0.20.0: the light drafting palette ships; runtime dark /
+  high-contrast switching is a later milestone
+
+### Try it
+1. Download `lintel-windows-x86_64-setup.exe` (Windows),
+   `lintel-macos-aarch64.dmg` (macOS) or `lintel-appimage-x86_64.AppImage`
+   (Linux) from the release page and install it.
+2. Open a project, pick the Door or Window tool, click anywhere on a wall —
+   the opening places under the cursor; clicking off a wall shows a hint.
+
 ## Lintel 0.20.0 — Design System Extensions (draft)
 
 **Summary.** This release finishes the v0.20.0 design-system slice: the

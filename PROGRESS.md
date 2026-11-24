@@ -204,7 +204,28 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.0
 Readiness % (v0.15.1): **100% — shipped:**
 https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
 
-## v0.20.0 Status — IN PROGRESS
+## v0.20.1 Status — RELEASE PREP
+
+**Patch release: door & window placement fixes (PRs #68, #70) that merged
+after the v0.20.0 tag.** Fixes are regression-tested and merged green; this
+release makes them installable.
+
+- [x] Fixes landed on `main`: PR #68 (placement bugs: centreline projection,
+      `note_status` error surfacing, empty-canvas hint) and PR #70 (opening
+      placement projected onto the wall centreline,
+      `wall_offset_along_centerline` + regression test in
+      `apps/lintel/src/tests/workflows.rs`) — both merged with CI green
+      (check, kittest, contrast-test, build-matrix ×3, pr-author-is-dev)
+- [x] Drift fix: CHANGELOG `Unreleased` content that shipped in v0.20.0
+      renamed to `## v0.20.0 — 2026-11-22`; v0.20.1 section added
+- [x] Version bumps 0.20.0 → 0.20.1 (both crates + Cargo.lock)
+- [x] RELEASE_NOTES.md drafted for v0.20.1; first-reader gate: `lost: 0`
+- [x] scope-creep-check: `scope: clean` (docs + version bumps only)
+- [ ] Tag `v0.20.1` after this change merges, then confirm the release run,
+      installers and signed `SHA256SUMS.txt.asc` (dependency-doctor gate
+      before the tag)
+
+## v0.20.0 Status — RELEASED
 
 **Design-system extensions (spec `docs/specs/v0.20.0-design-system-extensions.spec.md`).**
 
@@ -270,8 +291,11 @@ https://github.com/Perchemop/lintel-desktop/releases/tag/v0.15.1
       architecture, evidence pipeline, 0.36 API breaks), evidence-folder
       READMEs, version bumps 0.19.0 → 0.20.0 (both crates + Cargo.lock
       entries), DECISIONS D-036.
-- [ ] Verification: CI run for the combined v0.20.0 branch (orchestrator
-      `ci.sh` run to follow; red-run/green-run IDs recorded here when done).
+- [x] Verification: the slice landed as PRs #69/#70 after the tag, each green
+      on every required check (pr-author-is-dev, check, contrast-test,
+      kittest, build-matrix ubuntu/macos/windows); tag `v0.20.0` published
+      2026-11-22 with installers (setup.exe, dmg, AppImage, zips) and signed
+      `SHA256SUMS.txt.asc`.
 
 ## v0.19.0 Status — RELEASE PREP
 
