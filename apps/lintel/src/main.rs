@@ -89,10 +89,7 @@ pub struct LintelApp {
 ///
 /// Opening placement uses this rather than the raw Euclidean distance from the
 /// wall start: clicking off the centreline must still land on the wall.
-pub(crate) fn wall_offset_along_centerline(
-    wall: &lintel_core::wall::Wall,
-    world: Point2,
-) -> f64 {
+pub(crate) fn wall_offset_along_centerline(wall: &lintel_core::wall::Wall, world: Point2) -> f64 {
     let wall_vec = wall.end - wall.start;
     let click_vec = world - wall.start;
     let t = click_vec.dot(wall_vec) / wall_vec.length_sq();
