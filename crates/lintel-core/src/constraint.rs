@@ -1215,11 +1215,14 @@ mod tests {
         let resolved = solve_constraints(&level, &constraints);
         // Only PerpendicularDistance resolves to a point
         assert_eq!(resolved.len(), 1);
-        assert_eq!(resolved[0].constraint, Constraint::PerpendicularDistance {
-            dimension: dim_c,
-            wall_id: WALL,
-            param: 0.5,
-        });
+        assert_eq!(
+            resolved[0].constraint,
+            Constraint::PerpendicularDistance {
+                dimension: dim_c,
+                wall_id: WALL,
+                param: 0.5,
+            }
+        );
     }
 
     // T-203: Anchor + constraint round-trip tests
@@ -1356,12 +1359,14 @@ mod tests {
         }
 
         // Add FixedAngle constraint between the two dimensions
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::FixedAngle {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::FixedAngle {
                 dimension: DimensionId(3),
                 degrees: 90.0,
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
@@ -1500,25 +1505,31 @@ mod tests {
         }
 
         // Add mixed constraints
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::PerpendicularDistance {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
                 dimension: DimensionId(3),
                 wall_id: wall1,
                 param: 0.5,
-            },
-        );
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::EqualLength {
+            });
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::EqualLength {
                 a: DimensionId(3),
                 b: DimensionId(4),
-            },
-        );
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::FixedAngle {
+            });
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::FixedAngle {
                 dimension: DimensionId(4),
                 degrees: 45.0,
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
