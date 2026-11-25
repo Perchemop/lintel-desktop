@@ -989,7 +989,6 @@ mod tests {
     // AC-006, AC-011: Wall deletion cascade
     #[test]
     fn wall_deletion_cascades_constraint_and_anchor_clear() {
-        use crate::ids::LevelId;
         use crate::project::Project;
 
         let mut project = Project::new("Test plan", 1_760_000_000);
