@@ -1208,7 +1208,7 @@ mod tests {
 
     #[test]
     fn perpendicular_distance_constraint_round_trips_with_anchor() {
-        use crate::persistence::{to_json, from_json};
+        use crate::persistence::{from_json, to_json};
 
         let mut project = Project::new("Test plan", 1_760_000_000);
 
@@ -1283,7 +1283,7 @@ mod tests {
 
     #[test]
     fn fixed_angle_constraint_round_trips_with_anchors() {
-        use crate::persistence::{to_json, from_json};
+        use crate::persistence::{from_json, to_json};
 
         let mut project = Project::new("Test plan", 1_760_000_000);
 
@@ -1359,7 +1359,7 @@ mod tests {
 
     #[test]
     fn equal_length_constraint_round_trips_with_anchors() {
-        use crate::persistence::{to_json, from_json};
+        use crate::persistence::{from_json, to_json};
 
         let mut project = Project::new("Test plan", 1_760_000_000);
 
@@ -1423,7 +1423,7 @@ mod tests {
 
     #[test]
     fn mixed_constraints_round_trip_with_anchors() {
-        use crate::persistence::{to_json, from_json};
+        use crate::persistence::{from_json, to_json};
 
         let mut project = Project::new("Test plan", 1_760_000_000);
 
