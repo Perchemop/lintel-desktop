@@ -147,6 +147,13 @@ offset value, `project_with_anchored_dimensions_and_constraints_round_trips`
 expected pre-solve anchor values). All 442 tests now pass; all required CI
 checks green (check, contrast-test, kittest, build-matrix ×3, pr-author-is-dev).
 
+**2026-11-25: T-207 Inspector empty states (PR #81)** — Improved empty-state
+messages in the Inspector for Constraints, Viewports, Block Definitions, and
+Block Instances sections. All empty states now include an actionable description
+and (where applicable) a primary action button to add the relevant entity. CI
+green on all required checks (check, contrast-test, kittest, build-matrix ×3,
+pr-author-is-dev).
+
 ## v0.14.0 Status — RELEASED
 
 **Constraint Persistence & Sheet Layout** (CAP-111–115). Full scope in
