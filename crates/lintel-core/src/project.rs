@@ -97,10 +97,10 @@ impl Project {
                 highest = highest.max(label.id.value());
             }
             for block_def in &level.block_defs {
-                highest = highest.max(block_def.id.value());
+                highest = highest.max(block_def.id.value().into());
             }
             for block_instance in &level.block_instances {
-                highest = highest.max(block_instance.id.value());
+                highest = highest.max(block_instance.id.value().into());
             }
         }
         highest
