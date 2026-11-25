@@ -23,6 +23,7 @@ use crate::geom::{Point2, Vec2};
 use crate::ids::{DimensionId, LayerId, WallId};
 use crate::layer::EntityStyle;
 use crate::level::Level;
+use crate::wall::Wall;
 
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
@@ -106,11 +107,23 @@ impl DimensionAnchor {
     /// Returns `None` for `Free` anchors, or when the wall is not on the level
     /// or the param is not valid.
     pub fn resolve_on(&self, level: &Level) -> Option<Point2> {
-        let (wall_id, param) = match self {
+        let (wall_id, _param) = match self {
             DimensionAnchor::Free => return None,
             DimensionAnchor::Anchored { wall_id, param, .. } => (*wall_id, *param),
         };
         let wall = level.wall(wall_id)?;
+        self.resolve_on_wall(wall)
+    }
+
+    /// Resolves the anchor to a point on the given wall.
+    ///
+    /// Returns `None` for `Free` anchors, or when the param is not valid.
+    /// This is a faster variant that skips the wall lookup.
+    pub fn resolve_on_wall(&self, wall: &Wall) -> Option<Point2> {
+        let param = match self {
+            DimensionAnchor::Free => return None,
+            DimensionAnchor::Anchored { param, .. } => *param,
+        };
         if !param.is_finite() || !(0.0..=1.0).contains(&param) {
             return None;
         }

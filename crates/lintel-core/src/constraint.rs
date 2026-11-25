@@ -19,6 +19,7 @@ use crate::error::CoreError;
 use crate::geom::Point2;
 use crate::ids::{DimensionId, WallId};
 use crate::level::Level;
+use crate::wall::Wall;
 
 use std::collections::{HashMap, HashSet};
 
@@ -88,9 +89,12 @@ impl ResolvedConstraint {
 /// so they are skipped until the solver grows a pass that moves both ends of a
 /// pair. They are accepted here so a project can store them now.
 pub fn solve_constraints(level: &Level, constraints: &[Constraint]) -> Vec<ResolvedConstraint> {
+    // Build wall lookup map once for O(1) wall access
+    let wall_map: HashMap<WallId, &Wall> = level.walls.iter().map(|w| (w.id, w)).collect();
+
     constraints
         .iter()
-        .filter_map(|constraint| resolve(level, constraint))
+        .filter_map(|constraint| resolve_with_wall_map(&wall_map, constraint))
         .collect()
 }
 
@@ -150,12 +154,16 @@ fn retarget(anchor: &mut Option<DimensionAnchor>, wall_id: WallId, param: f64) -
     }
 }
 
-fn resolve(level: &Level, constraint: &Constraint) -> Option<ResolvedConstraint> {
+fn resolve_with_wall_map(
+    wall_map: &HashMap<WallId, &Wall>,
+    constraint: &Constraint,
+) -> Option<ResolvedConstraint> {
     let Constraint::PerpendicularDistance { wall_id, param, .. } = constraint else {
         return None;
     };
+    let wall = wall_map.get(wall_id)?;
     let anchor = DimensionAnchor::anchored(*wall_id, *param, false);
-    let point = anchor.resolve_on(level)?;
+    let point = anchor.resolve_on_wall(wall)?;
     Some(ResolvedConstraint {
         constraint: constraint.clone(),
         point,
