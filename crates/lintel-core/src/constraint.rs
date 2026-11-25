@@ -14,7 +14,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
+use crate::dimension::DimensionAnchor;
 use crate::error::CoreError;
 use crate::geom::Point2;
 use crate::ids::{DimensionId, WallId};
