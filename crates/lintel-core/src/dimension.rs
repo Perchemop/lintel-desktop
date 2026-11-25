@@ -111,6 +111,18 @@ impl DimensionAnchor {
             DimensionAnchor::Anchored { wall_id, param, .. } => (*wall_id, *param),
         };
         let wall = level.wall(wall_id)?;
+        self.resolve_on_wall(wall)
+    }
+
+    /// Resolves the anchor to a point on the given wall.
+    ///
+    /// Returns `None` for `Free` anchors, or when the param is not valid.
+    /// This is a faster variant that skips the wall lookup.
+    pub fn resolve_on_wall(&self, wall: &Wall) -> Option<Point2> {
+        let param = match self {
+            DimensionAnchor::Free => return None,
+            DimensionAnchor::Anchored { param, .. } => *param,
+        };
         if !param.is_finite() || !(0.0..=1.0).contains(&param) {
             return None;
         }
