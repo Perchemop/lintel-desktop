@@ -273,7 +273,9 @@ fn has_circular_reference(graph: &HashMap<DimensionId, HashSet<DimensionId>>) ->
     let mut rec_stack: HashSet<DimensionId> = HashSet::new();
 
     for &node in graph.keys() {
-        if !visited.contains(&node) && has_cycle_dfs(node, graph, &mut visited, &mut rec_stack, &mut Vec::new()) {
+        if !visited.contains(&node)
+            && has_cycle_dfs(node, graph, &mut visited, &mut rec_stack, &mut Vec::new())
+        {
             return true;
         }
     }
