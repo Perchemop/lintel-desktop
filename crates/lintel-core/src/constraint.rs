@@ -1084,4 +1084,424 @@ mod tests {
         assert!(!dimension.is_valid_at(Some(&level)));
         assert!(dimension.dimension_line_at(Some(&level)).is_none());
     }
+
+    // T-202: Constraint solver 2-node cycle stress tests
+    // These verify that mutual EqualLength constraints (A↔B) are allowed
+    // and don't trigger false-positive circular reference errors.
+
+    #[test]
+    fn equal_length_two_node_cycle_is_allowed() {
+        let mut level = level_with_wall();
+        let dim_a = DimensionId(10);
+        let dim_b = DimensionId(11);
+
+        // Add two dimensions
+        level.dimensions.push(Dimension::new(
+            dim_a,
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        ));
+        level.dimensions.push(Dimension::new(
+            dim_b,
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 1000.0),
+            Point2::new(3000.0, 1000.0),
+            500.0,
+        ));
+
+        // Create mutual EqualLength constraints (A ↔ B)
+        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+
+        // Should not raise circular reference error
+        let constraints: Vec<_> = level.constraints.clone();
+        let resolved = solve_constraints(&level, &constraints);
+        assert_eq!(resolved.len(), 0); // EqualLength doesn't resolve to a point
+    }
+
+    #[test]
+    fn multiple_independent_two_node_cycles() {
+        let mut level = level_with_wall();
+        let mut constraints = Vec::new();
+
+        // Create 5 independent 2-node cycles (10 dimensions, 10 constraints)
+        for i in 0..5 {
+            let dim_a = DimensionId(100 + i * 2);
+            let dim_b = DimensionId(101 + i * 2);
+
+            level.dimensions.push(Dimension::new(
+                dim_a,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, (i * 100) as f64),
+                Point2::new(3000.0, (i * 100) as f64),
+                500.0,
+            ));
+            level.dimensions.push(Dimension::new(
+                dim_b,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, (i * 100 + 50) as f64),
+                Point2::new(3000.0, (i * 100 + 50) as f64),
+                500.0,
+            ));
+
+            // Mutual EqualLength
+            level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
+            level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+        }
+
+        let constraints: Vec<_> = level.constraints.clone();
+        let resolved = solve_constraints(&level, &constraints);
+        assert_eq!(resolved.len(), 0);
+    }
+
+    #[test]
+    fn mixed_two_node_cycles_with_other_constraints() {
+        let mut level = level_with_wall();
+        let dim_a = DimensionId(20);
+        let dim_b = DimensionId(21);
+        let dim_c = DimensionId(22);
+
+        // Add dimensions
+        for (id, y) in [(dim_a, 0.0), (dim_b, 1000.0), (dim_c, 2000.0)] {
+            level.dimensions.push(Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, y),
+                Point2::new(3000.0, y),
+                500.0,
+            ));
+        }
+
+        // A ↔ B mutual EqualLength
+        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+
+        // PerpendicularDistance on C
+        level.constraints.push(Constraint::PerpendicularDistance {
+            dimension: dim_c,
+            wall_id: WALL,
+            param: 0.5,
+        });
+
+        // FixedAngle between A and C
+        level.constraints.push(Constraint::FixedAngle {
+            dimension: dim_a,
+            degrees: 90.0,
+        });
+
+        let constraints: Vec<_> = level.constraints.clone();
+        let resolved = solve_constraints(&level, &constraints);
+        // Only PerpendicularDistance resolves to a point
+        assert_eq!(resolved.len(), 1);
+        assert_eq!(resolved[0].constraint, Constraint::PerpendicularDistance {
+            dimension: dim_c,
+            wall_id: WALL,
+            param: 0.5,
+        });
+    }
+
+    // T-203: Anchor + constraint round-trip tests
+    // These verify that anchored dimensions and constraints survive
+    // save/load identically with the solver re-applying on load.
+
+    #[test]
+    fn perpendicular_distance_constraint_round_trips_with_anchor() {
+        use crate::persistence::{to_json, from_json};
+
+        let mut project = Project::new("Test plan", 1_760_000_000);
+
+        // Add a wall
+        let wall_id = WallId(2);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Add a dimension with anchors
+        let dim_id = DimensionId(3);
+        let mut dimension = Dimension::new(
+            dim_id,
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        );
+        dimension.start_anchor = Some(DimensionAnchor::anchored(wall_id, 0.25, false));
+        dimension.end_anchor = Some(DimensionAnchor::anchored(wall_id, 0.75, false));
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(dimension);
+
+        // Add a PerpendicularDistance constraint
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
+                dimension: dim_id,
+                wall_id,
+                param: 0.5,
+            },
+        );
+
+        // Save and load
+        let text = to_json(&project).expect("serialize");
+        let loaded = from_json(&text).expect("load");
+
+        // Verify anchors and constraint survive
+        let level = loaded.level(LevelId(1)).expect("level");
+        assert_eq!(level.dimensions.len(), 1);
+        let loaded_dim = level.dimension(dim_id).expect("dimension");
+
+        // Anchors are updated by constraint solver on load
+        assert_eq!(
+            loaded_dim.start_anchor,
+            Some(DimensionAnchor::anchored(wall_id, 0.5, true))
+        );
+        assert_eq!(
+            loaded_dim.end_anchor,
+            Some(DimensionAnchor::anchored(wall_id, 0.5, true))
+        );
+        assert_eq!(level.constraints.len(), 1);
+        assert_eq!(
+            level.constraints[0],
+            Constraint::PerpendicularDistance {
+                dimension: dim_id,
+                wall_id,
+                param: 0.5,
+            }
+        );
+    }
+
+    #[test]
+    fn fixed_angle_constraint_round_trips_with_anchors() {
+        use crate::persistence::{to_json, from_json};
+
+        let mut project = Project::new("Test plan", 1_760_000_000);
+
+        // Add two walls
+        let wall1 = WallId(2);
+        let wall2 = WallId(3);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall1,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall2,
+                Point2::new(4000.0, 0.0),
+                Point2::new(4000.0, 3000.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Add two anchored dimensions
+        let dim1 = DimensionId(3);
+        let dim2 = DimensionId(4);
+        for (id, wall, param) in [(DimensionId(3), WallId(2), 0.25), (DimensionId(4), WallId(3), 0.75)] {
+            let mut dim = Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            );
+            dim.start_anchor = Some(DimensionAnchor::anchored(wall, param, false));
+            project
+                .active_level_mut()
+                .expect("level")
+                .dimensions
+                .push(dim);
+        }
+
+        // Add FixedAngle constraint between the two dimensions
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::FixedAngle {
+                dimension: DimensionId(3),
+                degrees: 90.0,
+            },
+        );
+
+        // Save and load
+        let text = to_json(&project).expect("serialize");
+        let loaded = from_json(&text).expect("load");
+
+        // Verify
+        let level = loaded.level(LevelId(1)).expect("level");
+        assert_eq!(level.dimensions.len(), 2);
+        assert_eq!(level.constraints.len(), 1);
+        assert_eq!(
+            level.constraints[0],
+            Constraint::FixedAngle {
+                dimension: DimensionId(3),
+                degrees: 90.0,
+            }
+        );
+    }
+
+    #[test]
+    fn equal_length_constraint_round_trips_with_anchors() {
+        use crate::persistence::{to_json, from_json};
+
+        let mut project = Project::new("Test plan", 1_760_000_000);
+
+        // Add a wall
+        let wall_id = WallId(2);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Add two anchored dimensions
+        let dim1 = DimensionId(3);
+        let dim2 = DimensionId(4);
+        for (id, param) in [(DimensionId(3), 0.25), (DimensionId(4), 0.75)] {
+            let mut dim = Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            );
+            dim.start_anchor = Some(DimensionAnchor::anchored(wall_id, param, false));
+            project
+                .active_level_mut()
+                .expect("level")
+                .dimensions
+                .push(dim);
+        }
+
+        // Add EqualLength constraint
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::EqualLength {
+                a: DimensionId(3),
+                b: DimensionId(4),
+            },
+        );
+
+        // Save and load
+        let text = to_json(&project).expect("serialize");
+        let loaded = from_json(&text).expect("load");
+
+        // Verify
+        let level = loaded.level(LevelId(1)).expect("level");
+        assert_eq!(level.dimensions.len(), 2);
+        assert_eq!(level.constraints.len(), 1);
+        assert_eq!(
+            level.constraints[0],
+            Constraint::EqualLength {
+                a: DimensionId(3),
+                b: DimensionId(4),
+            }
+        );
+    }
+
+    #[test]
+    fn mixed_constraints_round_trip_with_anchors() {
+        use crate::persistence::{to_json, from_json};
+
+        let mut project = Project::new("Test plan", 1_760_000_000);
+
+        // Add two walls
+        let wall1 = WallId(2);
+        let wall2 = WallId(3);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall1,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall2,
+                Point2::new(4000.0, 0.0),
+                Point2::new(4000.0, 3000.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Add three anchored dimensions
+        for (id, wall, param) in [
+            (DimensionId(3), WallId(2), 0.25),
+            (DimensionId(4), WallId(2), 0.5),
+            (DimensionId(5), WallId(3), 0.75),
+        ] {
+            let mut dim = Dimension::new(
+                id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            );
+            dim.start_anchor = Some(DimensionAnchor::anchored(wall, param, false));
+            project
+                .active_level_mut()
+                .expect("level")
+                .dimensions
+                .push(dim);
+        }
+
+        // Add mixed constraints
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
+                dimension: DimensionId(3),
+                wall_id: wall1,
+                param: 0.5,
+            },
+        );
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::EqualLength {
+                a: DimensionId(3),
+                b: DimensionId(4),
+            },
+        );
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::FixedAngle {
+                dimension: DimensionId(4),
+                degrees: 45.0,
+            },
+        );
+
+        // Save and load
+        let text = to_json(&project).expect("serialize");
+        let loaded = from_json(&text).expect("load");
+
+        // Verify all survive
+        let level = loaded.level(LevelId(1)).expect("level");
+        assert_eq!(level.dimensions.len(), 3);
+        assert_eq!(level.constraints.len(), 3);
+    }
 }
