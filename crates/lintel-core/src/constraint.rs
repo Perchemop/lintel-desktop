@@ -154,7 +154,10 @@ fn retarget(anchor: &mut Option<DimensionAnchor>, wall_id: WallId, param: f64) -
     }
 }
 
-fn resolve_with_wall_map(wall_map: &HashMap<WallId, &Wall>, constraint: &Constraint) -> Option<ResolvedConstraint> {
+fn resolve_with_wall_map(
+    wall_map: &HashMap<WallId, &Wall>,
+    constraint: &Constraint,
+) -> Option<ResolvedConstraint> {
     let Constraint::PerpendicularDistance { wall_id, param, .. } = constraint else {
         return None;
     };
