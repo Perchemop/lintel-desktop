@@ -138,6 +138,15 @@ merge — first signed release; all 8 artefacts including
       `SHA256SUMS.txt.asc`, workflow now uploads the signature (PR #30,
       `76a774b`)).**
 
+**2026-11-25: T-106 Core Headless Tests CI fix (PR #73)** — Fixed remaining CI
+infrastructure issues for v0.13.0 test suite: fixed `highest_id()` method on
+`Project` for proper ID tracking on load, corrected constraint.rs imports
+(`crate::dimension` vs `crate::dim`), resolved test formatting per rustfmt,
+and fixed two failing tests (`dimension_offsets_must_be_positive` used wrong
+offset value, `project_with_anchored_dimensions_and_constraints_round_trips`
+expected pre-solve anchor values). All 442 tests now pass; all required CI
+checks green (check, contrast-test, kittest, build-matrix ×3, pr-author-is-dev).
+
 ## v0.14.0 Status — RELEASED
 
 **Constraint Persistence & Sheet Layout** (CAP-111–115). Full scope in
