@@ -502,11 +502,11 @@ mod tests {
         );
 
         // Save and load
-        let text = to_json(project).expect("serialize");
+        let text = to_json(&project).expect("serialize");
         let loaded = from_json(&text).expect("load");
 
         // Verify round-trip
-        assert_eq!(&loaded, project.project());
+        assert_eq!(&loaded, &project);
         let level = loaded.level(LevelId(1)).expect("level");
         assert_eq!(level.dimensions.len(), 1);
         let loaded_dim = level.dimension(dim_id).expect("dimension");

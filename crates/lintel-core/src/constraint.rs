@@ -318,6 +318,7 @@ fn ensure_dimension(level: &Level, id: DimensionId) -> Result<(), CoreError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::command::{apply_command, Command};
     use crate::dimension::{Dimension, DimensionKind};
     use crate::ids::LevelId;
     use crate::wall::Wall;

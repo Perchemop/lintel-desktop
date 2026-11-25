@@ -3962,8 +3962,6 @@ mod tests {
         // AC-001: Given a wall from (0,0) to (3000,0) and a dimension anchored at 0.5
         // When the wall is moved to (1000,0)-(4000,0)
         // Then the dimension's start point moves to (2000,0) [0.5 along new wall]
-        use crate::constraint::Constraint;
-
         let mut project = empty_project();
         let wall = add(&mut project, (0.0, 0.0), (3000.0, 0.0));
         let dim_id = place_horizontal(&mut project);
