@@ -1040,10 +1040,7 @@ mod tests {
                 .wall(wall_id)
                 .is_some()
         );
-        assert_eq!(
-            project.active_level().expect("level").constraints.len(),
-            1
-        );
+        assert_eq!(project.active_level().expect("level").constraints.len(), 1);
 
         // Delete the wall via the command
         let result = apply_command(&mut project, Command::DeleteWall { id: wall_id });
@@ -1056,10 +1053,7 @@ mod tests {
                 .wall(wall_id)
                 .is_none()
         );
-        assert_eq!(
-            project.active_level().expect("level").constraints.len(),
-            0
-        );
+        assert_eq!(project.active_level().expect("level").constraints.len(), 0);
         assert!(
             project.active_level().expect("level").dimensions[0]
                 .start_anchor
