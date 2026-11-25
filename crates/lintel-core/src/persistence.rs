@@ -462,7 +462,7 @@ mod tests {
     #[test]
     fn project_with_anchored_dimensions_and_constraints_round_trips() {
         // AC-004: Save/load project with anchors + constraints
-        // Note: constraints are solved on load, so dimension geometry changes
+        // Note: constraints are solved on load, so dimension geometry and anchors are updated
         use crate::constraint::Constraint;
         use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
 
@@ -512,17 +512,19 @@ mod tests {
         let text = to_json(&project).expect("serialize");
         let loaded = from_json(&text).expect("load");
 
-        // Verify anchors and constraints survive (geometry is solved on load)
+        // Verify anchors and constraints survive (geometry and anchors are solved on load)
+        // The PerpendicularDistance constraint at param 0.5 moves both anchors to that position
         let level = loaded.level(LevelId(1)).expect("level");
         assert_eq!(level.dimensions.len(), 1);
         let loaded_dim = level.dimension(dim_id).expect("dimension");
+        // Anchors are updated by constraint solver to match the constraint
         assert_eq!(
             loaded_dim.start_anchor,
-            Some(DimensionAnchor::anchored(wall_id, 0.25, false))
+            Some(DimensionAnchor::anchored(wall_id, 0.5, true))
         );
         assert_eq!(
             loaded_dim.end_anchor,
-            Some(DimensionAnchor::anchored(wall_id, 0.75, false))
+            Some(DimensionAnchor::anchored(wall_id, 0.5, true))
         );
         assert_eq!(level.constraints.len(), 1);
         // The constraint solver runs on load, so the dimension is at param 0.5 (midpoint of wall)
