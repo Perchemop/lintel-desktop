@@ -136,7 +136,12 @@ fn retarget(anchor: &mut Option<DimensionAnchor>, wall_id: WallId, param: f64) -
     if anchor.wall_id() != Some(wall_id) {
         return false;
     }
-    if let DimensionAnchor::Anchored { param: p, perpendicular, .. } = anchor {
+    if let DimensionAnchor::Anchored {
+        param: p,
+        perpendicular,
+        ..
+    } = anchor
+    {
         *p = param;
         *perpendicular = true;
         true
@@ -245,14 +250,8 @@ pub fn validate_constraints(level: &Level) -> Result<(), CoreError> {
                     )));
                 }
                 // Add bidirectional dependency for cycle detection
-                dependency_graph
-                    .entry(*a)
-                    .or_default()
-                    .insert(*b);
-                dependency_graph
-                    .entry(*b)
-                    .or_default()
-                    .insert(*a);
+                dependency_graph.entry(*a).or_default().insert(*b);
+                dependency_graph.entry(*b).or_default().insert(*a);
             }
         }
     }
@@ -573,7 +572,12 @@ mod tests {
 
         let result = validate_constraints(&level);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("pinned by more than one constraint"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("pinned by more than one constraint")
+        );
     }
 
     // AC-010: 501st constraint returns LimitExceeded via AddConstraint
@@ -665,8 +669,12 @@ mod tests {
 
         // A -> B -> C -> A would be a cycle
         // EqualLength { a, b }, EqualLength { b, c }, EqualLength { c, a }
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_c });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_c });
 
         // Adding EqualLength { c, a } creates a cycle, which should be rejected by validate_constraints
         let circular_constraint = Constraint::EqualLength { a: dim_c, b: dim_a };
@@ -712,9 +720,15 @@ mod tests {
         ));
 
         // Create A -> B -> C -> A cycle
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_c });
-        level.constraints.push(Constraint::EqualLength { a: dim_c, b: dim_a });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_c });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_c, b: dim_a });
 
         // validate_constraints should detect the cycle
         let result = validate_constraints(&level);
@@ -746,9 +760,14 @@ mod tests {
             500.0,
         ));
 
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
         let result = validate_constraints(&level);
-        assert!(result.is_ok(), "Single EqualLength constraint should be valid");
+        assert!(
+            result.is_ok(),
+            "Single EqualLength constraint should be valid"
+        );
     }
 
     #[test]
@@ -807,7 +826,12 @@ mod tests {
         };
         let result = validate_constraint(&level, &constraint);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("cannot be constrained equal to itself"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("cannot be constrained equal to itself")
+        );
     }
 
     // Serde roundtrip tests for constraints
@@ -898,13 +922,27 @@ mod tests {
     fn five_hundred_constraints_solve_quickly() {
         fn create_test_level() -> Level {
             let mut level = Level::new(LevelId(1), "test", 0.0);
-            level.walls.push(Wall::new(WallId(2), Point2::new(0.0, 0.0), Point2::new(3000.0, 0.0), 200.0, 2800.0));
-            level.dimensions.push(Dimension::new(DimensionId(3), DimensionKind::LinearHorizontal, Point2::new(0.0, 0.0), Point2::new(3000.0, 0.0), 500.0));
-            
+            level.walls.push(Wall::new(
+                WallId(2),
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+            level.dimensions.push(Dimension::new(
+                DimensionId(3),
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, 0.0),
+                Point2::new(3000.0, 0.0),
+                500.0,
+            ));
+
             for i in 0..500 {
                 let param = (i % 100) as f64 / 100.0;
                 level.constraints.push(Constraint::PerpendicularDistance {
-                    dimension: DIMENSION, wall_id: WALL, param,
+                    dimension: DIMENSION,
+                    wall_id: WALL,
+                    param,
                 });
             }
             level
@@ -917,7 +955,11 @@ mod tests {
         let elapsed = start.elapsed();
 
         assert_eq!(resolved.len(), 500);
-        assert!(elapsed.as_millis() < 50, "solve took {} ms", elapsed.as_millis());
+        assert!(
+            elapsed.as_millis() < 50,
+            "solve took {} ms",
+            elapsed.as_millis()
+        );
     }
 
     // AC-006, AC-011: Wall deletion cascade
@@ -933,8 +975,14 @@ mod tests {
         level.walls.retain(|w| w.id != WALL);
         assert!(level.wall(WALL).is_none());
         assert_eq!(level.constraints.len(), 0);
-        assert!(level.dimensions[0].start_anchor.is_none() || 
-                level.dimensions[0].start_anchor.unwrap().wall_id().is_none());
+        assert!(
+            level.dimensions[0].start_anchor.is_none()
+                || level.dimensions[0]
+                    .start_anchor
+                    .unwrap()
+                    .wall_id()
+                    .is_none()
+        );
     }
 
     // AC-012: Zero-length dimension warning
@@ -942,12 +990,21 @@ mod tests {
     fn zero_length_dimension_is_invalid_at_level() {
         let level = level_with_wall();
 
-        let mut dimension = Dimension::new(DimensionId(99), DimensionKind::LinearHorizontal, Point2::new(0.0, 0.0), Point2::new(3000.0, 0.0), 500.0);
+        let mut dimension = Dimension::new(
+            DimensionId(99),
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        );
         dimension.start_anchor = Some(DimensionAnchor::anchored(WALL, 0.5, false));
         dimension.end_anchor = Some(DimensionAnchor::anchored(WALL, 0.5, false));
 
         assert!(dimension.is_valid(), "stored points are valid");
-        assert!(!dimension.is_valid_at(Some(&level)), "resolved points are zero-length at level");
+        assert!(
+            !dimension.is_valid_at(Some(&level)),
+            "resolved points are zero-length at level"
+        );
         assert!(dimension.dimension_line_at(Some(&level)).is_none());
     }
 }

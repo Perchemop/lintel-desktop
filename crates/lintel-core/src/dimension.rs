@@ -108,11 +108,7 @@ impl DimensionAnchor {
     pub fn resolve_on(&self, level: &Level) -> Option<Point2> {
         let (wall_id, param) = match self {
             DimensionAnchor::Free => return None,
-            DimensionAnchor::Anchored {
-                wall_id,
-                param,
-                ..
-            } => (*wall_id, *param),
+            DimensionAnchor::Anchored { wall_id, param, .. } => (*wall_id, *param),
         };
         let wall = level.wall(wall_id)?;
         if !param.is_finite() || !(0.0..=1.0).contains(&param) {
@@ -769,7 +765,11 @@ mod tests {
 
         let anchored_invalid = DimensionAnchor::anchored(WallId(2), 1.5, false);
         assert!(!anchored_invalid.is_valid());
-        assert!(dimension.resolve_anchor(&anchored_invalid, &level).is_none());
+        assert!(
+            dimension
+                .resolve_anchor(&anchored_invalid, &level)
+                .is_none()
+        );
 
         let nan_anchor = DimensionAnchor::anchored(WallId(2), f64::NAN, false);
         assert!(dimension.resolve_anchor(&nan_anchor, &level).is_none());
@@ -950,7 +950,10 @@ mod tests {
         dimension.end_anchor = Some(DimensionAnchor::anchored(WallId(1), 0.75, false));
 
         assert_eq!(dimension.effective_start(Some(&level)), dimension.start);
-        assert_eq!(dimension.effective_end(Some(&level)), Point2::new(3000.0, 0.0));
+        assert_eq!(
+            dimension.effective_end(Some(&level)),
+            Point2::new(3000.0, 0.0)
+        );
     }
 
     // T-104: Backward-compatible JSON load tests (AC-004, AC-005)
@@ -1005,8 +1008,17 @@ mod tests {
         let back: Dimension = serde_json::from_str(&json).expect("deserialize");
 
         // Verify exact match
-        assert_eq!(back, dimension, "anchored dimension should round-trip exactly");
-        assert_eq!(back.start_anchor, Some(DimensionAnchor::anchored(WallId(2), 0.25, false)));
-        assert_eq!(back.end_anchor, Some(DimensionAnchor::anchored(WallId(2), 0.75, false)));
+        assert_eq!(
+            back, dimension,
+            "anchored dimension should round-trip exactly"
+        );
+        assert_eq!(
+            back.start_anchor,
+            Some(DimensionAnchor::anchored(WallId(2), 0.25, false))
+        );
+        assert_eq!(
+            back.end_anchor,
+            Some(DimensionAnchor::anchored(WallId(2), 0.75, false))
+        );
     }
 }

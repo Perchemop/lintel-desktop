@@ -493,15 +493,13 @@ mod tests {
             .push(dimension);
 
         // Add a constraint
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::PerpendicularDistance {
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            });
+            },
+        );
 
         // Save and load
         let text = to_json(project).expect("serialize");
@@ -512,8 +510,14 @@ mod tests {
         let level = loaded.level(LevelId(1)).expect("level");
         assert_eq!(level.dimensions.len(), 1);
         let loaded_dim = level.dimension(dim_id).expect("dimension");
-        assert_eq!(loaded_dim.start_anchor, Some(DimensionAnchor::anchored(wall_id, 0.25, false)));
-        assert_eq!(loaded_dim.end_anchor, Some(DimensionAnchor::anchored(wall_id, 0.75, false)));
+        assert_eq!(
+            loaded_dim.start_anchor,
+            Some(DimensionAnchor::anchored(wall_id, 0.25, false))
+        );
+        assert_eq!(
+            loaded_dim.end_anchor,
+            Some(DimensionAnchor::anchored(wall_id, 0.75, false))
+        );
         assert_eq!(level.constraints.len(), 1);
     }
 

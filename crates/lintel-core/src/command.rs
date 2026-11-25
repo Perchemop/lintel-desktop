@@ -596,9 +596,9 @@ fn delete_wall(project: &mut Project, id: WallId) -> Result<Applied, CoreError> 
     level.openings.retain(|o| o.host != id);
     // Cascade delete constraints referencing this wall
     let constraints_before = level.constraints.len();
-    level.constraints.retain(|c| {
-        !matches!(c, Constraint::PerpendicularDistance { wall_id, .. } if *wall_id == id)
-    });
+    level.constraints.retain(
+        |c| !matches!(c, Constraint::PerpendicularDistance { wall_id, .. } if *wall_id == id),
+    );
     // Clear anchors on dimensions that referenced this wall
     for dimension in &mut level.dimensions {
         if let Some(ref mut anchor) = dimension.start_anchor {
@@ -1845,10 +1845,7 @@ mod tests {
             .expect("level")
             .dimension(id)
             .expect("dimension");
-        assert!(
-            dim.start_anchor.is_none(),
-            "undo clears the start anchor"
-        );
+        assert!(dim.start_anchor.is_none(), "undo clears the start anchor");
 
         // Redo: anchor restored
         assert!(document.redo(1_760_000_050));
@@ -1927,10 +1924,7 @@ mod tests {
             .expect("level")
             .dimension(id)
             .expect("dimension");
-        assert!(
-            dim.end_anchor.is_none(),
-            "undo clears the end anchor"
-        );
+        assert!(dim.end_anchor.is_none(), "undo clears the end anchor");
 
         // Redo: anchor restored
         assert!(document.redo(1_760_000_050));
@@ -2060,7 +2054,10 @@ mod tests {
             .expect("level")
             .dimension(id)
             .expect("dimension");
-        assert_eq!(dim.witness_gap, DEFAULT_WITNESS_GAP, "undo restores default gap");
+        assert_eq!(
+            dim.witness_gap, DEFAULT_WITNESS_GAP,
+            "undo restores default gap"
+        );
         assert_eq!(dim.witness_overrun, 0.0, "undo restores default overrun");
 
         // Redo both changes
@@ -3072,9 +3069,11 @@ mod tests {
         );
 
         // Remove first constraint (index 0)
-        assert!(document
-            .apply(Command::RemoveConstraint { index: 0 }, 1_760_000_050)
-            .is_ok());
+        assert!(
+            document
+                .apply(Command::RemoveConstraint { index: 0 }, 1_760_000_050)
+                .is_ok()
+        );
         assert_eq!(
             document
                 .project()
@@ -3982,7 +3981,10 @@ mod tests {
         // Record the initial position
         let level = project.active_level().expect("level");
         let dim_before = level.dimension(dim_id).expect("dimension");
-        assert_eq!(dim_before.effective_start(Some(level)), Point2::new(1500.0, 0.0));
+        assert_eq!(
+            dim_before.effective_start(Some(level)),
+            Point2::new(1500.0, 0.0)
+        );
 
         // Move the wall - this should auto-solve constraints
         apply_command(
@@ -4087,8 +4089,7 @@ mod tests {
         );
 
         // Delete the wall
-        apply_command(&mut project, Command::DeleteWall { id: wall })
-            .expect("delete wall");
+        apply_command(&mut project, Command::DeleteWall { id: wall }).expect("delete wall");
 
         // Verify cascade delete: wall gone, constraint gone, anchor cleared
         let level = project.active_level().expect("level");
@@ -4177,13 +4178,16 @@ mod tests {
         .expect("add constraint to dim2");
 
         // Delete the wall
-        apply_command(&mut project, Command::DeleteWall { id: wall })
-            .expect("delete wall");
+        apply_command(&mut project, Command::DeleteWall { id: wall }).expect("delete wall");
 
         // Verify all anchors on both dimensions are cleared
         let level = project.active_level().expect("level");
         assert!(level.wall(wall).is_none(), "wall should be deleted");
-        assert_eq!(level.constraints.len(), 0, "all constraints should be removed");
+        assert_eq!(
+            level.constraints.len(),
+            0,
+            "all constraints should be removed"
+        );
 
         let dim1 = level.dimension(dim_id1).expect("dim1");
         assert!(

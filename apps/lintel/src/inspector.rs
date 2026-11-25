@@ -1296,8 +1296,15 @@ fn dimension_fields(
         None => "Free".to_string(),
     };
     ui.label(start_state);
-    let mut start_wall = dimension.start_anchor.and_then(|a| a.wall_id()).map(|w| w.0).unwrap_or(0);
-    let mut start_param = dimension.start_anchor.and_then(|a| a.param()).unwrap_or(0.0);
+    let mut start_wall = dimension
+        .start_anchor
+        .and_then(|a| a.wall_id())
+        .map(|w| w.0)
+        .unwrap_or(0);
+    let mut start_param = dimension
+        .start_anchor
+        .and_then(|a| a.param())
+        .unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
         ui.add(
@@ -1362,7 +1369,11 @@ fn dimension_fields(
         None => "Free".to_string(),
     };
     ui.label(end_state);
-    let mut end_wall = dimension.end_anchor.and_then(|a| a.wall_id()).map(|w| w.0).unwrap_or(0);
+    let mut end_wall = dimension
+        .end_anchor
+        .and_then(|a| a.wall_id())
+        .map(|w| w.0)
+        .unwrap_or(0);
     let mut end_param = dimension.end_anchor.and_then(|a| a.param()).unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
