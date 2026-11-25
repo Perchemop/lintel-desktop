@@ -1279,13 +1279,11 @@ fn dimension_fields(
     let start_state = match dimension.start_anchor {
         Some(anchor) => {
             let wall_id = anchor.wall_id();
-            if let Some(wid) = wall_id {
-                if level.wall(wid).is_none() {
-                    ui.label(
-                        egui::RichText::new("wall missing — using stored point")
-                            .color(SPEC.component.text.muted),
-                    );
-                }
+            if let Some(wid) = wall_id && level.wall(wid).is_none() {
+                ui.label(
+                    egui::RichText::new("wall missing — using stored point")
+                        .color(SPEC.component.text.muted),
+                );
             }
             format!(
                 "Anchored to Wall #{} @ {:.2}",
@@ -1352,13 +1350,11 @@ fn dimension_fields(
     let end_state = match dimension.end_anchor {
         Some(anchor) => {
             let wall_id = anchor.wall_id();
-            if let Some(wid) = wall_id {
-                if level.wall(wid).is_none() {
-                    ui.label(
-                        egui::RichText::new("wall missing — using stored point")
-                            .color(SPEC.component.text.muted),
-                    );
-                }
+            if let Some(wid) = wall_id && level.wall(wid).is_none() {
+                ui.label(
+                    egui::RichText::new("wall missing — using stored point")
+                        .color(SPEC.component.text.muted),
+                );
             }
             format!(
                 "Anchored to Wall #{} @ {:.2}",
