@@ -304,5 +304,7 @@ fn empty_canvas_click_shows_hint_no_panic() {
     // Should return an error, not panic
     assert!(result.is_err());
     let error = result.unwrap_err();
-    assert!(error.to_string().contains("does not exist") || error.to_string().contains("not found"));
+    assert!(
+        error.to_string().contains("does not exist") || error.to_string().contains("not found")
+    );
 }
