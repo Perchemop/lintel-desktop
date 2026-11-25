@@ -2179,7 +2179,7 @@ checksum = "d4a5ff6bcca6c4867b1c4fd4ef63e4db7436ef363e0ad7531d1558856bae64f4"
 
 [[package]]
 name = "lintel"
-version = "0.20.0"
+version = "0.20.1"
 dependencies = [
  "crash-report",
  "eframe",
@@ -2194,7 +2194,7 @@ dependencies = [
 
 [[package]]
 name = "lintel-core"
-version = "0.20.0"
+version = "0.20.1"
 dependencies = [
  "proptest",
  "serde",

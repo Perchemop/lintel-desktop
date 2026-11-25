@@ -5,7 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## v0.20.1 — 2026-11-25
+
+### Fixed
+
+- Doors and windows place on the first click of a wall: the click offset is
+  projected onto the wall centreline instead of measuring straight-line
+  distance from the wall start, so off-centre clicks no longer compute
+  offsets that fail `Opening::fits_on()` and get silently discarded
+  (PRs #68, #70)
+- Failed placements — wall too short, overlapping openings — surface an
+  error note via `note_status` instead of being discarded without feedback
+  (PR #68)
+- Placing with no wall under the cursor shows a status hint instead of
+  returning silently (PR #68)
+- `wall_offset_along_centerline` stores an opening's offset along the wall
+  centreline; regression-tested in `apps/lintel/src/tests/workflows.rs`
+  (PR #70)
+
+### Changed
+
+- Both crates bumped 0.20.0 → 0.20.1
+
+## v0.20.0 — 2026-11-22
 
 ### Added
 
