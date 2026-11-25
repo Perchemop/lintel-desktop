@@ -1505,31 +1505,25 @@ mod tests {
         }
 
         // Add mixed constraints
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::PerpendicularDistance {
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
                 dimension: DimensionId(3),
                 wall_id: wall1,
                 param: 0.5,
-            });
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::EqualLength {
+            },
+        );
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::EqualLength {
                 a: DimensionId(3),
                 b: DimensionId(4),
-            });
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::FixedAngle {
+            },
+        );
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::FixedAngle {
                 dimension: DimensionId(4),
                 degrees: 45.0,
-            });
+            },
+        );
 
         // Save and load
         let text = to_json(&project).expect("serialize");
