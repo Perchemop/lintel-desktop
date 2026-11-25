@@ -433,7 +433,35 @@ CI evidence: PR #71 release workflow run `45516814571`.
 **Release gate:** Signed artefacts with `SHA256SUMS.txt.asc`, ledger row appended
 by CI, dependency-doctor gate before tag.
 
-## v0.21.0 — Next Milestone (Planning)
+## v0.21.0 — Bugfix & Polish Patch Cycle
+
+**Status:** Specification complete — tickets created, ready for implementation.
+
+**Scope:** Patch-level release focused on stability, polish, and fixing known issues from v0.20.x. No new capabilities.
+
+| ID | Capability | Ticket | Status |
+|---|-----------|--------|--------|
+| T-200 | Fix kittest SIGSEGV in evidence generation | T-200 | 📋 Spec |
+| T-201 | Door/window placement regression tests | T-201 | 📋 Spec |
+| T-202 | Constraint solver 2-node cycle stress tests | T-202 | 📋 Spec |
+| T-203 | Anchor + constraint round-trip tests | T-203 | 📋 Spec |
+| T-204 | Dark palette WCAG AA contrast audit | T-204 | 📋 Spec |
+| T-205 | High-contrast palette WCAG AA (7:1) audit | T-205 | 📋 Spec |
+| T-206 | Constraint solver performance (< 50ms @ 500) | T-206 | 📋 Spec |
+| T-207 | Inspector empty states for all sections | T-207 | 📋 Spec |
+| T-208 | Inspector Tab order audit | T-208 | 📋 Spec |
+| T-209 | Version bumps 0.20.1 → 0.21.0 | T-209 | 📋 Spec |
+| T-210 | CHANGELOG.md v0.21.0 section | T-210 | 📋 Spec |
+| T-211 | RELEASE_NOTES.md v0.21.0 section | T-211 | 📋 Spec |
+| T-212 | Tag v0.21.0 and verify release | T-212 | 📋 Spec |
+
+**Release gate (guide §12.1):** Signed artefacts, `docs/tokens.md` ledger updated by CI and quoted in release notes, version bump before tag, all required CI checks green.
+
+**Full spec:** `docs/specs/v0.21.0-bugfix-polish.spec.md`
+
+**Readiness:** 100% spec complete — awaiting implementation.
+
+## v0.22.0+ — Next Feature Milestone (Planning)
 
 **Status:** Planning — determine scope for next feature release.
 
@@ -451,9 +479,8 @@ Candidates from the backlog:
 | CAP-??? | On-canvas hints | Separate roadmap track |
 | CAP-??? | 3D/structural/IFC track | Separate roadmap track |
 
-**Decision needed:** Choose next vertical slice scope. Options:
-1. **v0.21.0** — Polish/bugfix patch cycle (no major new capabilities)
+**Decision needed:** Choose next vertical slice scope after v0.21.0 ships. Options:
+1. **v0.22.0** — Feature slice from unscheduled list
 2. **v1.0.0** — First stable major release with all current features
-3. **Feature slice** — One specific capability from unscheduled list
 
-**Readiness:** 0% — awaiting scope decision.
+**Readiness:** 0% — awaiting v0.21.0 completion and scope decision.
