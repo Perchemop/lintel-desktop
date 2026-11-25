@@ -19,6 +19,7 @@ use crate::error::CoreError;
 use crate::geom::Point2;
 use crate::ids::{DimensionId, WallId};
 use crate::level::Level;
+use crate::wall::Wall;
 
 use std::collections::{HashMap, HashSet};
 

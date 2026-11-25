@@ -23,6 +23,7 @@ use crate::geom::{Point2, Vec2};
 use crate::ids::{DimensionId, LayerId, WallId};
 use crate::layer::EntityStyle;
 use crate::level::Level;
+use crate::wall::Wall;
 
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
