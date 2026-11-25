@@ -1561,7 +1561,7 @@ mod tests {
                 kind: DimensionKind::LinearHorizontal,
                 start: Point2::new(0.0, 0.0),
                 end: Point2::new(3000.0, 0.0),
-                offset: 500.0,
+                offset: 0.0,
             },
         )
         .expect_err("zero offset");
