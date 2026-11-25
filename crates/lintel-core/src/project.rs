@@ -96,11 +96,11 @@ impl Project {
             for label in &level.labels {
                 highest = highest.max(label.id.value());
             }
-            for room in &level.rooms {
-                highest = highest.max(room.id.value());
+            for block_def in &level.block_defs {
+                highest = highest.max(block_def.id.value());
             }
-            for block in &level.blocks {
-                highest = highest.max(block.id.value());
+            for block_instance in &level.block_instances {
+                highest = highest.max(block_instance.id.value());
             }
         }
         highest

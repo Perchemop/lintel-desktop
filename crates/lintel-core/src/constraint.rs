@@ -14,12 +14,11 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::dimension::{Dimension, DimensionKind, DimensionAnchor};
+use crate::dimension::DimensionAnchor;
 use crate::error::CoreError;
 use crate::geom::Point2;
-use crate::ids::{DimensionId, LevelId, WallId};
+use crate::ids::{DimensionId, WallId};
 use crate::level::Level;
-use crate::wall::Wall;
 
 use std::collections::{HashMap, HashSet};
 
