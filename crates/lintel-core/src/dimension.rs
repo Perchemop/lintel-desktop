@@ -23,7 +23,6 @@ use crate::geom::{Point2, Vec2};
 use crate::ids::{DimensionId, LayerId, WallId};
 use crate::layer::EntityStyle;
 use crate::level::Level;
-use crate::wall::Wall;
 
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
@@ -422,6 +421,7 @@ mod tests {
     use super::*;
     use crate::ids::LevelId;
     use crate::project::Project;
+    use crate::wall::Wall;
 
     /// A 4 m wall along the x-axis, on a level of its own.
     fn level_with_wall(wall_id: WallId) -> Level {
