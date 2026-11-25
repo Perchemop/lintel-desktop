@@ -711,32 +711,10 @@ pub fn inspector(
 
             ui.label("Definitions");
             if level.block_defs.is_empty() {
-                ui.vertical(|ui| {
-                    ui.label(
-                        egui::RichText::new("No block definitions — create one to reuse groups of entities.")
-                            .color(SPEC.component.text.muted),
-                    );
-                    ui.add_space(SPEC.component.spacing.sm);
-                    if ui
-                        .add(
-                            egui::Button::new("Add definition")
-                                .fill(SPEC.component.button.primary_md.fill)
-                                .min_size(SPEC.component.button.primary_md.min_size)
-                                .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
-                        )
-                        .on_hover_text("Create a new block definition with an empty entity list.")
-                        .clicked()
-                    {
-                        let next = level.block_defs.iter().map(|d| d.id.0).max().unwrap_or(0) + 1;
-                        command = Some(Command::AddBlockDef {
-                            block: lintel_core::block::BlockDef::new(
-                                lintel_core::block::BlockId(next),
-                                draft.new_block_def_name.trim().to_string(),
-                            ),
-                        });
-                        draft.new_block_def_name.clear();
-                    }
-                });
+                ui.label(
+                    egui::RichText::new("No block definitions — create one to reuse groups of entities.")
+                        .color(SPEC.component.text.muted),
+                );
             } else {
                 for def in &level.block_defs {
                     ui.horizontal(|ui| {
@@ -799,36 +777,10 @@ pub fn inspector(
             ui.separator();
             ui.label("Instances");
             if level.block_instances.is_empty() {
-                ui.vertical(|ui| {
-                    ui.label(
-                        egui::RichText::new("No block instances — place one from a definition.")
-                            .color(SPEC.component.text.muted),
-                    );
-                    ui.add_space(SPEC.component.spacing.sm);
-                    if draft.block_def_id == 0 {
-                        ui.label(
-                            egui::RichText::new("Select a definition above first.")
-                                .color(SPEC.component.text.muted)
-                                .size(SPEC.component.text.sm),
-                        );
-                    } else if ui
-                        .add(
-                            egui::Button::new("Place instance")
-                                .fill(SPEC.component.button.primary_md.fill)
-                                .min_size(SPEC.component.button.primary_md.min_size)
-                                .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
-                        )
-                        .on_hover_text("Click on the canvas to place an instance of the selected definition.")
-                        .clicked()
-                    {
-                        command = Some(Command::AddBlockInstance {
-                            block_id: lintel_core::block::BlockId(draft.block_def_id),
-                            param: lintel_core::geom::Point2::new(0.0, 0.0),
-                            rotation: lintel_core::geom::Angle::ZERO,
-                            flipped: false,
-                        });
-                    }
-                });
+                ui.label(
+                    egui::RichText::new("No block instances — place one from a definition.")
+                        .color(SPEC.component.text.muted),
+                );
             } else {
                 for inst in &level.block_instances {
                     let def_name = level
@@ -954,36 +906,10 @@ pub fn inspector(
             let project = doc.project();
             ui.label("A viewport places a level on a sheet at a set scale.");
             if project.viewports.is_empty() {
-                ui.vertical(|ui| {
-                    ui.label(
-                        egui::RichText::new("No viewports — add one to frame a level on a sheet.")
-                            .color(SPEC.component.text.muted),
-                    );
-                    ui.add_space(SPEC.component.spacing.sm);
-                    if ui
-                        .add(
-                            egui::Button::new("Add viewport")
-                                .fill(SPEC.component.button.primary_md.fill)
-                                .min_size(SPEC.component.button.primary_md.min_size)
-                                .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
-                        )
-                        .on_hover_text("Add a viewport with a default A4 landscape region.")
-                        .clicked()
-                    {
-                        let level = lintel_core::ids::LevelId(draft.new_viewport_level);
-                        let region = lintel_core::geom::Bounds {
-                            min: lintel_core::geom::Point2::new(20.0, 20.0),
-                            max: lintel_core::geom::Point2::new(277.0, 190.0),
-                        };
-                        command = Some(Command::AddViewport {
-                            level,
-                            region,
-                            scale_denominator: draft.new_viewport_scale,
-                            caption: draft.new_viewport_caption.trim().to_string(),
-                        });
-                        draft.new_viewport_caption.clear();
-                    }
-                });
+                ui.label(
+                    egui::RichText::new("No viewports — add one to frame a level on a sheet.")
+                        .color(SPEC.component.text.muted),
+                );
             } else {
                 for (index, viewport) in project.viewports.iter().enumerate() {
                     ui.horizontal(|ui| {
