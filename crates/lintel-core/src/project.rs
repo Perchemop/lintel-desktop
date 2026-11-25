@@ -78,6 +78,34 @@ impl Project {
         id
     }
 
+    /// Return the highest entity ID in the project across all levels.
+    /// Used to ensure `next_id` stays ahead of any deserialized IDs.
+    pub fn highest_id(&self) -> u64 {
+        let mut highest = 0_u64;
+        for level in &self.levels {
+            highest = highest.max(level.id.value());
+            for wall in &level.walls {
+                highest = highest.max(wall.id.value());
+            }
+            for opening in &level.openings {
+                highest = highest.max(opening.id.value());
+            }
+            for dimension in &level.dimensions {
+                highest = highest.max(dimension.id.value());
+            }
+            for label in &level.labels {
+                highest = highest.max(label.id.value());
+            }
+            for room in &level.rooms {
+                highest = highest.max(room.id.value());
+            }
+            for block in &level.blocks {
+                highest = highest.max(block.id.value());
+            }
+        }
+        highest
+    }
+
     /// Bring a project written by an older build up to the current shape.
     ///
     /// Every level gains the default layer, and every entity that references a
