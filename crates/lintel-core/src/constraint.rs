@@ -1032,13 +1032,15 @@ mod tests {
             .push(dimension);
 
         // Add a constraint on the same wall
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::PerpendicularDistance {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            },
-        );
+            });
 
         assert!(
             project
@@ -1120,8 +1122,12 @@ mod tests {
         ));
 
         // Create mutual EqualLength constraints (A ↔ B)
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_a });
 
         // Should not raise circular reference error
         let constraints: Vec<_> = level.constraints.clone();
@@ -1155,8 +1161,12 @@ mod tests {
             ));
 
             // Mutual EqualLength
-            level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-            level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+            level
+                .constraints
+                .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+            level
+                .constraints
+                .push(Constraint::EqualLength { a: dim_b, b: dim_a });
         }
 
         let constraints: Vec<_> = level.constraints.clone();
@@ -1183,8 +1193,12 @@ mod tests {
         }
 
         // A ↔ B mutual EqualLength
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_a });
 
         // PerpendicularDistance on C
         level.constraints.push(Constraint::PerpendicularDistance {
@@ -1252,13 +1266,15 @@ mod tests {
             .push(dimension);
 
         // Add a PerpendicularDistance constraint
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::PerpendicularDistance {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
@@ -1324,7 +1340,10 @@ mod tests {
         // Add two anchored dimensions
         let dim1 = DimensionId(3);
         let dim2 = DimensionId(4);
-        for (id, wall, param) in [(DimensionId(3), WallId(2), 0.25), (DimensionId(4), WallId(3), 0.75)] {
+        for (id, wall, param) in [
+            (DimensionId(3), WallId(2), 0.25),
+            (DimensionId(4), WallId(3), 0.75),
+        ] {
             let mut dim = Dimension::new(
                 id,
                 DimensionKind::LinearHorizontal,
@@ -1341,12 +1360,14 @@ mod tests {
         }
 
         // Add FixedAngle constraint between the two dimensions
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::FixedAngle {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::FixedAngle {
                 dimension: DimensionId(3),
                 degrees: 90.0,
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
@@ -1405,12 +1426,14 @@ mod tests {
         }
 
         // Add EqualLength constraint
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::EqualLength {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::EqualLength {
                 a: DimensionId(3),
                 b: DimensionId(4),
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
@@ -1483,25 +1506,31 @@ mod tests {
         }
 
         // Add mixed constraints
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::PerpendicularDistance {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
                 dimension: DimensionId(3),
                 wall_id: wall1,
                 param: 0.5,
-            },
-        );
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::EqualLength {
+            });
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::EqualLength {
                 a: DimensionId(3),
                 b: DimensionId(4),
-            },
-        );
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::FixedAngle {
+            });
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::FixedAngle {
                 dimension: DimensionId(4),
                 degrees: 45.0,
-            },
-        );
+            });
 
         // Save and load
         let text = to_json(&project).expect("serialize");
