@@ -107,7 +107,7 @@ impl DimensionAnchor {
     /// Returns `None` for `Free` anchors, or when the wall is not on the level
     /// or the param is not valid.
     pub fn resolve_on(&self, level: &Level) -> Option<Point2> {
-        let (wall_id, param) = match self {
+        let (wall_id, _param) = match self {
             DimensionAnchor::Free => return None,
             DimensionAnchor::Anchored { wall_id, param, .. } => (*wall_id, *param),
         };
