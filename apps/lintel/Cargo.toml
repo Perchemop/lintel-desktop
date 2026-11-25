@@ -6,7 +6,6 @@ license = "MIT OR Apache-2.0"
 
 [features]
 default = []
-release-signing-key = ["update-check/release-signing-key"]
 
 [dependencies]
 # Core domain - pure Rust, headless tested
