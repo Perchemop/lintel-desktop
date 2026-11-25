@@ -1032,15 +1032,13 @@ mod tests {
             .push(dimension);
 
         // Add a constraint on the same wall
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::PerpendicularDistance {
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            });
+            },
+        );
 
         assert!(
             project
@@ -1266,15 +1264,13 @@ mod tests {
             .push(dimension);
 
         // Add a PerpendicularDistance constraint
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::PerpendicularDistance {
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            });
+            },
+        );
 
         // Save and load
         let text = to_json(&project).expect("serialize");
@@ -1360,14 +1356,12 @@ mod tests {
         }
 
         // Add FixedAngle constraint between the two dimensions
-        project
-            .active_level_mut()
-            .expect("level")
-            .constraints
-            .push(Constraint::FixedAngle {
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::FixedAngle {
                 dimension: DimensionId(3),
                 degrees: 90.0,
-            });
+            },
+        );
 
         // Save and load
         let text = to_json(&project).expect("serialize");
