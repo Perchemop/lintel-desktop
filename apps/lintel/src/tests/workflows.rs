@@ -258,7 +258,7 @@ fn door_placement_near_wall_corner_picks_correct_wall() {
         .wall
         .expect("wall id");
 
-    let wall2 = doc
+    let _wall2 = doc
         .apply(
             Command::AddWall {
                 start: Point2::new(4000.0, 0.0),
