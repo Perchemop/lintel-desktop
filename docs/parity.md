@@ -120,19 +120,19 @@ each green CI run; percentages move only from evidence.
 | CAP-097 | Command palette (Ctrl+K) | PR #21 `18a5bbf`, tag `v0.12.1` | verified |
 | CAP-098 | Snap visual indicators on canvas | PR #21 `18a5bbf`, tag `v0.12.1` | verified |
 
-## v0.13.0 — Anchored Dimensions & Release Governance (unreleased)
+## v0.13.0 — Anchored Dimensions & Release Governance
 
 | ID | Evidence | CI run | Status |
 |---|---|---|---|
-| CAP-100 | Constraint-driven dimensions core | PR #22 `2b07f58` | implemented (unreleased) |
-| CAP-101 | Constraint solver | PR #22 `2b07f58` | implemented (unreleased) |
-| CAP-102 | Anchor commands | PR #22 `2b07f58` | implemented (unreleased) |
-| CAP-103 | Anchor UI | PR #23 `7d88830` | implemented (unreleased) |
-| CAP-104 | Update verification | PR #24 `61cf97a` | implemented (unreleased) |
-| CAP-105 | In-app release notes from `RELEASE_NOTES.md` | PR #26 `1a43bea` | implemented (unreleased) |
-| CAP-106 | Release governance | PR #25 `d248b8b` | implemented (unreleased) |
-| CAP-107 | Documentation parity | this slice | implemented (unreleased) |
-| CAP-108 | Phase A UI completion | PR #27 `e86f697` | implemented (unreleased) |
+| CAP-100 | Constraint-driven dimensions core (`DimensionAnchor`, `start_anchor`/`end_anchor`/`witness_gap`/`witness_overrun`); `dimension.rs` unit tests for anchor resolution and JSON round-trip | PR #22 `2b07f58`, tag `v0.13.0` | verified |
+| CAP-101 | `Constraint` enum (PerpendicularDistance, FixedAngle, EqualLength), `solve_constraints`, `apply_constraints_to_anchors`; constraint validation tests in `constraint.rs` | PR #22 `2b07f58`, tag `v0.13.0` | verified |
+| CAP-102 | `SetDimensionStartAnchor`/`EndAnchor` commands; `SetDimensionWitnessGap`/`Overrun` with validation; `command::tests` for anchor commands including T-105 undo/redo tests: `a_dimension_start_anchor_can_be_undone_and_redone`, `a_dimension_end_anchor_can_be_undone_and_redone`, `witness_margins_can_be_undone_and_redone`, `an_added_constraint_can_be_undone_and_redone`, `a_added_constraint_can_be_redone`, `remove_a_constraint_can_be_undone_and_redone` | PR #22 `2b07f58`, tag `v0.13.0` | verified |
+| CAP-103 | `apps/lintel/src/inspector.rs` anchor fields, witness margin controls; `apps/lintel/src/dimension_ui.rs` canvas witness lines; cobalt grip markers | PR #23 `7d88830`, tag `v0.13.0` | verified |
+| CAP-104 | `update-check::verify_signature` validates GPG signature; cache TTL honored instead of `check_uncached` (used only for testing); `Release::checksum_asset()` and `signature_asset()` surface manifest and signature | `update-check/src/lib.rs`; PR #24 `61cf97a` | verified |
+| CAP-105 | `apps/lintel/src/release_notes.rs` `include_str!("../../../RELEASE_NOTES.md")`; `release_notes::releases()` parses markdown; `TOKEN_METRIC_NOTE` explains ledger-era figures | PR #26 `1a43bea`, tag `v0.13.0` | verified |
+| CAP-106 | `release.yml` steps "Verify tag matches crate version" and "Sign SHA256SUMS.txt"; both fail on mismatch or missing `GPG_PRIVATE_KEY`; `--verify-tag` anchors to `v`-prefixed git tag | .github/workflows/release.yml, tag `v0.13.0` | verified |
+| CAP-107 | `docs/capability-inventory.md` extended through CAP-108; `docs/parity.md` v0.13.0 rows; `CHANGELOG.md`/`ROADMAP.md`/`PROGRESS.md` reconciled; `docs/tokens.md` ledger updated | tag `v0.13.0`; CI run `43529660411` | verified |
+| CAP-108 | Layers panel (`Layer`, protected default, per-entity assignment); `Tool::Construction` (line/ray/circle/arc) with two-click flows; keyboard shortcuts C/Shift+C/Q/X; Shift+V toggle visibility; Del delete | apps/lintel/src/inspector.rs layers section; PR #27 `e86f697`, tag `v0.13.0` | verified |
 
 ## v0.14.0 — Constraint Persistence & Sheet Layout
 

@@ -180,7 +180,7 @@ pub fn select(
             continue;
         }
         let (start, end) = dimension
-            .dimension_line()
+            .dimension_line(None)
             .unwrap_or((dimension.start, dimension.end));
         let footprint = Footprint {
             centre: midpoint(start, end),

@@ -190,7 +190,7 @@ impl PlanGeometry {
         }
         // Dimensions: hit test against their dimension line.
         for dim in &self.dimensions {
-            if let Some((a, b)) = dim.dimension_line() {
+            if let Some((a, b)) = dim.dimension_line(None) {
                 if point_segment_distance(point, a, b) <= tolerance {
                     return Some(Hit::Dimension(dim.id));
                 }

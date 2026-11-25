@@ -23,7 +23,6 @@ use crate::geom::{Point2, Vec2};
 use crate::ids::{DimensionId, LayerId, WallId};
 use crate::layer::EntityStyle;
 use crate::level::Level;
-use crate::wall::Wall;
 
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
@@ -70,50 +69,89 @@ impl DimensionKind {
     }
 }
 
-/// A dimension's attachment of one measured point to a wall.
+/// How a measured point is attached to geometry.
 ///
-/// The anchor stores *where* on the wall the point sits rather than a
-/// coordinate, so the measured point follows the wall when it moves or
-/// stretches. The position is a fraction of the wall's length: `0.0` is its
-/// start, `1.0` its end.
+/// - `Free` means the point is not attached to any wall; its coordinates are
+///   the stored `start` or `end` point.
+/// - `Anchored` means the point sits on a wall at a parametric position.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct DimensionAnchor {
-    /// Wall the measured point sits on.
-    pub wall_id: WallId,
-    /// Position along the wall as a fraction of its length.
-    pub param: f64,
-    /// Whether the dimension measures across the wall. The constraint solver
-    /// maintains this flag; it never moves the resolved point.
-    #[serde(default)]
-    pub perpendicular: bool,
+#[serde(tag = "type", content = "data")]
+pub enum DimensionAnchor {
+    /// Not attached to any wall; uses the stored coordinate.
+    Free,
+    /// Attached to a wall at the given param and perpendicular flag.
+    Anchored {
+        /// Wall the measured point sits on.
+        wall_id: WallId,
+        /// Position along the wall as a fraction of its length.
+        param: f64,
+        /// Whether the dimension measures across the wall. Defaults to false.
+        #[serde(default)]
+        perpendicular: bool,
+    },
 }
 
 impl DimensionAnchor {
-    /// An anchor on `wall_id`, `param` of the way along it.
-    pub const fn new(wall_id: WallId, param: f64) -> Self {
-        Self {
+    /// An anchored position on `wall_id`, `param` of the way along it.
+    pub fn anchored(wall_id: WallId, param: f64, perpendicular: bool) -> Self {
+        Self::Anchored {
             wall_id,
             param,
-            perpendicular: false,
+            perpendicular,
         }
     }
 
-    /// True when `param` is a finite fraction of the wall.
-    pub fn is_valid(&self) -> bool {
-        self.param.is_finite() && (0.0..=1.0).contains(&self.param)
-    }
-
-    /// The point this anchor pins on `wall`: `param` of the way along its
-    /// centreline from its start to its end.
+    /// Resolves this anchor to a point on its wall in `level`.
     ///
-    /// `None` when the parameter is not a fraction of the wall or the wall has
-    /// no usable geometry. The point stays on the centreline whatever
-    /// [`DimensionAnchor::perpendicular`] says.
-    pub fn resolve_on(&self, wall: &Wall) -> Option<Point2> {
-        if !self.is_valid() || !wall.start.is_finite() || !wall.end.is_finite() {
+    /// Returns `None` for `Free` anchors, or when the wall is not on the level
+    /// or the param is not valid.
+    pub fn resolve_on(&self, level: &Level) -> Option<Point2> {
+        let (wall_id, param) = match self {
+            DimensionAnchor::Free => return None,
+            DimensionAnchor::Anchored { wall_id, param, .. } => (*wall_id, *param),
+        };
+        let wall = level.wall(wall_id)?;
+        if !param.is_finite() || !(0.0..=1.0).contains(&param) {
             return None;
         }
-        Some(wall.start + (wall.end - wall.start) * self.param)
+        if !wall.start.is_finite() || !wall.end.is_finite() {
+            return None;
+        }
+        Some(wall.start + (wall.end - wall.start) * param)
+    }
+
+    /// The parameter along the wall, if anchored.
+    pub fn param(&self) -> Option<f64> {
+        match self {
+            DimensionAnchor::Free => None,
+            DimensionAnchor::Anchored { param, .. } => Some(*param),
+        }
+    }
+
+    /// The wall id if anchored.
+    pub fn wall_id(&self) -> Option<WallId> {
+        match self {
+            DimensionAnchor::Free => None,
+            DimensionAnchor::Anchored { wall_id, .. } => Some(*wall_id),
+        }
+    }
+
+    /// Whether the anchor has a perpendicular witness line.
+    pub fn perpendicular(&self) -> bool {
+        match self {
+            DimensionAnchor::Free => false,
+            DimensionAnchor::Anchored { perpendicular, .. } => *perpendicular,
+        }
+    }
+
+    /// True when `param` is a finite fraction of the wall (if anchored).
+    pub fn is_valid(&self) -> bool {
+        match self {
+            DimensionAnchor::Free => true,
+            DimensionAnchor::Anchored { param, .. } => {
+                param.is_finite() && (0.0..=1.0).contains(param)
+            }
+        }
     }
 }
 
@@ -222,45 +260,53 @@ impl Dimension {
     /// mean `y` plus the offset); for a vertical one it sits to their right.
     /// An aligned dimension is shifted along the left-hand normal of
     /// `start..end`.
-    pub fn dimension_line(&self) -> Option<(Point2, Point2)> {
-        if !self.is_valid() {
+    pub fn dimension_line(&self, level: Option<&Level>) -> Option<(Point2, Point2)> {
+        let start = self.effective_start(level);
+        let end = self.effective_end(level);
+        if !self.is_valid_at(level) {
             return None;
         }
-        Some(self.offset_line(self.start, self.end))
+        Some(self.offset_line(start, end))
     }
 
     /// The first measured point, resolved through its wall anchor when it has
     /// one and `level` still holds that wall.
     ///
-    /// Falls back to the stored point otherwise, so a dimension whose wall was
-    /// deleted still reads the geometry it was last measured against.
+    /// For `Free` anchor, returns the stored `start` point.
+    /// Falls back to the stored point when no level is provided or when the
+    /// wall is not on the level.
     pub fn effective_start(&self, level: Option<&Level>) -> Point2 {
-        self.start_anchor
-            .as_ref()
-            .zip(level)
-            .and_then(|(anchor, level)| self.resolve_anchor(anchor, level))
-            .unwrap_or(self.start)
+        if let Some(lvl) = level {
+            if let Some(anchor) = &self.start_anchor {
+                if let Some(point) = anchor.resolve_on(lvl) {
+                    return point;
+                }
+            }
+        }
+        self.start
     }
 
     /// The second measured point, resolved the same way as
     /// [`Dimension::effective_start`].
     pub fn effective_end(&self, level: Option<&Level>) -> Point2 {
-        self.end_anchor
-            .as_ref()
-            .zip(level)
-            .and_then(|(anchor, level)| self.resolve_anchor(anchor, level))
-            .unwrap_or(self.end)
+        if let Some(lvl) = level {
+            if let Some(anchor) = &self.end_anchor {
+                if let Some(point) = anchor.resolve_on(lvl) {
+                    return point;
+                }
+            }
+        }
+        self.end
     }
 
     /// The point `anchor` pins on its wall in `level`.
     ///
     /// `None` when the wall is not on `level`, when the parameter is not a
-    /// finite fraction of the wall, or when the wall has no usable geometry.
+    /// finite fraction of the wall, or when the anchor is `Free`.
     /// [`DimensionAnchor::perpendicular`] is constraint metadata and never
     /// moves the point.
     pub fn resolve_anchor(&self, anchor: &DimensionAnchor, level: &Level) -> Option<Point2> {
-        let wall = level.wall(anchor.wall_id)?;
-        anchor.resolve_on(wall)
+        anchor.resolve_on(level)
     }
 
     /// The measured value for this kind, using the resolved measured points.
@@ -376,6 +422,7 @@ mod tests {
     use super::*;
     use crate::ids::LevelId;
     use crate::project::Project;
+    use crate::wall::Wall;
 
     /// A 4 m wall along the x-axis, on a level of its own.
     fn level_with_wall(wall_id: WallId) -> Level {
@@ -394,8 +441,8 @@ mod tests {
     /// quarters of the way along `wall_id`.
     fn anchored(kind: DimensionKind, wall_id: WallId) -> Dimension {
         let mut dimension = dimension(kind);
-        dimension.start_anchor = Some(DimensionAnchor::new(wall_id, 0.25));
-        dimension.end_anchor = Some(DimensionAnchor::new(wall_id, 0.75));
+        dimension.start_anchor = Some(DimensionAnchor::anchored(wall_id, 0.25, false));
+        dimension.end_anchor = Some(DimensionAnchor::anchored(wall_id, 0.75, false));
         dimension
     }
 
@@ -452,7 +499,7 @@ mod tests {
             DEFAULT_DIMENSION_OFFSET,
         );
         assert!(!horizontal.is_valid());
-        assert!(horizontal.dimension_line().is_none());
+        assert!(horizontal.dimension_line(None).is_none());
     }
 
     #[test]
@@ -474,7 +521,7 @@ mod tests {
     #[test]
     fn the_dimension_line_sits_at_the_requested_offset() {
         let horizontal = dimension(DimensionKind::LinearHorizontal);
-        let (a, b) = horizontal.dimension_line().expect("dimension line");
+        let (a, b) = horizontal.dimension_line(None).expect("dimension line");
         assert_eq!(a, Point2::new(0.0, DEFAULT_DIMENSION_OFFSET));
         assert_eq!(b, Point2::new(3000.0, DEFAULT_DIMENSION_OFFSET));
 
@@ -485,7 +532,7 @@ mod tests {
             Point2::new(0.0, 2000.0),
             DEFAULT_DIMENSION_OFFSET,
         );
-        let (a, b) = vertical.dimension_line().expect("dimension line");
+        let (a, b) = vertical.dimension_line(None).expect("dimension line");
         assert_eq!(a, Point2::new(DEFAULT_DIMENSION_OFFSET, 0.0));
         assert_eq!(b, Point2::new(DEFAULT_DIMENSION_OFFSET, 2000.0));
     }
@@ -605,16 +652,21 @@ mod tests {
 
     #[test]
     fn dimension_anchors_round_trip_and_validate() {
-        let anchor = DimensionAnchor::new(WallId(3), 0.5);
+        let anchor = DimensionAnchor::anchored(WallId(3), 0.5, false);
         let json = serde_json::to_string(&anchor).expect("serialize");
         let back: DimensionAnchor = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(back, anchor);
-        assert!(!back.perpendicular);
+        assert!(!back.perpendicular());
 
-        assert!(DimensionAnchor::new(WallId(3), 0.0).is_valid());
-        assert!(DimensionAnchor::new(WallId(3), 1.0).is_valid());
-        assert!(!DimensionAnchor::new(WallId(3), -0.01).is_valid());
-        assert!(!DimensionAnchor::new(WallId(3), f64::NAN).is_valid());
+        assert!(DimensionAnchor::anchored(WallId(3), 0.0, false).is_valid());
+        assert!(DimensionAnchor::anchored(WallId(3), 1.0, false).is_valid());
+        assert!(!DimensionAnchor::anchored(WallId(3), -0.01, false).is_valid());
+        assert!(!DimensionAnchor::anchored(WallId(3), f64::NAN, false).is_valid());
+
+        // Free anchor is valid and resolves to None
+        let free = DimensionAnchor::Free;
+        assert!(free.is_valid());
+        assert!(!free.perpendicular());
     }
 
     #[test]
@@ -625,8 +677,8 @@ mod tests {
         assert_eq!(back, original);
         let start = back.start_anchor.expect("start anchor");
         let end = back.end_anchor.expect("end anchor");
-        assert_eq!(start, DimensionAnchor::new(WallId(2), 0.25));
-        assert_eq!(end, DimensionAnchor::new(WallId(2), 0.75));
+        assert_eq!(start, DimensionAnchor::anchored(WallId(2), 0.25, false));
+        assert_eq!(end, DimensionAnchor::anchored(WallId(2), 0.75, false));
     }
 
     #[test]
@@ -696,8 +748,9 @@ mod tests {
     fn the_perpendicular_flag_never_moves_the_resolved_point() {
         let level = level_with_wall(WallId(2));
         let mut dimension = anchored(DimensionKind::LinearHorizontal, WallId(2));
-        let anchor = dimension.start_anchor.as_mut().expect("start anchor");
-        anchor.perpendicular = true;
+        if let Some(DimensionAnchor::Anchored { perpendicular, .. }) = &mut dimension.start_anchor {
+            *perpendicular = true;
+        }
         assert_eq!(
             dimension.effective_start(Some(&level)),
             Point2::new(1000.0, 0.0)
@@ -707,26 +760,29 @@ mod tests {
     #[test]
     fn an_anchor_off_the_wall_does_not_resolve() {
         let level = level_with_wall(WallId(2));
-        let mut dimension = anchored(DimensionKind::LinearHorizontal, WallId(2));
-        let anchor = dimension.start_anchor.expect("start anchor");
-        assert!(dimension.resolve_anchor(&anchor, &level).is_some());
+        let dimension = anchored(DimensionKind::LinearHorizontal, WallId(2));
 
-        let mut beyond = anchor;
-        beyond.param = 1.5;
-        assert!(!beyond.is_valid());
-        assert!(dimension.resolve_anchor(&beyond, &level).is_none());
+        let anchored_invalid = DimensionAnchor::anchored(WallId(2), 1.5, false);
+        assert!(!anchored_invalid.is_valid());
+        assert!(
+            dimension
+                .resolve_anchor(&anchored_invalid, &level)
+                .is_none()
+        );
 
-        beyond.param = f64::NAN;
-        assert!(dimension.resolve_anchor(&beyond, &level).is_none());
+        let nan_anchor = DimensionAnchor::anchored(WallId(2), f64::NAN, false);
+        assert!(dimension.resolve_anchor(&nan_anchor, &level).is_none());
 
         // A wall that is not on the level cannot resolve either, and the
         // dimension falls back to the point it stored.
-        let missing = DimensionAnchor::new(WallId(99), 0.5);
+        let missing = DimensionAnchor::anchored(WallId(99), 0.5, false);
         assert!(dimension.resolve_anchor(&missing, &level).is_none());
-        dimension.start_anchor = Some(missing);
+
+        let mut dimension_with_missing = anchored(DimensionKind::LinearHorizontal, WallId(2));
+        dimension_with_missing.start_anchor = Some(missing);
         assert_eq!(
-            dimension.effective_start(Some(&level)),
-            dimension.start,
+            dimension_with_missing.effective_start(Some(&level)),
+            dimension_with_missing.start,
             "a dangling anchor falls back instead of vanishing"
         );
     }
@@ -735,8 +791,8 @@ mod tests {
     fn an_anchored_dimension_that_collapses_is_invalid_at() {
         let level = level_with_wall(WallId(2));
         let mut dimension = dimension(DimensionKind::LinearHorizontal);
-        dimension.start_anchor = Some(DimensionAnchor::new(WallId(2), 0.5));
-        dimension.end_anchor = Some(DimensionAnchor::new(WallId(2), 0.5));
+        dimension.start_anchor = Some(DimensionAnchor::anchored(WallId(2), 0.5, false));
+        dimension.end_anchor = Some(DimensionAnchor::anchored(WallId(2), 0.5, false));
         assert!(dimension.is_valid(), "the stored points still measure");
         assert!(!dimension.is_valid_at(Some(&level)));
         assert!(dimension.dimension_line_at(Some(&level)).is_none());
@@ -803,5 +859,165 @@ mod tests {
         assert!((from.y - 120.0).abs() < 1e-9);
         assert!((to.x + 480.0).abs() < 1e-9);
         assert!((to.y - 360.0).abs() < 1e-9);
+    }
+
+    // T-100: DimensionAnchor Free variant tests
+
+    #[test]
+    fn free_anchor_returns_none_from_resolve_on() {
+        let level = level_with_wall(WallId(1));
+        let free = DimensionAnchor::Free;
+        assert!(free.resolve_on(&level).is_none());
+    }
+
+    #[test]
+    fn free_anchor_is_valid() {
+        let free = DimensionAnchor::Free;
+        assert!(free.is_valid());
+    }
+
+    #[test]
+    fn free_anchor_has_no_perpendicular_flag() {
+        let free = DimensionAnchor::Free;
+        assert!(!free.perpendicular());
+        assert!(free.param().is_none());
+    }
+
+    #[test]
+    fn free_anchor_round_trips_through_json() {
+        let free = DimensionAnchor::Free;
+        let json = serde_json::to_string(&free).expect("serialize");
+        let back: DimensionAnchor = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, free);
+    }
+
+    #[test]
+    fn anchored_anchor_resolves_correctly() {
+        let level = level_with_wall(WallId(1));
+        // Wall from (0,0) to (4000,0), so param 0.5 = (2000, 0)
+        let anchored = DimensionAnchor::anchored(WallId(1), 0.5, false);
+        assert!(anchored.is_valid());
+        let point = anchored.resolve_on(&level).expect("should resolve");
+        assert_eq!(point, Point2::new(2000.0, 0.0));
+    }
+
+    #[test]
+    fn anchored_anchor_with_perpendicular_flag() {
+        let level = level_with_wall(WallId(1));
+        let anchored = DimensionAnchor::anchored(WallId(1), 0.25, true);
+        assert!(anchored.perpendicular());
+        let point = anchored.resolve_on(&level).expect("should resolve");
+        assert_eq!(point, Point2::new(1000.0, 0.0));
+    }
+
+    #[test]
+    fn anchored_anchor_returns_none_for_missing_wall() {
+        let level = level_with_wall(WallId(1));
+        let anchored = DimensionAnchor::anchored(WallId(99), 0.5, false);
+        assert!(anchored.resolve_on(&level).is_none());
+    }
+
+    #[test]
+    fn dimension_with_free_anchor_effective_start_returns_stored_point() {
+        let mut dimension = dimension(DimensionKind::LinearHorizontal);
+        dimension.start = Point2::new(100.0, 200.0);
+        dimension.start_anchor = Some(DimensionAnchor::Free);
+        assert_eq!(
+            dimension.effective_start(Some(&level_with_wall(WallId(1)))),
+            dimension.start
+        );
+    }
+
+    #[test]
+    fn dimension_with_free_anchor_effective_end_returns_stored_point() {
+        let mut dimension = dimension(DimensionKind::LinearHorizontal);
+        dimension.end = Point2::new(3000.0, 400.0);
+        dimension.end_anchor = Some(DimensionAnchor::Free);
+        assert_eq!(
+            dimension.effective_end(Some(&level_with_wall(WallId(1)))),
+            dimension.end
+        );
+    }
+
+    #[test]
+    fn mixed_anchors_free_and_anchored() {
+        let level = level_with_wall(WallId(1));
+        let mut dimension = dimension(DimensionKind::LinearHorizontal);
+        dimension.start = Point2::new(0.0, 0.0);
+        dimension.end = Point2::new(3000.0, 0.0);
+        dimension.start_anchor = Some(DimensionAnchor::Free);
+        dimension.end_anchor = Some(DimensionAnchor::anchored(WallId(1), 0.75, false));
+
+        assert_eq!(dimension.effective_start(Some(&level)), dimension.start);
+        assert_eq!(
+            dimension.effective_end(Some(&level)),
+            Point2::new(3000.0, 0.0)
+        );
+    }
+
+    // T-104: Backward-compatible JSON load tests (AC-004, AC-005)
+
+    #[test]
+    fn a_dimension_without_anchor_fields_in_json_loads_with_none_anchors() {
+        // AC-005: v0.12.x fixture file behavior
+        // When anchor fields are missing, they should deserialize as None
+        let json = r#"{
+            "id": 1,
+            "kind": "LinearHorizontal",
+            "start": { "x": 0.0, "y": 0.0 },
+            "end": { "x": 3000.0, "y": 0.0 },
+            "offset": 500.0,
+            "extension_lines": true,
+            "witness_gap": 200.0,
+            "witness_overrun": 100.0,
+            "label_precision": 0
+        }"#;
+        let dimension: Dimension = serde_json::from_str(json).expect("dimension loads");
+        assert!(
+            dimension.start_anchor.is_none(),
+            "missing start_anchor should be None"
+        );
+        assert!(
+            dimension.end_anchor.is_none(),
+            "missing end_anchor should be None"
+        );
+        // AC-005: coordinates are preserved unchanged
+        assert_eq!(dimension.start, Point2::new(0.0, 0.0));
+        assert_eq!(dimension.end, Point2::new(3000.0, 0.0));
+    }
+
+    #[test]
+    fn anchored_dimension_round_trips_with_constraints_correctly() {
+        // AC-004: Save/load project with anchors + constraints → identical
+
+        let mut dimension = Dimension::new(
+            DimensionId(1),
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        );
+        dimension.start_anchor = Some(DimensionAnchor::anchored(WallId(2), 0.25, false));
+        dimension.end_anchor = Some(DimensionAnchor::anchored(WallId(2), 0.75, false));
+
+        // Serialize the dimension
+        let json = serde_json::to_string(&dimension).expect("serialize");
+
+        // Deserialize it back
+        let back: Dimension = serde_json::from_str(&json).expect("deserialize");
+
+        // Verify exact match
+        assert_eq!(
+            back, dimension,
+            "anchored dimension should round-trip exactly"
+        );
+        assert_eq!(
+            back.start_anchor,
+            Some(DimensionAnchor::anchored(WallId(2), 0.25, false))
+        );
+        assert_eq!(
+            back.end_anchor,
+            Some(DimensionAnchor::anchored(WallId(2), 0.75, false))
+        );
     }
 }

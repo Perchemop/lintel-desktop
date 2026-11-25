@@ -78,6 +78,34 @@ impl Project {
         id
     }
 
+    /// Return the highest entity ID in the project across all levels.
+    /// Used to ensure `next_id` stays ahead of any deserialized IDs.
+    pub fn highest_id(&self) -> u64 {
+        let mut highest = 0_u64;
+        for level in &self.levels {
+            highest = highest.max(level.id.value());
+            for wall in &level.walls {
+                highest = highest.max(wall.id.value());
+            }
+            for opening in &level.openings {
+                highest = highest.max(opening.id.value());
+            }
+            for dimension in &level.dimensions {
+                highest = highest.max(dimension.id.value());
+            }
+            for label in &level.labels {
+                highest = highest.max(label.id.value());
+            }
+            for block_def in &level.block_defs {
+                highest = highest.max(block_def.id.value().into());
+            }
+            for block_instance in &level.block_instances {
+                highest = highest.max(block_instance.id.value().into());
+            }
+        }
+        highest
+    }
+
     /// Bring a project written by an older build up to the current shape.
     ///
     /// Every level gains the default layer, and every entity that references a
@@ -706,5 +734,99 @@ mod tests {
             ));
         let error = project.validate().expect_err("zero offset");
         assert!(error.to_string().contains("non-positive offset"));
+    }
+
+    #[test]
+    fn validation_catches_a_circular_equal_length_constraint() {
+        use crate::constraint::Constraint;
+
+        let mut project = Project::new(UNTITLED, 1);
+
+        // Create three dimensions
+        let dim_a = DimensionId(project.allocate_id());
+        let dim_b = DimensionId(project.allocate_id());
+        let dim_c = DimensionId(project.allocate_id());
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .extend([
+                Dimension::new(
+                    dim_a,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(0.0, 0.0),
+                    Point2::new(1000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_b,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(2000.0, 0.0),
+                    Point2::new(3000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_c,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(4000.0, 0.0),
+                    Point2::new(5000.0, 0.0),
+                    500.0,
+                ),
+            ]);
+
+        // Create A -> B -> C -> A cycle
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .extend([
+                Constraint::EqualLength { a: dim_a, b: dim_b },
+                Constraint::EqualLength { a: dim_b, b: dim_c },
+                Constraint::EqualLength { a: dim_c, b: dim_a },
+            ]);
+
+        let error = project.validate().expect_err("circular constraint");
+        assert!(matches!(error, CoreError::CircularConstraint));
+    }
+
+    #[test]
+    fn validation_accepts_valid_constraints_with_equal_length() {
+        use crate::constraint::Constraint;
+
+        let mut project = Project::new(UNTITLED, 1);
+
+        // Create two dimensions with EqualLength constraint
+        let dim_a = DimensionId(project.allocate_id());
+        let dim_b = DimensionId(project.allocate_id());
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .extend([
+                Dimension::new(
+                    dim_a,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(0.0, 0.0),
+                    Point2::new(1000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_b,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(2000.0, 0.0),
+                    Point2::new(3000.0, 0.0),
+                    500.0,
+                ),
+            ]);
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+
+        assert!(project.validate().is_ok());
     }
 }

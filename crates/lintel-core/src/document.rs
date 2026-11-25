@@ -251,7 +251,7 @@ mod tests {
                 Point2::new(3000.0, 0.0),
                 500.0,
             );
-            dimension.start_anchor = Some(DimensionAnchor::new(wall_id, 0.25));
+            dimension.start_anchor = Some(DimensionAnchor::anchored(wall_id, 0.25, false));
             level.dimensions.push(dimension);
             level.constraints.push(Constraint::PerpendicularDistance {
                 dimension: dimension_id,

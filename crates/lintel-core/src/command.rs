@@ -579,6 +579,9 @@ fn move_wall(
     let wall = level.wall_mut(id).ok_or(CoreError::WallNotFound(id))?;
     wall.start = start;
     wall.end = end;
+    // Auto-solve constraints after wall moves
+    let constraints = level.constraints.clone();
+    let _moved = crate::constraint::apply_constraints_to_anchors(level, &constraints);
     Ok(Applied::default())
 }
 
@@ -591,6 +594,25 @@ fn delete_wall(project: &mut Project, id: WallId) -> Result<Applied, CoreError> 
     }
     // A hosted opening cannot outlive its wall.
     level.openings.retain(|o| o.host != id);
+    // Cascade delete constraints referencing this wall
+    let constraints_before = level.constraints.len();
+    level.constraints.retain(
+        |c| !matches!(c, Constraint::PerpendicularDistance { wall_id, .. } if *wall_id == id),
+    );
+    // Clear anchors on dimensions that referenced this wall
+    for dimension in &mut level.dimensions {
+        if let Some(ref mut anchor) = dimension.start_anchor {
+            if anchor.wall_id() == Some(id) {
+                *anchor = DimensionAnchor::Free;
+            }
+        }
+        if let Some(ref mut anchor) = dimension.end_anchor {
+            if anchor.wall_id() == Some(id) {
+                *anchor = DimensionAnchor::Free;
+            }
+        }
+    }
+    let _constraints_removed = constraints_before - level.constraints.len();
     Ok(Applied::default())
 }
 
@@ -1737,14 +1759,14 @@ mod tests {
             &mut project,
             Command::SetDimensionStartAnchor {
                 id,
-                anchor: Some(DimensionAnchor::new(wall, 0.25)),
+                anchor: Some(DimensionAnchor::anchored(wall, 0.25, false)),
             },
         )
         .expect("anchor the start");
         let anchor = dimension_anchor(&project, id).expect("start anchor");
-        assert_eq!(anchor.wall_id, wall);
-        assert_eq!(anchor.param, 0.25);
-        assert!(!anchor.perpendicular);
+        assert_eq!(anchor.wall_id().unwrap(), wall);
+        assert_eq!(anchor.param().unwrap(), 0.25);
+        assert!(!anchor.perpendicular());
         assert!(
             project
                 .active_level()
@@ -1765,6 +1787,163 @@ mod tests {
     }
 
     #[test]
+    fn a_dimension_start_anchor_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let wall = document
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                1_760_000_010,
+            )
+            .expect("wall")
+            .wall
+            .expect("wall id");
+        let id = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 500.0),
+                    end: Point2::new(3000.0, 500.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("place dimension")
+            .dimension
+            .expect("dim id");
+
+        // Apply anchor
+        document
+            .apply(
+                Command::SetDimensionStartAnchor {
+                    id,
+                    anchor: Some(DimensionAnchor::anchored(wall, 0.3, false)),
+                },
+                1_760_000_030,
+            )
+            .expect("anchor start");
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.start_anchor.is_some());
+        assert_eq!(dim.start_anchor.unwrap().param().unwrap(), 0.3);
+
+        // Undo: anchor cleared
+        assert!(document.undo(1_760_000_040));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.start_anchor.is_none(), "undo clears the start anchor");
+
+        // Redo: anchor restored
+        assert!(document.redo(1_760_000_050));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.start_anchor.is_some());
+        assert_eq!(
+            dim.start_anchor.unwrap().param().unwrap(),
+            0.3,
+            "redo restores the start anchor"
+        );
+    }
+
+    #[test]
+    fn a_dimension_end_anchor_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let wall = document
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                1_760_000_010,
+            )
+            .expect("wall")
+            .wall
+            .expect("wall id");
+        let id = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 500.0),
+                    end: Point2::new(3000.0, 500.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("place dimension")
+            .dimension
+            .expect("dim id");
+
+        // Apply anchor
+        document
+            .apply(
+                Command::SetDimensionEndAnchor {
+                    id,
+                    anchor: Some(DimensionAnchor::anchored(wall, 0.7, true)),
+                },
+                1_760_000_030,
+            )
+            .expect("anchor end");
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.end_anchor.is_some());
+        let anchor = dim.end_anchor.unwrap();
+        assert_eq!(anchor.param().unwrap(), 0.7);
+        assert!(anchor.perpendicular());
+
+        // Undo: anchor cleared
+        assert!(document.undo(1_760_000_040));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.end_anchor.is_none(), "undo clears the end anchor");
+
+        // Redo: anchor restored
+        assert!(document.redo(1_760_000_050));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert!(dim.end_anchor.is_some());
+        let anchor = dim.end_anchor.unwrap();
+        assert_eq!(anchor.param().unwrap(), 0.7);
+        assert!(
+            anchor.perpendicular(),
+            "redo restores the perpendicular flag"
+        );
+    }
+
+    #[test]
     fn an_anchor_parameter_must_lie_on_its_wall() {
         let mut project = empty_project();
         let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
@@ -1773,7 +1952,7 @@ mod tests {
             &mut project,
             Command::SetDimensionEndAnchor {
                 id,
-                anchor: Some(DimensionAnchor::new(wall, 1.5)),
+                anchor: Some(DimensionAnchor::anchored(wall, 1.5, false)),
             },
         )
         .expect_err("past the end of the wall");
@@ -1783,7 +1962,7 @@ mod tests {
             &mut project,
             Command::SetDimensionEndAnchor {
                 id,
-                anchor: Some(DimensionAnchor::new(wall, f64::NAN)),
+                anchor: Some(DimensionAnchor::anchored(wall, f64::NAN, false)),
             },
         )
         .expect_err("not a number");
@@ -1822,6 +2001,76 @@ mod tests {
             .expect("dimension");
         assert_eq!(dimension.witness_gap, 150.0);
         assert_eq!(dimension.witness_overrun, 75.0);
+    }
+
+    #[test]
+    fn witness_margins_can_be_undone_and_redone() {
+        use crate::document::Document;
+
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let id = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 500.0),
+                    end: Point2::new(3000.0, 500.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("place dimension")
+            .dimension
+            .expect("dim id");
+
+        // Apply witness margin settings
+        document
+            .apply(
+                Command::SetDimensionWitnessGap { id, gap: 100.0 },
+                1_760_000_030,
+            )
+            .expect("set gap");
+        document
+            .apply(
+                Command::SetDimensionWitnessOverrun { id, overrun: 50.0 },
+                1_760_000_040,
+            )
+            .expect("set overrun");
+
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert_eq!(dim.witness_gap, 100.0);
+        assert_eq!(dim.witness_overrun, 50.0);
+
+        // Undo both changes
+        assert!(document.undo(1_760_000_050));
+        assert!(document.undo(1_760_000_060));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert_eq!(
+            dim.witness_gap, DEFAULT_WITNESS_GAP,
+            "undo restores default gap"
+        );
+        assert_eq!(dim.witness_overrun, 100.0, "undo restores default overrun");
+
+        // Redo both changes
+        assert!(document.redo(1_760_000_070));
+        assert!(document.redo(1_760_000_080));
+        let dim = document
+            .project()
+            .active_level()
+            .expect("level")
+            .dimension(id)
+            .expect("dimension");
+        assert_eq!(dim.witness_gap, 100.0, "redo restores the gap");
+        assert_eq!(dim.witness_overrun, 50.0, "redo restores the overrun");
     }
 
     #[test]
@@ -1912,7 +2161,7 @@ mod tests {
             &mut project,
             Command::SetDimensionStartAnchor {
                 id: missing,
-                anchor: Some(DimensionAnchor::new(wall, 0.5)),
+                anchor: Some(DimensionAnchor::anchored(wall, 0.5, false)),
             },
         )
         .expect_err("no such dimension");
@@ -1947,7 +2196,7 @@ mod tests {
         let commands = [
             Command::SetDimensionStartAnchor {
                 id: DimensionId(3),
-                anchor: Some(DimensionAnchor::new(WallId(7), 0.5)),
+                anchor: Some(DimensionAnchor::anchored(WallId(7), 0.5, false)),
             },
             Command::SetDimensionEndAnchor {
                 id: DimensionId(3),
@@ -2574,7 +2823,7 @@ mod tests {
     }
 
     #[test]
-    fn an_added_constraint_can_be_undone() {
+    fn an_added_constraint_can_be_undone_and_redone() {
         use crate::constraint::Constraint;
         use crate::document::Document;
         let mut document = Document::new("Test plan", 1_760_000_000);
@@ -2634,6 +2883,257 @@ mod tests {
                 .expect("level")
                 .constraints
                 .is_empty()
+        );
+        assert!(document.redo(1_760_000_050));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            1,
+            "redo restores the constraint"
+        );
+    }
+
+    #[test]
+    fn an_added_constraint_can_be_redone() {
+        use crate::constraint::Constraint;
+        use crate::document::Document;
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let wall = document
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                1_760_000_010,
+            )
+            .expect("wall")
+            .wall
+            .expect("wall id");
+        let dim1 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(3000.0, 0.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("dimension")
+            .dimension
+            .expect("dim id");
+        // Add a second dimension for the second constraint
+        let dim2 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 1000.0),
+                    end: Point2::new(3000.0, 1000.0),
+                    offset: 500.0,
+                },
+                1_760_000_021,
+            )
+            .expect("second dimension")
+            .dimension
+            .expect("dim2 id");
+
+        // Add constraints on different dimensions (each dimension can only be pinned once)
+        document
+            .apply(
+                Command::AddConstraint {
+                    constraint: Constraint::PerpendicularDistance {
+                        dimension: dim1,
+                        wall_id: wall,
+                        param: 0.3,
+                    },
+                },
+                1_760_000_030,
+            )
+            .expect("add first constraint");
+        document
+            .apply(
+                Command::AddConstraint {
+                    constraint: Constraint::PerpendicularDistance {
+                        dimension: dim2,
+                        wall_id: wall,
+                        param: 0.7,
+                    },
+                },
+                1_760_000_040,
+            )
+            .expect("add second constraint");
+
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            2
+        );
+
+        // Undo both
+        assert!(document.undo(1_760_000_050));
+        assert!(document.undo(1_760_000_060));
+        assert!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .is_empty()
+        );
+
+        // Redo both - order matters
+        assert!(document.redo(1_760_000_070));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            1
+        );
+        assert!(document.redo(1_760_000_080));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            2
+        );
+    }
+
+    #[test]
+    fn remove_a_constraint_can_be_undone_and_redone() {
+        use crate::constraint::Constraint;
+        use crate::document::Document;
+        let mut document = Document::new("Test plan", 1_760_000_000);
+        let wall = document
+            .apply(
+                Command::AddWall {
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(4000.0, 0.0),
+                    thickness: 200.0,
+                    height: 2800.0,
+                },
+                1_760_000_010,
+            )
+            .expect("wall")
+            .wall
+            .expect("wall id");
+        // Add two dimensions, each with its own constraint
+        let dim1 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 0.0),
+                    end: Point2::new(3000.0, 0.0),
+                    offset: 500.0,
+                },
+                1_760_000_020,
+            )
+            .expect("dimension")
+            .dimension
+            .expect("dim id");
+        let dim2 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 1000.0),
+                    end: Point2::new(3000.0, 1000.0),
+                    offset: 500.0,
+                },
+                1_760_000_021,
+            )
+            .expect("second dimension")
+            .dimension
+            .expect("dim2 id");
+
+        // Add constraints on different dimensions
+        document
+            .apply(
+                Command::AddConstraint {
+                    constraint: Constraint::PerpendicularDistance {
+                        dimension: dim1,
+                        wall_id: wall,
+                        param: 0.25,
+                    },
+                },
+                1_760_000_030,
+            )
+            .expect("add first constraint");
+        document
+            .apply(
+                Command::AddConstraint {
+                    constraint: Constraint::PerpendicularDistance {
+                        dimension: dim2,
+                        wall_id: wall,
+                        param: 0.75,
+                    },
+                },
+                1_760_000_040,
+            )
+            .expect("add second constraint");
+
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            2
+        );
+
+        // Remove first constraint (index 0)
+        assert!(
+            document
+                .apply(Command::RemoveConstraint { index: 0 }, 1_760_000_050)
+                .is_ok()
+        );
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            1
+        );
+
+        // Undo: constraint should be back at index 0
+        assert!(document.undo(1_760_000_060));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            2
+        );
+
+        // Redo: constraint removed again
+        assert!(document.redo(1_760_000_070));
+        assert_eq!(
+            document
+                .project()
+                .active_level()
+                .expect("level")
+                .constraints
+                .len(),
+            1
         );
     }
 
@@ -3481,5 +3981,258 @@ mod tests {
             let back: Command = serde_json::from_str(&json).expect("deserialize");
             assert_eq!(back, command);
         }
+    }
+
+    // T-101: PerpendicularDistance Constraint Tests
+
+    #[test]
+    fn wall_move_updates_anchored_dimension_start() {
+        // AC-001: Given a wall from (0,0) to (3000,0) and a dimension anchored at 0.5
+        // When the wall is moved to (1000,0)-(4000,0)
+        // Then the dimension's start point moves to (2000,0) [0.5 along new wall]
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (3000.0, 0.0));
+        let dim_id = place_horizontal(&mut project);
+
+        // Anchor the dimension's start to the wall at param 0.5
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id: dim_id,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.5, false)),
+            },
+        )
+        .expect("anchor start");
+
+        // Record the initial position
+        let level = project.active_level().expect("level");
+        let dim_before = level.dimension(dim_id).expect("dimension");
+        assert_eq!(
+            dim_before.effective_start(Some(level)),
+            Point2::new(1500.0, 0.0)
+        );
+
+        // Move the wall - this should auto-solve constraints
+        apply_command(
+            &mut project,
+            Command::MoveWall {
+                id: wall,
+                start: Point2::new(1000.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+            },
+        )
+        .expect("move wall");
+
+        // Verify the dimension's start point moved to 0.5 along the new wall
+        let level = project.active_level().expect("level");
+        let dim_after = level.dimension(dim_id).expect("dimension");
+        assert_eq!(
+            dim_after.effective_start(Some(level)),
+            Point2::new(2500.0, 0.0),
+            "dimension start should move to 0.5 along new wall position"
+        );
+    }
+
+    #[test]
+    fn perpendicular_distance_constraint_round_trips_through_json() {
+        use crate::constraint::Constraint;
+
+        // Test with a valid constraint
+        let constraint = Constraint::PerpendicularDistance {
+            dimension: DimensionId(3),
+            wall_id: WallId(2),
+            param: 0.75,
+        };
+
+        let json = serde_json::to_string(&constraint).expect("serialize");
+        let back: Constraint = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back, constraint, "constraint should round-trip");
+
+        // Test edge cases
+        let constraint_min = Constraint::PerpendicularDistance {
+            dimension: DimensionId(1),
+            wall_id: WallId(1),
+            param: 0.0,
+        };
+        let json = serde_json::to_string(&constraint_min).expect("serialize param 0");
+        let back: Constraint = serde_json::from_str(&json).expect("deserialize param 0");
+        assert_eq!(back, constraint_min, "param 0 should round-trip");
+
+        let constraint_max = Constraint::PerpendicularDistance {
+            dimension: DimensionId(1),
+            wall_id: WallId(1),
+            param: 1.0,
+        };
+        let json = serde_json::to_string(&constraint_max).expect("serialize param 1");
+        let back: Constraint = serde_json::from_str(&json).expect("deserialize param 1");
+        assert_eq!(back, constraint_max, "param 1 should round-trip");
+    }
+
+    #[test]
+    fn delete_wall_cascades_constraint_and_anchor_removal() {
+        use crate::constraint::Constraint;
+
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+        let dim_id = place_horizontal(&mut project);
+
+        // Add a constraint on this wall
+        apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim_id,
+                    wall_id: wall,
+                    param: 0.5,
+                },
+            },
+        )
+        .expect("add constraint");
+
+        // Anchor the dimension to the wall
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id: dim_id,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.25, false)),
+            },
+        )
+        .expect("anchor dimension");
+
+        // Verify pre-condition: wall, constraint, and anchor exist
+        let level = project.active_level().expect("level");
+        assert!(level.wall(wall).is_some(), "wall should exist");
+        assert_eq!(level.constraints.len(), 1, "constraint should exist");
+        let dim = level.dimension(dim_id).expect("dimension");
+        assert!(
+            dim.start_anchor.is_some(),
+            "dimension should have start anchor"
+        );
+        assert_eq!(
+            dim.start_anchor.unwrap().wall_id(),
+            Some(wall),
+            "anchor should be on this wall"
+        );
+
+        // Delete the wall
+        apply_command(&mut project, Command::DeleteWall { id: wall }).expect("delete wall");
+
+        // Verify cascade delete: wall gone, constraint gone, anchor cleared
+        let level = project.active_level().expect("level");
+        assert!(level.wall(wall).is_none(), "wall should be deleted");
+        assert!(
+            level.constraints.is_empty(),
+            "constraint should be cascade-deleted"
+        );
+        let dim = level.dimension(dim_id).expect("dimension");
+        // Anchor should be cleared (reverted to Free)
+        assert!(
+            dim.start_anchor.is_none() || dim.start_anchor.unwrap().wall_id().is_none(),
+            "anchor should be cleared when wall is deleted"
+        );
+    }
+
+    // AC-011 extension: multiple dimensions with anchors on same wall
+    #[test]
+    fn deleting_wall_clears_anchors_on_all_affected_dimensions() {
+        use crate::constraint::Constraint;
+
+        let mut project = empty_project();
+        let wall = add(&mut project, (0.0, 0.0), (4000.0, 0.0));
+
+        // Place two dimensions
+        let dim_id1 = place_horizontal(&mut project);
+        let dim_id2 = place_horizontal(&mut project);
+
+        // Anchor both dimensions to the same wall
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id: dim_id1,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.25, false)),
+            },
+        )
+        .expect("anchor dim1 start");
+        apply_command(
+            &mut project,
+            Command::SetDimensionEndAnchor {
+                id: dim_id1,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.75, false)),
+            },
+        )
+        .expect("anchor dim1 end");
+
+        apply_command(
+            &mut project,
+            Command::SetDimensionStartAnchor {
+                id: dim_id2,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.5, false)),
+            },
+        )
+        .expect("anchor dim2 start");
+        apply_command(
+            &mut project,
+            Command::SetDimensionEndAnchor {
+                id: dim_id2,
+                anchor: Some(DimensionAnchor::anchored(wall, 0.6, false)),
+            },
+        )
+        .expect("anchor dim2 end");
+
+        // Add constraints on both dimensions referencing the wall
+        apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim_id1,
+                    wall_id: wall,
+                    param: 0.3,
+                },
+            },
+        )
+        .expect("add constraint to dim1");
+        apply_command(
+            &mut project,
+            Command::AddConstraint {
+                constraint: Constraint::PerpendicularDistance {
+                    dimension: dim_id2,
+                    wall_id: wall,
+                    param: 0.4,
+                },
+            },
+        )
+        .expect("add constraint to dim2");
+
+        // Delete the wall
+        apply_command(&mut project, Command::DeleteWall { id: wall }).expect("delete wall");
+
+        // Verify all anchors on both dimensions are cleared
+        let level = project.active_level().expect("level");
+        assert!(level.wall(wall).is_none(), "wall should be deleted");
+        assert_eq!(
+            level.constraints.len(),
+            0,
+            "all constraints should be removed"
+        );
+
+        let dim1 = level.dimension(dim_id1).expect("dim1");
+        assert!(
+            dim1.start_anchor.is_none() || dim1.start_anchor.unwrap().wall_id().is_none(),
+            "dim1 start anchor should be cleared"
+        );
+        assert!(
+            dim1.end_anchor.is_none() || dim1.end_anchor.unwrap().wall_id().is_none(),
+            "dim1 end anchor should be cleared"
+        );
+
+        let dim2 = level.dimension(dim_id2).expect("dim2");
+        assert!(
+            dim2.start_anchor.is_none() || dim2.start_anchor.unwrap().wall_id().is_none(),
+            "dim2 start anchor should be cleared"
+        );
+        assert!(
+            dim2.end_anchor.is_none() || dim2.end_anchor.unwrap().wall_id().is_none(),
+            "dim2 end anchor should be cleared"
+        );
     }
 }

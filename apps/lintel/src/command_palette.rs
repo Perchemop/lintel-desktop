@@ -812,7 +812,23 @@ fn apply_action(app: &mut LintelApp, action: PaletteAction, now: i64) {
                 let _ = app.doc.apply(Command::RemoveConstraint { index }, now);
             }
         }
-        PaletteAction::AddPerpendicularConstraint => {}
+        PaletteAction::AddPerpendicularConstraint => {
+            let level = app.doc.project().active_level();
+            if let Some(level) = level {
+                let wall = level.walls.first().map(|w| w.id);
+                let dimension = level.dimensions.first().map(|d| d.id);
+                if let (Some(wall_id), Some(dimension_id)) = (wall, dimension) {
+                    let constraint = lintel_core::Constraint::PerpendicularDistance {
+                        dimension: dimension_id,
+                        wall_id,
+                        param: 0.5,
+                    };
+                    let _ = app
+                        .doc
+                        .apply(Command::AddConstraint { constraint }, now);
+                }
+            }
+        }
         PaletteAction::NewPlan => app.new_plan(),
         PaletteAction::OpenPlan => app.open_plan(now),
         PaletteAction::SavePlan => app.save_plan(now),
