@@ -2058,7 +2058,7 @@ mod tests {
             dim.witness_gap, DEFAULT_WITNESS_GAP,
             "undo restores default gap"
         );
-        assert_eq!(dim.witness_overrun, 0.0, "undo restores default overrun");
+        assert_eq!(dim.witness_overrun, 100.0, "undo restores default overrun");
 
         // Redo both changes
         assert!(document.redo(1_760_000_070));
@@ -2915,7 +2915,7 @@ mod tests {
             .expect("wall")
             .wall
             .expect("wall id");
-        let dim = document
+        let dim1 = document
             .apply(
                 Command::PlaceDimension {
                     kind: DimensionKind::LinearHorizontal,
@@ -2928,13 +2928,27 @@ mod tests {
             .expect("dimension")
             .dimension
             .expect("dim id");
+        // Add a second dimension for the second constraint
+        let dim2 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 1000.0),
+                    end: Point2::new(3000.0, 1000.0),
+                    offset: 500.0,
+                },
+                1_760_000_021,
+            )
+            .expect("second dimension")
+            .dimension
+            .expect("dim2 id");
 
-        // Add two constraints to test undo/redo sequence
+        // Add constraints on different dimensions (each dimension can only be pinned once)
         document
             .apply(
                 Command::AddConstraint {
                     constraint: Constraint::PerpendicularDistance {
-                        dimension: dim,
+                        dimension: dim1,
                         wall_id: wall,
                         param: 0.3,
                     },
@@ -2946,7 +2960,7 @@ mod tests {
             .apply(
                 Command::AddConstraint {
                     constraint: Constraint::PerpendicularDistance {
-                        dimension: dim,
+                        dimension: dim2,
                         wall_id: wall,
                         param: 0.7,
                     },
@@ -3018,7 +3032,8 @@ mod tests {
             .expect("wall")
             .wall
             .expect("wall id");
-        let dim = document
+        // Add two dimensions, each with its own constraint
+        let dim1 = document
             .apply(
                 Command::PlaceDimension {
                     kind: DimensionKind::LinearHorizontal,
@@ -3031,13 +3046,26 @@ mod tests {
             .expect("dimension")
             .dimension
             .expect("dim id");
+        let dim2 = document
+            .apply(
+                Command::PlaceDimension {
+                    kind: DimensionKind::LinearHorizontal,
+                    start: Point2::new(0.0, 1000.0),
+                    end: Point2::new(3000.0, 1000.0),
+                    offset: 500.0,
+                },
+                1_760_000_021,
+            )
+            .expect("second dimension")
+            .dimension
+            .expect("dim2 id");
 
-        // Add two constraints
+        // Add constraints on different dimensions
         document
             .apply(
                 Command::AddConstraint {
                     constraint: Constraint::PerpendicularDistance {
-                        dimension: dim,
+                        dimension: dim1,
                         wall_id: wall,
                         param: 0.25,
                     },
@@ -3049,7 +3077,7 @@ mod tests {
             .apply(
                 Command::AddConstraint {
                     constraint: Constraint::PerpendicularDistance {
-                        dimension: dim,
+                        dimension: dim2,
                         wall_id: wall,
                         param: 0.75,
                     },

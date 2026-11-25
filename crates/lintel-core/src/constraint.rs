@@ -14,11 +14,13 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::dimension::DimensionAnchor;
+use crate::dim::{Dimension, DimensionKind};
+use crate::dimension::{DimensionAnchor};
 use crate::error::CoreError;
 use crate::geom::Point2;
-use crate::ids::{DimensionId, WallId};
+use crate::ids::{DimensionId, LevelId, WallId};
 use crate::level::Level;
+use crate::wall::Wall;
 
 use std::collections::{HashMap, HashSet};
 
@@ -332,7 +334,7 @@ mod tests {
     use super::*;
     use crate::command::{Command, apply_command};
     use crate::dimension::{Dimension, DimensionKind};
-    use crate::ids::LevelId;
+    use crate::ids::{DimensionId, LevelId, WallId};
     use crate::wall::Wall;
 
     const WALL: WallId = WallId(2);
@@ -442,7 +444,7 @@ mod tests {
         let constraint = perpendicular(0.75);
         level.constraints.push(constraint.clone());
 
-        let constraints = level.constraints.clone();
+        let constraints: Vec<_> = level.constraints.clone();
         let moved = apply_constraints_to_anchors(&mut level, &constraints);
 
         assert_eq!(moved, 1);
@@ -540,10 +542,20 @@ mod tests {
         use crate::error::CoreError;
 
         // Create a level with exactly 500 constraints (at the limit)
+        // Each constraint pins a different dimension to avoid the "pinned by more than one constraint" rule
         let mut level = level_with_wall();
         for i in 0..500 {
+            // Create a unique dimension for each constraint
+            let dim_id = DimensionId(100 + i);
+            level.dimensions.push(Dimension::new(
+                dim_id,
+                DimensionKind::LinearHorizontal,
+                Point2::new(0.0, (i * 100) as f64),
+                Point2::new(3000.0, (i * 100) as f64),
+                500.0,
+            ));
             let constraint = Constraint::PerpendicularDistance {
-                dimension: DIMENSION,
+                dimension: dim_id,
                 wall_id: WALL,
                 param: (i % 100) as f64 / 100.0,
             };
@@ -838,10 +850,7 @@ mod tests {
         let result = validate_constraint(&level, &constraint);
         assert!(result.is_err());
         assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("cannot be constrained equal to itself")
+            result.unwrap_err().to_string().contains("cannot be constrained equal to itself")
         );
     }
 
@@ -940,19 +949,22 @@ mod tests {
                 200.0,
                 2800.0,
             ));
-            level.dimensions.push(Dimension::new(
-                DimensionId(3),
-                DimensionKind::LinearHorizontal,
-                Point2::new(0.0, 0.0),
-                Point2::new(3000.0, 0.0),
-                500.0,
-            ));
 
             for i in 0..500 {
+                let dim_id = DimensionId(100 + i);
+                let y_pos = (i * 100) as f64;
+                // Create a unique dimension for each constraint
+                level.dimensions.push(Dimension::new(
+                    dim_id,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(0.0, y_pos),
+                    Point2::new(3000.0, y_pos),
+                    500.0,
+                ));
                 let param = (i % 100) as f64 / 100.0;
                 level.constraints.push(Constraint::PerpendicularDistance {
-                    dimension: DIMENSION,
-                    wall_id: WALL,
+                    dimension: dim_id,
+                    wall_id: WallId(2),
                     param,
                 });
             }
@@ -976,19 +988,73 @@ mod tests {
     // AC-006, AC-011: Wall deletion cascade
     #[test]
     fn wall_deletion_cascades_constraint_and_anchor_clear() {
-        let mut level = level_with_wall();
-        level.dimensions[0].start_anchor = Some(DimensionAnchor::anchored(WALL, 0.25, true));
-        level.constraints.push(perpendicular(0.5));
+        use crate::id::LevelId;
+        use crate::project::Project;
 
-        assert!(level.wall(WALL).is_some());
-        assert_eq!(level.constraints.len(), 1);
+        let mut project = Project::new("Test plan", 1_760_000_000);
 
-        level.walls.retain(|w| w.id != WALL);
-        assert!(level.wall(WALL).is_none());
-        assert_eq!(level.constraints.len(), 0);
+        // Create a wall
+        let wall_id = WallId(2);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Create a dimension with anchor to the wall
+        let dim_id = DimensionId(3);
+        let mut dimension = Dimension::new(
+            dim_id,
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        );
+        dimension.start_anchor = Some(DimensionAnchor::anchored(wall_id, 0.25, true));
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(dimension);
+
+        // Add a constraint on the same wall
+        project.active_level_mut().expect("level").constraints.push(
+            Constraint::PerpendicularDistance {
+                dimension: dim_id,
+                wall_id,
+                param: 0.5,
+            },
+        );
+
+        assert!(project.active_level().expect("level").wall(wall_id).is_some());
+        assert_eq!(project.active_level().expect("level").constraints.len(), 1);
+
+        // Delete the wall via the command
+        let result = apply_command(
+            &mut project,
+            Command::DeleteWall { id: wall_id },
+        );
+
+        assert!(result.is_ok());
+        assert!(project.active_level().expect("level").wall(wall_id).is_none());
+        assert_eq!(project.active_level().expect("level").constraints.len(), 0);
         assert!(
-            level.dimensions[0].start_anchor.is_none()
-                || level.dimensions[0]
+            project
+                .active_level()
+                .expect("level")
+                .dimensions[0]
+                .start_anchor
+                .is_none()
+                || project
+                    .active_level()
+                    .expect("level")
+                    .dimensions[0]
                     .start_anchor
                     .unwrap()
                     .wall_id()
@@ -1012,10 +1078,7 @@ mod tests {
         dimension.end_anchor = Some(DimensionAnchor::anchored(WALL, 0.5, false));
 
         assert!(dimension.is_valid(), "stored points are valid");
-        assert!(
-            !dimension.is_valid_at(Some(&level)),
-            "resolved points are zero-length at level"
-        );
+        assert!(!dimension.is_valid_at(Some(&level)));
         assert!(dimension.dimension_line_at(Some(&level)).is_none());
     }
 }

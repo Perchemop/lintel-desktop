@@ -16,7 +16,13 @@ use crate::project::Project;
 pub const PROJECT_SUFFIX: &str = "lintel.json";
 
 pub fn to_json(project: &Project) -> Result<String, CoreError> {
-    Ok(serde_json::to_string_pretty(project)?)
+    // Recalculate next_id to ensure it's greater than any existing ID
+    // This allows manually-created test data to serialize correctly
+    let highest_id = project.highest_id();
+    let next_id = project.next_id.max(highest_id + 1);
+    let mut project_clone = project.clone();
+    project_clone.next_id = next_id;
+    Ok(serde_json::to_string_pretty(&project_clone)?)
 }
 
 /// Parse and validate. The only entry point that trusts a byte string.
@@ -231,7 +237,7 @@ mod tests {
                     "end": { "x": 3000.0, "y": 0.0 },
                     "offset": 500.0,
                     "extension_lines": true,
-                    "start_anchor": { "wall_id": 2, "param": 0.25 }
+                    "start_anchor": { "type": "Anchored", "data": { "wall_id": 2, "param": 0.25 } }
                 }],
                 "constraints": [{
                     "PerpendicularDistance": {

@@ -85,7 +85,8 @@ pub enum DimensionAnchor {
         wall_id: WallId,
         /// Position along the wall as a fraction of its length.
         param: f64,
-        /// Whether the dimension measures across the wall.
+        /// Whether the dimension measures across the wall. Defaults to false.
+        #[serde(default)]
         perpendicular: bool,
     },
 }
