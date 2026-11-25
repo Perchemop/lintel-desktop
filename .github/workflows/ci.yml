@@ -89,8 +89,10 @@ jobs:
       # (buttons, forms, layout) headlessly and upload them for the PR
       # description. The PNGs are artefacts, never committed (no pixel
       # baselines — the AccessKit assertions above are the gate).
+      # Run sequentially (--test-threads=1) to avoid wgpu context conflicts
+      # between parallel tests; RUST_BACKTRACE for SIGSEGV debugging (T-200).
       - name: Render design-system evidence
-        run: LINTEL_GENERATE_EVIDENCE=1 cargo test -p lintel --bin lintel evidence_ -- --nocapture
+        run: LINTEL_GENERATE_EVIDENCE=1 RUST_BACKTRACE=1 cargo test -p lintel --bin lintel evidence_ -- --nocapture --test-threads=1
         env:
           CI: "true"
           DISPLAY: ":99"
