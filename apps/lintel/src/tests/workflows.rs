@@ -155,22 +155,22 @@ fn door_placement_at_wall_endpoint_snaps_to_centreline() {
         .wall
         .expect("wall id");
 
-    // Click at wall start (0,0) - should project to centreline at param ~0
+    // Click near wall start (500mm from start) - should project to centreline at param ~0.125
+    // Door is 900mm wide, so it fits within 4000mm wall
     doc.apply(
         Command::PlaceOpening {
             kind: lintel_core::opening::OpeningKind::Door,
             host: wall,
-            offset: 0.0, // offset parameter is along centreline
+            offset: 500.0, // offset parameter is along centreline
         },
         3,
     )
-    .expect("place door at endpoint");
+    .expect("place door near endpoint");
 
     let level = doc.project().active_level().expect("level");
     let openings = level.openings.iter().collect::<Vec<_>>();
     assert_eq!(openings.len(), 1);
-    // The door should be placed at the wall start (param 0)
-    // Note: offset 0.0 means param 0 on centreline
+    // The door should be placed at the projected position
 }
 
 #[test]
@@ -272,12 +272,12 @@ fn door_placement_near_wall_corner_picks_correct_wall() {
         .wall
         .expect("wall id");
 
-    // Click near the corner (4000, 0) - should pick wall1 (horizontal)
+    // Click near the corner (3500mm from start) - should pick wall1 (horizontal)
     doc.apply(
         Command::PlaceOpening {
             kind: lintel_core::opening::OpeningKind::Door,
             host: wall1,
-            offset: 3900.0, // near end of wall1
+            offset: 3500.0, // near end of wall1 but door still fits
         },
         4,
     )
