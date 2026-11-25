@@ -1032,13 +1032,15 @@ mod tests {
             .push(dimension);
 
         // Add a constraint on the same wall
-        project.active_level_mut().expect("level").constraints.push(
-            Constraint::PerpendicularDistance {
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
                 dimension: dim_id,
                 wall_id,
                 param: 0.5,
-            },
-        );
+            });
 
         assert!(
             project
@@ -1120,8 +1122,12 @@ mod tests {
         ));
 
         // Create mutual EqualLength constraints (A ↔ B)
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_a });
 
         // Should not raise circular reference error
         let constraints: Vec<_> = level.constraints.clone();
@@ -1155,8 +1161,12 @@ mod tests {
             ));
 
             // Mutual EqualLength
-            level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-            level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+            level
+                .constraints
+                .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+            level
+                .constraints
+                .push(Constraint::EqualLength { a: dim_b, b: dim_a });
         }
 
         let constraints: Vec<_> = level.constraints.clone();
@@ -1183,8 +1193,12 @@ mod tests {
         }
 
         // A ↔ B mutual EqualLength
-        level.constraints.push(Constraint::EqualLength { a: dim_a, b: dim_b });
-        level.constraints.push(Constraint::EqualLength { a: dim_b, b: dim_a });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+        level
+            .constraints
+            .push(Constraint::EqualLength { a: dim_b, b: dim_a });
 
         // PerpendicularDistance on C
         level.constraints.push(Constraint::PerpendicularDistance {
