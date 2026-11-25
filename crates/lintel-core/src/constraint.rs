@@ -848,7 +848,10 @@ mod tests {
         let result = validate_constraint(&level, &constraint);
         assert!(result.is_err());
         assert!(
-            result.unwrap_err().to_string().contains("cannot be constrained equal to itself")
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("cannot be constrained equal to itself")
         );
     }
 
@@ -1030,29 +1033,38 @@ mod tests {
             },
         );
 
-        assert!(project.active_level().expect("level").wall(wall_id).is_some());
-        assert_eq!(project.active_level().expect("level").constraints.len(), 1);
-
-        // Delete the wall via the command
-        let result = apply_command(
-            &mut project,
-            Command::DeleteWall { id: wall_id },
-        );
-
-        assert!(result.is_ok());
-        assert!(project.active_level().expect("level").wall(wall_id).is_none());
-        assert_eq!(project.active_level().expect("level").constraints.len(), 0);
         assert!(
             project
                 .active_level()
                 .expect("level")
-                .dimensions[0]
+                .wall(wall_id)
+                .is_some()
+        );
+        assert_eq!(
+            project.active_level().expect("level").constraints.len(),
+            1
+        );
+
+        // Delete the wall via the command
+        let result = apply_command(&mut project, Command::DeleteWall { id: wall_id });
+
+        assert!(result.is_ok());
+        assert!(
+            project
+                .active_level()
+                .expect("level")
+                .wall(wall_id)
+                .is_none()
+        );
+        assert_eq!(
+            project.active_level().expect("level").constraints.len(),
+            0
+        );
+        assert!(
+            project.active_level().expect("level").dimensions[0]
                 .start_anchor
                 .is_none()
-                || project
-                    .active_level()
-                    .expect("level")
-                    .dimensions[0]
+                || project.active_level().expect("level").dimensions[0]
                     .start_anchor
                     .unwrap()
                     .wall_id()
