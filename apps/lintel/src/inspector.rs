@@ -712,8 +712,10 @@ pub fn inspector(
             ui.label("Definitions");
             if level.block_defs.is_empty() {
                 ui.label(
-                    egui::RichText::new("No block definitions — create one to reuse groups of entities.")
-                        .color(SPEC.component.text.muted),
+                    egui::RichText::new(
+                        "No block definitions — create one to reuse groups of entities.",
+                    )
+                    .color(SPEC.component.text.muted),
                 );
             } else {
                 for def in &level.block_defs {
@@ -778,8 +780,10 @@ pub fn inspector(
             ui.label("Instances");
             if level.block_instances.is_empty() {
                 ui.label(
-                    egui::RichText::new("No block instances — place one from a definition.")
-                        .color(SPEC.component.text.muted),
+                    egui::RichText::new(
+                        "No block instances — place one from a definition.",
+                    )
+                    .color(SPEC.component.text.muted),
                 );
             } else {
                 for inst in &level.block_instances {
@@ -907,8 +911,10 @@ pub fn inspector(
             ui.label("A viewport places a level on a sheet at a set scale.");
             if project.viewports.is_empty() {
                 ui.label(
-                    egui::RichText::new("No viewports — add one to frame a level on a sheet.")
-                        .color(SPEC.component.text.muted),
+                    egui::RichText::new(
+                        "No viewports — add one to frame a level on a sheet.",
+                    )
+                    .color(SPEC.component.text.muted),
                 );
             } else {
                 for (index, viewport) in project.viewports.iter().enumerate() {
