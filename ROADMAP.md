@@ -388,9 +388,9 @@ and quoted in the release notes, version bump before the tag.
 
 ## v0.20.0 — Design System Extensions
 
-**Status:** In progress — implementation complete, CI verification pending
-(spec `docs/specs/v0.20.0-design-system-extensions.spec.md`; human gate
-passed 2026-11-19).
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/v0.20.0
+
+CI evidence: PR #69 run green (check + build-matrix), PR #70 green; release workflow run `45516814571`.
 
 Scope: copy-pattern component layer on the token system (no crate adoption —
 egui 0.36.2 is incompatible with every design-system crate).
@@ -415,8 +415,45 @@ egui 0.36.2 is incompatible with every design-system crate).
 **Release gate:** CI green on all required checks (including `contrast-test`
 and `kittest`), ledger row appended by CI, tag `v0.20.0` only after merge.
 
-**Unscheduled / future:** Workbench shell (activity bar, status bar, editor
-tabs) and docking framework are separate milestones; runtime theme switch
-(dark/high-contrast reference palettes are asserted but not user-selectable
-yet); web/WASM port, plugin architecture, collaborative editing, custom
-paper sizes, on-canvas hints, 3D/structural/IFC track (separate roadmap).
+## v0.20.1 — Patch: Door & Window Placement Fixes
+
+**Status:** Released — https://github.com/Perchemop/lintel-desktop/releases/tag/v0.20.1
+
+CI evidence: PR #71 release workflow run `45516814571`.
+
+- Fix door/window placement bugs from PR #68: centreline projection,
+  `note_status` error surfacing, empty-canvas hint
+- Fix opening placement projected onto the wall centreline (PR #70):
+  `wall_offset_along_centerline` + regression test in
+  `apps/lintel/src/tests/workflows.rs`
+- CHANGELOG drift fix: `Unreleased` content that shipped in v0.20.0 renamed
+  to `## v0.20.0 — 2026-11-22`; v0.20.1 section added
+- Version bumps 0.20.0 → 0.20.1 (both crates + Cargo.lock)
+
+**Release gate:** Signed artefacts with `SHA256SUMS.txt.asc`, ledger row appended
+by CI, dependency-doctor gate before tag.
+
+## v0.21.0 — Next Milestone (Planning)
+
+**Status:** Planning — determine scope for next feature release.
+
+Candidates from the backlog:
+
+| ID | Capability | Notes |
+|---|-----------|------|
+| CAP-??? | Workbench shell: activity bar, status bar, editor tabs | Separate milestone per v0.20.0 unscheduled |
+| CAP-??? | Docking framework | Separate milestone per v0.20.0 unscheduled |
+| CAP-??? | Runtime theme switch (dark/high-contrast user-selectable) | v0.20.0 unscheduled |
+| CAP-??? | Web/WASM port | Separate roadmap track |
+| CAP-??? | Plugin architecture | Separate roadmap track |
+| CAP-??? | Collaborative editing | Separate roadmap track |
+| CAP-??? | Custom paper sizes | Separate roadmap track |
+| CAP-??? | On-canvas hints | Separate roadmap track |
+| CAP-??? | 3D/structural/IFC track | Separate roadmap track |
+
+**Decision needed:** Choose next vertical slice scope. Options:
+1. **v0.21.0** — Polish/bugfix patch cycle (no major new capabilities)
+2. **v1.0.0** — First stable major release with all current features
+3. **Feature slice** — One specific capability from unscheduled list
+
+**Readiness:** 0% — awaiting scope decision.
