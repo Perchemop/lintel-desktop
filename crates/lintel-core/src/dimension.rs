@@ -24,7 +24,6 @@ use crate::ids::{DimensionId, LayerId, WallId};
 use crate::layer::EntityStyle;
 use crate::level::Level;
 
-
 /// Offset the UI should start with when the user has not dragged a dimension
 /// line anywhere yet, in millimetres.
 pub const DEFAULT_DIMENSION_OFFSET: f64 = 500.0;

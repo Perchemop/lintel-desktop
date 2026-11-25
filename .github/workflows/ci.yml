@@ -73,7 +73,11 @@ jobs:
             cargo-index-${{ runner.os }}-
 
       - name: Force Cargo.lock regeneration
+        if: runner.os != 'Windows'
         run: rm -f Cargo.lock
+      - name: Force Cargo.lock regeneration (Windows)
+        if: runner.os == 'Windows'
+        run: if (Test-Path Cargo.lock) { Remove-Item Cargo.lock -Force }
 
       - name: Run kittest (AccessKit / egui_kittest harness)
         run: cargo test -p lintel --test kittest
@@ -125,7 +129,11 @@ jobs:
             cargo-registry-${{ runner.os }}-
 
       - name: Force Cargo.lock regeneration
+        if: runner.os != 'Windows'
         run: rm -f Cargo.lock
+      - name: Force Cargo.lock regeneration (Windows)
+        if: runner.os == 'Windows'
+        run: if (Test-Path Cargo.lock) { Remove-Item Cargo.lock -Force }
 
       - name: WCAG contrast gate (light/dark/high-contrast, headless — spec AC-08)
         run: cargo test -p lintel --bin lintel contrast_test
@@ -233,7 +241,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - name: Force Cargo.lock regeneration
+        if: runner.os != 'Windows'
         run: rm -f Cargo.lock
+      - name: Force Cargo.lock regeneration (Windows)
+        if: runner.os == 'Windows'
+        run: if (Test-Path Cargo.lock) { Remove-Item Cargo.lock -Force }
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
         run: |
