@@ -665,7 +665,7 @@ mod tests {
         // Free anchor is valid and resolves to None
         let free = DimensionAnchor::Free;
         assert!(free.is_valid());
-        assert!(free.perpendicular() == false);
+        assert!(!free.perpendicular());
     }
 
     #[test]
@@ -747,10 +747,8 @@ mod tests {
     fn the_perpendicular_flag_never_moves_the_resolved_point() {
         let level = level_with_wall(WallId(2));
         let mut dimension = anchored(DimensionKind::LinearHorizontal, WallId(2));
-        if let Some(anchor) = &mut dimension.start_anchor {
-            if let DimensionAnchor::Anchored { perpendicular, .. } = anchor {
-                *perpendicular = true;
-            }
+        if let Some(DimensionAnchor::Anchored { perpendicular, .. }) = &mut dimension.start_anchor {
+            *perpendicular = true;
         }
         assert_eq!(
             dimension.effective_start(Some(&level)),
