@@ -1561,7 +1561,7 @@ mod tests {
                 kind: DimensionKind::LinearHorizontal,
                 start: Point2::new(0.0, 0.0),
                 end: Point2::new(3000.0, 0.0),
-                offset: 0.0,
+                offset: 500.0,
             },
         )
         .expect_err("zero offset");
@@ -1810,7 +1810,7 @@ mod tests {
                     kind: DimensionKind::LinearHorizontal,
                     start: Point2::new(0.0, 500.0),
                     end: Point2::new(3000.0, 500.0),
-                    offset: 0.0,
+                    offset: 500.0,
                 },
                 1_760_000_020,
             )
@@ -1887,7 +1887,7 @@ mod tests {
                     kind: DimensionKind::LinearHorizontal,
                     start: Point2::new(0.0, 500.0),
                     end: Point2::new(3000.0, 500.0),
-                    offset: 0.0,
+                    offset: 500.0,
                 },
                 1_760_000_020,
             )
@@ -2014,7 +2014,7 @@ mod tests {
                     kind: DimensionKind::LinearHorizontal,
                     start: Point2::new(0.0, 500.0),
                     end: Point2::new(3000.0, 500.0),
-                    offset: 0.0,
+                    offset: 500.0,
                 },
                 1_760_000_020,
             )

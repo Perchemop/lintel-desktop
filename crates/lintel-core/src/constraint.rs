@@ -267,12 +267,13 @@ pub fn validate_constraints(level: &Level) -> Result<(), CoreError> {
 
 /// Detect circular references in a dependency graph.
 /// A cycle exists if any node can reach itself through the graph.
+/// Note: 2-node cycles (A <-> B) from EqualLength constraints are allowed.
 fn has_circular_reference(graph: &HashMap<DimensionId, HashSet<DimensionId>>) -> bool {
     let mut visited: HashSet<DimensionId> = HashSet::new();
     let mut rec_stack: HashSet<DimensionId> = HashSet::new();
 
     for &node in graph.keys() {
-        if !visited.contains(&node) && has_cycle_dfs(node, graph, &mut visited, &mut rec_stack) {
+        if !visited.contains(&node) && has_cycle_dfs(node, graph, &mut visited, &mut rec_stack, &mut Vec::new()) {
             return true;
         }
     }
@@ -280,24 +281,33 @@ fn has_circular_reference(graph: &HashMap<DimensionId, HashSet<DimensionId>>) ->
 }
 
 /// Depth-first search to detect cycles in a directed graph.
+/// Ignores 2-node cycles (A <-> B) from EqualLength constraints.
 fn has_cycle_dfs(
     node: DimensionId,
     graph: &HashMap<DimensionId, HashSet<DimensionId>>,
     visited: &mut HashSet<DimensionId>,
     rec_stack: &mut HashSet<DimensionId>,
+    path: &mut Vec<DimensionId>,
 ) -> bool {
     visited.insert(node);
     rec_stack.insert(node);
+    path.push(node);
 
     if let Some(neighbors) = graph.get(&node) {
         for &neighbor in neighbors {
             if !visited.contains(&neighbor) {
-                if has_cycle_dfs(neighbor, graph, visited, rec_stack) {
+                if has_cycle_dfs(neighbor, graph, visited, rec_stack, path) {
                     return true;
                 }
             } else if rec_stack.contains(&neighbor) {
                 // Found a back edge - cycle detected
-                return true;
+                // Check if this is a 2-node cycle (A <-> B) from EqualLength
+                if path.len() == 2 && path[0] == neighbor {
+                    // This is a 2-node cycle (A <-> B), allowed for EqualLength
+                } else {
+                    // Found a cycle of length > 2
+                    return true;
+                }
             }
         }
     }
