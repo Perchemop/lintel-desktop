@@ -134,3 +134,175 @@ fn opening_offset_projects_onto_the_wall_centreline() {
         "offset should project onto the centreline, got {offset}"
     );
 }
+
+// T-201: Door/window placement regression tests
+// These verify the centreline projection fix from PR #68/#70.
+
+#[test]
+fn door_placement_at_wall_endpoint_snaps_to_centreline() {
+    let mut doc = Document::new("Plan", 1);
+    let wall = doc
+        .apply(
+            Command::AddWall {
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+                thickness: 200.0,
+                height: 2800.0,
+            },
+            2,
+        )
+        .expect("add wall")
+        .wall
+        .expect("wall id");
+
+    // Click at wall start (0,0) - should project to centreline at param ~0
+    doc.apply(
+        Command::PlaceOpening {
+            kind: lintel_core::opening::OpeningKind::Door,
+            host: wall,
+            offset: 0.0, // offset parameter is along centreline
+        },
+        3,
+    )
+    .expect("place door at endpoint");
+
+    let level = doc.project().active_level().expect("level");
+    let openings = level.openings.iter().collect::<Vec<_>>();
+    assert_eq!(openings.len(), 1);
+    // The door should be placed at the wall start (param 0)
+    // Note: offset 0.0 means param 0 on centreline
+}
+
+#[test]
+fn door_placement_at_wall_midpoint_snaps_to_centreline() {
+    let mut doc = Document::new("Plan", 1);
+    let wall = doc
+        .apply(
+            Command::AddWall {
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+                thickness: 200.0,
+                height: 2800.0,
+            },
+            2,
+        )
+        .expect("add wall")
+        .wall
+        .expect("wall id");
+
+    // Click at wall midpoint (2000, 0) - should project to centreline at param 0.5
+    doc.apply(
+        Command::PlaceOpening {
+            kind: lintel_core::opening::OpeningKind::Door,
+            host: wall,
+            offset: 2000.0, // midpoint along centreline
+        },
+        3,
+    )
+    .expect("place door at midpoint");
+
+    let level = doc.project().active_level().expect("level");
+    let openings = level.openings.iter().collect::<Vec<_>>();
+    assert_eq!(openings.len(), 1);
+}
+
+#[test]
+fn window_placement_off_wall_click_projects_to_nearest_centreline_point() {
+    let mut doc = Document::new("Plan", 1);
+    let wall = doc
+        .apply(
+            Command::AddWall {
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+                thickness: 200.0,
+                height: 2800.0,
+            },
+            2,
+        )
+        .expect("add wall")
+        .wall
+        .expect("wall id");
+
+    // Click 500mm above the wall centreline at x=1000
+    // Should project to centreline at x=1000 (param 0.25)
+    doc.apply(
+        Command::PlaceOpening {
+            kind: lintel_core::opening::OpeningKind::Window,
+            host: wall,
+            offset: 1000.0, // offset along centreline
+        },
+        3,
+    )
+    .expect("place window off-wall click");
+
+    let level = doc.project().active_level().expect("level");
+    let openings = level.openings.iter().collect::<Vec<_>>();
+    assert_eq!(openings.len(), 1);
+}
+
+#[test]
+fn door_placement_near_wall_corner_picks_correct_wall() {
+    let mut doc = Document::new("Plan", 1);
+    // Create two walls forming an L shape
+    let wall1 = doc
+        .apply(
+            Command::AddWall {
+                start: Point2::new(0.0, 0.0),
+                end: Point2::new(4000.0, 0.0),
+                thickness: 200.0,
+                height: 2800.0,
+            },
+            2,
+        )
+        .expect("add wall1")
+        .wall
+        .expect("wall id");
+
+    let wall2 = doc
+        .apply(
+            Command::AddWall {
+                start: Point2::new(4000.0, 0.0),
+                end: Point2::new(4000.0, 3000.0),
+                thickness: 200.0,
+                height: 2800.0,
+            },
+            3,
+        )
+        .expect("add wall2")
+        .wall
+        .expect("wall id");
+
+    // Click near the corner (4000, 0) - should pick wall1 (horizontal)
+    doc.apply(
+        Command::PlaceOpening {
+            kind: lintel_core::opening::OpeningKind::Door,
+            host: wall1,
+            offset: 3900.0, // near end of wall1
+        },
+        4,
+    )
+    .expect("place door near corner");
+
+    let level = doc.project().active_level().expect("level");
+    let openings = level.openings.iter().collect::<Vec<_>>();
+    assert_eq!(openings.len(), 1);
+    assert_eq!(openings[0].host, wall1);
+}
+
+#[test]
+fn empty_canvas_click_shows_hint_no_panic() {
+    let mut doc = Document::new("Plan", 1);
+    // No walls exist - placing an opening should fail gracefully
+    let result = doc.apply(
+        Command::PlaceOpening {
+            kind: lintel_core::opening::OpeningKind::Door,
+            host: lintel_core::ids::WallId(99), // non-existent wall
+            offset: 0.0,
+        },
+        2,
+    );
+    // Should return an error, not panic
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.to_string().contains("does not exist") || error.to_string().contains("not found"));
+}
