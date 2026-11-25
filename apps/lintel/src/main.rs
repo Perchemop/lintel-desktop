@@ -1051,7 +1051,11 @@ impl LintelApp {
                         } else {
                             0.0
                         };
-                        let anchor = lintel_core::dimension::DimensionAnchor::new(wall_id, param);
+                        let anchor = lintel_core::dimension::DimensionAnchor::anchored(
+                            wall_id,
+                            param,
+                            false,
+                        );
                         let cmd = if is_start {
                             Command::SetDimensionStartAnchor {
                                 id: dim_id,

@@ -7,11 +7,13 @@
 use serde::{Deserialize, Serialize};
 
 use crate::constraint::apply_constraints_to_anchors;
+use crate::dimension::{Dimension, DimensionKind};
 use crate::error::CoreError;
-use crate::geom::Bounds;
-use crate::ids::{LayerId, LevelId, OpeningId};
+use crate::geom::{Bounds, Point2};
+use crate::ids::{DimensionId, LayerId, LevelId, OpeningId};
 use crate::layer::Layer;
 use crate::level::Level;
+use crate::opening::Opening;
 use crate::title_block::TitleBlock;
 use crate::units::UnitSystem;
 use crate::viewport::Viewport;
@@ -706,5 +708,99 @@ mod tests {
             ));
         let error = project.validate().expect_err("zero offset");
         assert!(error.to_string().contains("non-positive offset"));
+    }
+
+    #[test]
+    fn validation_catches_a_circular_equal_length_constraint() {
+        use crate::constraint::Constraint;
+
+        let mut project = Project::new(UNTITLED, 1);
+
+        // Create three dimensions
+        let dim_a = DimensionId(project.allocate_id());
+        let dim_b = DimensionId(project.allocate_id());
+        let dim_c = DimensionId(project.allocate_id());
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .extend([
+                Dimension::new(
+                    dim_a,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(0.0, 0.0),
+                    Point2::new(1000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_b,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(2000.0, 0.0),
+                    Point2::new(3000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_c,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(4000.0, 0.0),
+                    Point2::new(5000.0, 0.0),
+                    500.0,
+                ),
+            ]);
+
+        // Create A -> B -> C -> A cycle
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .extend([
+                Constraint::EqualLength { a: dim_a, b: dim_b },
+                Constraint::EqualLength { a: dim_b, b: dim_c },
+                Constraint::EqualLength { a: dim_c, b: dim_a },
+            ]);
+
+        let error = project.validate().expect_err("circular constraint");
+        assert!(matches!(error, CoreError::CircularConstraint));
+    }
+
+    #[test]
+    fn validation_accepts_valid_constraints_with_equal_length() {
+        use crate::constraint::Constraint;
+
+        let mut project = Project::new(UNTITLED, 1);
+
+        // Create two dimensions with EqualLength constraint
+        let dim_a = DimensionId(project.allocate_id());
+        let dim_b = DimensionId(project.allocate_id());
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .extend([
+                Dimension::new(
+                    dim_a,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(0.0, 0.0),
+                    Point2::new(1000.0, 0.0),
+                    500.0,
+                ),
+                Dimension::new(
+                    dim_b,
+                    DimensionKind::LinearHorizontal,
+                    Point2::new(2000.0, 0.0),
+                    Point2::new(3000.0, 0.0),
+                    500.0,
+                ),
+            ]);
+
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::EqualLength { a: dim_a, b: dim_b });
+
+        assert!(project.validate().is_ok());
     }
 }

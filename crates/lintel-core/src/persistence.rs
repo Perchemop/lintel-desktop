@@ -258,8 +258,8 @@ mod tests {
             "the anchored point snaps onto the wall it is constrained to"
         );
         let anchor = dimension.start_anchor.expect("start anchor");
-        assert_eq!(anchor.param, 0.5);
-        assert!(anchor.perpendicular, "the solver flags the pinned anchor");
+        assert_eq!(anchor.param().unwrap(), 0.5);
+        assert!(anchor.perpendicular(), "the solver flags the pinned anchor");
     }
 
     #[test]
@@ -448,6 +448,137 @@ mod tests {
         let level = project.level(LevelId(1)).expect("level");
         assert!(level.block_defs.is_empty());
         assert!(level.block_instances.is_empty());
+        assert!(project.validate().is_ok());
+    }
+
+    // T-104: Backward-compatible JSON load tests (AC-004, AC-005)
+
+    #[test]
+    fn project_with_anchored_dimensions_and_constraints_round_trips() {
+        // AC-004: Save/load project with anchors + constraints → identical
+        use crate::constraint::Constraint;
+        use crate::dimension::{Dimension, DimensionAnchor, DimensionKind};
+
+        let mut project = Project::new("Test plan", 1_760_000_000);
+
+        // Add a wall
+        let wall_id = WallId(2);
+        project
+            .active_level_mut()
+            .expect("level")
+            .walls
+            .push(Wall::new(
+                wall_id,
+                Point2::new(0.0, 0.0),
+                Point2::new(4000.0, 0.0),
+                200.0,
+                2800.0,
+            ));
+
+        // Add a dimension with anchors
+        let dim_id = DimensionId(3);
+        let mut dimension = Dimension::new(
+            dim_id,
+            DimensionKind::LinearHorizontal,
+            Point2::new(0.0, 0.0),
+            Point2::new(3000.0, 0.0),
+            500.0,
+        );
+        dimension.start_anchor = Some(DimensionAnchor::anchored(wall_id, 0.25, false));
+        dimension.end_anchor = Some(DimensionAnchor::anchored(wall_id, 0.75, false));
+        project
+            .active_level_mut()
+            .expect("level")
+            .dimensions
+            .push(dimension);
+
+        // Add a constraint
+        project
+            .active_level_mut()
+            .expect("level")
+            .constraints
+            .push(Constraint::PerpendicularDistance {
+                dimension: dim_id,
+                wall_id,
+                param: 0.5,
+            });
+
+        // Save and load
+        let text = to_json(project).expect("serialize");
+        let loaded = from_json(&text).expect("load");
+
+        // Verify round-trip
+        assert_eq!(&loaded, project.project());
+        let level = loaded.level(LevelId(1)).expect("level");
+        assert_eq!(level.dimensions.len(), 1);
+        let loaded_dim = level.dimension(dim_id).expect("dimension");
+        assert_eq!(loaded_dim.start_anchor, Some(DimensionAnchor::anchored(wall_id, 0.25, false)));
+        assert_eq!(loaded_dim.end_anchor, Some(DimensionAnchor::anchored(wall_id, 0.75, false)));
+        assert_eq!(level.constraints.len(), 1);
+    }
+
+    #[test]
+    fn project_without_anchors_loads_with_none_anchors_and_preserves_coords() {
+        // AC-005: Load v0.12.x fixture file behavior
+        // When anchor fields are missing, they should deserialize as None
+        let text = r#"{
+            "format_version": 1,
+            "name": "Old plan",
+            "units": "Metric",
+            "levels": [{
+                "id": 1,
+                "name": "Level 0",
+                "elevation": 0.0,
+                "walls": [{
+                    "id": 2,
+                    "start": { "x": 0.0, "y": 0.0 },
+                    "end": { "x": 4000.0, "y": 0.0 },
+                    "thickness": 200.0,
+                    "height": 2800.0
+                }],
+                "openings": [],
+                "dimensions": [{
+                    "id": 3,
+                    "kind": "LinearHorizontal",
+                    "start": { "x": 0.0, "y": 0.0 },
+                    "end": { "x": 3000.0, "y": 0.0 },
+                    "offset": 500.0,
+                    "extension_lines": true,
+                    "witness_gap": 200.0,
+                    "witness_overrun": 100.0,
+                    "label_precision": 0
+                }],
+                "constraints": []
+            }],
+            "active_level": 1,
+            "created_epoch_s": 0,
+            "modified_epoch_s": 0,
+            "notes": "",
+            "next_id": 4
+        }"#;
+
+        let project = from_json(text).expect("old project with dimensions loads");
+        let level = project.level(LevelId(1)).expect("level");
+        let dimension = level.dimension(DimensionId(3)).expect("dimension");
+
+        // AC-005: anchors should be None
+        assert!(
+            dimension.start_anchor.is_none(),
+            "missing start_anchor should be None"
+        );
+        assert!(
+            dimension.end_anchor.is_none(),
+            "missing end_anchor should be None"
+        );
+
+        // AC-005: coordinates are preserved unchanged
+        assert_eq!(dimension.start, Point2::new(0.0, 0.0));
+        assert_eq!(dimension.end, Point2::new(3000.0, 0.0));
+        assert_eq!(dimension.witness_gap, 200.0);
+        assert_eq!(dimension.witness_overrun, 100.0);
+        assert_eq!(dimension.label_precision, 0);
+
+        // Verify project validates successfully
         assert!(project.validate().is_ok());
     }
 }

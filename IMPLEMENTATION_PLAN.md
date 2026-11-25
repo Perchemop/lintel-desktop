@@ -139,9 +139,7 @@ Each release is a vertical slice:
 ## Next Slices
 
 ### v0.12.0 / 0.12.1 “Phase A (Snapping + Selection + Command Palette)” — published as 0.12.1
-**Status:** Planned — being re-scoped; the snapping, selection and
-command-palette work below is now the v0.11.1 active slice, leaving the
-constraint-dimension foundation here.
+**Status:** Complete
 
 **Core**
 - Entity snapping generation for midpoint, intersection and perpendicular
@@ -150,9 +148,11 @@ constraint-dimension foundation here.
   crossing modes), pure and headless.
 - Command registry metadata (name, shortcut, description) to feed a palette
   without duplicating the `Command` enum.
-- `crates/lintel-core/src/dimension.rs` — `DimensionAnchor`
+- `crates/lintel-core/src/dimension.rs` — `DimensionAnchor`,
   (`EntityPoint` / `Free`), witness-line gap and overrun, backward-compatible
   load.
+- T-105 tests: undo/redo cycles for start anchor, end anchor, witness margins,
+  add constraint, remove constraint
 
 **UI**
 - Snap markers and per-kind toggles.

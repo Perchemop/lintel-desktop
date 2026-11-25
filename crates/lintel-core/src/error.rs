@@ -32,6 +32,8 @@ pub enum CoreError {
     DefaultLayer,
     #[error("{0} still has entities; move them to another layer first")]
     LayerInUse(LayerId),
+    #[error("maximum constraint limit (500) reached for this level")]
+    LimitExceeded,
     #[error("{0}")]
     Invalid(String),
     #[error("unsupported project format {found}; this build reads up to {supported}")]
@@ -42,6 +44,8 @@ pub enum CoreError {
     Io(std::io::Error),
     #[error("the project file is not valid JSON: {0}")]
     Json(serde_json::Error),
+    #[error("constraint would create a circular reference")]
+    CircularConstraint,
 }
 
 impl CoreError {
@@ -93,5 +97,10 @@ mod tests {
         assert_eq!(e.to_string(), "block instance #7 does not exist");
         let e = CoreError::BlockDefInUse(BlockId(3));
         assert!(e.to_string().contains("still instanced"));
+        let e = CoreError::LimitExceeded;
+        assert!(e.to_string().contains("limit"));
+        assert!(e.to_string().contains("500"));
+        let e = CoreError::CircularConstraint;
+        assert!(e.to_string().contains("circular"));
     }
 }

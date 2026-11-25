@@ -142,6 +142,11 @@ run, recorded in `docs/parity.md`).
 | ID | Capability | Observable behaviour | Acceptance criteria | Source URL(s) | Status |
 |---|---|---|---|---|---|
 | CAP-099 | Drawing set / sheet layout | Title blocks and viewport linking | `pdf::tests::render_set_*` | — | implemented (CAP-113/CAP-114) |
+| CAP-104 | Release verification metadata | Update check surfaces `SHA256SUMS.txt` manifest and digest; signature verification support via `verify_signature()` | `update-check::verify_signature` validates GPG signature; cache TTL honored instead of `check_uncached` (used only for testing) | docs/release-verification.md | implemented |
+| CAP-105 | In-app release notes from `RELEASE_NOTES.md` | Release notes window parses embedded `RELEASE_NOTES.md` via `include_str!`; ledger-era figures shown, pre-ledger releases marked | `apps/lintel/src/release_notes.rs`; `include_str!("../../../RELEASE_NOTES.md")` | — | implemented |
+| CAP-106 | Release governance | `release.yml` fails if tag ≠ crate versions (both app and core); fails if `GPG_PRIVATE_KEY` unset; verifies its own signature before publishing | CI step "Verify tag matches crate version"; CI step "Sign SHA256SUMS.txt" with GPG check | .github/workflows/release.yml | implemented |
+| CAP-107 | Documentation parity for v0.13.0 | `docs/capability-inventory.md`, `docs/parity.md`, `CHANGELOG.md`, `ROADMAP.md`, `PROGRESS.md` reconciled through CAP-108 | All tracking files updated with v0.13.0 CAP-104–108 entries | guide §12.1 | implemented |
+| CAP-108 | Phase A UI completion | Layers panel (visibility/lock), construction tools (line/ray/circle/arc), keyboard shortcuts (C/Shift+C/Q/X, Shift+V, Del) | `apps/lintel/src/inspector.rs` layers section; `apps/lintel/src/main.rs` tool bindings | D-032 | implemented |
 
 ## v0.14.0–v0.16.0 capabilities
 

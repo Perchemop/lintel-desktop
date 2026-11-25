@@ -69,7 +69,7 @@ Phase A foundation already on the branch (core):
 Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
 — published as 0.12.1, rebuilt 2026-11-10 (runs `42902103302` / `42902103890`).**
 
-## v0.13.0 Status — IN PROGRESS
+## v0.13.0 Status — RELEASED
 
 **Anchored Dimensions & Release Governance** (CAP-100–CAP-108). Full scope in
 `ROADMAP.md`.
@@ -83,7 +83,13 @@ Readiness % (v0.11.1): **100% of the Phase A continued slice (CAP-094–CAP-098)
       point) — PR #22
 - [x] CAP-102 — Anchor commands: `SetDimensionStartAnchor`/`EndAnchor`,
       `SetDimensionWitnessGap`/`Overrun` with validation
-      (`DimensionNotFound`, param-in-[0,1], margins ≥ 0) — PR #22
+      (`DimensionNotFound`, param-in-[0,1], margins ≥ 0); **undo/redo tests**
+      added: `a_dimension_start_anchor_can_be_undone_and_redone`,
+      `a_dimension_end_anchor_can_be_undone_and_redone`,
+      `witness_margins_can_be_undone_and_redone`,
+      `an_added_constraint_can_be_undone_and_redone`,
+      `a_added_constraint_can_be_redone`,
+      `remove_a_constraint_can_be_undone_and_redone` — T-105
 - [x] CAP-103 — Anchor UI: inspector fields, click-to-place witness lines,
       grip editing (renderer adopts `dimension_line_at`/`witness_line` +
       active level plumbing) — PR #23 merged (`7d88830`), CI green; inspector

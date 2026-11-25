@@ -1236,55 +1236,39 @@ fn dimension_fields(
         });
     }
 
-    // Witness margins.
+    // Witness margins — live preview: emit on change.
     let mut gap = dimension.witness_gap;
     ui.horizontal(|ui| {
-        ui.label("Witness gap:");
-        ui.add(
-            egui::DragValue::new(&mut gap)
-                .speed(1.0)
-                .range(0.0..=100000.0)
-                .suffix(" mm"),
-        )
-        .on_hover_text(
-            "Gap between a measured point and the start of its witness line in mm (min 0).",
-        );
-        if ui
+        let label_resp = ui.label("Witness gap:");
+        let input_resp = ui
             .add(
-                egui::Button::new("Apply")
-                    .fill(SPEC.component.button.primary_md.fill)
-                    .min_size(SPEC.component.button.primary_md.min_size)
-                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
+                egui::DragValue::new(&mut gap)
+                    .speed(1.0)
+                    .range(0.0..=100000.0)
+                    .suffix(" mm"),
             )
-            .on_hover_text("Apply the new witness gap.")
-            .clicked()
-            && (gap - dimension.witness_gap).abs() > f64::EPSILON
-        {
+            .on_hover_text(
+                "Gap between a measured point and the start of its witness line in mm (min 0).",
+            );
+        let _ = input_resp.labelled_by(label_resp.id);
+        if (gap - dimension.witness_gap).abs() > f64::EPSILON {
             command = Some(Command::SetDimensionWitnessGap { id, gap });
         }
     });
 
     let mut overrun = dimension.witness_overrun;
     ui.horizontal(|ui| {
-        ui.label("Witness overrun:");
-        ui.add(
-            egui::DragValue::new(&mut overrun)
-                .speed(1.0)
-                .range(0.0..=100000.0)
-                .suffix(" mm"),
-        )
-        .on_hover_text("How far a witness line runs past the dimension line in mm (min 0).");
-        if ui
+        let label_resp = ui.label("Witness overrun:");
+        let input_resp = ui
             .add(
-                egui::Button::new("Apply")
-                    .fill(SPEC.component.button.primary_md.fill)
-                    .min_size(SPEC.component.button.primary_md.min_size)
-                    .stroke(egui::Stroke::new(2.0, SPEC.component.button.ring)),
+                egui::DragValue::new(&mut overrun)
+                    .speed(1.0)
+                    .range(0.0..=100000.0)
+                    .suffix(" mm"),
             )
-            .on_hover_text("Apply the new witness overrun.")
-            .clicked()
-            && (overrun - dimension.witness_overrun).abs() > f64::EPSILON
-        {
+            .on_hover_text("How far a witness line runs past the dimension line in mm (min 0).");
+        let _ = input_resp.labelled_by(label_resp.id);
+        if (overrun - dimension.witness_overrun).abs() > f64::EPSILON {
             command = Some(Command::SetDimensionWitnessOverrun { id, overrun });
         }
     });
@@ -1294,29 +1278,26 @@ fn dimension_fields(
     ui.label("Start anchor");
     let start_state = match dimension.start_anchor {
         Some(anchor) => {
-            if level.wall(anchor.wall_id).is_none() {
-                ui.label(
-                    egui::RichText::new("wall missing — using stored point")
-                        .color(SPEC.component.text.muted),
-                );
-                format!(
-                    "anchored to Wall {} at {:.0}%",
-                    anchor.wall_id.value(),
-                    anchor.param * 100.0
-                )
-            } else {
-                format!(
-                    "anchored to Wall {} at {:.0}%",
-                    anchor.wall_id.value(),
-                    anchor.param * 100.0
-                )
+            let wall_id = anchor.wall_id();
+            if let Some(wid) = wall_id {
+                if level.wall(wid).is_none() {
+                    ui.label(
+                        egui::RichText::new("wall missing — using stored point")
+                            .color(SPEC.component.text.muted),
+                    );
+                }
             }
+            format!(
+                "Anchored to Wall #{} @ {:.2}",
+                wall_id.map(|w| w.value()).unwrap_or(0),
+                anchor.param().unwrap_or(0.0)
+            )
         }
-        None => "not anchored (free point)".to_string(),
+        None => "Free".to_string(),
     };
     ui.label(start_state);
-    let mut start_wall = dimension.start_anchor.map(|a| a.wall_id.0).unwrap_or(0);
-    let mut start_param = dimension.start_anchor.map(|a| a.param).unwrap_or(0.0);
+    let mut start_wall = dimension.start_anchor.and_then(|a| a.wall_id()).map(|w| w.0).unwrap_or(0);
+    let mut start_param = dimension.start_anchor.and_then(|a| a.param()).unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
         ui.add(
@@ -1342,9 +1323,10 @@ fn dimension_fields(
         {
             command = Some(Command::SetDimensionStartAnchor {
                 id,
-                anchor: Some(lintel_core::dimension::DimensionAnchor::new(
+                anchor: Some(lintel_core::dimension::DimensionAnchor::anchored(
                     lintel_core::ids::WallId(start_wall),
                     start_param,
+                    false,
                 )),
             });
         }
@@ -1362,23 +1344,26 @@ fn dimension_fields(
     ui.label("End anchor");
     let end_state = match dimension.end_anchor {
         Some(anchor) => {
-            if level.wall(anchor.wall_id).is_none() {
-                ui.label(
-                    egui::RichText::new("wall missing — using stored point")
-                        .color(SPEC.component.text.muted),
-                );
+            let wall_id = anchor.wall_id();
+            if let Some(wid) = wall_id {
+                if level.wall(wid).is_none() {
+                    ui.label(
+                        egui::RichText::new("wall missing — using stored point")
+                            .color(SPEC.component.text.muted),
+                    );
+                }
             }
             format!(
-                "anchored to Wall {} at {:.0}%",
-                anchor.wall_id.value(),
-                anchor.param * 100.0
+                "Anchored to Wall #{} @ {:.2}",
+                wall_id.map(|w| w.value()).unwrap_or(0),
+                anchor.param().unwrap_or(0.0)
             )
         }
-        None => "not anchored (free point)".to_string(),
+        None => "Free".to_string(),
     };
     ui.label(end_state);
-    let mut end_wall = dimension.end_anchor.map(|a| a.wall_id.0).unwrap_or(0);
-    let mut end_param = dimension.end_anchor.map(|a| a.param).unwrap_or(0.0);
+    let mut end_wall = dimension.end_anchor.and_then(|a| a.wall_id()).map(|w| w.0).unwrap_or(0);
+    let mut end_param = dimension.end_anchor.and_then(|a| a.param()).unwrap_or(0.0);
     ui.horizontal(|ui| {
         ui.label("Wall id:");
         ui.add(
@@ -1404,9 +1389,10 @@ fn dimension_fields(
         {
             command = Some(Command::SetDimensionEndAnchor {
                 id,
-                anchor: Some(lintel_core::dimension::DimensionAnchor::new(
+                anchor: Some(lintel_core::dimension::DimensionAnchor::anchored(
                     lintel_core::ids::WallId(end_wall),
                     end_param,
+                    false,
                 )),
             });
         }
