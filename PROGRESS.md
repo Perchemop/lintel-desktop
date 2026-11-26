@@ -154,6 +154,17 @@ and (where applicable) a primary action button to add the relevant entity. CI
 green on all required checks (check, contrast-test, kittest, build-matrix ×3,
 pr-author-is-dev).
 
+**2026-11-26: T-202 + T-203 constraint tests + T-206 solver perf (PR #83)** —
+Added seven headless tests to `constraint.rs`: three 2-node EqualLength cycle
+stress tests (single pair, five independent cycles, mixed with
+PerpendicularDistance/FixedAngle) and four anchor + constraint round-trip tests
+(PerpendicularDistance, FixedAngle, EqualLength, mixed). Optimized
+`solve_constraints` with a `HashMap` wall lookup (`resolve_on_wall` on
+`DimensionAnchor`) so 500 constraints resolve well under the 50 ms budget.
+`Project` import hoisted to the test module; clippy-clean. CI green on all
+required checks (check, contrast-test, kittest, build-matrix ×3,
+pr-author-is-dev).
+
 ## v0.14.0 Status — RELEASED
 
 **Constraint Persistence & Sheet Layout** (CAP-111–115). Full scope in
