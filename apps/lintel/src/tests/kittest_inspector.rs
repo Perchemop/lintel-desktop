@@ -71,10 +71,7 @@ fn tab_traverses_inspector_controls_in_reading_order() {
             1,
             "control {index} ({role:?}): exactly one node of this role must hold focus"
         );
-        let actual = focused[0]
-            .accesskit_node()
-            .value()
-            .unwrap_or_default();
+        let actual = focused[0].accesskit_node().value().unwrap_or_default();
         assert_eq!(
             actual.as_str(),
             value,
