@@ -36,7 +36,7 @@ fn inspector_slice_ui(ui: &mut egui::Ui) {
         ui.label("Elevation:");
         ui.add(egui::DragValue::new(&mut elevation).speed(1.0));
     });
-    let mut selected = false;
+    let selected = false;
     let _ = ui.selectable_label(selected, "Level 0");
 }
 
