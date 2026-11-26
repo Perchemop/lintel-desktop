@@ -77,7 +77,7 @@ fn tab_traverses_inspector_controls_in_reading_order() {
             .value()
             .unwrap_or_default();
         assert_eq!(
-            actual.as_deref().unwrap_or(""),
+            actual.as_ref().unwrap_or(""),
             value,
             "Tab order broke at control {index}: expected {role:?} with value {value:?}"
         );
@@ -97,7 +97,7 @@ fn shift_tab_reverses_the_inspector_focus_order() {
     for (role, value) in expected_focus_order().into_iter().rev() {
         harness.key_press(egui::Key::Tab); // Shift is not a modifier here
         harness.run();
-        let focused: Vec<_> = harness.get_all_by_role(role).filter(|n| n.is_focused()).count();
+        let focused = harness.get_all_by_role(role).filter(|n| n.is_focused()).count();
         assert_eq!(
             focused, 1,
             "reverse walk must re-land on {role:?} with value {value:?}"
