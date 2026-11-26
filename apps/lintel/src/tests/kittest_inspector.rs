@@ -14,7 +14,7 @@ use egui_kittest::kittest::{NodeT, Queryable};
 /// left-to-right). The closure is `FnMut`, so buffers are recreated per pass.
 fn inspector_slice_ui(ui: &mut egui::Ui) {
     let mut name = String::from("Ground floor");
-    let mut elevation = String::from("0");
+    let mut elevation: f64 = 0.0;
 
     // Section 1 — Project-like: a text field, a checkbox, an action button.
     ui.label("Project");
