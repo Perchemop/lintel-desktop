@@ -341,6 +341,7 @@ mod tests {
     use crate::command::{Command, apply_command};
     use crate::dimension::{Dimension, DimensionKind};
     use crate::ids::{DimensionId, LevelId, WallId};
+    use crate::project::Project;
     use crate::wall::Wall;
 
     const WALL: WallId = WallId(2);
@@ -614,7 +615,6 @@ mod tests {
     #[test]
     fn adding_501st_constraint_returns_limit_exceeded() {
         use crate::error::CoreError;
-        use crate::project::Project;
 
         let mut project = Project::new("Test plan", 1_760_000_000);
 
@@ -997,8 +997,6 @@ mod tests {
     // AC-006, AC-011: Wall deletion cascade
     #[test]
     fn wall_deletion_cascades_constraint_and_anchor_clear() {
-        use crate::project::Project;
-
         let mut project = Project::new("Test plan", 1_760_000_000);
 
         // Create a wall
@@ -1136,7 +1134,6 @@ mod tests {
     #[test]
     fn multiple_independent_two_node_cycles() {
         let mut level = level_with_wall();
-        let mut constraints = Vec::new();
 
         // Create 5 independent 2-node cycles (10 dimensions, 10 constraints)
         for i in 0..5 {
