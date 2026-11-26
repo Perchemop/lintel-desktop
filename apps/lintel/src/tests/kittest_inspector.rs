@@ -97,7 +97,10 @@ fn shift_tab_reverses_the_inspector_focus_order() {
     for (role, value) in expected_focus_order().into_iter().rev() {
         harness.key_press(egui::Key::Tab); // Shift is not a modifier here
         harness.run();
-        let focused = harness.get_all_by_role(role).filter(|n| n.is_focused()).count();
+        let focused = harness
+            .get_all_by_role(role)
+            .filter(|n| n.is_focused())
+            .count();
         assert_eq!(
             focused, 1,
             "reverse walk must re-land on {role:?} with value {value:?}"
@@ -138,8 +141,14 @@ fn every_inspector_control_exposes_a_focusable_accesskit_role() {
     let checkboxes = harness.get_all_by_role(Role::CheckBox).count();
     let buttons = harness.get_all_by_role(Role::Button).count();
 
-    assert_eq!(text_inputs, 2, "both text edits must expose TextInput roles");
-    assert_eq!(checkboxes, 1, "the units checkbox must expose CheckBox role");
+    assert_eq!(
+        text_inputs, 2,
+        "both text edits must expose TextInput roles"
+    );
+    assert_eq!(
+        checkboxes, 1,
+        "the units checkbox must expose CheckBox role"
+    );
     assert!(
         buttons >= 2,
         "the Apply button and the selectable row must expose Button roles"
