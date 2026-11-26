@@ -37,8 +37,7 @@ fn inspector_slice_ui(ui: &mut egui::Ui) {
         ui.add(egui::DragValue::new(&mut elevation).speed(1.0));
     });
     let mut selected = false;
-    ui.selectable_label(selected, "Level 0");
-    let _ = &mut selected;
+    let _ = ui.selectable_label(selected, "Level 0");
 }
 
 /// Every focusable control in visual (reading) order, identified by role and
