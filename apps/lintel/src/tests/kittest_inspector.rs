@@ -45,11 +45,11 @@ fn inspector_slice_ui(ui: &mut egui::Ui) {
 /// accessible value so the assertion names *which* control is out of order.
 fn expected_focus_order() -> Vec<(Role, &'static str)> {
     vec![
-        (Role::TextInput, "Ground floor"),   // Name field
-        (Role::CheckBox, "Metric units"),    // units toggle
-        (Role::Button, "Apply"),             // action button
-        (Role::TextInput, "0"),              // elevation spinner (DragValue uses TextInput)
-        (Role::Button, "Level 0"),           // selectable row is a Button role
+        (Role::TextInput, "Ground floor"), // Name field
+        (Role::CheckBox, "Metric units"), // units toggle
+        (Role::Button, "Apply"), // action button
+        (Role::TextInput, "0"), // elevation spinner (DragValue uses TextInput)
+        (Role::Button, "Level 0"), // selectable row is a Button role
     ]
 }
 
