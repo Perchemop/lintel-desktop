@@ -7,7 +7,7 @@
 
 use eframe::egui;
 use egui::accesskit::Role;
-use egui_kittest::kittest::{NodeT, Queryable};
+use egui_kittest::kittest::Queryable;
 
 /// A representative Inspector slice: two sections of the mixed control types
 /// the real panel draws, laid out in reading order (top-to-bottom,
