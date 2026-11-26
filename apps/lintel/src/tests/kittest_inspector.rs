@@ -48,8 +48,7 @@ fn expected_focus_order() -> Vec<(Role, &'static str)> {
         (Role::TextInput, "Ground floor"),   // Name field
         (Role::CheckBox, "Metric units"),    // units toggle
         (Role::Button, "Apply"),             // action button
-        (Role::DragValue, ""),               // elevation spinner (no label text)
-        (Role::TextInput, "0"),              // drag-backed text value
+        (Role::TextInput, "0"),              // elevation spinner (DragValue uses TextInput)
         (Role::Button, "Level 0"),           // selectable row is a Button role
     ]
 }
@@ -77,7 +76,7 @@ fn tab_traverses_inspector_controls_in_reading_order() {
             .value()
             .unwrap_or_default();
         assert_eq!(
-            actual.as_ref().unwrap_or(""),
+            actual.as_str(),
             value,
             "Tab order broke at control {index}: expected {role:?} with value {value:?}"
         );
