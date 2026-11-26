@@ -137,8 +137,5 @@ fn every_inspector_control_exposes_a_focusable_accesskit_role() {
         checkboxes, 1,
         "the units checkbox must expose CheckBox role"
     );
-    assert!(
-        buttons >= 1,
-        "the Apply button must expose Button role"
-    );
+    assert!(buttons >= 1, "the Apply button must expose Button role");
 }
