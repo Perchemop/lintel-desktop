@@ -90,10 +90,7 @@ fn shift_tab_reverses_the_inspector_focus_order() {
             .get_all_by_role(expected_role)
             .filter(|n| n.is_focused())
             .count();
-        assert_eq!(
-            focused, 1,
-            "reverse walk must re-land on {expected_role:?}"
-        );
+        assert_eq!(focused, 1, "reverse walk must re-land on {expected_role:?}");
     }
 }
 
