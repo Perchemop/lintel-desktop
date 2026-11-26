@@ -1334,8 +1334,6 @@ mod tests {
             ));
 
         // Add two anchored dimensions
-        let dim1 = DimensionId(3);
-        let dim2 = DimensionId(4);
         for (id, wall, param) in [
             (DimensionId(3), WallId(2), 0.25),
             (DimensionId(4), WallId(3), 0.75),
@@ -1403,8 +1401,6 @@ mod tests {
             ));
 
         // Add two anchored dimensions
-        let dim1 = DimensionId(3);
-        let dim2 = DimensionId(4);
         for (id, param) in [(DimensionId(3), 0.25), (DimensionId(4), 0.75)] {
             let mut dim = Dimension::new(
                 id,
