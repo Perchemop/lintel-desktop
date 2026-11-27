@@ -2,6 +2,10 @@
 //!
 //! Stub implementation — full constraint management (list, add form, solver
 //! status) is implemented here in a follow-up slice.
+//!
+//! #![allow(dead_code)] — stub panel, not yet wired into the workbench shell.
+
+use crate::theme::SPEC;
 
 use crate::theme::SPEC;
 use eframe::egui;

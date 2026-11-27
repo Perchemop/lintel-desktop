@@ -1,6 +1,10 @@
 //! Right-hand inspector: properties of the selected element plus global
 //! view controls. All edits flow through `lintel_core::Command` values
 //! returned here and applied by the shell.
+//!
+//! #![allow(dead_code)] — inspector functions are called from shell.rs which
+//! is no longer the main layout path (v0.22.0 workbench shell replaces it
+//! incrementally).
 
 use crate::canvas::Selection;
 use crate::theme::SPEC;
