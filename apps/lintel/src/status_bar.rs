@@ -39,6 +39,48 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
         ui.label(egui::RichText::new(format!("Tool: {}", app.tool.label())).small());
         ui.separator();
 
+        // Contextual hint for the active tool.
+        let hint_text = match app.tool {
+            crate::app::tool::Tool::Select => {
+                if app.selection.is_empty() {
+                    "Click wall to select • Shift+Click multi-select • Esc clear"
+                } else {
+                    "Drag to move • Click dimension to edit • Del delete • Esc clear"
+                }
+            }
+            crate::app::tool::Tool::Wall => {
+                "Click to start • Move to preview • Click to place • Esc cancel"
+            }
+            crate::app::tool::Tool::Door => "Click wall to place door • Esc cancel",
+            crate::app::tool::Tool::Window => "Click wall to place window • Esc cancel",
+            crate::app::tool::Tool::Dimension => {
+                "Click first point • Click second point • Esc cancel"
+            }
+            crate::app::tool::Tool::Label => {
+                "Click to place label • Type text • Enter confirm • Esc cancel"
+            }
+            crate::app::tool::Tool::Measurements => "Click room to measure • Esc cancel",
+            crate::app::tool::Tool::Block => "Click to place instance • Esc cancel",
+            crate::app::tool::Tool::ConstructionLine => {
+                "Click first point • Click second point • Esc cancel"
+            }
+            crate::app::tool::Tool::ConstructionRay => {
+                "Click first point • Click second point • Esc cancel"
+            }
+            crate::app::tool::Tool::ConstructionCircle => {
+                "Click first point • Click second point • Esc cancel"
+            }
+            crate::app::tool::Tool::ConstructionArc => {
+                "Click first point • Click second point • Esc cancel"
+            }
+        };
+        ui.label(
+            egui::RichText::new(hint_text)
+                .small()
+                .color(SPEC.component.text.hint),
+        );
+        ui.separator();
+
         // Snap mode chips. The active ones are drawn in the marker colour of
         // their kind, so the bar and the canvas agree; clicking one toggles it,
         // exactly as its key does.
