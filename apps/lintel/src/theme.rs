@@ -2064,6 +2064,51 @@ impl ThemeSpec {
 /// The spec every widget reads: `SPEC.component.<group>.<token>`.
 pub const SPEC: ThemeSpec = ThemeSpec::LIGHT;
 
+// ============================================================================
+// Runtime theme mode (v0.22.0, T-225)
+// ============================================================================
+
+/// User-selectable theme mode. `System` follows the OS preference.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum ThemeMode {
+    Light,
+    Dark,
+    HighContrast,
+    System,
+}
+
+impl Default for ThemeMode {
+    fn default() -> Self {
+        ThemeMode::System
+    }
+}
+
+impl ThemeMode {
+    /// Human-readable label for UI display.
+    pub fn label(self) -> &'static str {
+        match self {
+            ThemeMode::Light => "Light",
+            ThemeMode::Dark => "Dark",
+            ThemeMode::HighContrast => "High Contrast",
+            ThemeMode::System => "System",
+        }
+    }
+
+    /// Resolve to a [`contrast::Theme`] for contrast checking or palette lookup.
+    pub fn to_contrast_theme(self) -> contrast::Theme {
+        match self {
+            ThemeMode::Light => contrast::Theme::Light,
+            ThemeMode::Dark => contrast::Theme::Dark,
+            ThemeMode::HighContrast => contrast::Theme::HighContrast,
+            ThemeMode::System => {
+                // System maps to Light for contrast checking (the runtime
+                // dark-mode query is handled by eframe's Visuals::dark_mode).
+                contrast::Theme::Light
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

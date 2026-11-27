@@ -17,6 +17,22 @@ pub enum Tool {
     Block,
 }
 
+/// All tools, in activity bar order.
+pub const ALL: [Tool; 12] = [
+    Tool::Select,
+    Tool::Wall,
+    Tool::Door,
+    Tool::Window,
+    Tool::Dimension,
+    Tool::Label,
+    Tool::Measurements,
+    Tool::ConstructionLine,
+    Tool::ConstructionRay,
+    Tool::ConstructionCircle,
+    Tool::ConstructionArc,
+    Tool::Block,
+];
+
 impl Tool {
     pub fn label(self) -> &'static str {
         match self {

@@ -3,8 +3,8 @@
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
 use crate::canvas::{
-    Draft, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes, View, entity_of,
-    resolve_snap, screen_to_world,
+    Draft, HoveredEntity, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes,
+    View, entity_of, resolve_snap, screen_to_world,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::InspectorDraft;
@@ -14,7 +14,7 @@ use lintel_core::{
     command::Command,
     document::Document,
     geom::{Bounds, Point2, Vec2},
-    ids::EntityId,
+    ids::{DimensionId, EntityId},
     join::{Hit, PlanGeometry},
 };
 
@@ -29,6 +29,10 @@ mod components;
 mod dimension_ui;
 mod inspector;
 mod layout;
+mod constraints_panel;
+mod layers;
+mod output;
+mod panels;
 mod release_notes;
 mod status_bar;
 #[cfg(test)]
@@ -82,6 +86,17 @@ pub struct LintelApp {
     pointer_world: Option<lintel_core::geom::Point2>,
     /// Currently selected block instance, if any.
     selected_block_instance: Option<BlockId>,
+    /// Dock state for the workbench shell (v0.22.0). `None` means "use default
+    /// layout" until the user rearranges panels.
+    dock_state: Option<egui_dock::Tree<panels::Panel>>,
+    /// Runtime theme mode (v0.22.0).
+    theme_mode: theme::ThemeMode,
+    /// Canvas hover hints state (v0.22.0).
+    canvas_hints: crate::canvas::CanvasHints,
+    /// Active sheet name (none means "Plan").
+    active_sheet: Option<String>,
+    /// Settings dialog open flag.
+    showing_settings: bool,
 }
 
 /// Project a pointer position onto a wall's centreline and return the
@@ -130,6 +145,11 @@ impl LintelApp {
             },
             pointer_world: None,
             selected_block_instance: None,
+            dock_state: None,
+            theme_mode: theme::ThemeMode::default(),
+            canvas_hints: crate::canvas::CanvasHints::default(),
+            active_sheet: None,
+            showing_settings: false,
         };
         // One quiet check at startup; it fails soft when offline and never
         // blocks the UI thread.
@@ -565,13 +585,335 @@ impl eframe::App for LintelApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let now = now_epoch_s();
 
-        // Use the new Shell::regions() pattern (T-005)
-        let _regions = crate::app::shell::regions(ui, self, now);
+        // Apply the runtime theme mode to the egui context (T-225).
+        self.apply_theme_mode(ui.ctx());
 
-        // Dialogs need a Ui to render; use a minimal CentralPanel for them
+        // Global keyboard shortcuts.
+        self.handle_global_shortcuts(ui);
+
+        // Workbench shell layout: activity bar | dock area | status bar.
+        egui::TopBottomPanel::top("editor_tabs").show(ui, |ui| {
+            self.editor_tabs(ui);
+        });
+
+        egui::SidePanel::left("activity_bar")
+            .resizable(false)
+            .default_width(48.0)
+            .show(ui, |ui| {
+                self.activity_bar(ui);
+            });
+
+        egui::CentralPanel::default().show(ui, |ui| {
+            self.dock_area(ui, now);
+        });
+
+        egui::TopBottomPanel::bottom("status_bar")
+            .resizable(false)
+            .default_height(28.0)
+            .show(ui, |ui| {
+                self.status_bar(ui, now);
+            });
+
+        // Dialogs need a Ui to render; they overlay on top of everything.
         egui::CentralPanel::default().show(ui, |ui| {
             self.dialogs(ui, now);
         });
+
+        // Command palette renders as a modal overlay on the context.
+        crate::command_palette::show(ui.ctx(), self, now);
+    }
+}
+
+impl LintelApp {
+    /// Apply the runtime theme mode to the egui context.
+    fn apply_theme_mode(&mut self, ctx: &egui::Context) {
+        let visuals = match self.theme_mode {
+            theme::ThemeMode::Light => egui::Visuals::light(),
+            theme::ThemeMode::Dark => egui::Visuals::dark(),
+            theme::ThemeMode::HighContrast => {
+                let mut v = egui::Visuals::high_contrast();
+                v.widgets.noninteractive.bg_fill = crate::theme::BASE_PAPER;
+                v.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, crate::theme::TEXT_PRIMARY);
+                v
+            }
+            theme::ThemeMode::System => {
+                if ctx.output(|o| o.platform_visuals.dark_mode) {
+                    egui::Visuals::dark()
+                } else {
+                    egui::Visuals::light()
+                }
+            }
+        };
+        ctx.set_visuals(visuals);
+    }
+
+    /// Handle global keyboard shortcuts (T-227: Ctrl+T theme cycle).
+    fn handle_global_shortcuts(&mut self, ui: &egui::Ui) {
+        let input = ui.input(|i| i.clone());
+        if input.modifiers.command && input.key_pressed(egui::Key::T) {
+            self.theme_mode = match self.theme_mode {
+                theme::ThemeMode::Light => theme::ThemeMode::Dark,
+                theme::ThemeMode::Dark => theme::ThemeMode::HighContrast,
+                theme::ThemeMode::HighContrast => theme::ThemeMode::System,
+                theme::ThemeMode::System => theme::ThemeMode::Light,
+            };
+        }
+    }
+
+    /// Editor tabs: Plan (pinned) + Sheet tabs.
+    fn editor_tabs(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+
+            // Plan tab — always present, pinned.
+            let plan_active = self.active_sheet().map_or(true, |s| s == "Plan");
+            let plan_btn = egui::SelectableLabel::new(plan_active, "Plan");
+            if ui.add(plan_btn).clicked() {
+                self.active_sheet = Some("Plan".to_string());
+            }
+            ui.separator();
+
+            // Sheet tabs from the drawing set.
+            for sheet in self.drawing_set_sheets() {
+                let active = self.active_sheet().as_deref() == Some(sheet.as_str());
+                let resp = ui
+                    .add(egui::SelectableLabel::new(active, sheet.as_str()))
+                    .on_hover_ui(|ui| {
+                        ui.label("Switch to sheet");
+                        ui.button("×").on_hover_text("Close sheet");
+                    });
+                if resp.clicked() {
+                    self.active_sheet = Some(sheet.clone());
+                }
+                // Close button on hover.
+                if resp.hovered() {
+                    if ui.button("×").clicked() {
+                        // TODO: remove sheet from drawing set
+                    }
+                }
+                ui.separator();
+            }
+
+            // + button: add new sheet.
+            if ui.button("+").clicked() {
+                // TODO: add new sheet to drawing set
+            }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(egui::RichText::new("Lintel v").small());
+                ui.label(egui::RichText::new(env!("CARGO_PKG_VERSION")).small().monospace());
+            });
+        });
+        ui.separator();
+    }
+
+    /// Activity bar: tool icons + panel toggles.
+    fn activity_bar(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = 8.0;
+
+            // Tool icons.
+            for tool in crate::app::tool::Tool::ALL {
+                let selected = self.tool == tool;
+                let btn = crate::components::buttons::StyledButton::new(tool.label())
+                    .role(tool.role())
+                    .size(crate::components::buttons::ButtonSize::Sm)
+                    .selected(selected);
+                if ui.add(btn).on_hover_text(format!("{} ({})", tool.label(), tool.shortcut())).clicked() {
+                    self.tool = tool;
+                }
+            }
+
+            ui.separator();
+
+            // Panel toggles.
+            for panel in panels::Panel::ALL {
+                let visible = self.panel_visible(panel);
+                let btn = crate::components::buttons::StyledButton::new(panel.title())
+                    .role(crate::components::buttons::ButtonRole::Ghost)
+                    .size(crate::components::buttons::ButtonSize::Sm)
+                    .selected(visible);
+                if ui.add(btn).on_hover_text(panel.title()).clicked() {
+                    self.toggle_panel(panel);
+                }
+            }
+
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                if ui.button("⚙").on_hover_text("Settings").clicked() {
+                    self.showing_settings = true;
+                }
+            });
+        });
+    }
+
+    /// Dock area: renders all dockable panels.
+    fn dock_area(&mut self, ui: &mut egui::Ui, now: i64) {
+        let mut dock_state = self.dock_state.take().unwrap_or_else(panels::default_tree);
+
+        egui_dock::DockArea::new(&mut dock_state)
+            .show_inside(ui, &mut panels::TabViewer { app: self, now });
+
+        self.dock_state = Some(dock_state);
+    }
+
+    /// Render the canvas inside a dock panel: walls, openings, dimensions,
+    /// snap markers, empty state, and canvas hints.
+    fn canvas_dock(&mut self, ui: &mut egui::Ui, now: i64) {
+        let level = self
+            .doc
+            .project()
+            .active_level()
+            .expect("level");
+        let geometry = PlanGeometry::of_level(level);
+        let summary = crate::plan_summary(self.doc.project());
+
+        let (resp, rect) = Canvas::show(
+            ui,
+            &self.view,
+            &geometry,
+            &self.selection,
+            &self.snap_modes,
+            &self.snap,
+            &self.draft,
+            &summary,
+            self.band.as_ref(),
+        );
+
+        let dimension_painter = ui.painter_at(rect);
+        crate::dimension_ui::render_dimensions(
+            &dimension_painter,
+            rect,
+            &self.view,
+            &geometry,
+            &self.selection,
+            level,
+        );
+
+        // Empty state.
+        if geometry.walls.is_empty() && !self.draft.active {
+            let msg1 = "Pick the Wall tool (W) and click twice to draw a wall";
+            let msg2 = "Then place doors and windows from the toolbar";
+            let center = rect.center();
+            dimension_painter.text(
+                center,
+                egui::Align2::CENTER_CENTER,
+                msg1,
+                egui::FontId::proportional(16.0),
+                SPEC.component.canvas.text,
+            );
+            dimension_painter.text(
+                center + egui::Vec2::new(0.0, 22.0),
+                egui::Align2::CENTER_CENTER,
+                msg2,
+                egui::FontId::proportional(16.0),
+                SPEC.component.canvas.text,
+            );
+        }
+
+        // Highlight selected block instance.
+        if let Some(id) = self.selected_block_instance
+            && let Some(instance) = level.block_instance(id)
+        {
+            let def = level.block_def(instance.block_id);
+            let mut min_x = f64::INFINITY;
+            let mut min_y = f64::INFINITY;
+            let mut max_x = f64::NEG_INFINITY;
+            let mut max_y = f64::NEG_INFINITY;
+            let mut any = false;
+            if let Some(def) = def {
+                for local in def.local_points() {
+                    let p = instance.transform_point(local);
+                    min_x = min_x.min(p.x);
+                    min_y = min_y.min(p.y);
+                    max_x = max_x.max(p.x);
+                    max_y = max_y.max(p.y);
+                    any = true;
+                }
+            }
+            if !any {
+                const HALF: f64 = 250.0;
+                min_x = instance.param.x - HALF;
+                min_y = instance.param.y - HALF;
+                max_x = instance.param.x + HALF;
+                max_y = instance.param.y + HALF;
+            }
+            let a = screen_to_world(&self.view, rect, Point2::new(min_x, min_y));
+            let b = screen_to_world(&self.view, rect, Point2::new(max_x, max_y));
+            let r = egui::Rect::from_two_pos(a, b);
+            let painter = ui.painter_at(rect);
+            painter.rect_stroke(
+                r,
+                0.0,
+                egui::Stroke::new(2.0, SPEC.component.canvas.block_instance_stroke),
+                egui::StrokeKind::Outside,
+            );
+        }
+
+        self.pointer_world = resp.pointer_world;
+        self.last_snap = resp.snap;
+        self.handle_canvas_input(ui, resp, rect, now);
+
+        // Canvas hints (T-228/T-229).
+        let hovered = resp.pointer_world.and_then(|world| {
+            geometry
+                .hit_test(world, self.snap.anchor_tolerance)
+                .map(|hit| match hit {
+                    Hit::Wall(id) => HoveredEntity::Wall(id),
+                    Hit::Opening(id) => HoveredEntity::Opening(id),
+                    Hit::Dimension(id) => HoveredEntity::Dimension(id),
+                    Hit::Label(_) => HoveredEntity::AnchorGrip(DimensionId(0)), // placeholder
+                })
+        });
+        let dt = ui.input(|i| i.predicted_dt);
+        self.canvas_hints.update(hovered, dt);
+        self.canvas_hints.render(ui, resp.pointer_world, &self.view, rect);
+    }
+
+    /// Status bar: coordinates, snap chips, selection, zoom, theme.
+    fn status_bar(&mut self, ui: &mut egui::Ui, now: i64) {
+        crate::status_bar::render(ui, self, now);
+    }
+
+    /// Active sheet name (none means "Plan").
+    fn active_sheet(&self) -> Option<&str> {
+        self.active_sheet.as_deref()
+    }
+
+    /// Drawing set sheet names (placeholder — full sheet management is a later slice).
+    fn drawing_set_sheets(&self) -> Vec<String> {
+        vec!["Plan".to_string()]
+    }
+
+    /// Whether a panel is visible in the dock state.
+    fn panel_visible(&self, panel: panels::Panel) -> bool {
+        self.dock_state
+            .as_ref()
+            .map(|tree| {
+                let mut found = false;
+                tree.each_node(&mut |_, nodes| {
+                    if nodes.tabs.contains(&panel) {
+                        found = true;
+                    }
+                });
+                found
+            })
+            .unwrap_or(true)
+    }
+
+    /// Toggle a panel's visibility in the dock state.
+    fn toggle_panel(&mut self, panel: panels::Panel) {
+        if let Some(tree) = self.dock_state.as_mut() {
+            // Simple approach: remove the panel if visible, add it back if hidden.
+            let mut to_remove = Vec::new();
+            tree.each_node_mut(&mut |_idx, nodes| {
+                if nodes.tabs.contains(&panel) {
+                    to_remove.push(nodes.tabs.iter().position(|t| *t == panel).unwrap());
+                }
+            });
+            // Not implemented: toggling requires tree manipulation.
+            // For now, just note the intent.
+            let _ = to_remove;
+        }
     }
 }
 
