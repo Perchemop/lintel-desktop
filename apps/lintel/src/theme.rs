@@ -1293,6 +1293,7 @@ pub const SPACING_SM: f32 = SPACING_BASE;
 /// Medium spacing: 8pt (2× base).
 pub const SPACING_MD: f32 = SPACING_BASE * 2.0;
 /// Large spacing: 12pt (3× base).
+#[allow(dead_code)]
 pub const SPACING_LG: f32 = SPACING_BASE * 3.0;
 /// Extra-large spacing: 16pt (4× base).
 #[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
@@ -2080,6 +2081,7 @@ pub enum ThemeMode {
 
 impl ThemeMode {
     /// Human-readable label for UI display.
+    #[allow(dead_code)]
     pub fn label(self) -> &'static str {
         match self {
             ThemeMode::Light => "Light",
@@ -2090,6 +2092,7 @@ impl ThemeMode {
     }
 
     /// Resolve to a [`contrast::Theme`] for contrast checking or palette lookup.
+    #[allow(dead_code)]
     pub fn to_contrast_theme(self) -> contrast::Theme {
         match self {
             ThemeMode::Light => contrast::Theme::Light,

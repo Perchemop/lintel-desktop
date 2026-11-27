@@ -19,6 +19,7 @@ pub enum Panel {
 }
 
 /// All panels, in activity bar toggle order.
+#[allow(dead_code)]
 pub const ALL: [Panel; 5] = [
     Panel::Inspector,
     Panel::Layers,
@@ -40,6 +41,7 @@ impl Panel {
     }
 
     /// Stable panel id for serialization.
+    #[allow(dead_code)]
     pub fn id(self) -> &'static str {
         match self {
             Panel::Inspector => "inspector",

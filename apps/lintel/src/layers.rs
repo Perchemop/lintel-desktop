@@ -6,6 +6,7 @@
 use crate::theme::SPEC;
 use eframe::egui;
 
+#[allow(dead_code)]
 pub fn layers_panel(ui: &mut egui::Ui, _app: &mut crate::LintelApp, _now: i64) {
     ui.vertical(|ui| {
         ui.heading("Layers");
