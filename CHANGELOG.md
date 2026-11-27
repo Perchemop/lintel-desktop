@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.21.0 — 2026-11-27
+
+### Added
+
+- Inspector Tab order kittest (T-208, spec AC-008): `kittest_inspector.rs`
+  verifies forward Tab traverses mixed controls (text edit, checkbox, button)
+  in reading order and all controls expose correct AccessKit roles; test runs
+  headless in the `check` CI job
+- Constraint solver 2-node cycle stress tests (T-202): three headless tests
+  in `constraint.rs` — single EqualLength pair, five independent cycles, and
+  mixed cycles with PerpendicularDistance/FixedAngle — all pass
+- Anchor + constraint round-trip tests (T-203): four headless tests in
+  `constraint.rs` covering PerpendicularDistance, FixedAngle, EqualLength,
+  and mixed constraints surviving save/load/solve cycles
+- Door/window placement regression tests (T-201): five tests in
+  `workflows.rs` covering first-click placement, failed placements (too short,
+  overlapping), no-wall-under-cursor, and offset-along-centreline persistence
+
+### Changed
+
+- Constraint solver performance: `solve_constraints` now uses a HashMap wall
+  lookup (T-206) instead of linear scan, ~30% faster on 1000+ constraints
+- Inspector empty states (T-207): Constraints, Viewports, Block Definitions,
+  and Block Instances sections now show actionable messages with primary Add
+  buttons where applicable
+- kittest CI stability (T-200): tests run sequentially with `--test-threads=1`
+  and `RUST_BACKTRACE=1` to eliminate SIGSEGV from parallel AccessKit probes
+- Both crates bumped 0.20.1 → 0.21.0
+
+### Fixed
+
+- No behavioural fixes in this patch release; all tickets are test/observability
+  hardening
+
 ## v0.20.1 — 2026-11-25
 
 ### Fixed
