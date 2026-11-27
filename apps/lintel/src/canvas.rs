@@ -1206,11 +1206,8 @@ impl CanvasHints {
         };
 
         let hint_pos = pointer + egui::Vec2::new(12.0, 12.0);
-        let hint_rect = egui::Rect::from_min_size(
-            hint_pos,
-            egui::vec2(120.0, 24.0),
-        );
-        let hint_rect = hint_rect.intersect(rect);
+        let hint_rect = egui::Rect::from_min_size(hint_pos, egui::vec2(120.0, 24.0))
+            .intersect(rect);
 
         let alpha = self.alpha();
         let bg = egui::Color32::from_black_alpha((alpha * 200.0) as u8);
@@ -1221,7 +1218,12 @@ impl CanvasHints {
         );
 
         ui.painter().rect_filled(hint_rect, 4.0, bg);
-        ui.painter().rect_stroke(hint_rect, 4.0, egui::Stroke::new(1.0, fg), egui::StrokeKind::Inside);
+        ui.painter().rect_stroke(
+            hint_rect,
+            4.0,
+            egui::Stroke::new(1.0, fg),
+            egui::StrokeKind::Inside,
+        );
         ui.painter().text(
             hint_rect.center(),
             egui::Align2::CENTER_CENTER,

@@ -28,11 +28,11 @@ mod app;
 mod canvas;
 mod command_palette;
 mod components;
+mod constraints_panel;
 mod dimension_ui;
 mod inspector;
-mod layout;
-mod constraints_panel;
 mod layers;
+mod layout;
 mod output;
 mod panels;
 mod release_notes;
@@ -635,7 +635,8 @@ impl LintelApp {
             theme::ThemeMode::HighContrast => {
                 let mut v = egui::Visuals::dark();
                 v.widgets.noninteractive.bg_fill = crate::theme::BASE_PAPER;
-                v.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, crate::theme::TEXT_PRIMARY);
+                v.widgets.noninteractive.fg_stroke =
+                    egui::Stroke::new(1.0, crate::theme::TEXT_PRIMARY);
                 v
             }
             theme::ThemeMode::System => {
@@ -701,7 +702,11 @@ impl LintelApp {
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(egui::RichText::new("Lintel v").small());
-                ui.label(egui::RichText::new(env!("CARGO_PKG_VERSION")).small().monospace());
+                ui.label(
+                    egui::RichText::new(env!("CARGO_PKG_VERSION"))
+                        .small()
+                        .monospace(),
+                );
             });
         });
         ui.separator();
