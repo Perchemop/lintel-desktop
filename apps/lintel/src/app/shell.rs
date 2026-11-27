@@ -2,6 +2,11 @@
 //!
 //! Pattern copied from `spaceui` `Theme::install()` returning `Regions`
 //! (spec v0.20.0 AC-06, T-005). All colours/spacing from theme tokens.
+//!
+//! #![allow(dead_code)] — shell functions are no longer called from main.rs
+//! (v0.22.0 workbench shell replaces the layout), but are kept for reference.
+
+#![allow(dead_code)]
 
 use crate::app::tool::Tool;
 use crate::canvas::{Canvas, CanvasResponse, SnapModeKind, world_to_screen};

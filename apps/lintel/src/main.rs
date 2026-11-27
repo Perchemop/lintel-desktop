@@ -1,6 +1,11 @@
 //! Lintel desktop shell — eframe/egui GUI wired to `lintel-core` commands.
 //! Every user interaction goes through a `Command`; the core model updates
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
+//!
+//! #![allow(dead_code)] — v0.22.0 workbench shell replaces the old layout
+//! incrementally; shell.rs methods and app helpers are kept for reference.
+
+#![allow(dead_code)]
 
 use crate::canvas::{
     Canvas, Draft, HoveredEntity, Selection, SelectionBand, SelectionModeKind, SnapModeKind,
