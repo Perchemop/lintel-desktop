@@ -1209,7 +1209,8 @@ impl CanvasHints {
         let hint_rect = egui::Rect::from_min_size(
             hint_pos,
             egui::vec2(120.0, 24.0),
-        ).clamp_to_rect(rect);
+        );
+        let hint_rect = hint_rect.intersect(rect);
 
         let alpha = self.alpha();
         let bg = egui::Color32::from_black_alpha((alpha * 200.0) as u8);

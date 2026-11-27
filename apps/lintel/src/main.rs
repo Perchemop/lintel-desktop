@@ -637,11 +637,10 @@ impl LintelApp {
                 v
             }
             theme::ThemeMode::System => {
-                if ctx.style().visuals.dark_mode {
-                    egui::Visuals::dark()
-                } else {
-                    egui::Visuals::light()
-                }
+                // egui 0.36 doesn't expose platform dark-mode detection via
+                // Context::style(); default to light and let the user switch
+                // manually via the theme selector.
+                egui::Visuals::light()
             }
         };
         ctx.set_visuals(visuals);
