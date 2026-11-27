@@ -1116,7 +1116,7 @@ pub enum FadeState {
     Out(f64),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HoveredEntity {
     Wall(lintel_core::ids::WallId),
     Opening(lintel_core::ids::OpeningId),

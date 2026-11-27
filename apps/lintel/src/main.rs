@@ -3,12 +3,15 @@
 //! headlessly, and the UI re-renders from the new state (addendum K.3).
 
 use crate::canvas::{
-    Draft, HoveredEntity, Selection, SelectionBand, SelectionModeKind, SnapModeKind, SnapModes,
-    View, entity_of, resolve_snap, screen_to_world,
+    Canvas, Draft, HoveredEntity, Selection, SelectionBand, SelectionModeKind, SnapModeKind,
+    SnapModes, View, entity_of, resolve_snap, screen_to_world,
 };
 use crate::command_palette::CommandPalette;
 use crate::inspector::InspectorDraft;
+use crate::panels::{Panel, PanelVisibility};
+use crate::theme::SPEC;
 use eframe::egui;
+use eframe::egui::{SidePanel, TopBottomPanel};
 use lintel_core::{
     BlockId,
     command::Command,
@@ -86,9 +89,8 @@ pub struct LintelApp {
     pointer_world: Option<lintel_core::geom::Point2>,
     /// Currently selected block instance, if any.
     selected_block_instance: Option<BlockId>,
-    /// Dock state for the workbench shell (v0.22.0). `None` means "use default
-    /// layout" until the user rearranges panels.
-    dock_state: Option<egui_dock::Tree<panels::Panel>>,
+    /// Panel visibility state for the workbench shell (v0.22.0).
+    panel_visibility: PanelVisibility,
     /// Runtime theme mode (v0.22.0).
     theme_mode: theme::ThemeMode,
     /// Canvas hover hints state (v0.22.0).
@@ -145,7 +147,7 @@ impl LintelApp {
             },
             pointer_world: None,
             selected_block_instance: None,
-            dock_state: None,
+            panel_visibility: PanelVisibility::all_visible(),
             theme_mode: theme::ThemeMode::default(),
             canvas_hints: crate::canvas::CanvasHints::default(),
             active_sheet: None,
@@ -591,12 +593,12 @@ impl eframe::App for LintelApp {
         // Global keyboard shortcuts.
         self.handle_global_shortcuts(ui);
 
-        // Workbench shell layout: activity bar | dock area | status bar.
-        egui::TopBottomPanel::top("editor_tabs").show(ui, |ui| {
+        // Workbench shell layout.
+        TopBottomPanel::top("editor_tabs").show(ui, |ui| {
             self.editor_tabs(ui);
         });
 
-        egui::SidePanel::left("activity_bar")
+        SidePanel::left("activity_bar")
             .resizable(false)
             .default_width(48.0)
             .show(ui, |ui| {
@@ -604,20 +606,18 @@ impl eframe::App for LintelApp {
             });
 
         egui::CentralPanel::default().show(ui, |ui| {
-            self.dock_area(ui, now);
+            self.canvas_panel(ui, now);
         });
 
-        egui::TopBottomPanel::bottom("status_bar")
+        TopBottomPanel::bottom("status_bar")
             .resizable(false)
             .default_height(28.0)
             .show(ui, |ui| {
                 self.status_bar(ui, now);
             });
 
-        // Dialogs need a Ui to render; they overlay on top of everything.
-        egui::CentralPanel::default().show(ui, |ui| {
-            self.dialogs(ui, now);
-        });
+        // Dialogs render as floating windows on top of everything.
+        self.dialogs(ui, now);
 
         // Command palette renders as a modal overlay on the context.
         crate::command_palette::show(ui.ctx(), self, now);
@@ -667,8 +667,8 @@ impl LintelApp {
 
             // Plan tab — always present, pinned.
             let plan_active = self.active_sheet().map_or(true, |s| s == "Plan");
-            let plan_btn = egui::SelectableLabel::new(plan_active, "Plan");
-            if ui.add(plan_btn).clicked() {
+            let plan_resp = egui::selectable_label(ui, plan_active, "Plan");
+            if plan_resp.clicked() {
                 self.active_sheet = Some("Plan".to_string());
             }
             ui.separator();
@@ -676,20 +676,9 @@ impl LintelApp {
             // Sheet tabs from the drawing set.
             for sheet in self.drawing_set_sheets() {
                 let active = self.active_sheet().as_deref() == Some(sheet.as_str());
-                let resp = ui
-                    .add(egui::SelectableLabel::new(active, sheet.as_str()))
-                    .on_hover_ui(|ui| {
-                        ui.label("Switch to sheet");
-                        ui.button("×").on_hover_text("Close sheet");
-                    });
-                if resp.clicked() {
+                let sheet_resp = egui::selectable_label(ui, active, sheet.as_str());
+                if sheet_resp.clicked() {
                     self.active_sheet = Some(sheet.clone());
-                }
-                // Close button on hover.
-                if resp.hovered() {
-                    if ui.button("×").clicked() {
-                        // TODO: remove sheet from drawing set
-                    }
                 }
                 ui.separator();
             }
@@ -727,7 +716,7 @@ impl LintelApp {
             ui.separator();
 
             // Panel toggles.
-            for panel in panels::Panel::ALL {
+            for panel in Panel::ALL {
                 let visible = self.panel_visible(panel);
                 let btn = crate::components::buttons::StyledButton::new(panel.title())
                     .role(crate::components::buttons::ButtonRole::Ghost)
@@ -746,19 +735,9 @@ impl LintelApp {
         });
     }
 
-    /// Dock area: renders all dockable panels.
-    fn dock_area(&mut self, ui: &mut egui::Ui, now: i64) {
-        let mut dock_state = self.dock_state.take().unwrap_or_else(panels::default_tree);
-
-        egui_dock::DockArea::new(&mut dock_state)
-            .show_inside(ui, &mut panels::TabViewer { app: self, now });
-
-        self.dock_state = Some(dock_state);
-    }
-
-    /// Render the canvas inside a dock panel: walls, openings, dimensions,
+    /// Render the canvas in the central panel: walls, openings, dimensions,
     /// snap markers, empty state, and canvas hints.
-    fn canvas_dock(&mut self, ui: &mut egui::Ui, now: i64) {
+    fn canvas_panel(&mut self, ui: &mut egui::Ui, now: i64) {
         let level = self
             .doc
             .project()
@@ -837,8 +816,8 @@ impl LintelApp {
                 max_x = instance.param.x + HALF;
                 max_y = instance.param.y + HALF;
             }
-            let a = screen_to_world(&self.view, rect, Point2::new(min_x, min_y));
-            let b = screen_to_world(&self.view, rect, Point2::new(max_x, max_y));
+            let a = screen_to_world(&self.view, rect, egui::Pos2::new(min_x as f32, min_y as f32));
+            let b = screen_to_world(&self.view, rect, egui::Pos2::new(max_x as f32, max_y as f32));
             let r = egui::Rect::from_two_pos(a, b);
             let painter = ui.painter_at(rect);
             painter.rect_stroke(
@@ -861,12 +840,13 @@ impl LintelApp {
                     Hit::Wall(id) => HoveredEntity::Wall(id),
                     Hit::Opening(id) => HoveredEntity::Opening(id),
                     Hit::Dimension(id) => HoveredEntity::Dimension(id),
-                    Hit::Label(_) => HoveredEntity::AnchorGrip(DimensionId(0)), // placeholder
+                    Hit::Label(_) => HoveredEntity::AnchorGrip(DimensionId(0)),
                 })
         });
-        let dt = ui.input(|i| i.predicted_dt);
+        let dt = ui.input(|i| i.predicted_dt) as f64;
         self.canvas_hints.update(hovered, dt);
-        self.canvas_hints.render(ui, resp.pointer_world, &self.view, rect);
+        let pointer_pos = resp.pointer_world.map(|p| egui::Pos2::new(p.x as f32, p.y as f32));
+        self.canvas_hints.render(ui, pointer_pos, &self.view, rect);
     }
 
     /// Status bar: coordinates, snap chips, selection, zoom, theme.
@@ -884,36 +864,15 @@ impl LintelApp {
         vec!["Plan".to_string()]
     }
 
-    /// Whether a panel is visible in the dock state.
-    fn panel_visible(&self, panel: panels::Panel) -> bool {
-        self.dock_state
-            .as_ref()
-            .map(|tree| {
-                let mut found = false;
-                tree.each_node(&mut |_, nodes| {
-                    if nodes.tabs.contains(&panel) {
-                        found = true;
-                    }
-                });
-                found
-            })
-            .unwrap_or(true)
+    /// Whether a panel is visible (from panel visibility state).
+    fn panel_visible(&self, panel: Panel) -> bool {
+        self.panel_visibility.is_visible(panel)
     }
 
-    /// Toggle a panel's visibility in the dock state.
-    fn toggle_panel(&mut self, panel: panels::Panel) {
-        if let Some(tree) = self.dock_state.as_mut() {
-            // Simple approach: remove the panel if visible, add it back if hidden.
-            let mut to_remove = Vec::new();
-            tree.each_node_mut(&mut |_idx, nodes| {
-                if nodes.tabs.contains(&panel) {
-                    to_remove.push(nodes.tabs.iter().position(|t| *t == panel).unwrap());
-                }
-            });
-            // Not implemented: toggling requires tree manipulation.
-            // For now, just note the intent.
-            let _ = to_remove;
-        }
+    /// Toggle a panel's visibility.
+    fn toggle_panel(&mut self, panel: Panel) {
+        let visible = self.panel_visibility.is_visible(panel);
+        self.panel_visibility.set_visible(panel, !visible);
     }
 }
 
