@@ -1293,6 +1293,7 @@ pub const SPACING_SM: f32 = SPACING_BASE;
 /// Medium spacing: 8pt (2× base).
 pub const SPACING_MD: f32 = SPACING_BASE * 2.0;
 /// Large spacing: 12pt (3× base).
+#[allow(dead_code)]
 pub const SPACING_LG: f32 = SPACING_BASE * 3.0;
 /// Extra-large spacing: 16pt (4× base).
 #[allow(dead_code)] // token registry: consumed by theme_tiers assertions, pending shell adoption (D-035)
@@ -2063,6 +2064,48 @@ impl ThemeSpec {
 
 /// The spec every widget reads: `SPEC.component.<group>.<token>`.
 pub const SPEC: ThemeSpec = ThemeSpec::LIGHT;
+
+// ============================================================================
+// Runtime theme mode (v0.22.0, T-225)
+// ============================================================================
+
+/// User-selectable theme mode. `System` follows the OS preference.
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThemeMode {
+    Light,
+    Dark,
+    HighContrast,
+    #[default]
+    System,
+}
+
+impl ThemeMode {
+    /// Human-readable label for UI display.
+    #[allow(dead_code)]
+    pub fn label(self) -> &'static str {
+        match self {
+            ThemeMode::Light => "Light",
+            ThemeMode::Dark => "Dark",
+            ThemeMode::HighContrast => "High Contrast",
+            ThemeMode::System => "System",
+        }
+    }
+
+    /// Resolve to a [`contrast::Theme`] for contrast checking or palette lookup.
+    #[allow(dead_code)]
+    pub fn to_contrast_theme(self) -> contrast::Theme {
+        match self {
+            ThemeMode::Light => contrast::Theme::Light,
+            ThemeMode::Dark => contrast::Theme::Dark,
+            ThemeMode::HighContrast => contrast::Theme::HighContrast,
+            ThemeMode::System => {
+                // System maps to Light for contrast checking (the runtime
+                // dark-mode query is handled by eframe's Visuals::dark_mode).
+                contrast::Theme::Light
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

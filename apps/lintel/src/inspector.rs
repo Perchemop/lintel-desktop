@@ -1,6 +1,10 @@
 //! Right-hand inspector: properties of the selected element plus global
 //! view controls. All edits flow through `lintel_core::Command` values
 //! returned here and applied by the shell.
+//!
+//! #![allow(dead_code)] — inspector functions are called from shell.rs which
+//! is no longer the main layout path (v0.22.0 workbench shell replaces it
+//! incrementally).
 
 use crate::canvas::Selection;
 use crate::theme::SPEC;
@@ -1150,6 +1154,25 @@ fn opening_fields(
     }
 
     command
+}
+
+/// Dock-panel wrapper for the Inspector content (v0.22.0, T-222).
+///
+/// Extracts the fields the shell needs from `app` and delegates to
+/// [`inspector`], applying any returned `Command` to the document.
+pub fn inspector_dock(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) {
+    let cmd = inspector(
+        ui,
+        &app.doc,
+        &app.selection,
+        &mut app.snap,
+        &mut app.inspector_draft,
+        app.tool == crate::app::tool::Tool::Measurements,
+        app.selected_block_instance,
+    );
+    if let Some(cmd) = cmd {
+        let _ = app.doc.apply(cmd, now);
+    }
 }
 
 fn dimension_fields(

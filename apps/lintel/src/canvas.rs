@@ -1103,6 +1103,140 @@ fn paint_opening(
     }
 }
 
+/// Canvas hover hints (v0.22.0, T-228).
+///
+/// Tracks which entity is under the pointer and renders a small tooltip-style
+/// hint near the cursor. The hint fades in/out and respects reduced-motion.
+#[derive(Debug, Default, Clone, Copy)]
+pub enum FadeState {
+    #[default]
+    Hidden,
+    In(f64),
+    Visible,
+    Out(f64),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HoveredEntity {
+    Wall(lintel_core::ids::WallId),
+    Opening(lintel_core::ids::OpeningId),
+    Dimension(lintel_core::ids::DimensionId),
+    AnchorGrip(lintel_core::ids::DimensionId),
+}
+
+/// State for on-canvas hover hints.
+#[derive(Debug, Default)]
+pub struct CanvasHints {
+    hovered_entity: Option<HoveredEntity>,
+    hints_enabled: bool,
+    fade_state: FadeState,
+}
+
+impl CanvasHints {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Update the fade animation based on what is currently hovered.
+    pub fn update(&mut self, hovered: Option<HoveredEntity>, dt: f64) {
+        let changed = self.hovered_entity != hovered;
+        self.hovered_entity = hovered;
+
+        match (
+            &mut self.fade_state,
+            changed,
+            self.hints_enabled && hovered.is_some(),
+        ) {
+            (FadeState::Hidden, false, false) => {}
+            (FadeState::Hidden, _, true) => {
+                self.fade_state = FadeState::In(0.0);
+            }
+            (FadeState::In(t), _, true) => {
+                *t += dt;
+                if *t >= 0.15 {
+                    self.fade_state = FadeState::Visible;
+                }
+            }
+            (FadeState::Visible, _, true) => {}
+            (_, _, false) => match self.fade_state {
+                FadeState::Hidden => {}
+                _ => {
+                    self.fade_state = FadeState::Out(0.0);
+                }
+            },
+            (FadeState::Out(t), _, _) => {
+                *t += dt;
+                if *t >= 0.30 {
+                    self.fade_state = FadeState::Hidden;
+                }
+            }
+        }
+    }
+
+    /// Current alpha value (0.0 = hidden, 1.0 = fully visible).
+    pub fn alpha(&self) -> f32 {
+        match self.fade_state {
+            FadeState::Hidden => 0.0,
+            FadeState::In(t) => (t / 0.15).clamp(0.0, 1.0) as f32,
+            FadeState::Visible => 1.0,
+            FadeState::Out(t) => (1.0 - (t / 0.30)).clamp(0.0, 1.0) as f32,
+        }
+    }
+
+    /// Render the hint near the cursor if alpha > 0.
+    pub fn render(
+        &self,
+        ui: &mut egui::Ui,
+        pointer: Option<egui::Pos2>,
+        _view: &crate::canvas::View,
+        rect: egui::Rect,
+    ) {
+        if self.alpha() == 0.0 || !self.hints_enabled {
+            return;
+        }
+
+        let Some(pointer) = pointer else {
+            return;
+        };
+
+        let text = match self.hovered_entity {
+            Some(HoveredEntity::Wall(_)) => "Wall".to_string(),
+            Some(HoveredEntity::Opening(_)) => "Opening".to_string(),
+            Some(HoveredEntity::Dimension(_)) => "Dimension".to_string(),
+            Some(HoveredEntity::AnchorGrip(_)) => "Anchor grip".to_string(),
+            None => return,
+        };
+
+        let hint_pos = pointer + egui::Vec2::new(12.0, 12.0);
+        let hint_rect =
+            egui::Rect::from_min_size(hint_pos, egui::vec2(120.0, 24.0)).intersect(rect);
+
+        let alpha = self.alpha();
+        let bg = egui::Color32::from_black_alpha((alpha * 200.0) as u8);
+        let fg = egui::Color32::from_rgb(
+            (255.0 * alpha) as u8,
+            (255.0 * alpha) as u8,
+            (255.0 * alpha) as u8,
+        );
+
+        ui.painter().rect_filled(hint_rect, 4.0, bg);
+        ui.painter().rect_stroke(
+            hint_rect,
+            4.0,
+            egui::Stroke::new(1.0, fg),
+            egui::StrokeKind::Inside,
+        );
+        ui.painter().text(
+            hint_rect.center(),
+            egui::Align2::CENTER_CENTER,
+            &text,
+            egui::FontId::proportional(11.0),
+            fg,
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

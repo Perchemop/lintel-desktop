@@ -28,6 +28,9 @@ image = "0.25"
 # Tabler, Phosphor or any packaged icon set (spec v0.20.0 AC-05, D-034).
 resvg = "0.45"
 
+# JSON serialisation for dock state persistence (T-223, deferred)
+# serde_json = "1"
+
 [dev-dependencies]
 # AccessKit / snapshot testing harness (guide II.27.12 / K.7). The `wgpu`
 # feature adds the software/GPU test renderer that `Harness::render()` needs
