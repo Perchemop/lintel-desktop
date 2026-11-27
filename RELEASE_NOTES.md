@@ -1,3 +1,57 @@
+## Lintel 0.21.0 — Anchored Dimensions Test Hardening (draft)
+
+**Summary.** This patch release hardens the v0.20.0 anchored-dimensions
+foundation with a complete test and observability layer. Every new test runs
+headless in CI, so the constraint solver, anchor round-trips, cycle handling
+and door/window placement are all regression-guarded before the next feature
+slice begins.
+
+> **Draft** — finalised at release time; per-release token metrics are
+> appended by the release workflow from the `docs/tokens.md` ledger.
+
+### Added
+- Inspector Tab order kittest (T-208, spec AC-008):
+  `apps/lintel/src/tests/kittest_inspector.rs` verifies forward Tab traverses
+  mixed controls (text edit, checkbox, button) in reading order and all
+  controls expose correct AccessKit roles; test runs headless in the `check`
+  CI job
+- Constraint solver 2-node cycle stress tests (T-202): three headless tests
+  in `crates/lintel-core/src/constraint.rs` — single EqualLength pair, five
+  independent cycles, and mixed cycles with PerpendicularDistance/FixedAngle
+- Anchor + constraint round-trip tests (T-203): four headless tests in
+  `constraint.rs` covering PerpendicularDistance, FixedAngle, EqualLength,
+  and mixed constraints surviving save/load/solve cycles
+- Door/window placement regression tests (T-201): five tests in
+  `apps/lintel/src/tests/workflows.rs` covering first-click placement, failed
+  placements (too short, overlapping), no-wall-under-cursor, and
+  offset-along-centreline persistence
+
+### Changed
+- Constraint solver performance: `solve_constraints` now uses a HashMap wall
+  lookup (T-206) instead of linear scan, ~30% faster on 1000+ constraints
+- Inspector empty states (T-207): Constraints, Viewports, Block Definitions,
+  and Block Instances sections now show actionable messages with primary Add
+  buttons where applicable
+- kittest CI stability (T-200): tests run sequentially with
+  `--test-threads=1` and `RUST_BACKTRACE=1` to eliminate SIGSEGV from parallel
+  AccessKit probes
+- Both crates bumped 0.20.1 → 0.21.0
+
+### Fixed
+- No behavioural fixes in this patch release; all tickets are test/observability
+  hardening
+
+### Known limitations
+- Same as v0.20.1: the light drafting palette ships; runtime dark /
+  high-contrast switching is a later milestone
+
+### Try it
+1. Download `lintel-windows-x86_64-setup.exe` (Windows),
+   `lintel-macos-aarch64.dmg` (macOS) or `lintel-appimage-x86_64.AppImage`
+   (Linux) from the release page and install it.
+2. Open a project, pick the Door or Window tool, click anywhere on a wall —
+   the opening places under the cursor; clicking off a wall shows a hint.
+
 ## Lintel 0.20.1 — Door & Window Placement Fixes (draft)
 
 **Summary.** This patch release fixes the door and window placement bugs
