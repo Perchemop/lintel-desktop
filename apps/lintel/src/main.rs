@@ -11,7 +11,7 @@ use crate::inspector::InspectorDraft;
 use crate::panels::{Panel, PanelVisibility};
 use crate::theme::SPEC;
 use eframe::egui;
-use eframe::egui::{SidePanel, TopBottomPanel};
+use eframe::egui;
 use lintel_core::{
     BlockId,
     command::Command,
@@ -594,11 +594,11 @@ impl eframe::App for LintelApp {
         self.handle_global_shortcuts(ui);
 
         // Workbench shell layout.
-        TopBottomPanel::top("editor_tabs").show(ui, |ui| {
+        egui::TopBottomPanel::top("editor_tabs").show(ui, |ui| {
             self.editor_tabs(ui);
         });
 
-        SidePanel::left("activity_bar")
+        egui::SidePanel::left("activity_bar")
             .resizable(false)
             .default_width(48.0)
             .show(ui, |ui| {
@@ -609,7 +609,7 @@ impl eframe::App for LintelApp {
             self.canvas_panel(ui, now);
         });
 
-        TopBottomPanel::bottom("status_bar")
+        egui::TopBottomPanel::bottom("status_bar")
             .resizable(false)
             .default_height(28.0)
             .show(ui, |ui| {
@@ -711,7 +711,20 @@ impl LintelApp {
             ui.spacing_mut().item_spacing.y = 8.0;
 
             // Tool icons.
-            for tool in crate::app::tool::Tool::ALL {
+            for tool in [
+                crate::app::tool::Tool::Select,
+                crate::app::tool::Tool::Wall,
+                crate::app::tool::Tool::Door,
+                crate::app::tool::Tool::Window,
+                crate::app::tool::Tool::Dimension,
+                crate::app::tool::Tool::Label,
+                crate::app::tool::Tool::Measurements,
+                crate::app::tool::Tool::ConstructionLine,
+                crate::app::tool::Tool::ConstructionRay,
+                crate::app::tool::Tool::ConstructionCircle,
+                crate::app::tool::Tool::ConstructionArc,
+                crate::app::tool::Tool::Block,
+            ] {
                 let selected = self.tool == tool;
                 let btn = crate::components::buttons::StyledButton::new(tool.label())
                     .role(tool.role())
@@ -725,7 +738,13 @@ impl LintelApp {
             ui.separator();
 
             // Panel toggles.
-            for panel in Panel::ALL {
+            for panel in [
+                panels::Panel::Inspector,
+                panels::Panel::Layers,
+                panels::Panel::Constraints,
+                panels::Panel::Output,
+                panels::Panel::Canvas,
+            ] {
                 let visible = self.panel_visible(panel);
                 let btn = crate::components::buttons::StyledButton::new(panel.title())
                     .role(crate::components::buttons::ButtonRole::Ghost)
