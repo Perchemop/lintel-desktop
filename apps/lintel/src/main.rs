@@ -816,8 +816,10 @@ impl LintelApp {
                 max_x = instance.param.x + HALF;
                 max_y = instance.param.y + HALF;
             }
-            let a = screen_to_world(&self.view, rect, egui::Pos2::new(min_x as f32, min_y as f32));
-            let b = screen_to_world(&self.view, rect, egui::Pos2::new(max_x as f32, max_y as f32));
+            let a_pt = screen_to_world(&self.view, rect, egui::Pos2::new(min_x as f32, min_y as f32));
+            let b_pt = screen_to_world(&self.view, rect, egui::Pos2::new(max_x as f32, max_y as f32));
+            let a = egui::Pos2::new(a_pt.x as f32, a_pt.y as f32);
+            let b = egui::Pos2::new(b_pt.x as f32, b_pt.y as f32);
             let r = egui::Rect::from_two_pos(a, b);
             let painter = ui.painter_at(rect);
             painter.rect_stroke(

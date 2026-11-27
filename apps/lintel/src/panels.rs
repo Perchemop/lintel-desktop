@@ -73,7 +73,7 @@ impl PanelVisibility {
         }
     }
 
-    pub fn is_visible(self, panel: Panel) -> bool {
+    pub fn is_visible(&self, panel: Panel) -> bool {
         match panel {
             Panel::Inspector => self.inspector,
             Panel::Layers => self.layers,
