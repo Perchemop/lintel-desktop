@@ -26,7 +26,7 @@ pub const ALL: [Panel; 5] = [
     Panel::Constraints,
     Panel::Output,
     Panel::Canvas,
-]
+];
 
 impl Panel {
     /// Human-readable tab title.

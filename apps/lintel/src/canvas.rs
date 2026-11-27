@@ -1186,7 +1186,7 @@ impl CanvasHints {
         &self,
         ui: &mut egui::Ui,
         pointer: Option<egui::Pos2>,
-        view: &crate::canvas::View,
+        _view: &crate::canvas::View,
         rect: egui::Rect,
     ) {
         if self.alpha() == 0.0 || !self.hints_enabled {
