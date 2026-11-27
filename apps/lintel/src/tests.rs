@@ -7,6 +7,7 @@ mod forms;
 mod icons;
 mod kittest_buttons;
 mod kittest_forms;
+mod kittest_inspector;
 mod layout;
 mod shell;
 mod theme_tiers;
