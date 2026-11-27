@@ -6,8 +6,6 @@
 //! #![allow(dead_code)] — stub panel, not yet wired into the workbench shell.
 
 use crate::theme::SPEC;
-
-use crate::theme::SPEC;
 use eframe::egui;
 
 pub fn constraints_panel(ui: &mut egui::Ui, _app: &mut crate::LintelApp, _now: i64) {

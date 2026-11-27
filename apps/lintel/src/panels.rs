@@ -6,8 +6,6 @@
 //! Colours come from `crate::theme` only — no raw `Color32` here
 //! (guide II.30.6).
 
-use eframe::egui;
-
 /// Every panel in the workbench.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Panel {
