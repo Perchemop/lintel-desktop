@@ -732,7 +732,11 @@ impl LintelApp {
                     .role(tool.role())
                     .size(crate::components::buttons::ButtonSize::Sm)
                     .selected(selected);
-                if ui.add(btn).on_hover_text(format!("{} ({})", tool.label(), tool.shortcut())).clicked() {
+                if ui
+                    .add(btn)
+                    .on_hover_text(format!("{} ({})", tool.label(), tool.shortcut()))
+                    .clicked()
+                {
                     self.tool = tool;
                 }
             }
@@ -768,11 +772,7 @@ impl LintelApp {
     /// Render the canvas in the central panel: walls, openings, dimensions,
     /// snap markers, empty state, and canvas hints.
     fn canvas_panel(&mut self, ui: &mut egui::Ui, now: i64) {
-        let level = self
-            .doc
-            .project()
-            .active_level()
-            .expect("level");
+        let level = self.doc.project().active_level().expect("level");
         let geometry = PlanGeometry::of_level(level);
         let summary = crate::plan_summary(self.doc.project());
 
@@ -846,8 +846,16 @@ impl LintelApp {
                 max_x = instance.param.x + HALF;
                 max_y = instance.param.y + HALF;
             }
-            let a_pt = screen_to_world(&self.view, rect, egui::Pos2::new(min_x as f32, min_y as f32));
-            let b_pt = screen_to_world(&self.view, rect, egui::Pos2::new(max_x as f32, max_y as f32));
+            let a_pt = screen_to_world(
+                &self.view,
+                rect,
+                egui::Pos2::new(min_x as f32, min_y as f32),
+            );
+            let b_pt = screen_to_world(
+                &self.view,
+                rect,
+                egui::Pos2::new(max_x as f32, max_y as f32),
+            );
             let a = egui::Pos2::new(a_pt.x as f32, a_pt.y as f32);
             let b = egui::Pos2::new(b_pt.x as f32, b_pt.y as f32);
             let r = egui::Rect::from_two_pos(a, b);
@@ -877,7 +885,9 @@ impl LintelApp {
         });
         let dt = ui.input(|i| i.predicted_dt) as f64;
         self.canvas_hints.update(hovered, dt);
-        let pointer_pos = resp.pointer_world.map(|p| egui::Pos2::new(p.x as f32, p.y as f32));
+        let pointer_pos = resp
+            .pointer_world
+            .map(|p| egui::Pos2::new(p.x as f32, p.y as f32));
         self.canvas_hints.render(ui, pointer_pos, &self.view, rect);
     }
 
