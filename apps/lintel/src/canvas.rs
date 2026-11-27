@@ -1220,7 +1220,7 @@ impl CanvasHints {
         );
 
         ui.painter().rect_filled(hint_rect, 4.0, bg);
-        ui.painter().rect_stroke(hint_rect, 4.0, egui::Stroke::new(1.0, fg));
+        ui.painter().rect_stroke(hint_rect, 4.0, egui::Stroke::new(1.0, fg), egui::StrokeKind::Inside);
         ui.painter().text(
             hint_rect.center(),
             egui::Align2::CENTER_CENTER,

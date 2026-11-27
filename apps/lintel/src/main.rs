@@ -631,13 +631,13 @@ impl LintelApp {
             theme::ThemeMode::Light => egui::Visuals::light(),
             theme::ThemeMode::Dark => egui::Visuals::dark(),
             theme::ThemeMode::HighContrast => {
-                let mut v = egui::Visuals::high_contrast();
+                let mut v = egui::Visuals::dark();
                 v.widgets.noninteractive.bg_fill = crate::theme::BASE_PAPER;
                 v.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, crate::theme::TEXT_PRIMARY);
                 v
             }
             theme::ThemeMode::System => {
-                if ctx.output(|o| o.platform_visuals.dark_mode) {
+                if ctx.style().visuals.dark_mode {
                     egui::Visuals::dark()
                 } else {
                     egui::Visuals::light()
