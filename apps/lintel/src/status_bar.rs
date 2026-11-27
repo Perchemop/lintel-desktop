@@ -5,7 +5,7 @@
 //! core `Command`s for unit changes; it never owns geometry or history.
 
 use crate::canvas::{SnapModeKind, SnapModes};
-use crate::theme::SPEC;
+use crate::theme::{self, SPEC};
 use eframe::egui;
 use lintel_core::command::Command;
 use lintel_core::units::UnitSystem;
@@ -122,6 +122,25 @@ pub fn render(ui: &mut egui::Ui, app: &mut crate::LintelApp, now: i64) -> egui::
                 .clicked()
             {
                 app.showing_notes = true;
+            }
+
+            // Theme selector: Light / Dark / High Contrast / System.
+            ui.separator();
+            let mut theme_mode = app.theme_mode;
+            egui::ComboBox::from_label("")
+                .selected_text(theme_mode.label())
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut theme_mode, theme::ThemeMode::Light, "Light");
+                    ui.selectable_value(&mut theme_mode, theme::ThemeMode::Dark, "Dark");
+                    ui.selectable_value(
+                        &mut theme_mode,
+                        theme::ThemeMode::HighContrast,
+                        "High Contrast",
+                    );
+                    ui.selectable_value(&mut theme_mode, theme::ThemeMode::System, "System");
+                });
+            if theme_mode != app.theme_mode {
+                app.theme_mode = theme_mode;
             }
         });
     })
