@@ -1142,7 +1142,11 @@ impl CanvasHints {
         let changed = self.hovered_entity != hovered;
         self.hovered_entity = hovered;
 
-        match (&mut self.fade_state, changed, self.hints_enabled && hovered.is_some()) {
+        match (
+            &mut self.fade_state,
+            changed,
+            self.hints_enabled && hovered.is_some(),
+        ) {
             (FadeState::Hidden, false, false) => {}
             (FadeState::Hidden, _, true) => {
                 self.fade_state = FadeState::In(0.0);
@@ -1154,14 +1158,12 @@ impl CanvasHints {
                 }
             }
             (FadeState::Visible, _, true) => {}
-            (_, _, false) => {
-                match self.fade_state {
-                    FadeState::Hidden => {}
-                    _ => {
-                        self.fade_state = FadeState::Out(0.0);
-                    }
+            (_, _, false) => match self.fade_state {
+                FadeState::Hidden => {}
+                _ => {
+                    self.fade_state = FadeState::Out(0.0);
                 }
-            }
+            },
             (FadeState::Out(t), _, _) => {
                 *t += dt;
                 if *t >= 0.30 {
@@ -1206,8 +1208,8 @@ impl CanvasHints {
         };
 
         let hint_pos = pointer + egui::Vec2::new(12.0, 12.0);
-        let hint_rect = egui::Rect::from_min_size(hint_pos, egui::vec2(120.0, 24.0))
-            .intersect(rect);
+        let hint_rect =
+            egui::Rect::from_min_size(hint_pos, egui::vec2(120.0, 24.0)).intersect(rect);
 
         let alpha = self.alpha();
         let bg = egui::Color32::from_black_alpha((alpha * 200.0) as u8);
