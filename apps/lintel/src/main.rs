@@ -11,7 +11,6 @@ use crate::inspector::InspectorDraft;
 use crate::panels::{Panel, PanelVisibility};
 use crate::theme::SPEC;
 use eframe::egui;
-use eframe::egui::panel::{SidePanel, TopBottomPanel};
 use lintel_core::{
     BlockId,
     command::Command,
@@ -595,21 +594,26 @@ impl eframe::App for LintelApp {
 
         // Workbench shell layout.
         egui::CentralPanel::default().show(ui, |ui| {
-            // Top: editor tabs
-            TopBottomPanel::top("editor_tabs").show(ui, |ui| {
+            // Editor tabs (top row)
+            ui.horizontal(|ui| {
                 self.editor_tabs(ui);
             });
+            ui.separator();
 
-            // Left: activity bar
-            SidePanel::left("activity_bar").show(ui, |ui| {
-                self.activity_bar(ui);
+            // Activity bar + canvas (middle row)
+            ui.horizontal(|ui| {
+                // Activity bar: fixed-width strip on the left
+                ui.allocate_ui(egui::vec2(48.0, ui.available_height()), |ui| {
+                    self.activity_bar(ui);
+                });
+                ui.separator();
+                // Canvas: remaining space
+                self.canvas_panel(ui, now);
             });
+            ui.separator();
 
-            // Centre: canvas
-            self.canvas_panel(ui, now);
-
-            // Bottom: status bar
-            TopBottomPanel::bottom("status_bar").show(ui, |ui| {
+            // Status bar (bottom row)
+            ui.horizontal(|ui| {
                 self.status_bar(ui, now);
             });
         });
