@@ -11,7 +11,7 @@ use crate::inspector::InspectorDraft;
 use crate::panels::{Panel, PanelVisibility};
 use crate::theme::SPEC;
 use eframe::egui;
-use eframe::egui;
+use eframe::egui::panel::{SidePanel, TopBottomPanel};
 use lintel_core::{
     BlockId,
     command::Command,
@@ -594,27 +594,25 @@ impl eframe::App for LintelApp {
         self.handle_global_shortcuts(ui);
 
         // Workbench shell layout.
-        egui::TopBottomPanel::top("editor_tabs").show(ui, |ui| {
-            self.editor_tabs(ui);
-        });
+        egui::CentralPanel::default().show(ui, |ui| {
+            // Top: editor tabs
+            TopBottomPanel::top("editor_tabs").show(ui, |ui| {
+                self.editor_tabs(ui);
+            });
 
-        egui::SidePanel::left("activity_bar")
-            .resizable(false)
-            .default_width(48.0)
-            .show(ui, |ui| {
+            // Left: activity bar
+            SidePanel::left("activity_bar").show(ui, |ui| {
                 self.activity_bar(ui);
             });
 
-        egui::CentralPanel::default().show(ui, |ui| {
+            // Centre: canvas
             self.canvas_panel(ui, now);
-        });
 
-        egui::TopBottomPanel::bottom("status_bar")
-            .resizable(false)
-            .default_height(28.0)
-            .show(ui, |ui| {
+            // Bottom: status bar
+            TopBottomPanel::bottom("status_bar").show(ui, |ui| {
                 self.status_bar(ui, now);
             });
+        });
 
         // Dialogs render as floating windows on top of everything.
         self.dialogs(ui, now);

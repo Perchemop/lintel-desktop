@@ -2069,7 +2069,7 @@ pub const SPEC: ThemeSpec = ThemeSpec::LIGHT;
 // ============================================================================
 
 /// User-selectable theme mode. `System` follows the OS preference.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ThemeMode {
     Light,
     Dark,
