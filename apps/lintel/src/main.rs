@@ -668,7 +668,7 @@ impl LintelApp {
             ui.spacing_mut().item_spacing.x = 0.0;
 
             // Plan tab — always present, pinned.
-            let plan_active = self.active_sheet().map_or(true, |s| s == "Plan");
+            let plan_active = self.active_sheet().is_none_or(|s| s == "Plan");
             let plan_btn = egui::Button::new("Plan");
             let plan_btn = if plan_active {
                 plan_btn.fill(SPEC.component.button.primary_sm.fill)
@@ -682,7 +682,7 @@ impl LintelApp {
 
             // Sheet tabs from the drawing set.
             for sheet in self.drawing_set_sheets() {
-                let active = self.active_sheet().as_deref() == Some(sheet.as_str());
+                let active = self.active_sheet() == Some(sheet.as_str());
                 let sheet_btn = egui::Button::new(sheet.as_str());
                 let sheet_btn = if active {
                     sheet_btn.fill(SPEC.component.button.primary_sm.fill)

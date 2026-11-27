@@ -18,6 +18,7 @@ pub enum Tool {
 }
 
 /// All tools, in activity bar order.
+#[allow(dead_code)]
 pub const ALL: [Tool; 12] = [
     Tool::Select,
     Tool::Wall,
