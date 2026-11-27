@@ -666,8 +666,13 @@ impl LintelApp {
 
             // Plan tab — always present, pinned.
             let plan_active = self.active_sheet().map_or(true, |s| s == "Plan");
-            let plan_resp = egui::selectable_label(ui, plan_active, "Plan");
-            if plan_resp.clicked() {
+            let plan_btn = egui::Button::new("Plan");
+            let plan_btn = if plan_active {
+                plan_btn.fill(SPEC.component.button.primary_sm.fill)
+            } else {
+                plan_btn
+            };
+            if ui.add(plan_btn).clicked() {
                 self.active_sheet = Some("Plan".to_string());
             }
             ui.separator();
@@ -675,8 +680,13 @@ impl LintelApp {
             // Sheet tabs from the drawing set.
             for sheet in self.drawing_set_sheets() {
                 let active = self.active_sheet().as_deref() == Some(sheet.as_str());
-                let sheet_resp = egui::selectable_label(ui, active, sheet.as_str());
-                if sheet_resp.clicked() {
+                let sheet_btn = egui::Button::new(sheet.as_str());
+                let sheet_btn = if active {
+                    sheet_btn.fill(SPEC.component.button.primary_sm.fill)
+                } else {
+                    sheet_btn
+                };
+                if ui.add(sheet_btn).clicked() {
                     self.active_sheet = Some(sheet.clone());
                 }
                 ui.separator();
