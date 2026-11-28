@@ -276,7 +276,13 @@ contrast-test, kittest, pr-author-is-dev, build-matrix).
 - [x] T-220..T-240 all implemented and verified green in CI
 - [x] ROADMAP.md updated with v0.22.0 scope and CI run ID evidence
 - [x] PROGRESS.md drafted for v0.22.0; first-reader gate: `lost: 0`
-- [ ] Tag `v0.22.0` after this change merges, then confirm the release run, installers and signed `SHA256SUMS.txt.asc` (dependency-doctor gate before the tag)
+- [x] Tag `v0.22.0` cut on merge commit `8bdba47`, release run 46187583285
+      succeeded: installers published (Windows setup .exe, macOS .dmg,
+      Linux .AppImage) with `SHA256SUMS.txt` + `SHA256SUMS.txt.asc`;
+      signature verified against the pinned release key fingerprint
+      (docs/release-verification.md); tag is an ancestor of `main`.
+      Token metrics measured 2026-11-29 from the session ledger:
+      59,572,709 this release / 1,296,360,380 cumulative (docs/tokens.md).
 
 ## v0.20.0 Status — RELEASED
 
