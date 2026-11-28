@@ -715,4 +715,4 @@ Readiness % (v0.1.0): **100% — shipped.**
 
 ## Process feedback
 
-- No friction logged this session.
+- No friction logged this session.- research batch (8 deep-dive notes) + inspiration gap audit (25 ranked candidates) landed in this PR, with CI run evidence

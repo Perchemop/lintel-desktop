@@ -44,3 +44,25 @@ This project was inspired by publicly documented architectural drafting applicat
 - **Project JSON format:** A plain JSON file with `format_version`, `name`, `units`, `levels` (each with `id`, `name`, `elevation`, `walls`, `openings`), `active_level`, `created_epoch_s`, `modified_epoch_s`, `notes`, and `next_id`. Version 1 is the current format; newer files are refused.
 
 - **Command pattern:** Every user edit is a `Command` enum variant. The UI never mutates the model directly — it sends a command and renders the result. This makes workflow tests exercise the same path the app uses.
+
+## Deep-dive research (Nov 2026)
+
+1. **AutoCAD** — official Autodesk help and documentation; behavioural summaries in docs/research/autocad-drafting-core.md, autocad-annotation-output.md, autocad-management-settings.md
+   - URL: <https://help.autodesk.com/>
+
+2. **FreeCAD** — FreeCAD wiki and public source on GitHub; behavioural summaries in docs/research/freecad-parametric.md
+   - URL: <https://freecadwiki.org/>
+
+3. **QCAD/LibreCAD** — QCAD.org and LibreCAD documentation; behavioural summaries in docs/research/qcad-librecad-2d.md
+   - URL: <https://qcad.org/>
+
+4. **SketchUp** — SketchUp help documentation; behavioural summaries in docs/research/sketchup-inferencing.md
+   - URL: <https://help.sketchup.com/>
+
+5. **Sweet Home 3D / Floorplanner / RoomSketcher** — Sweet Home 3D, Floorplanner, and RoomSketcher docs; behavioural summaries in docs/research/home-design-ux.md
+   - URLs: <https://sweethome3d.com/>, <https://floorplanner.com/>, <https://roomsketcher.com/>
+
+6. **Blender** — Blender manual; behavioural summaries in docs/research/blender-ui-architecture.md
+   - URL: <https://docs.blender.org/>
+
+Original behavioural summaries with full details live in docs/research/<file>.md for each source consulted.
