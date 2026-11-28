@@ -461,17 +461,56 @@ by CI, dependency-doctor gate before tag.
 
 **Readiness:** 100% spec complete — awaiting implementation.
 
+## v0.22.0 — Workbench Shell & Theme (In Progress)
+
+**Status:** In CI — build matrix passing, ready for release tag after final v0.22.0 merge.
+
+**Scope:** v0.22.0 adds the workbench shell with activity bar, dockable panels
+(Inspector, Layers, Constraints, Output with visibility toggles T-226/T-230/T-238/T-239/T-240),
+status-bar theme selector (light/dark/high-contrast T-224), contextual per-tool
+status-bar hints T-230, runtime themes Light/Dark/High-Contrast T-224, settings
+persistence (theme mode + panel visibility) in `lintel-settings.json` via
+serde/serde_json T-225, SPEC→spec() migration enabling runtime theme switching.
+
+CI evidence: PR #90 merge commit `e6020a2` (`check` + `build-matrix` on Linux/macOS/Windows),
+run ID 46141818194 (all checks green: check, contrast-test, kittest, pr-author-is-dev, build-matrix).
+
+| ID | Capability | Done |
+|---|-----------|------|
+| T-220 | Add egui_dock dependency and DockState to AppState | ✓ |
+| T-221 | Panel enum and default dock layout | ✓ |
+| T-222 | Render docked panels in the main UI loop | ✓ |
+| T-223 | Layout persistence (save/restore DockState) | ✓ |
+| T-224 | Dark and High-Contrast palettes in theme.rs | ✓ |
+| T-225 | ThemeMode enum, AppSettings persistence, runtime switch | ✓ |
+| T-226 | Theme selector in status bar + Settings panel | ✓ |
+| T-227 | Ctrl+T theme cycle shortcut | ✓ |
+| T-228 | CanvasHints struct and hover detection | ✓ |
+| T-229 | Render on-canvas hover hints | ✓ |
+| T-230 | Contextual status bar hints per active tool | ✓ |
+| T-231 | Activity bar component (left) | ✓ |
+| T-232 | Status bar component (bottom) | ✓ |
+| T-233 | Editor tabs component (top) | ✓ |
+| T-234 | Workbench shell integration in App::update() | ✓ |
+| T-235 | Extend contrast_test for Dark + High-Contrast palettes | ✓ |
+| T-236 | Rendered design evidence for new shell components | ✓ |
+| T-237 | egui_kittest AccessKit assertions for workbench shell | ✓ |
+| T-238 | Layers panel content (visibility, lock, colour, add/remove) | ✓ |
+| T-239 | Constraints panel content (list + add form) | ✓ |
+| T-240 | Output panel content (command log, solver status, measurements) | ✓ |
+
+**Release gate (guide §12.1):** Signed artefacts, `docs/tokens.md` ledger updated by CI and quoted in release notes, version bump before tag, all required CI checks green.
+
+**Readiness:** 100% — all T-220..T-240 tickets implemented and verified green in CI.
+
 ## v0.22.0+ — Next Feature Milestone (Planning)
 
-**Status:** Planning — determine scope for next feature release.
+**Status:** Planning — determine scope for after v0.22.0 release.
 
 Candidates from the backlog:
 
 | ID | Capability | Notes |
 |---|-----------|------|
-| CAP-??? | Workbench shell: activity bar, status bar, editor tabs | Separate milestone per v0.20.0 unscheduled |
-| CAP-??? | Docking framework | Separate milestone per v0.20.0 unscheduled |
-| CAP-??? | Runtime theme switch (dark/high-contrast user-selectable) | v0.20.0 unscheduled |
 | CAP-??? | Web/WASM port | Separate roadmap track |
 | CAP-??? | Plugin architecture | Separate roadmap track |
 | CAP-??? | Collaborative editing | Separate roadmap track |
@@ -479,8 +518,8 @@ Candidates from the backlog:
 | CAP-??? | On-canvas hints | Separate roadmap track |
 | CAP-??? | 3D/structural/IFC track | Separate roadmap track |
 
-**Decision needed:** Choose next vertical slice scope after v0.21.0 ships. Options:
-1. **v0.22.0** — Feature slice from unscheduled list
+**Decision needed:** Choose next vertical slice scope after v0.22.0 ships. Options:
+1. **v0.23.0** — Feature slice from unscheduled list
 2. **v1.0.0** — First stable major release with all current features
 
-**Readiness:** 0% — awaiting v0.21.0 completion and scope decision.
+**Readiness:** 0% — awaiting v0.22.0 completion and scope decision.

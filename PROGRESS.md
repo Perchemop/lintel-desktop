@@ -255,8 +255,28 @@ release makes them installable.
 - [x] RELEASE_NOTES.md drafted for v0.20.1; first-reader gate: `lost: 0`
 - [x] scope-creep-check: `scope: clean` (docs + version bumps only)
 - [ ] Tag `v0.20.1` after this change merges, then confirm the release run,
-      installers and signed `SHA256SUMS.txt.asc` (dependency-doctor gate
-      before the tag)
+
+## v0.22.0 Status — RELEASE PREP
+
+**Workbench shell & theme release**, v0.22.0 adds the workbench shell with
+activity bar, dockable panels (Inspector, Layers, Constraints, Output with
+visibility toggles T-226/T-230/T-238/T-239/T-240), status-bar theme selector
+(light/dark/high-contrast T-224), contextual per-tool status-bar hints
+T-230, runtime themes Light/Dark/High-Contrast T-224, settings persistence
+(theme mode + panel visibility) in `lintel-settings.json` via serde/serde_json
+T-225, SPEC→spec() migration enabling runtime theme switching.
+
+CI evidence: PR #90 merge commit `e6020a2` (`check` + `build-matrix` on
+Linux/macOS/Windows), run ID 46141818194 (all checks green: check,
+contrast-test, kittest, pr-author-is-dev, build-matrix).
+
+- [x] Version bumps 0.21.0 → 0.22.0 (both crates + Cargo.lock)
+- [x] CHANGELOG.md drafted for v0.22.0; first-reader gate: `lost: 0`
+- [x] RELEASE_NOTES.md drafted for v0.22.0; first-reader gate: `lost: 0`
+- [x] T-220..T-240 all implemented and verified green in CI
+- [x] ROADMAP.md updated with v0.22.0 scope and CI run ID evidence
+- [x] PROGRESS.md drafted for v0.22.0; first-reader gate: `lost: 0`
+- [ ] Tag `v0.22.0` after this change merges, then confirm the release run, installers and signed `SHA256SUMS.txt.asc` (dependency-doctor gate before the tag)
 
 ## v0.20.0 Status — RELEASED
 
