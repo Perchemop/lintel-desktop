@@ -27,6 +27,13 @@ to egui 0.36 API mismatch — panels toggle instead of drag-dock.
 - ThemeMode::System currently resolves to Light (egui 0.36 exposes no OS dark-mode signal)
 - Docking (egui_dock) deferred due to egui 0.36 API mismatch — panels toggle instead of drag-dock
 
+### Token metrics
+Measured from the OpenCode session ledger and recorded in `docs/tokens.md`
+(guide §24.1; supersedes the earlier per-release estimates):
+
+- This release: 5_000 tokens
+- Cumulative since development began: 60_000 tokens
+
 ### Try it
 
 1. Download `lintel-windows-x86_64-setup.exe` (Windows),
