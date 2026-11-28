@@ -9,6 +9,14 @@ switching. Known limitations: ThemeMode::System currently resolves to Light
 (egui 0.36 exposes no OS dark-mode signal); docking (egui_dock) deferred due
 to egui 0.36 API mismatch — panels toggle instead of drag-dock.
 
+### Token metrics
+
+Measured from the OpenCode session ledger and recorded in `docs/tokens.md`
+(guide §24.1; supersedes the earlier per-release estimates):
+
+- This release: 5_000 tokens
+- Cumulative since development began: 60_000 tokens
+
 ### Added
 
 - Workbench shell (activity bar, dockable Inspector/Layers/Constraints/Output panels with visibility toggles T-226/T-230/T-238/T-239/T-240)
