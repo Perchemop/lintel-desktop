@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## v0.22.0 — 2026-11-28
+
+### Added
+
+- Workbench shell (activity bar, dockable Inspector/Layers/Constraints/Output panels with visibility toggles T-226/T-230/T-238/T-239/T-240)
+- Status-bar theme selector (light/dark/high-contrast T-224)
+- Contextual per-tool status-bar hints T-230
+- Runtime themes Light/Dark/High-Contrast T-224
+- Settings persistence (theme mode + panel visibility) in `lintel-settings.json` via serde/serde_json T-225
+- SPEC→spec() migration enabling runtime theme switching
+
+### Changed
+
+- (none specific to 0.22.0 in this release)
+
+### Known limitations
+
+- ThemeMode::System currently resolves to Light (egui 0.36 exposes no OS dark-mode signal)
+- Docking (egui_dock) deferred due to egui 0.36 API mismatch — panels toggle instead of drag-dock
+
 ## v0.21.0 — 2026-11-27
 
 ### Added

@@ -1,3 +1,49 @@
+## Lintel 0.22.0 — 2026-11-28
+
+**Summary.** v0.22.0 adds the workbench shell with activity bar, dockable
+panels (Inspector, Layers, Constraints, Output with visibility toggles),
+status-bar theme selector (Light/Dark/High-Contrast), contextual per-tool
+status-bar hints, runtime theme switching, and settings persistence in
+`lintel-settings.json`. The SPEC→spec() migration enables runtime theme
+switching. Known limitations: ThemeMode::System currently resolves to Light
+(egui 0.36 exposes no OS dark-mode signal); docking (egui_dock) deferred due
+to egui 0.36 API mismatch — panels toggle instead of drag-dock.
+
+### Token metrics
+
+Measured 2026-11-29 from the OpenCode session ledger and recorded in
+`docs/tokens.md` (guide §24.1). The never-tagged v0.20.1/v0.21.0 windows fold
+into this release:
+
+- This release: 59,572,709 tokens (input + output + reasoning)
+- Cumulative since development began: 1,296,360,380 tokens
+
+### Added
+
+- Workbench shell (activity bar, dockable Inspector/Layers/Constraints/Output panels with visibility toggles T-226/T-230/T-238/T-239/T-240)
+- Status-bar theme selector (light/dark/high-contrast T-224)
+- Contextual per-tool status-bar hints T-230
+- Runtime themes Light/Dark/High-Contrast T-224
+- Settings persistence (theme mode + panel visibility) in `lintel-settings.json` via serde/serde_json T-225
+- SPEC→spec() migration enabling runtime theme switching
+
+### Changed
+
+- Both crates bumped 0.20.1 → 0.22.0
+
+### Known limitations
+
+- ThemeMode::System currently resolves to Light (egui 0.36 exposes no OS dark-mode signal)
+- Docking (egui_dock) deferred due to egui 0.36 API mismatch — panels toggle instead of drag-dock
+
+### Try it
+
+1. Download `lintel-windows-x86_64-setup.exe` (Windows),
+   `lintel-macos-aarch64.dmg` (macOS) or `lintel-appimage-x86_64.AppImage`
+   (Linux) from the release page and install it.
+2. Open a project, pick the Door or Window tool, click anywhere on a wall —
+   the opening places under the cursor; clicking off a wall shows a hint.
+
 ## Lintel 0.21.0 — Anchored Dimensions Test Hardening (draft)
 
 **Summary.** This patch release hardens the v0.20.0 anchored-dimensions

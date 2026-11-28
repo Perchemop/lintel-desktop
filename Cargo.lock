@@ -2182,7 +2182,7 @@ checksum = "d4a5ff6bcca6c4867b1c4fd4ef63e4db7436ef363e0ad7531d1558856bae64f4"
 
 [[package]]
 name = "lintel"
-version = "0.20.1"
+version = "0.22.0"
 dependencies = [
  "crash-report",
  "eframe",
@@ -2197,7 +2197,7 @@ dependencies = [
 
 [[package]]
 name = "lintel-core"
-version = "0.20.1"
+version = "0.22.0"
 dependencies = [
  "proptest",
  "serde",
@@ -3595,7 +3595,7 @@ dependencies = [
 
 [[package]]
 name = "rustybuzz"
-version = "0.20.1"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3c7c96f8a08ee34eff8857b11b49b07d71d1c3f4e88f8a88d4c9e9f90b1702"
 dependencies = [
