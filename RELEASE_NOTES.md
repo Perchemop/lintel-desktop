@@ -11,11 +11,12 @@ to egui 0.36 API mismatch — panels toggle instead of drag-dock.
 
 ### Token metrics
 
-Measured from the OpenCode session ledger and recorded in `docs/tokens.md`
-(guide §24.1; supersedes the earlier per-release estimates):
+Measured 2026-11-29 from the OpenCode session ledger and recorded in
+`docs/tokens.md` (guide §24.1). The never-tagged v0.20.1/v0.21.0 windows fold
+into this release:
 
-- This release: 5_000 tokens
-- Cumulative since development began: 60_000 tokens
+- This release: 59,572,709 tokens (input + output + reasoning)
+- Cumulative since development began: 1,296,360,380 tokens
 
 ### Added
 
